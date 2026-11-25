@@ -7,12 +7,17 @@ thermodynamic measurements. Real retained receipts are audited separately.
 import copy
 import csv
 import io
+import errno
+import os
+import stat
+import tempfile
 import json
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 import zipfile
 
-from benchmark_huron_vidal_rows import FLAGS, audit, plan, sha, stem
+from benchmark_huron_vidal_rows import FLAGS, audit, plan, sha, stem, write_json_atomic
 
 
 def encode(rows):
@@ -178,6 +183,147 @@ class RowReuseEvidenceTest(unittest.TestCase):
         self.assertEqual((216, 2160, 2916000, 59400), tuple(
             result[key] for key in ("jvms", "rounds", "operations", "phase_component_rows")))
         self.assertEqual(json.loads((root / "summary.json").read_text(encoding="utf-8")), result)
+
+
+class ScratchTrialEvidenceTest(unittest.TestCase):
+    """Audit rejected trials as frozen observations, never as live timing budgets."""
+
+    def test_retained_negative_trials(self):
+        root = Path(__file__).resolve().parents[1] / (
+            "src/test/resources/neqsim/thermo/mixingrule/hv-phase-scratch")
+        report = json.loads((root / "validation.json").read_text(encoding="utf-8"))
+        raw = (root / "raw.zip").read_bytes()
+        self.assertEqual(sha(raw), report["archive"]["sha256"])
+        expected = {"tuple-full": 216, "tuple-repeat": 24, "tuple-java21": 24,
+                    "tuple-boundary": 24, "descriptor-pilot": 24}
+        self.assertEqual(set(report["datasets"]), set(expected))
+        with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+            for name, count in expected.items():
+                manifest = json.loads(archive.read(name + "/execution.json"))
+                result = audit(manifest, lambda path: archive.read(name + "/" + path))
+                self.assertEqual(result, report["datasets"][name]["summary"])
+                self.assertEqual(result["jvms"], count)
+                self.assertEqual(result["max_same_case_difference"], 0.0)
+        # These assertions protect the retained adverse observations, not current CPU timings.
+        for name in ("tuple-full", "tuple-repeat"):
+            cell = next(row for row in report["datasets"][name]["summary"]["cells"]
+                        if (row["profile"], row["size"], row["scenario"], row["rule"])
+                        == (0, 5, "init3", 4))
+            self.assertTrue(all(value > 1.0 for key in ("candidate_over_base", "candidate_over_control")
+                                for value in cell["ratios"][key]))
+        self.assertEqual(sum(expected.values()), 312)
+
+
+class AtomicReceiptTest(unittest.TestCase):
+    """A failed next checkpoint must preserve every byte of its accepted prefix."""
+
+    def test_success_publishes_complete_json(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "execution.json"
+            value = {"runs": [{"exit": 0}], "reason": "water–gas"}
+            write_json_atomic(path, value)
+            self.assertEqual(json.loads(path.read_bytes()), value)
+            self.assertEqual(path.read_bytes(), (json.dumps(value, indent=2) + "\n").encode())
+            self.assertEqual(list(Path(directory).iterdir()), [path])
+
+    def test_failed_fsync_preserves_accepted_receipt(self):
+        self.check_failed_replacement("os.fsync")
+
+    def test_failed_replace_preserves_accepted_receipt(self):
+        self.check_failed_replacement("os.replace")
+
+    @unittest.skipUnless(os.name == "posix", "POSIX permission semantics")
+    def test_replacement_preserves_existing_mode(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "execution.json"
+            path.write_text("{}")
+            path.chmod(0o640)
+            write_json_atomic(path, {"runs": []})
+            self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o640)
+
+    @unittest.skipUnless(os.name == "posix", "POSIX permission semantics")
+    def test_new_receipt_preserves_umask_creation_policy(self):
+        with tempfile.TemporaryDirectory() as directory:
+            control = Path(directory) / "ordinary.json"
+            control.write_text("{}")
+            path = Path(directory) / "execution.json"
+            write_json_atomic(path, {"runs": []})
+            self.assertEqual(stat.S_IMODE(path.stat().st_mode), stat.S_IMODE(control.stat().st_mode))
+
+    def test_cleanup_failure_preserves_primary_error_and_reports_orphan(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "execution.json"
+            original = b'{"runs":[]}\n'
+            path.write_bytes(original)
+            with patch("benchmark_huron_vidal_rows.os.fsync",
+                       side_effect=OSError(errno.ENOSPC, "injected full device")):
+                with patch("benchmark_huron_vidal_rows.Path.unlink",
+                           side_effect=OSError(errno.EPERM, "injected cleanup refusal")):
+                    with self.assertRaises(OSError) as caught:
+                        write_json_atomic(path, {"runs": [1]})
+            self.assertEqual(caught.exception.errno, errno.ENOSPC)
+            self.assertTrue(any("Temporary receipt cleanup failed:" in note
+                                for note in caught.exception.__notes__))
+            self.assertEqual(path.read_bytes(), original)
+            self.assertEqual(len(list(Path(directory).glob("*.tmp"))), 1)
+
+    def test_partial_write_failure_preserves_accepted_receipt(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "execution.json"
+            original = b'{"runs":[{"exit":0}]}\n'
+            path.write_bytes(original)
+            factory = Path.open
+
+            class FailingWriter:
+                """Write a real partial payload before raising a full-device error."""
+
+                def __init__(self, stream):
+                    self.stream = stream
+                    self.name = stream.name
+
+                def __enter__(self):
+                    return self
+
+                def __exit__(self, *args):
+                    return self.stream.__exit__(*args)
+
+                def write(self, data):
+                    self.stream.write(data[:7])
+                    self.stream.flush()
+                    raise OSError(errno.ENOSPC, "injected partial write")
+
+            def failed_file(candidate, *args, **kwargs):
+                stream = factory(candidate, *args, **kwargs)
+                return FailingWriter(stream) if args and args[0] == "xb" else stream
+
+            with patch("benchmark_huron_vidal_rows.Path.open", failed_file):
+                with self.assertRaises(OSError):
+                    write_json_atomic(path, {"runs": [{"exit": 0}, {"exit": 0}]})
+            self.assertEqual(path.read_bytes(), original)
+            self.assertEqual(list(Path(directory).iterdir()), [path])
+
+    def check_failed_replacement(self, operation):
+        """Inject a deterministic disk failure after the new payload was written."""
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "execution.json"
+            original = b'{"runs":[{"exit":0,"csv_sha256":"retained"}]}\n'
+            path.write_bytes(original)
+            with patch("benchmark_huron_vidal_rows." + operation,
+                       side_effect=OSError(errno.ENOSPC, "injected full device")):
+                with self.assertRaises(OSError):
+                    write_json_atomic(path, {"runs": [{"exit": 0}, {"exit": 0}]})
+            self.assertEqual(path.read_bytes(), original)
+            self.assertEqual(list(Path(directory).iterdir()), [path])
+
+    def test_serialization_failure_preserves_accepted_receipt(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "execution.json"
+            original = b'{"runs":[]}\n'
+            path.write_bytes(original)
+            with self.assertRaises(TypeError):
+                write_json_atomic(path, {"invalid": object()})
+            self.assertEqual(path.read_bytes(), original)
+            self.assertEqual(list(Path(directory).iterdir()), [path])
 
 
 if __name__ == "__main__":

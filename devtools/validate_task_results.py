@@ -55,6 +55,15 @@ PVT_TUNING_HINTS = (
     "tuned the eos", "split factor", "regression against measured pvt", "kij tuning",
 )
 
+#: Words that mean the task assesses overpressure, relief or a pressure-limiting barrier. Word-bounded
+#: matching; a task counts as an overpressure study when at least OVERPRESSURE_MIN_HINTS distinct hints appear.
+OVERPRESSURE_HINTS = (
+    r"overpressure", r"overtrykk", r"\bpsv\b", r"\bpzv\b", r"relief", r"avlast", r"hipps", r"pahh",
+    r"choke[- ]collapse", r"choke[- ]kollaps", r"inadvertent valve opening", r"\bivo\b", r"blocked outlet",
+    r"blokkert utl",
+)
+OVERPRESSURE_MIN_HINTS = 4
+
 
 def _validate_pvt_tuning_quality(block) -> Tuple[List[str], List[str]]:
     """Validate the pvt_tuning_quality block (the fluid-tuning reporting standard).
@@ -93,6 +102,150 @@ def _validate_pvt_tuning_quality(block) -> Tuple[List[str], List[str]]:
         warnings.append("pvt_tuning_quality.exclusions: list excluded samples/data with reasons (use [] when none)")
     if not block.get("figures"):
         warnings.append("pvt_tuning_quality.figures: add the parity/curve figure files of the tuning")
+    return errors, warnings
+
+
+def _mentions_overpressure_study(results: dict) -> bool:
+    """True when the task text is about overpressure/relief (at least OVERPRESSURE_MIN_HINTS distinct hints).
+
+    Args:
+        results: parsed results.json
+
+    Returns:
+        True for a substantial overpressure, relief or pressure-limiting-barrier study
+    """
+    parts = [str(results.get(k, "")) for k in ("task_statement", "approach", "conclusions")]
+    kr = results.get("key_results")
+    if isinstance(kr, dict):
+        parts.extend(str(k) for k in kr)
+    text = " ".join(parts).lower()
+    hits = sum(1 for pat in OVERPRESSURE_HINTS if re.search(pat, text))
+    return hits >= OVERPRESSURE_MIN_HINTS
+
+
+def _first_present(block: dict, names: Tuple[str, ...]):
+    """Return the first non-empty value among the alias keys, else None."""
+    for name in names:
+        val = block.get(name)
+        if val:
+            return val
+    return None
+
+
+def _validate_existing_wells_comparison(block) -> Tuple[List[str], List[str]]:
+    """Validate the existing_wells_comparison block of an overpressure study.
+
+    The block records the comparison of a new well/source with the existing or previous wells and inputs to the
+    receiving separator/header, and the blocked-outlet check as a function of current inflow. Structural problems are
+    errors; missing parts are warnings. ``{"not_applicable": "<reason>"}`` is accepted for systems without existing inputs.
+
+    Args:
+        block: the parsed ``existing_wells_comparison`` value
+
+    Returns:
+        (errors, warnings)
+    """
+    errors: List[str] = []
+    warnings: List[str] = []
+    if not isinstance(block, dict):
+        return ["existing_wells_comparison: must be a JSON object"], warnings
+    if "not_applicable" in block:
+        if not str(block.get("not_applicable") or "").strip():
+            warnings.append("existing_wells_comparison.not_applicable: give the reason (e.g. no existing producers on the receiving system)")
+        return errors, warnings
+    if not _first_present(block, ("existing_inputs", "wells")):
+        warnings.append("existing_wells_comparison.existing_inputs: list the existing/previous wells or inputs to the receiving separator/header "
+                        "(riser/inlet pressure, SIWHP, rates, choke dP)")
+    if not _first_present(block, ("relief_basis", "doc_basis")):
+        warnings.append("existing_wells_comparison.relief_basis: state what the PSV/relief basis was sized for (or that it is not documented)")
+    if not _first_present(block, ("ratios",)):
+        warnings.append("existing_wells_comparison.ratios: give the ratio new versus historical source pressure (and rate/choke dP)")
+    if not _first_present(block, ("relief_effect", "model_cases")):
+        warnings.append("existing_wells_comparison.relief_effect: give the effect on the failed-open / choke-collapse relief load at the historical pressures")
+    blocked = block.get("blocked_outlet")
+    if not isinstance(blocked, dict):
+        warnings.append("existing_wells_comparison.blocked_outlet: add the blocked-outlet check as a function of current inflow (object with governs, statement, inflow_cases)")
+    else:
+        if "governs" not in blocked:
+            warnings.append("existing_wells_comparison.blocked_outlet.governs: state explicitly whether blocked outlet governs the PSV case")
+        if not str(blocked.get("statement") or "").strip():
+            warnings.append("existing_wells_comparison.blocked_outlet.statement: add the verdict with the caveats (lower production today, stationary estimate)")
+        if not blocked.get("inflow_cases"):
+            warnings.append("existing_wells_comparison.blocked_outlet.inflow_cases: give margins for current (not design) inflow, forecast and design inflow")
+    return errors, warnings
+
+
+def _rows_of(block, key: str) -> list:
+    """Return the list of rows of a block that is either a list or an object holding the list under ``key``."""
+    if isinstance(block, list):
+        return block
+    if isinstance(block, dict):
+        rows = block.get(key)
+        if isinstance(rows, list):
+            return rows
+    return []
+
+
+def _validate_scenario_cv_blocks(results: dict) -> Tuple[List[str], List[str]]:
+    """Validate scenario_register, valve_cv_inputs and cv_sensitivity of an overpressure / failed-open study.
+
+    A reviewer must see which scenario each relief rate belongs to (study status, valve states, limiting mechanism,
+    governing or not), which installed valve Cv the rates rest on (value, source, quality) and how the rates depend on
+    Cv for failed-open and for blocked outlet. Structural problems are errors; missing parts are warnings.
+    ``{"not_applicable": "<reason>"}`` is accepted for each block.
+
+    Args:
+        results: parsed results.json
+
+    Returns:
+        (errors, warnings)
+    """
+    errors: List[str] = []
+    warnings: List[str] = []
+    specs = (
+        ("scenario_register", "scenarios", (("study_status", "status"), ("valves", "valve_states"), ("limit", "limiting_mechanism"), ("governing", "governs")),
+         "one row per scenario with study status (calculated / simple estimate / qualitative), valve states, limiting mechanism, relief result and governing yes/no"),
+        ("valve_cv_inputs", "inputs", (("element", "valve", "tag"), ("value",), ("source",), ("grade", "quality")),
+         "every flow-limiting valve and PSV with installed Cv or capacity, source (document, revision, page or ASSUMED) and quality grade"),
+        ("cv_sensitivity", None, (), "relief rate, time to set pressure and peak pressure against installed Cv for failed-open and for blocked outlet"),
+    )
+    for key, rows_key, fields, hint in specs:
+        block = results.get(key)
+        if block is None:
+            warnings.append(
+                f"{key}: the task is an overpressure / failed-open study but has no {key} block ({hint}; "
+                "see neqsim-hp-lp-interface-overpressure section 2c)"
+            )
+            continue
+        if not isinstance(block, (dict, list)):
+            errors.append(f"{key}: must be a JSON object")
+            continue
+        if isinstance(block, dict) and "not_applicable" in block:
+            if not str(block.get("not_applicable") or "").strip():
+                warnings.append(f"{key}.not_applicable: give the reason")
+            continue
+        if key == "cv_sensitivity":
+            if not isinstance(block, dict):
+                errors.append("cv_sensitivity: must be a JSON object")
+                continue
+            if not _first_present(block, ("ivo_cc", "failed_open", "ivocc")):
+                warnings.append("cv_sensitivity.ivo_cc: add the failed-open (IVO/choke collapse) sensitivity against choke Cv, PV Cv and source pressure")
+            if not _first_present(block, ("blocked_outlet", "blocked")):
+                warnings.append("cv_sensitivity.blocked_outlet: add the blocked-outlet sensitivity (source cap against choke Cv at the actual dP)")
+            if not _first_present(block, ("findings", "statement")):
+                warnings.append("cv_sensitivity.findings: state what the relief rate depends on and what it does not")
+            continue
+        rows = _rows_of(block, rows_key)
+        if not rows:
+            warnings.append(f"{key}.{rows_key}: list the rows ({hint})")
+            continue
+        for names in fields:
+            if not any(isinstance(r, dict) and any(r.get(n) for n in names) for r in rows):
+                warnings.append(f"{key}.{rows_key}: no row gives {'/'.join(names)}")
+            else:
+                missing = [i for i, r in enumerate(rows) if isinstance(r, dict) and not any(r.get(n) for n in names)]
+                if len(missing) > len(rows) // 2:
+                    warnings.append(f"{key}.{rows_key}: most rows lack {'/'.join(names)} (rows {missing[:5]}...)")
     return errors, warnings
 
 
@@ -250,6 +403,25 @@ def validate(results: dict) -> Tuple[List[str], List[str]]:
             "pvt_tuning_quality: the task tunes a fluid to PVT data but reports no pvt_tuning_quality block "
             "(before/after error per experiment, tuned parameters with bounds, exclusions, figures)"
         )
+
+    # existing_wells_comparison (mandatory reporting block for overpressure studies of a new source on an existing system)
+    ewc = results.get("existing_wells_comparison")
+    if ewc is not None:
+        e, w = _validate_existing_wells_comparison(ewc)
+        errors.extend(e)
+        warnings.extend(w)
+    elif _mentions_overpressure_study(results):
+        warnings.append(
+            "existing_wells_comparison: the task assesses overpressure/relief but has no existing_wells_comparison block "
+            "(compare the new source with existing/previous wells and inputs to the receiving separator/header, and check "
+            "blocked outlet against current inflow; see neqsim-hp-lp-interface-overpressure section 2b)"
+        )
+
+    # scenario_register, valve_cv_inputs, cv_sensitivity (mandatory reporting blocks for overpressure / failed-open studies)
+    if _mentions_overpressure_study(results) or any(k in results for k in ("scenario_register", "valve_cv_inputs", "cv_sensitivity")):
+        e, w = _validate_scenario_cv_blocks(results)
+        errors.extend(e)
+        warnings.extend(w)
 
     # figure_discussion entries
     fd = results.get("figure_discussion")

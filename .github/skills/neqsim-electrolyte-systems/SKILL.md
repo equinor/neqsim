@@ -1,7 +1,7 @@
 ---
 name: neqsim-electrolyte-systems
 description: "Electrolyte and brine chemistry guidance for NeqSim. USE WHEN: modeling produced water, scale prediction, CO2/H2S in aqueous systems, MEG/DEG injection, hydrate inhibitor dosing, or any system with ions, salts, or electrolytes. Covers SystemElectrolyteCPAstatoil setup, ion components, scale risk assessment, and brine handling patterns."
-last_verified: "2026-11-21"
+last_verified: "2026-11-24"
 ---
 
 # Electrolyte Systems Guide
@@ -153,6 +153,15 @@ Before hand-rolling the flash, note these ready-made helpers (see the
   `system.chemicalReactionInit()` before `createDatabase(true)`/`setMixingRule(10)`
   and flash first (otherwise carbonate/bicarbonate/pH speciation is missing and
   the SR is wrong).
+
+For electrolyte CPA carbonate brines containing a dissolved spectator ion
+such as sodium or chloride, select
+`setUseMolalCarbonateChemistry(true)` before chemistry initialization, then
+rebuild the mixing rule. Check conservative-ion balance and read pH on the
+selected basis before interpreting calcite SR. The
+[carbonate brine benchmark](../../../docs/thermo/ElectrolyteCPAModel.md#molality-carbonate-chemistry-and-calcite-screening)
+covers the 44 to 3 bara PH path, with PHREEQC comparisons at the flashed states.
+Use the default reaction data for sulfide or amine speciation.
 
 Once the SI/SR is known, the **inhibitor** side (minimum inhibitor concentration, residual SI
 after treatment, chemical compatibility, and what a pH adjuster or H2S scavenger does to the

@@ -1,7 +1,7 @@
 ---
 name: neqsim-dynamic-simulation
 description: "Dynamic simulation guidance for NeqSim. USE WHEN: running transient simulations, modeling startup/shutdown, tuning PID controllers, analyzing pressure/level dynamics, performing blowdown/depressurization, or setting up measurement devices and control loops. Covers runTransient, DynamicProcessHelper, controller tuning, and dynamic equipment configuration."
-last_verified: "2026-11-22"
+last_verified: "2026-11-25"
 ---
 
 # Dynamic Simulation Guidance
@@ -16,11 +16,18 @@ live separator-pressure feedback is not yet qualified by the `#5036` evidence.
 For an explicitly selected unsplit `TwoFluidPipe` route, the accepted mass report exposes
 `getRejectedAttempts()` and `getModelEvaluations()`. A non-negative value is available for unsplit
 execution; -1 means the selected transient route does not publish that diagnostic. Do not infer
-nonlinear quality only from elapsed time or an enforced flux sign. The current sustained unsplit
-Tengesdal gate completes 600 s with zero rejects but remains a flat fixed point, with
-`1.945482e-4 Pa` pressure amplitude and no liquid-production cycle. Disabling steady consistency
-does not change it. Tracked-slug geometry and conservative slug-force integration are still rejected
-by this route; qualify that moving slug/film coupling before promoting the opt-in experimental gate.
+nonlinear quality only from elapsed time or an enforced flux sign. The sustained Tengesdal gate uses
+complete cycles from the final 300 s and runs `16 cells / 0.1 s`, `16 / 0.05 s` and `24 / 0.05 s`.
+All current realizations reach 600 s but publish zero complete pressure and liquid-production cycles;
+the 24-cell case also records two rejected attempts. Experimental amplitude, inlet-pressure period,
+phase lock and amplitude/period refinement are unresolved. The route now accepts explicitly selected
+`CONSERVATIVE_LAGRANGIAN` marker geometry: it reconstructs faces from the current accepted marker and
+advances the tracker only after the nonlinear and conservation gates accept the substep. Rejected
+attempts leave marker age and position unchanged. Accepted tracked cells may now opt into the
+reconstructed body/film friction source; ordinary friction remains owned by untracked cells, and
+the accepted ledger records the passive momentum impulse. The 0.1 s 16/24-cell startup matrix checks
+rollback, mass closure and time-step refinement. Tracking-enabled five-second publication and
+settled-cycle gates remain open, so this does not promote the experimental gate.
 
 ## Extend the existing unit operation
 
@@ -690,10 +697,11 @@ For pressure-protection, rating or allowable checks on a `TwoFluidPipe`, take zo
 `isLastIntervalPressureEnvelopeSubstepResolved()`. Riser-base gas-pocket collapse after shut-in can
 rise and decay inside one outer step. Measured 2026-11-20 on the synthetic tie-back
 (`examples/production-decision/tieback-protection.md`): at the default CFL 0.5 the substep envelope
-moved by up to 7.9 bar with the outer step. At `setCflNumber(0.25)`, outer-step, CFL and mesh
-refinements agreed within 0.36 bar on 60/120 cells. A 240-cell mesh added 0.60 bar, so the local
-riser-base peak is time-converged but not mesh-converged. Use CFL 0.25 for riser-base/countercurrent
-fallback studies, show one CFL and two mesh refinements, and report a growing mesh increment as open. See `docs/wiki/two_fluid_reporting_and_validation.md`.
+moved by up to 7.9 bar with the outer step. A later replay on `5a09e550` with CFL 0.25 changed the
+LC2 peak by 2.80 bar when halving the outer step and by 5.88 bar when refining from 60 to 120
+cells. Use CFL 0.25 as the fixture's starting point and repeat outer-step, CFL and adjacent mesh
+comparisons on the current source. Record the fixed riser-base pressure history and wave arrival
+alongside zone-wide substep peaks. See `docs/wiki/two_fluid_reporting_and_validation.md`.
 Condensation must use equilibrium hydrocarbon-liquid and aqueous-liquid **mass**
 contributions; never use the current cell water cut to identify a phase that is not yet present.
 For evaporation, withdraw from the actual oil and water conservative inventories and bound each

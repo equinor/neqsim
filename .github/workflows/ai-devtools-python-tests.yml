@@ -10,12 +10,14 @@ on:
       - "src/main/java/neqsim/pvtsimulation/util/CompositionalReservoirHistory.java"
       - "src/main/java/neqsim/pvtsimulation/util/CalibratedPvtModel.java"
       - "src/test/resources/neqsim/pvtsimulation/gas-lab-tank/**"
+      - "src/test/resources/neqsim/pvtsimulation/binary-tank/**"
       - "src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series/**"
       - "src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy/**"
       - "src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy/**"
       - "src/test/resources/neqsim/thermo/mixingrule/hv-co2-source/**"
       - "src/test/resources/neqsim/thermo/mixingrule/hv-selected-pair-performance/**"
       - "src/test/resources/neqsim/thermo/mixingrule/hv-row-performance/**"
+      - "src/test/resources/neqsim/thermo/mixingrule/hv-phase-scratch/**"
       - "src/test/resources/neqsim/thermo/mixingrule/hv-co2-meg-receipts/**"
       - "src/test/resources/neqsim/thermo/mixingrule/hv-meg-methane/**"
       - "src/test/resources/data/chemistry_benchmarks/structure_h_jin2023_digitized.*"
@@ -30,12 +32,14 @@ on:
       - "src/main/java/neqsim/pvtsimulation/util/CompositionalReservoirHistory.java"
       - "src/main/java/neqsim/pvtsimulation/util/CalibratedPvtModel.java"
       - "src/test/resources/neqsim/pvtsimulation/gas-lab-tank/**"
+      - "src/test/resources/neqsim/pvtsimulation/binary-tank/**"
       - "src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series/**"
       - "src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy/**"
       - "src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy/**"
       - "src/test/resources/neqsim/thermo/mixingrule/hv-co2-source/**"
       - "src/test/resources/neqsim/thermo/mixingrule/hv-selected-pair-performance/**"
       - "src/test/resources/neqsim/thermo/mixingrule/hv-row-performance/**"
+      - "src/test/resources/neqsim/thermo/mixingrule/hv-phase-scratch/**"
       - "src/test/resources/neqsim/thermo/mixingrule/hv-co2-meg-receipts/**"
       - "src/test/resources/neqsim/thermo/mixingrule/hv-meg-methane/**"
       - "src/test/resources/data/chemistry_benchmarks/structure_h_jin2023_digitized.*"
@@ -76,6 +80,13 @@ jobs:
         run: >-
           uv run --project devtools --locked --group test python -m pytest -q -s
           devtools/test_reservoir_history_java.py
+
+      - name: Qualify independent binary two-phase reservoir chain
+        env:
+          NEQSIM_TEST_RESERVOIR_JAVA: "1"
+        run: |
+          uv run --project devtools --locked --group test python -m unittest discover -s src/test/resources/neqsim/pvtsimulation/binary-tank -p 'test_*.py' -v
+          uv run --project devtools --locked --group test python -m pytest -q -s devtools/test_binary_reservoir_java.py
 
       - name: Verify SRK local-flux receipts and rejection controls
         run: |
@@ -148,7 +159,9 @@ jobs:
         run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_run_huron_vidal_selected_pair_benchmark.py -v
 
       - name: Verify HV binary controls and retained performance evidence
-        run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_benchmark_huron_vidal_rows.py -v
+        run: |
+          uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_benchmark_huron_vidal_rows.py -v
+          uv run --project devtools --locked --group test python -O -m unittest discover -s devtools -p test_benchmark_huron_vidal_rows.py -v
 
       - name: Verify nitrogen-water source versions and uncertainty boundaries
         run: |
@@ -245,7 +258,9 @@ jobs:
         run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_run_huron_vidal_selected_pair_benchmark.py -v
 
       - name: Verify HV binary evidence on the minimum supported Python
-        run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_benchmark_huron_vidal_rows.py -v
+        run: |
+          uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_benchmark_huron_vidal_rows.py -v
+          uv run --project devtools --locked --group test python -O -m unittest discover -s devtools -p test_benchmark_huron_vidal_rows.py -v
 
       - name: Verify nitrogen-water source versions and uncertainty boundaries
         run: |

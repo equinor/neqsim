@@ -2,7 +2,7 @@
 name: neqsim-surf-report-drawings
 version: "1.0.0"
 description: "SURF drawing set, datasheets, registers and 20-chapter report contract: 15 deterministic A3 sheets (field plan, network schematic, functional process sheets, route profiles, riser, template/PLEM, jumper, umbilical, thermal cross-sections, installation, results, comparison, quantities), canonical dataset tokens, fail-closed validation and visual inspection. USE WHEN: SURF drawings or the SURF design report are requested, reviewed or extended."
-last_verified: "2026-10-25"
+last_verified: "2026-11-24"
 requires:
   python_packages: [python-docx, matplotlib, pymupdf, pyyaml]
 ---
@@ -44,6 +44,8 @@ structural status, standards (no conformity claim), drawing layout/assets/title 
 
 ## Pitfalls
 
+- 3D views of the SURF layout (templates with trees, PLET/PLEM, manifold, jumpers, flowline field joints, riser base/SSIV, umbilical) come from `neqsim-asset-scene` (`asset_scene.subsea`), not from these A3 sheets. Follow its source-register rule: every drawn element is SOURCED, DERIVED or ASSUMED, and assumed items carry the label `antatt/skjematisk` in the figure; document the facts (slot and template positions, line lengths) from the design basis with document number, revision and page.
+- Diagram text must be at least 7 pt at the width it has in the report; split a dense figure instead of shrinking the text.
 - Plan panels with an extreme aspect ratio need a strip plus a detail panel at a stated scale.
 - Keep labels at least 2.2 mm high; shorten with `surf_draw.fit` instead of shrinking below the minimum.
 - The Word PDF export needs Word; without it the report is DOCX only and the check warns (use `--no-word`).

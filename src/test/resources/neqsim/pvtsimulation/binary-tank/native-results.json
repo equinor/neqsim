@@ -1,0 +1,115 @@
+{
+  "base_revision": "32ee38fd5dc070bfa765d996027cdb0fa30e1e12",
+  "runtime": "Temurin17.0.21+9; CPython3.12.14; dedicated workspace JVM",
+  "command": "NEQSIM_TEST_RESERVOIR_JAVA=1 PYTHONFAULTHANDLER=1 devtools/.venv/bin/python -m pytest -q -s devtools/test_binary_reservoir_java.py",
+  "exit": 0,
+  "results": [
+    {
+      "errors": {
+        "pressure_bar": 1.4360068689711625e-10,
+        "composition": 4.529709940470639e-14,
+        "gor_relative": 2.1125656779474866e-11,
+        "component_mol": 6.031477823853493e-07
+      },
+      "predictions": [
+        {
+          "pressure_bara": 77.96782786206772,
+          "produced_methane_fraction": 0.8532959678508257,
+          "gor": 1254.8474511747334
+        },
+        {
+          "pressure_bara": 75.93647726958477,
+          "produced_methane_fraction": 0.8520532801601525,
+          "gor": 1238.7857095132474
+        },
+        {
+          "pressure_bara": 73.90575026651632,
+          "produced_methane_fraction": 0.8507930083000381,
+          "gor": 1222.8648494009751
+        },
+        {
+          "pressure_bara": 71.87545058858299,
+          "produced_methane_fraction": 0.8495147631938714,
+          "gor": 1207.082864373955
+        }
+      ],
+      "fitted_volume_m3": 99.9999986074546,
+      "fitted_pressures_bara": [
+        80.0,
+        77.96782783377058,
+        75.93647721301058,
+        73.90575018167658,
+        71.87545047548127
+      ],
+      "fitted_holdout_gor": 1207.082863635093,
+      "calibration_chi_square": 1.1153165200287707e-12,
+      "holdout_chi_square": 1.27595367163974e-12,
+      "lab_holdout_relative_errors": [
+        0.0,
+        0.0,
+        2.220446049250313e-16,
+        2.220446049250313e-16
+      ],
+      "original_holdout_relative_errors": [
+        0.0016315976017650113,
+        0.001406341735244343,
+        0.0010587104680386261,
+        0.0005810311759998354
+      ],
+      "elapsed_seconds": 11.527978251000604
+    },
+    {
+      "finite_protocol_refinement": [
+        {
+          "substeps": 1,
+          "reference_pressure_bara": 71.87147000741625,
+          "native_pressure_bara": 71.87147000756192,
+          "reference_gor": 1212.9708822215364,
+          "native_gor": 1212.970882201162,
+          "reference_methane_fraction": 0.8499950930165862,
+          "native_methane_fraction": 0.8499950930166293
+        },
+        {
+          "substeps": 2,
+          "reference_pressure_bara": 71.87412261477209,
+          "native_pressure_bara": 71.87412261491755,
+          "reference_gor": 1209.0415693806501,
+          "native_gor": 1209.0415693607652,
+          "reference_methane_fraction": 0.8496750079996663,
+          "native_methane_fraction": 0.8496750079997124
+        },
+        {
+          "substeps": 4,
+          "reference_pressure_bara": 71.87545058843939,
+          "native_pressure_bara": 71.87545058858299,
+          "reference_gor": 1207.0828643936243,
+          "native_gor": 1207.082864373955,
+          "reference_methane_fraction": 0.8495147631938261,
+          "native_methane_fraction": 0.8495147631938714
+        },
+        {
+          "substeps": 8,
+          "reference_pressure_bara": 71.87611499119306,
+          "native_pressure_bara": 71.87611499133403,
+          "reference_gor": 1206.1049978168123,
+          "native_gor": 1206.1049977972618,
+          "reference_methane_fraction": 0.8494345904138619,
+          "native_methane_fraction": 0.849434590413908
+        },
+        {
+          "substeps": 16,
+          "reference_pressure_bara": 71.87644729634589,
+          "native_pressure_bara": 71.87644729648976,
+          "reference_gor": 1205.6164357664313,
+          "native_gor": 1205.616435746928,
+          "reference_methane_fraction": 0.8493944914545551,
+          "native_methane_fraction": 0.8493944914546004
+        }
+      ]
+    }
+  ],
+  "source_sha256": {
+    "src/test/resources/neqsim/pvtsimulation/binary-tank/reference.py": "78b356572910cbe39c2efdb1ea673d381c5d230eaa1fe5fc50fe2f34067542d1",
+    "devtools/test_binary_reservoir_java.py": "dc0d84c0b62627b7f248872104e798c7227c52d559ddd778822278110fcbf785"
+  }
+}

@@ -14,11 +14,74 @@ import java.util.UUID;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.junit.jupiter.api.Test;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /** Reproduces the published STEP flashing-propane release case from Witlox et al. (2007). */
 class HomogeneousEquilibriumExternalBenchmarkTest extends neqsim.NeqSimTest {
+
+  /** Compares the published rate with an explicitly selected liquid withdrawal root. */
+  @Test
+  void publishedStepLiquidWithdrawalIsComparableAndRetainsLimitations() throws Exception {
+    Benchmark benchmark = Benchmark.read();
+    SystemInterface saturation = new SystemSrkEos(benchmark.storageTemperatureK, benchmark.storagePressurePa / 1.0e5);
+    saturation.addComponent("propane", 1.0);
+    saturation.setMixingRule("classic");
+    saturation.setPhaseType(0, PhaseType.LIQUID);
+    new ThermodynamicOperations(saturation).bubblePointPressureFlash(false);
+    double saturationPressureDeviation = (saturation.getPressure() * 1.0e5 - benchmark.storagePressurePa)
+        / benchmark.storagePressurePa;
+
+    SystemInterface reservoir = liquidRoot(benchmark.storageTemperatureK, benchmark.storagePressurePa);
+    ReleaseFlowRequest request = ReleaseFlowRequest.forSelectedPhase(reservoir, PhaseType.OIL,
+        benchmark.orificeDiameterM, benchmark.dischargeCoefficient, benchmark.ambientPressurePa);
+    ReleaseFlowResult result = new HomogeneousEquilibriumReleaseModel().calculate(request);
+    assertTrue(result.isUsable(), result.getDiagnostics().toString());
+    assertTrue(result.isChoked());
+    assertEquals(ReleaseFlowRequest.UpstreamPreparation.PRESERVE_SELECTED_PHASE, request.getUpstreamPreparation());
+    assertEquals(PhaseType.OIL, request.getSelectedUpstreamPhase());
+
+    ReleaseBenchmarkApplicability applicability = ReleaseBenchmarkApplicability.assess(result,
+        benchmark.withdrawalPhase);
+    assertTrue(applicability.isComparable(), applicability.getStatus().name());
+    assertEquals(ReleaseBenchmarkApplicability.Status.COMPARABLE, applicability.getStatus());
+    assertEquals(1.0, applicability.getExpectedPhaseMassFraction(), 1.0e-12);
+    assertTrue(result.getDiagnostics().stream()
+        .anyMatch(diagnostic -> "UPSTREAM_SELECTED_PHASE_PRESERVED".equals(diagnostic.getCode())));
+
+    double actualMassFlowKgS = result.getMassFlowRateKgS();
+    double relativeError = (actualMassFlowKgS - benchmark.measuredMassFlowKgS) / benchmark.measuredMassFlowKgS;
+    assertTrue(Double.isFinite(relativeError));
+    assertEquals(0.1370143485560885, actualMassFlowKgS, 1.0e-10);
+    assertEquals(-0.3149282572195576, relativeError, 1.0e-10);
+    assertTrue(Math.abs(relativeError) > 0.30, "STEP mismatch must remain negative qualification evidence");
+    assertEquals(0.01059518, saturationPressureDeviation, 1.0e-8);
+    assertEquals("NOT_REPORTED", benchmark.measurementUncertaintyStatus);
+    assertTrue(result.getEvidence().getLimitations().contains("STEP_SELECTED_LIQUID_ROOT_PRESERVED"));
+    assertTrue(result.getEvidence().getLimitations().contains("STEP_SRK_SATURATION_PRESSURE_DEVIATION"));
+
+    SourceTermFrame frame = SourceTermFrame.calculated("step-propane-selected-phase", "published-opening",
+        UUID.fromString("00000000-0000-0000-0000-000000003861"), 0, 0.0, Instant.parse("2026-11-25T00:00:00Z"), request,
+        result, Collections.singletonMap("benchmarkCase", benchmark.caseId));
+    SourceTermFrame.verifyEnvelope(frame.toJson());
+    JsonObject model = JsonParser.parseString(frame.toJson()).getAsJsonObject().getAsJsonObject("model");
+    assertEquals("PRESERVE_SELECTED_PHASE", model.get("upstreamPreparation").getAsString());
+    assertEquals("OIL", model.get("selectedUpstreamPhase").getAsString());
+
+    Path outputDirectory = Paths.get("target", "source-term-benchmarks");
+    Files.createDirectories(outputDirectory);
+    String receipt = "caseId,modelVersion,withdrawalPhase,upstreamPreparation,selectedUpstreamPhase,"
+        + "measuredMassFlow_kg_s,actualMassFlow_kg_s,relativeError,srkSaturationPressureDeviation,"
+        + "flowComparisonStatus,measurementUncertaintyStatus,evidenceLevel,choked\n" + benchmark.caseId + ","
+        + result.getModelVersion() + "," + benchmark.withdrawalPhase + "," + request.getUpstreamPreparation() + ","
+        + request.getSelectedUpstreamPhase() + "," + benchmark.measuredMassFlowKgS + "," + actualMassFlowKgS + ","
+        + relativeError + "," + saturationPressureDeviation + ",COMPARABLE," + benchmark.measurementUncertaintyStatus
+        + ",UNQUALIFIED," + result.isChoked() + "\n";
+    Files.write(outputDirectory.resolve("witlox-step-propane-2007-selected-phase-receipt.csv"),
+        receipt.getBytes(StandardCharsets.UTF_8));
+  }
 
   /** Compares the HEM result with the independently published STEP propane rate. */
   @Test
@@ -43,7 +106,7 @@ class HomogeneousEquilibriumExternalBenchmarkTest extends neqsim.NeqSimTest {
     assertEquals(1.0, applicability.getResolvedPhaseMassFractions().get("GAS"), 0.0);
     assertEquals("NOT_REPORTED", benchmark.measurementUncertaintyStatus);
     assertTrue(result.getEvidence().hasIndependentEvidence());
-    assertTrue(result.getEvidence().getLimitations().contains("EXPERIMENTAL_INPUT_PHASE_MISMATCH"));
+    assertTrue(result.getEvidence().getLimitations().contains("MEASUREMENT_UNCERTAINTY_NOT_REPORTED"));
 
     SourceTermFrame frame = SourceTermFrame.calculated("step-propane-benchmark", "published-opening",
         UUID.fromString("00000000-0000-0000-0000-000000003860"), 0, 0.0, Instant.parse("2026-11-17T00:00:00Z"), request,
@@ -89,6 +152,11 @@ class HomogeneousEquilibriumExternalBenchmarkTest extends neqsim.NeqSimTest {
         ReleaseBenchmarkApplicability.ExpectedPhase.MATERIAL_LIQUID);
     assertTrue(!liquidAssessment.isComparable());
     assertEquals(ReleaseBenchmarkApplicability.Status.EXPECTED_PHASE_ABSENT, liquidAssessment.getStatus());
+
+    ReleaseBenchmarkApplicability mixtureAssessment = ReleaseBenchmarkApplicability.assess(gasResult,
+        ReleaseBenchmarkApplicability.ExpectedPhase.GAS_LIQUID_MIXTURE);
+    assertTrue(!mixtureAssessment.isComparable());
+    assertEquals(ReleaseBenchmarkApplicability.Status.EXPECTED_PHASE_ABSENT, mixtureAssessment.getStatus());
   }
 
   /** Confirms the adverse result is surrounded by smooth, physically ordered numerical behavior. */
@@ -140,6 +208,22 @@ class HomogeneousEquilibriumExternalBenchmarkTest extends neqsim.NeqSimTest {
     reservoir.setMixingRule("classic");
     return new HomogeneousEquilibriumReleaseModel()
         .calculate(new ReleaseFlowRequest(reservoir, orificeDiameterM, 1.0, ambientPressurePa));
+  }
+
+  /**
+   * Builds the published liquid source root without forcing subsequent phase calculations.
+   *
+   * @param temperatureK source temperature in K
+   * @param pressurePa source absolute pressure in Pa
+   * @return initialized single-liquid source inventory
+   */
+  private static SystemInterface liquidRoot(double temperatureK, double pressurePa) {
+    SystemInterface liquid = new SystemSrkEos(temperatureK, pressurePa / 1.0e5);
+    liquid.addComponent("propane", 1.0);
+    liquid.setMixingRule("classic");
+    liquid.setPhaseType(0, PhaseType.OIL);
+    liquid.init(3);
+    return liquid;
   }
 
   /** One immutable published benchmark row. */

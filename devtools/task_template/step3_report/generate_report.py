@@ -5010,7 +5010,9 @@ def _task_figures():
     the alphabet's; figures without a caption follow alphabetically.
     """
     pngs = sorted(glob.glob(os.path.join(FIG_DIR, "*.png")))
-    svgs = sorted(glob.glob(os.path.join(FIG_DIR, "*.svg")))
+    png_stems = {os.path.splitext(path)[0] for path in pngs}
+    # PfdDiagram.render writes <stem>.png and <stem>.svg: the Word report cannot embed SVG, so a vector twin of a PNG is skipped.
+    svgs = [path for path in sorted(glob.glob(os.path.join(FIG_DIR, "*.svg"))) if os.path.splitext(path)[0] not in png_stems]
     figures = pngs + svgs
     prefixed = re.compile(r"^(fig(ure)?[\s_-]*)?\d", re.IGNORECASE)
     if any(prefixed.match(os.path.basename(path)) for path in figures):

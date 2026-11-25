@@ -1,5 +1,6 @@
 package neqsim.process.equipment.reservoir;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -263,6 +264,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
   private IPRModel iprModel = IPRModel.PRODUCTION_INDEX;
   private double reservoirPressure = 250.0; // bara
   private double productivityIndex = 0.0005; // Sm3/day/bar²
+  private boolean linearProductivityIndex = false;
   private double vogelQmax = 10000.0;
   private double fetkovichC = 0.001;
   private double fetkovichN = 0.8;
@@ -379,17 +381,55 @@ public class WellSystem extends ProcessEquipmentBaseClass {
    * @param pi productivity index
    * @param unit PI unit ("Sm3/day/bar2", "bbl/day/psi2", "Sm3/day/bar")
    */
+  @SuppressFBWarnings(value = "AT_STALE_THREAD_WRITE_OF_PRIMITIVE", justification = "WellSystem configuration and run are a caller-serialized process-equipment lifecycle")
   public void setProductionIndex(double pi, String unit) {
     switch (unit.toLowerCase()) {
     case "bbl/day/psi2":
       this.productivityIndex = pi * 0.158987 * Math.pow(14.5038, 2);
+      this.linearProductivityIndex = false;
       break;
     case "sm3/day/bar":
       // Linear PI (for liquid wells)
       this.productivityIndex = pi;
+      this.linearProductivityIndex = true;
       break;
     default:
       this.productivityIndex = pi;
+      this.linearProductivityIndex = false;
+    }
+  }
+
+  /**
+   * Set reservoir pressure without replacing the configured inlet stream identity.
+   *
+   * <p>
+   * This is intended for reservoir-state proxies and other time-varying boundaries. In contrast to
+   * {@link #setReservoirStream(StreamInterface)}, it keeps the inlet stream object connected to its surrounding model.
+   * </p>
+   *
+   * @param pressure reservoir pressure
+   * @param unit pressure unit accepted by the inlet stream
+   * @throws IllegalArgumentException if pressure is not positive and finite
+   */
+  @SuppressFBWarnings(value = "AT_NONATOMIC_64BIT_PRIMITIVE", justification = "WellSystem boundary updates and run are a caller-serialized process-equipment lifecycle")
+  public void setReservoirPressure(double pressure, String unit) {
+    if (!(pressure > 0.0) || !Double.isFinite(pressure)) {
+      throw new IllegalArgumentException("Reservoir pressure must be positive and finite");
+    }
+    if (reservoirStream != null) {
+      reservoirStream.setPressure(pressure, unit);
+      this.reservoirPressure = reservoirStream.getPressure("bara");
+    } else {
+      switch (unit.toLowerCase()) {
+      case "psia":
+        this.reservoirPressure = pressure / 14.5038;
+        break;
+      case "barg":
+        this.reservoirPressure = pressure + 1.01325;
+        break;
+      default:
+        this.reservoirPressure = pressure;
+      }
     }
   }
 
@@ -794,7 +834,8 @@ public class WellSystem extends ProcessEquipmentBaseClass {
       return fetkovichC * Math.pow(Math.pow(reservoirPressure, 2), fetkovichN);
     case PRODUCTION_INDEX:
     default:
-      return productivityIndex * Math.pow(reservoirPressure, 2);
+      return linearProductivityIndex ? productivityIndex * reservoirPressure
+          : productivityIndex * Math.pow(reservoirPressure, 2);
     }
   }
 
@@ -906,6 +947,10 @@ public class WellSystem extends ProcessEquipmentBaseClass {
 
     case PRODUCTION_INDEX:
     default:
+      if (linearProductivityIndex) {
+        // q = PI * (Pr - Pwf)
+        return Math.max(0.0, reservoirPressure - flowRate / productivityIndex);
+      }
       // q = PI * (Pr² - Pwf²)
       double pwf2pi = Math.pow(reservoirPressure, 2) - flowRate / productivityIndex;
       return pwf2pi > 0 ? Math.sqrt(pwf2pi) : 0.0;
@@ -1237,7 +1282,8 @@ public class WellSystem extends ProcessEquipmentBaseClass {
       return fetkovichC * Math.pow(Math.pow(reservoirPressure, 2) * 0.5, fetkovichN);
     case PRODUCTION_INDEX:
     default:
-      return productivityIndex * Math.pow(reservoirPressure, 2) * 0.3;
+      return (linearProductivityIndex ? productivityIndex * reservoirPressure
+          : productivityIndex * Math.pow(reservoirPressure, 2)) * 0.3;
     }
   }
 
@@ -1282,7 +1328,8 @@ public class WellSystem extends ProcessEquipmentBaseClass {
       return (-backpressureA + Math.sqrt(disc)) / (2 * backpressureB);
     case PRODUCTION_INDEX:
     default:
-      return productivityIndex * (Math.pow(reservoirPressure, 2) - Math.pow(bhp, 2));
+      return linearProductivityIndex ? productivityIndex * (reservoirPressure - bhp)
+          : productivityIndex * (Math.pow(reservoirPressure, 2) - Math.pow(bhp, 2));
     }
   }
 
@@ -1482,11 +1529,12 @@ public class WellSystem extends ProcessEquipmentBaseClass {
   /**
    * Get productivity index from last calculation.
    *
-   * @return effective PI (Sm3/day/bar²)
+   * @return effective PI in the configured pressure basis (Sm3/day/bar for linear PI, otherwise Sm3/day/bar²)
    */
   public double getEffectiveProductivityIndex() {
     if (!Double.isNaN(operatingFlowRate) && !Double.isNaN(operatingBHP)) {
-      return operatingFlowRate / (Math.pow(reservoirPressure, 2) - Math.pow(operatingBHP, 2));
+      return linearProductivityIndex ? operatingFlowRate / (reservoirPressure - operatingBHP)
+          : operatingFlowRate / (Math.pow(reservoirPressure, 2) - Math.pow(operatingBHP, 2));
     }
     return productivityIndex;
   }

@@ -1,0 +1,26 @@
+{
+  "prior_base": "5a09e550141d99da1dd2854070c6688d754fb678",
+  "current_base": "3c277b1faefe58c8160d959063e6f511e32dd7fc",
+  "verified_remote_delta": [
+    ".github/skills/neqsim-dynamic-simulation/SKILL.md",
+    ".github/skills/neqsim-flow-assurance/SKILL.md",
+    "docs/process/TWOFLUIDPIPE_MODEL.md",
+    "docs/process/twofluidpipe-evidence-matrix.md",
+    "docs/wiki/two_fluid_model.md",
+    "src/main/java/neqsim/process/equipment/pipeline/TwoFluidPipe.java",
+    "src/main/java/neqsim/process/equipment/pipeline/twophasepipe/numerics/TwoFluidUnsplitIntegrator.java",
+    "src/main/resources/neqsim/mcp/engineering-coverage.json",
+    "src/test/java/neqsim/process/equipment/pipeline/TwoFluidPipeUnsplitRunTest.java"
+  ],
+  "overlap": [
+    "src/main/resources/neqsim/mcp/engineering-coverage.json"
+  ],
+  "resolution": "Preserved exact remote generated snapshot; regenerate locally after final source choice. All9 remote bytes preserved. Unchanged original benchmark inputs stay frozen at old baseline, not relabeled current-master executions.",
+  "post_reconciliation_changes": [
+    ".github/skills/neqsim-thermodynamic-initialization/SKILL.md",
+    "docs/thermo/mixing_rules_guide.md",
+    "src/main/java/neqsim/thermo/component/ComponentGENRTLmodifiedHV.java",
+    "src/test/java/neqsim/thermo/component/HuronVidalPhasePureRequestTest.java",
+    "src/test/resources/neqsim/thermo/mixingrule/hv-literature-candidates.json"
+  ]
+}

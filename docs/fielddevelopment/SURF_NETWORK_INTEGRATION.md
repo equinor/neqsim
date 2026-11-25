@@ -169,6 +169,16 @@ NetworkHydraulicModelComparison.MeshSensitivityResult mesh =
         Arrays.asList("flowline"), Arrays.asList(4, 8, 10), UUID.randomUUID());
 NetworkHydraulicModelComparison.EdgeComparison fine =
     mesh.getResult(10).getEdgeComparison("flowline");
+
+NetworkHydraulicModelComparison.TransientTimeStepSensitivityResult rateStep =
+    result.compareTransientRateStep(
+        "flowline", 1.01, 0.000004,
+        Arrays.asList(0.000001, 0.000002), UUID.randomUUID());
+NetworkHydraulicModelComparison.TransientTimeStepResult fineTransient =
+    rateStep.getResult(0.000001);
+double acceptedMassResidualKg = fineTransient.getMassResidualKg();
+double methaneResidualKg = fineTransient.getComponentResidualKg("methane");
+double acceptedEnergyResidualJ = fineTransient.getEnergyResidualJ();
 ```
 
 `NetworkHydraulicModelComparisonTest` exercises two different SRK well fluids through
@@ -181,6 +191,20 @@ level 3/4 (conservation and engineering bounds), not an independent correlation 
 The test also checks that the conservative-energy handoff preserves every accepted steady
 pressure, temperature, holdup, phase-velocity and section-energy value exactly, then exercises
 the component and total-energy ledgers for one accepted transient interval.
+
+`Result.compareTransientRateStep(...)` extends that handoff without rebuilding the
+field. Every requested positive outer time step starts from an independent copy of the
+same accepted two-fluid steady state, switches only the inlet to a controlled constant
+mass flow, retains the solved pressure outlet and advances to one common physical time.
+The result records final pressure, temperature, holdup and superficial phase-velocity
+profiles plus the signed accumulated mass and energy residuals and worst interval-level
+mass, named-component, energy, occupied-volume and thermodynamic-recovery residuals.
+Invalid time-step sets and missing or unconverged conservation reports fail closed.
+The acceptance test exercises both the production tieback above and a typed host-to-PLET-to-
+injection-well route while proving the caller topology and its configured hydraulic models
+remain untouched. The tested microsecond horizon is a deterministic initialization and
+time-step regression, not qualification of field-scale transient duration, moving slugs,
+closures, fluids or operating envelopes; moving-slug work remains in the #3298 lane.
 
 For multi-edge continuation, `TwoFluidConservativeEnergyReport` retains the integration-weighted
 accepted inlet and outlet total-energy transfers separately, including pressure-correction mass
@@ -557,6 +581,15 @@ injection fracture limits fail the coupled acceptance result instead of silently
 clipping rate. A well below the configured rate threshold is reported as shut in;
 an otherwise pressure-indeterminate zero-flow branch does not claim coupled
 convergence.
+
+Simulator-derived Eclipse/OPM Flow state tables join this same path through
+`ReservoirStateWellBinding`. The binding updates an existing production `WellSystem`
+with proxy pressure, linear oil productivity index and optional WCT/GOR or compositional
+fluid data while retaining its inlet stream identity. It owns no graph, hydraulics or
+time loop: apply it before `FieldWellNetworkCoupler.run()`, and advance cumulative
+production, injection and elapsed time explicitly on the `ReservoirStateModel`.
+`GatheringNetwork` remains a reduced-order tree compatibility model and must not replace
+this canonical topology for SURF design, mixed-fidelity hydraulics or injection coupling.
 
 Injection coupling fails closed when the well inlet and network fluid do not use the
 same thermodynamic model, mixing rule and component identity set. Production source

@@ -26,6 +26,8 @@ public final class ReleaseBenchmarkApplicability implements Serializable {
     GAS,
     /** Hydrocarbon, generic or aqueous material-liquid withdrawal. */
     MATERIAL_LIQUID,
+    /** Coexisting gas and material-liquid phases in the benchmark upstream state. */
+    GAS_LIQUID_MIXTURE,
     /**
      * One supported material phase, without relying on an EOS gas-versus-liquid phase label.
      *
@@ -103,12 +105,19 @@ public final class ReleaseBenchmarkApplicability implements Serializable {
       expectedFraction = gasFraction;
     } else if (expectedPhase == ExpectedPhase.MATERIAL_LIQUID) {
       expectedFraction = liquidFraction;
+    } else if (expectedPhase == ExpectedPhase.GAS_LIQUID_MIXTURE) {
+      expectedFraction = Math.min(gasFraction, liquidFraction);
     } else {
       expectedFraction = supportedFraction;
     }
     Status status;
     if (supportedFraction < 1.0 - PURE_PHASE_TOLERANCE) {
       status = Status.UNSUPPORTED_UPSTREAM_PHASE;
+    } else if (expectedPhase == ExpectedPhase.GAS_LIQUID_MIXTURE
+        && (gasFraction <= PURE_PHASE_TOLERANCE || liquidFraction <= PURE_PHASE_TOLERANCE)) {
+      status = Status.EXPECTED_PHASE_ABSENT;
+    } else if (expectedPhase == ExpectedPhase.GAS_LIQUID_MIXTURE) {
+      status = Status.COMPARABLE;
     } else if (expectedPhase == ExpectedPhase.SINGLE_MATERIAL_PHASE && activeMaterialPhases(phases) != 1) {
       status = Status.MIXED_UPSTREAM;
     } else if (expectedFraction <= PURE_PHASE_TOLERANCE) {
@@ -147,7 +156,10 @@ public final class ReleaseBenchmarkApplicability implements Serializable {
     return status;
   }
 
-  /** @return resolved mass fraction of the expected material phase, or NaN when the model result is unusable */
+  /**
+   * @return resolved mass fraction of the expected material phase, the smaller constituent fraction for a gas/liquid
+   * mixture, or NaN when the model result is unusable
+   */
   public double getExpectedPhaseMassFraction() {
     return expectedPhaseMassFraction;
   }

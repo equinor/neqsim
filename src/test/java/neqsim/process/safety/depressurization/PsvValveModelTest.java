@@ -82,4 +82,26 @@ public class PsvValveModelTest {
     assertFalse(psv.isOpen());
     assertEquals(0, psv.getCycleCount());
   }
+
+  /** The stateless full-open flow must equal the latched flow once the valve is open, and work while closed. */
+  @Test
+  public void fullOpenFlowIsStatelessAndMatchesLatchedFlow() {
+    PsvValveModel psv = new PsvValveModel(50.0e5, 0.1, 0.975, 1.0e-3, 1.0e5);
+    double stateless = psv.fullOpenMassFlowKgPerS(55.0e5, 350.0, 0.018, 1.3, 0.95);
+    assertFalse(psv.isOpen(), "The stateless call must not latch the valve");
+    psv.update(55.0e5);
+    double latched = psv.massFlowKgPerS(55.0e5, 350.0, 0.018, 1.3, 0.95);
+    assertTrue(stateless > 0.0);
+    assertEquals(latched, stateless, 1.0e-12);
+  }
+
+  /** A partially lifted valve passes the lift fraction of the full-open flow; lift is clamped to 0..1. */
+  @Test
+  public void liftFractionScalesFlow() {
+    PsvValveModel psv = new PsvValveModel(50.0e5, 0.1, 0.975, 1.0e-3, 1.0e5);
+    double full = psv.fullOpenMassFlowKgPerS(55.0e5, 350.0, 0.018, 1.3, 0.95);
+    assertEquals(0.4 * full, psv.massFlowKgPerS(55.0e5, 350.0, 0.018, 1.3, 0.95, 0.4), 1.0e-12 * full);
+    assertEquals(0.0, psv.massFlowKgPerS(55.0e5, 350.0, 0.018, 1.3, 0.95, -0.2), 0.0);
+    assertEquals(full, psv.massFlowKgPerS(55.0e5, 350.0, 0.018, 1.3, 0.95, 1.7), 1.0e-12 * full);
+  }
 }

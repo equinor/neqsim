@@ -560,7 +560,7 @@ For upstream pressure at or below back pressure, the result is valid zero forwar
 | Transient decompression waves, line packing, multiphase slip, delayed flashing or heat transfer | Outside the delivered models. |
 | Failed flash, unclosed inventory/entropy/fugacity or invalid density | `INVALID`, without a numeric release payload. |
 
-Version `1.2.4` assesses the upstream, accepted throat and ambient-expanded states on defensive
+Version `1.2.6` assesses the upstream, accepted throat and ambient-expanded states on defensive
 fluid copies. Components present above `1e-12` mole fraction are checked when the station is at
 or below their database triple-point temperature. The selected-component solid flash uses the
 same EOS and mixture; a stable solid mass fraction above `1e-12` returns `SOLID_RISK`. A
@@ -574,18 +574,28 @@ qualification. Candidate screening is limited by the component data and hydrate 
 to the selected NeqSim thermodynamic system. Turning off solid checks on the caller does not
 disable the defensive assessment or establish absence of solids outside the checked stations.
 
-The HEM manifest also retains one independent experimental applicability case without converting
-it into qualification. Table 1 of Witlox et al., *Journal of Hazardous Materials* 142 (2007)
+The HEM manifest also retains one independent experimental accuracy case without converting it
+into qualification. Table 1 of Witlox et al., *Journal of Hazardous Materials* 142 (2007)
 797--809, DOI `10.1016/j.jhazmat.2006.06.126`, reports a STEP liquid-propane withdrawal at
 10.75 bar and 302.95 K through a 5 mm opening to 0.91 atm with a mass flow of 0.2 kg/s. The source
-table does not report measurement uncertainty. At those pressure and temperature inputs, the
-current SRK equilibrium request resolves a gas-only upstream state. Its raw 0.05969 kg/s result is
-therefore not a rate-validation point for the published liquid withdrawal. Version `1.2.4` retains a
-fail-closed phase-applicability assessment; the generated receipt leaves relative error empty and
-records `NOT_COMPARABLE_UPSTREAM_PHASE`, `NOT_REPORTED` uncertainty and `UNQUALIFIED`. The model
-manifest retains `EXPERIMENTAL_INPUT_PHASE_MISMATCH` and
-`MEASUREMENT_UNCERTAINTY_NOT_REPORTED`. An explicit, independently reviewed representation of the
-experimental liquid inventory is required before computing a rate error.
+table does not report measurement uncertainty. At those pressure and temperature inputs, an
+overall-state SRK equilibrium request resolves a gas-only upstream state; its raw 0.05969 kg/s result
+therefore remains fail-closed as `NOT_COMPARABLE_UPSTREAM_PHASE` for the declared liquid withdrawal.
+
+Version `1.2.6` adds an explicit selected-phase adapter for inventories that actually contain the
+declared phase. `ReleaseFlowRequest.forSelectedPhase` defensively extracts one GAS, OIL, LIQUID or
+AQUEOUS phase and preserves that initialized root only at the upstream boundary. The request and
+source frame retain `PRESERVE_SELECTED_PHASE` plus the selected phase. Downstream pressure search,
+isentropic flashes, solid-risk assessment and closure checks remain unchanged. Missing or unsupported
+phases fail before a request is created; the ordinary constructor still performs an overall TP flash.
+
+For the published STEP point, the selected propane liquid root produces 0.137014 kg/s versus
+0.2 kg/s measured, a -31.49% relative error. A separate SRK bubble-pressure calculation gives
+10.8639 bar at 302.95 K, 1.06% above the published 10.75 bar. These are explicit negative
+qualification results, not fitting targets. The retained limitations are
+`STEP_SELECTED_LIQUID_ROOT_PRESERVED`, `STEP_SRK_SATURATION_PRESSURE_DEVIATION`,
+`MEASUREMENT_UNCERTAINTY_NOT_REPORTED` and `NO_ENGINEERING_QUALIFICATION`; evidence remains
+`UNQUALIFIED` pending accountable independent review.
 
 Hammer et al., *International Journal of Multiphase Flow* 152 (2022) 104201, DOI
 `10.1016/j.ijmultiphaseflow.2022.104201`, report six dense single-fluid CO2 restriction tests with
@@ -599,7 +609,7 @@ The benchmark gate separately accepts `SINGLE_MATERIAL_PHASE` when exactly one s
 phase occupies the upstream state, independent of whether an EOS labels that sole compressed phase
 as gas or liquid. This does not accept gas/liquid coexistence, aqueous coexistence, solids or an
 unsupported native phase. Because all six restrictions remain choked with invariant calculated
-rates across a 600--800 kPa non-solid receiver-pressure band, version `1.2.4` also retains a
+rates across a 600--800 kPa non-solid receiver-pressure band, version `1.2.6` also retains a
 restriction-plane sensitivity comparison without using it as an ambient source payload. Across the
 six cases the mean absolute relative error is 19.39%, the
 signed bias is +9.86%, the relative RMSE is 21.19%, and the maximum absolute error is 34.26%. Only
@@ -607,6 +617,32 @@ one of six predictions is inside the reported experimental uncertainty; the larg
 10.27 reported uncertainty intervals. These results are independent accuracy evidence and a clear
 model limitation, not calibration or qualification. The live ambient path remains fail-closed and
 solid-capable physics plus accountable domain review are still required.
+
+Richardson et al., *Process Safety and Environmental Protection* 84(B1) (2006) 40--53,
+DOI `10.1205/psep.04298`, report measured rates for well-mixed natural-gas/commercial-propane
+flow through sharp-edged orifices. Version `1.2.6` retains the complete contiguous 27-case, 10 mm
+Table 3 series: 3.61--8.58 MPa, 245.95--278.85 K, propane-feed mass fractions 0.075--0.699 and
+measured rates 0.587--1.739 kg/s. The paper reports 1% accuracy for the separately metered total
+mass flow. The executable comparison uses a unity discharge coefficient, derives the coefficient
+implied by each measured rate, and compares that value with the paper's independently calculated
+HEM coefficient. It does not use the published coefficient as a predictive input.
+
+The retained feed uses the paper's average Table 1 mass compositions: natural gas C1/C2/C3/C4 =
+0.897/0.089/0.011/0.003 and commercial propane C2/C3/C4/C5 =
+0.003/0.963/0.033/0.001. Because the paper used each run's full measured analysis and does not
+report isomer distributions for its carbon-number groups, the executable proxy maps C4 and C5 to
+normal paraffins and records `AVERAGE_FEED_COMPOSITION_PROXY`. The published upstream and throat
+liquid fractions were calculated with PREPROP rather than measured; the manifest therefore records
+`PUBLISHED_PHASE_FRACTIONS_MODEL_DERIVED`.
+
+Twenty-six cases have matching gas or gas/liquid upstream phase classes. Case `R06-T3-19` is
+excluded from rate statistics because the paper reports a gas-only upstream state while SRK resolves
+1.53% oil, producing `MIXED_UPSTREAM`. Across the 26 comparable cases, the mean absolute difference
+between NeqSim-implied and published HEM discharge coefficients is 0.03536 and the maximum is
+0.09556. The largest upstream liquid-mass-fraction difference is 0.2461. Applying the published HEM
+coefficient to the NeqSim unity-coefficient rate places zero cases inside the 1% measurement-accuracy
+band. These deterministic results are independent multiphase accuracy evidence and expose a material
+model/composition limitation; they are not calibration, certification or engineering qualification.
 
 The frame's `model.evidence` object retains the exact manifest ID,
 applicability codes, limitation codes and evidence references used by the selected model; it does
@@ -636,7 +672,7 @@ an unresolved entropy, inventory or equilibrium residual still returns `INVALID`
 `INCIPIENT_PHASE_CONTINUATION` records resolved entropy roots, accepted/rejected candidate
 counts and the last rejection reason. This diagnostic is distinct from acoustic warnings.
 The original pressure-search bounds and closure tolerances are unchanged. The source-frame
-schema remains v1, while model provenance identifies numerical version `1.2.4`.
+schema remains v1, while model provenance identifies numerical version `1.2.6`.
 
 The former failing regression (80 mol% propane, 20 mol% n-butane, SRK/classic, 300 K,
 20 bara to 3 bara, 10 mm opening and discharge coefficient 0.62) now gives approximately
@@ -651,13 +687,15 @@ root or pressure maximizer. For the regression case, rate agreement is within `1
 and critical pressure within 2 Pa; generated reference values are retained in
 `mixture-saturation-reference.csv`. This is an independent numerical-algorithm check, not
 independent experimental validation. The separate STEP case above is single-component,
-short-opening applicability evidence whose current upstream phase does not match the declared
-liquid withdrawal; it does not qualify the multicomponent continuation.
+short-opening negative accuracy evidence using an explicit selected-liquid snapshot; it does not
+qualify the multicomponent continuation.
 
 The maximum is at phase appearance and is nonsmooth. The equilibrium acoustic diagnostic
 still reports `THROAT_MACH_MISMATCH` (Mach approximately 0.1215), so this example remains
-`VALID_WITH_WARNINGS`; frames remain `UNQUALIFIED`. Full mixture-flashing qualification
-requires independent release measurements and domain review.
+`VALID_WITH_WARNINGS`; frames remain `UNQUALIFIED`. The Richardson series above supplies independent
+measured multicomponent release rates over an explicit bounded range. Full mixture-flashing
+qualification still requires accountable domain review, run-specific compositions and additional
+geometries and mixtures.
 
 ## Transient ideal-gas pipe decompression
 

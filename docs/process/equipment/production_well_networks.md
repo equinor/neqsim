@@ -1053,8 +1053,9 @@ NetworkPipe addTubing(String bottomNode, String topNode, String name,
 NetworkPipe addTubingVfp(String bottomNode, String topNode, String name,
     VfpTable table)
 
-// Gas lift with rigorous tubing models
+// Gas lift with rigorous tubing models (the lift-gas fluid is stored and returned as a copy)
 void setLiftGasFluid(SystemInterface liftGas)
+SystemInterface getLiftGasFluid()
 double[] calculateGasLiftResponse(String tubingName,
     String productionElementName, double[] liftRates_Sm3d)
 

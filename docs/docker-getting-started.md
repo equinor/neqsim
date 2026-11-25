@@ -325,7 +325,7 @@ finishes you can run Java tests, Python scripts, and notebooks directly in the e
 
 ## Related Documentation
 
-- [Getting Started with NeqSim in Java](java-getting-started)
-- [Python Quickstart](quickstart/python-quickstart)
-- [Developer Setup](development/DEVELOPER_SETUP)
-- [Modules Overview](modules)
+- [Getting Started with NeqSim in Java](java-getting-started.md)
+- [Python Quickstart](quickstart/python-quickstart.md)
+- [Developer Setup](development/DEVELOPER_SETUP.md)
+- [Modules Overview](modules.md)

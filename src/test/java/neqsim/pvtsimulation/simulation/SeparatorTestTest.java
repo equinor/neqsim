@@ -1,10 +1,12 @@
 package neqsim.pvtsimulation.simulation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class SeparatorTestTest {
   @Test
@@ -45,5 +47,36 @@ public class SeparatorTestTest {
     sepSim.runCalc();
 
     assertEquals(1.1224612120760051, sepSim.getBofactor()[4], 0.0001);
+  }
+
+  /** Verifies stock-tank properties against a separate flash of the oil carried from the final separator. */
+  @Test
+  void testStockTankFlashesCarriedOil() {
+    double stageTemperature = 350.0;
+    double stagePressure = 50.0;
+    SystemInterface feed = new SystemSrkEos(stageTemperature, stagePressure);
+    feed.addComponent("methane", 0.70);
+    feed.addComponent("nC10", 0.30);
+    feed.setMixingRule(2);
+
+    SystemInterface stage = feed.clone();
+    new ThermodynamicOperations(stage).TPflash();
+    assertTrue(stage.hasPhaseType("gas") && stage.hasPhaseType("oil"));
+    SystemInterface stockTank = stage.phaseToSystem("oil");
+    stockTank.setPressure(ThermodynamicConstantsInterface.referencePressure);
+    stockTank.setTemperature(288.15);
+    new ThermodynamicOperations(stockTank).TPflash();
+    stockTank.initPhysicalProperties();
+    assertTrue(stockTank.hasPhaseType("gas") && stockTank.hasPhaseType("oil"));
+
+    SeparatorTest test = new SeparatorTest(feed);
+    test.setSeparatorConditions(new double[] {stageTemperature}, new double[] {stagePressure});
+    test.runCalc();
+
+    assertEquals(stockTank.getPhase("oil").getDensity("kg/m3"), test.getStockTankOilDensity(), 1e-6);
+    assertEquals(stockTank.getPhase("gas").getMolarMass() * 1000.0 / ThermodynamicConstantsInterface.molarMassAir,
+        test.getStockTankGasGravity(), 1e-9);
+    assertEquals(stage.getPhase("oil").getVolume() / stockTank.getPhase("oil").getVolume(), test.getBofactor()[0],
+        1e-8);
   }
 }

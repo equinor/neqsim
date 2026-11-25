@@ -21,7 +21,7 @@ This page groups NeqSim into seven foundational module areas. Each area maps to 
 ## Unit operations
 - **Location:** `process/equipment`
 - **Features:** library of process equipment including separators, heat exchangers, valves and other common unit operations.
-- **Distillation columns:** nine solver modes (direct substitution, damped, inside-out, adaptive matrix inside-out, Wegstein, sum-rates, Newton temperature correction, Naphtali-Sandholm simultaneous MESH correction, and MESH residual monitoring) with convergence diagnostics and Murphree efficiency support. See [distillation column docs](wiki/distillation_column).
+- **Distillation columns:** nine solver modes (direct substitution, damped, inside-out, adaptive matrix inside-out, Wegstein, sum-rates, Newton temperature correction, Naphtali-Sandholm simultaneous MESH correction, and MESH residual monitoring) with convergence diagnostics and Murphree efficiency support. See [distillation column docs](wiki/distillation_column.md).
 
 ## Chemical reactions routines
 - **Location:** `chemicalreactions`
@@ -46,6 +46,6 @@ This page groups NeqSim into seven foundational module areas. Each area maps to 
 
 ## Related documentation
 
-- [Documentation home](index)
-- [Package guide](README)
-- [Reference manual index](REFERENCE_MANUAL_INDEX)
+- [Documentation home](index.md)
+- [Package guide](README.md)
+- [Reference manual index](REFERENCE_MANUAL_INDEX.md)

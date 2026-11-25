@@ -210,13 +210,12 @@ class TwoFluidUnsplitIntegratorTest {
   void rejectsUnsupportedOperatorsBeforeCallingTheDensityModel() {
     TwoFluidSection[] accepted = nonuniformSections();
     TwoFluidConservationEquations[] unsupported = {isothermalEquations(), isothermalEquations(), isothermalEquations(),
-        isothermalEquations(), isothermalEquations(), isothermalEquations()};
+        isothermalEquations(), isothermalEquations()};
     unsupported[0].setIncludeEnergyEquation(true);
     unsupported[1].setIncludeMassTransfer(true);
     unsupported[2].setHeatTransferCoefficient(10.0);
     unsupported[3].setImplicitInterfacialPressure(true);
     unsupported[4].setEnableStiffBubbleDrag(true);
-    unsupported[5].setConservativeSlugForceIntegrationEnabled(true);
     int[] calls = {0};
     PhaseDensityModel density = (cell, state, pressure, time) -> {
       calls[0]++;
@@ -227,6 +226,10 @@ class TwoFluidUnsplitIntegratorTest {
       assertThrows(IllegalStateException.class,
           () -> integrator.prepareInterval(accepted, 10.0, 0.1, 0.0, 5.0e6, true, 1.0e-8));
     }
+    TwoFluidConservationEquations unownedSlugForces = isothermalEquations();
+    unownedSlugForces.setConservativeSlugForceIntegrationEnabled(true);
+    assertThrows(IllegalArgumentException.class,
+        () -> new TwoFluidUnsplitIntegrator(unownedSlugForces, density, solver(), 3, 8));
     assertEquals(0, calls[0]);
   }
 

@@ -56,7 +56,15 @@ Leaving shared slug forces disabled does not repair the earlier default-mode
 5.757% inventory-drift result. This release preparation does not change defaults.
 
 The separate `setConservativeSlugForceIntegrationEnabled(true)` option remains
-experimental and off by default. Its 65.163 kPa inlet-pressure amplitude is below
+experimental and off by default. With explicit conservative Lagrangian tracking, the unsplit
+transaction now leaves mean-cell friction on untracked cells and applies reconstructed body/film
+friction once after a tracked step passes nonlinear and conservation checks. Rejected attempts
+publish neither marker motion nor source impulse. Keep `setUnsplitPressureInterpolationEnabled(false)`
+when using reconstructed slug faces. The 0.1 s Tengesdal startup probe uses this configuration at
+16 cells with 0.1 and 0.05 s steps and at 24 cells with a 0.05 s step. The tracking-enabled
+five-second and 600 s publication gates remain open.
+
+The earlier 65.163 kPa inlet-pressure amplitude is below
 the unchanged 68.6 kPa lower bound; the unchanged liquid-trough detector finds no
 completed cycle intervals, and pressure limits still activate. Do not use these
 results as qualification of slug loads or extreme pressure transients. This is a historical
@@ -1201,7 +1209,9 @@ from exact phase transfers only when present cells, inlet and any explicit outle
 match those frozen component mass fractions. Negative outlet phase transfer requires
 `setOutletBoundaryFluid(...)`, remains signed in the phase ledger and is excluded from the
 forward downstream stream; it is never clamped or netted against another phase. General component
-transport, energy, phase change and tracked slugs remain unsupported in this route.
+transport, energy and phase change remain unsupported in this route. Explicit
+`CONSERVATIVE_LAGRANGIAN` marker geometry is supported under the narrower transactional contract
+below; other tracking modes still reject.
 Each accepted unsplit call also records nonlinear diagnostics on its
 `TwoFluidMassBalanceReport`: `getRejectedAttempts()` and `getModelEvaluations()` are non-negative
 for this route and remain -1 when the selected transient algorithm does not publish them. The
@@ -1210,9 +1220,13 @@ period, hold-up, inventory and conservation criteria; a zero-rejection numerical
 not sufficient experimental evidence. The 16-cell/0.1 s replay completed with zero rejected attempts
 but remained flat: `1.945482e-4 Pa` inlet-pressure amplitude, no liquid-production cycle, no
 blowout/fallback and `0.3285387` initial flowline hold-up. Disabling the legacy steady-consistency
-correction reproduced those values exactly. The unsplit route does not yet support tracked-slug
-geometry or conservative slug-force integration, which is therefore the next physical dependency;
-the negative gate remains executable without making ordinary slow CI intentionally red.
+correction reproduced those values exactly. The unsplit route now reconstructs faces from an
+explicit conservative marker and advances its cloned tracker only after an accepted substep. A
+seeded closed three-phase case closes gas/oil/water inventories, restores the marker after failure,
+and agrees within 0.02 m over 0.01/0.005 s steps and 0.04 m over four/eight cells. It still rejects
+conservative subcell slug-force integration, and the public gate continues to run with tracking
+disabled. The negative gate therefore remains executable without making ordinary slow CI
+intentionally red.
 Four-cell/0.1 s and eight-/sixteen-cell/0.05 s gas configurations now complete consecutive
 calls covering five seconds at the unchanged `1e-10` nonlinear and `1e-8` conservation gates.
 The outlet now uses the independently recovered phase fractions consistently with internal
@@ -1270,6 +1284,21 @@ attempted steps and uses the stricter of that allocation and the configured
 summation and independent endpoint checks remain active. These runs do not
 satisfy the distinct experimental pressure-amplitude, period and cycle gates and
 do not qualify physical restart or coupled pigging.
+
+The 24 November 2026 qualification repair prevents the 600 s experimental gate from passing on a
+startup extremum. It uses only complete cycles from the final 300 s, requires two complete pressure
+and liquid-production cycles, cycle-to-cycle amplitude/period stability for both signals, agreement
+of their median periods and one-to-one repeatable pressure/liquid phase lock. It compares the source's
+38 s value with inlet-pressure period. The
+same invocation runs `16 cells / 0.1 s`, `16 / 0.05 s` and `24 / 0.05 s` before asserting 15%
+pressure amplitude/period, 2% initial-hold-up and matched-production refinement bounds.
+
+All three current-master realizations reached 600 s with conservative, non-negative inventories but
+contained zero complete settled pressure and liquid cycles. The 16-cell runs retained initial
+flowline hold-up `0.328538684`; the 24-cell run retained `0.331462090` and recorded two rejected
+nonlinear attempts. Experimental amplitude, period, phase lock and amplitude/period refinement are
+unresolved. This is blocker evidence, not severe-slugging validation; conservative moving slug/film
+coupling remains the next physical dependency.
 See the [transaction and execution contract](../process/TWOFLUIDPIPE_MODEL.md#complete-transient-transactions-and-experimental-unsplit-execution)
 and [current transition evidence](../process/TWOFLUIDPIPE_MODEL.md#inclined-film-eligibility-and-trace-phase-derivatives).
 

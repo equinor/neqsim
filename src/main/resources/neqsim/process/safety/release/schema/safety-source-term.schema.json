@@ -78,6 +78,44 @@
     "model": {
       "type": "object",
       "additionalProperties": false,
+      "dependentRequired": {
+        "selectedUpstreamPhase": [
+          "upstreamPreparation"
+        ]
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "upstreamPreparation"
+            ],
+            "properties": {
+              "upstreamPreparation": {
+                "const": "PRESERVE_SELECTED_PHASE"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "selectedUpstreamPhase"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "selectedUpstreamPhase"
+            ]
+          },
+          "then": {
+            "properties": {
+              "upstreamPreparation": {
+                "const": "PRESERVE_SELECTED_PHASE"
+              }
+            }
+          }
+        }
+      ],
       "required": [
         "id",
         "version",
@@ -96,6 +134,20 @@
         "fluidModel": {
           "type": "string",
           "minLength": 1
+        },
+        "upstreamPreparation": {
+          "enum": [
+            "EQUILIBRATE_TP",
+            "PRESERVE_SELECTED_PHASE"
+          ]
+        },
+        "selectedUpstreamPhase": {
+          "enum": [
+            "GAS",
+            "OIL",
+            "LIQUID",
+            "AQUEOUS"
+          ]
         },
         "evidenceLevel": {
           "const": "UNQUALIFIED"

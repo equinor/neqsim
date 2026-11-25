@@ -648,26 +648,23 @@ The `ProducedWaterTreatmentTrain` models a complete multi-stage treatment system
 ### Basic Usage
 
 ```java
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.watertreatment.ProducedWaterTreatmentTrain;
-import neqsim.process.equipment.stream.Stream;
 
-// Create treatment train
-ProducedWaterTreatmentTrain train = new ProducedWaterTreatmentTrain(
-    "PW Treatment",
-    producedWater
-);
+// The produced-water stream can come from a three-phase separator.
+StreamInterface producedWater = prodSep.getWaterOutStream();
+ProducedWaterTreatmentTrain train =
+    new ProducedWaterTreatmentTrain("PW Treatment", producedWater);
 
 // Configure inlet conditions
 train.setInletOilConcentration(1000.0);  // mg/L from separator
 train.setWaterFlowRate(200.0);  // m³/h
 
-// Run simulation
+// Run simulation and read the documented result contract
 train.run();
-
-// Check compliance
-System.out.println("Outlet OIW: " + train.getOutletOilConcentration() + " mg/L");
-System.out.println("Compliant: " + train.isCompliant());
-System.out.println("Overall efficiency: " + (train.getOverallEfficiency() * 100) + "%");
+double outletOilInWaterMgL = train.getOilInWaterMgL();
+boolean dischargeCompliant = train.isDischargeCompliant();
+double overallEfficiencyPercent = train.getOverallEfficiency() * 100.0;
 ```
 
 ### Stage Types
@@ -686,13 +683,18 @@ StageType.MEMBRANE        // Membrane separation
 ### Custom Stage Configuration
 
 ```java
+import neqsim.process.equipment.watertreatment.ProducedWaterTreatmentTrain.WaterTreatmentStage;
+
 // Clear default stages
 train.clearStages();
 
 // Add custom stages
-train.addStage("Primary Cyclone", StageType.HYDROCYCLONE, 0.95);
-train.addStage("Compact Floatation", StageType.FLOTATION, 0.92);
-train.addStage("Final Polish", StageType.SKIM_TANK, 0.75);
+train.addStage(new WaterTreatmentStage(
+    "Primary Cyclone", StageType.HYDROCYCLONE, 0.95));
+train.addStage(new WaterTreatmentStage(
+    "Compact Flotation", StageType.FLOTATION, 0.92));
+train.addStage(new WaterTreatmentStage(
+    "Final Polish", StageType.SKIM_TANK, 0.75));
 
 // Run with custom configuration
 train.run();
@@ -701,17 +703,19 @@ train.run();
 ### Detailed Results
 
 ```java
+import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.watertreatment.ProducedWaterTreatmentTrain.WaterTreatmentStage;
+
 // Get stage-by-stage results
 for (WaterTreatmentStage stage : train.getStages()) {
-    System.out.println(stage.getName() + ":");
-    System.out.println("  Inlet OIW: " + stage.getInletOilMgL() + " mg/L");
-    System.out.println("  Outlet OIW: " + stage.getOutletOilMgL() + " mg/L");
-    System.out.println("  Efficiency: " + (stage.getEfficiency() * 100) + "%");
+    double inletOilInWaterMgL = stage.getInletOIW();
+    double outletOilInWaterMgL = stage.getOutletOIW();
+    double removalEfficiencyPercent = stage.getEfficiency() * 100.0;
 }
 
-// Get treated water and oil streams
-Stream treatedWater = train.getTreatedWaterStream();
-Stream recoveredOil = train.getRecoveredOilStream();
+// The train returns interface-typed streams.
+StreamInterface treatedWater = train.getTreatedWaterStream();
+StreamInterface recoveredOil = train.getRecoveredOilStream();
 ```
 
 ### Demulsifier Dose Optimization
@@ -741,9 +745,9 @@ DoseRecommendation recommendation = train.recommendDemulsifierDose(
     5       // day of month
 );
 
-System.out.println("Dose: " + recommendation.getSetpointDosePpm() + " ppm");
-System.out.println("Predicted OIW: "
-    + recommendation.getPredictedMeasuredOilInWaterMgL() + " mg/L");
+double recommendedDosePpm = recommendation.getSetpointDosePpm();
+double predictedMeasuredOilInWaterMgL =
+    recommendation.getPredictedMeasuredOilInWaterMgL();
 ```
 
 The same workflow is exposed through the flow-assurance runner analysis type `demulsifierDoseOptimization`. Typical JSON inputs include `untreatedOIW_mgL`, `waterRate_m3_h`, `halfEffectDosePpm`, `maxRemovalFraction`, `holdUpVolume_m3`, `projectedDailyWater_m3`, and optional `monthlySamples` with `oiw_mgL` and `waterVolume_m3`.
@@ -805,17 +809,18 @@ Oil-water separation efficiency varies with temperature:
 ### Compliance Checking
 
 ```java
+double outletOilInWaterMgL = train.getOilInWaterMgL();
+
 // Check against NCS requirements
-boolean ncsCompliant = train.getOutletOilConcentration()
-    <= ProducedWaterTreatmentTrain.NCS_OIW_LIMIT_MGL;
+boolean ncsCompliant =
+    outletOilInWaterMgL <= ProducedWaterTreatmentTrain.NCS_OIW_LIMIT_MGL;
 
-// Check against OSPAR
-boolean osparCompliant = train.getOutletOilConcentration()
-    <= ProducedWaterTreatmentTrain.OSPAR_OIW_LIMIT_MGL;
+// Check against OSPAR or a project-specific numerical limit
+boolean osparCompliant =
+    train.isCompliantWith(ProducedWaterTreatmentTrain.OSPAR_OIW_LIMIT_MGL);
 
-// Get compliance report
-String report = train.getComplianceReport();
-System.out.println(report);
+// Generate the current Markdown report
+String report = train.generateReport();
 ```
 
 ---
@@ -825,32 +830,40 @@ System.out.println(report);
 ### Complete Process Example
 
 ```java
-import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.watertreatment.ProducedWaterTreatmentTrain;
+import neqsim.process.processmodel.ProcessSystem;
 
 // Create process system
 ProcessSystem process = new ProcessSystem();
-
-// Add production separator
-ThreePhaseSeparator prodSep = new ThreePhaseSeparator("Production Separator", wellStream);
+ThreePhaseSeparator prodSep =
+    new ThreePhaseSeparator("Production Separator", wellStream);
 process.add(prodSep);
 
-// Add water treatment train
-ProducedWaterTreatmentTrain pwTrain = new ProducedWaterTreatmentTrain(
-    "PW Treatment",
-    prodSep.getWaterOutStream()
-);
+StreamInterface oilOut = prodSep.getOilOutStream();
+StreamInterface waterOut = prodSep.getWaterOutStream();
+ProducedWaterTreatmentTrain pwTrain =
+    new ProducedWaterTreatmentTrain("PW Treatment", waterOut);
 pwTrain.setInletOilConcentration(800.0);
 process.add(pwTrain);
 
 // Run process
 process.run();
 
-// Check results
-System.out.println("Water cut: " + (prodSep.getWaterCut() * 100) + "%");
-System.out.println("OIW to discharge: " + pwTrain.getOutletOilConcentration() + " mg/L");
-System.out.println("Compliant: " + pwTrain.isCompliant());
+// Calculate an explicit produced-liquid water mass fraction.
+double waterMassFlowKgPerHour = waterOut.getFlowRate("kg/hr");
+double oilMassFlowKgPerHour = oilOut.getFlowRate("kg/hr");
+double producedLiquidMassFlowKgPerHour =
+    oilMassFlowKgPerHour + waterMassFlowKgPerHour;
+double producedLiquidWaterMassFraction =
+    producedLiquidMassFlowKgPerHour > 0.0
+        ? waterMassFlowKgPerHour / producedLiquidMassFlowKgPerHour
+        : 0.0;
+
+// Read the current treatment-train result APIs.
+double outletOilInWaterMgL = pwTrain.getOilInWaterMgL();
+boolean dischargeCompliant = pwTrain.isDischargeCompliant();
 ```
 
 ---

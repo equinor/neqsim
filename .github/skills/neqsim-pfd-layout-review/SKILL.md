@@ -104,6 +104,10 @@ between named port sides with orthogonal routing (`via="hv"`, `"vh"` or waypoint
 `role="wrap"|"recycle"`), stream-number bubbles and collision-aware condition labels, automatic legend, wrapped footer
 and the exact geometry export. `render(path)` writes PNG, SVG, `*.layout.json`, `*.review.json` and returns the
 report. Coordinates: 100 units wide, y down, `(x, y)` is a node centre. Never draw a line from a box to a label.
+Norwegian reports: `PfdDiagram(..., language="no", fluid_labels={"other": "tiltak"})` gives the legend and phase-band texts in Norwegian
+(`FLUID_LABELS_NO`, `BAND_LABELS`) with optional per-diagram overrides; do not patch `FLUID_LABELS` in the process
+(test: `devtools/test_pfd_diagram_language.py`). Text must be at least 7 pt at the width the diagram has in the report: set
+`intended_width_mm` to that width and split a dense diagram instead of shrinking the fonts.
 
 Spec schema (`neqsim.pfd_layout.v1`): `canvas {width,height,unit,intended_width_mm}`, `nodes[] {id, kind, tag,
 bbox[x,y,w,h], texts[], style}`, `edges[] {id, from, to, points[], arrow_end, fluid, stream, label{text,bbox}, role,

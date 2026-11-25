@@ -179,8 +179,10 @@ findings, then apply the steady/transient limitations in the loaded
 
 For transient pressure peaks against line ratings (shut-in, HIPPS, blocked outlet),
 report the substep envelope from `TwoFluidPipe.getLastIntervalPeakPressureProfile`
-with the pipe CFL at 0.25, and include one CFL and two mesh refinements. End-of-step
-profile samples can miss riser-base excursions (see `neqsim-dynamic-simulation`).
+with the fixture CFL at 0.25 as the starting point, and include outer-step, CFL and two mesh
+refinements. End-of-step profile samples can miss local excursions. Compare wave arrival and
+pressure histories at the same chainages on every mesh, including the riser-base bend for that
+fixture (see `neqsim-dynamic-simulation`).
 Keep `setFrozenCompositionDensityUpdate(true)` (default) for these runs unless mass
 transfer or component transport is enabled, and state which was used.
 

@@ -1,7 +1,7 @@
 ---
 name: neqsim-thermodynamic-initialization
 description: "Select and audit NeqSim thermodynamic initialization levels for correctness and performance. USE WHEN: implementing or reviewing flashes, phase stability, EOS root selection, process-equipment thermodynamics, property access, or performance changes involving init(...) or initProperties()."
-last_verified: "2026-11-21"
+last_verified: "2026-11-25"
 ---
 
 # NeqSim thermodynamic initialization
@@ -143,3 +143,14 @@ For pure phases backed by independent fundamental EOS models, compare molar chem
 ## Audit guidance
 
 Search production code for `init(2)` and `init(3)`. Prioritize calls inside iterative flashes, recycle loops, tray/column iteration, transient flow cells, and frequently executed unit operations. Do not bulk-replace them. Handle one bounded call path at a time, prove that downstream consumers need only a lower level, add regression coverage, and measure the benefit before opening a PR.
+
+### HV allocation trials
+
+The retained invocation-local scratch proposals are rejected for production:
+allocation fell, but controlled Java17 small-PR initialization regressed. The
+current evaluator and its initialization contract remain unchanged. Use the
+same frozen harness, independent baseline controls and numerical endpoints
+when evaluating another performance change; allocation is not a latency gate.
+See `src/test/resources/neqsim/thermo/mixingrule/hv-phase-scratch/README.md`.
+Benchmark JSON receipts now use atomic replacement: a failed next write must
+preserve the accepted prefix. This adds no automatic retry or resume authority.

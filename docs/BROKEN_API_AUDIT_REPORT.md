@@ -120,15 +120,19 @@ description: "Systematic scan of NeqSim documentation vs source code: identifies
 
 **Confidence**: HIGH — WellSystem.addLayer takes 5 parameters. Note: WellFlow.addLayer takes 4 args with different parameter meanings `(name, stream, reservoirPressure, pi)`.
 
-### 2.5 `ThreePhaseSeparator.getWaterCut()` — does not exist
+### 2.5 `ThreePhaseSeparator.getWaterCut()` — resolved
 
-| File                                        | Line | Broken Call                                  |
-| ------------------------------------------- | ---- | -------------------------------------------- |
-| `docs/process/equipment/separators.md`      | 71   | `double waterCut = separator.getWaterCut();` |
-| `docs/process/equipment/water_treatment.md` | 305  | `prodSep.getWaterCut()`                      |
+**Status**: Resolved in both affected guides. The separator and produced-water examples now read
+`getOilOutStream()` and `getWaterOutStream()`, use explicit `kg/hr` outlet rates, and calculate
+the produced-liquid water mass fraction with a zero-flow guard. The produced-water guide also uses
+the current `ProducedWaterTreatmentTrain` result, stage, stream-interface, compliance, and report
+APIs.
 
-**Correct API**: Calculate water cut manually from water and total liquid flow rates.
-**Confidence**: HIGH
+**Regression coverage**: `docs/test_separator_core_documentation.py`,
+`docs/test_produced_water_treatment_documentation.py`, and the executable Java guide regressions
+for `SeparatorGuideDocumentationTest` and `ProducedWaterTreatmentTrainTest`.
+
+**Confidence**: HIGH — source signatures and executable guide paths are contract-tested.
 
 ### 2.6 `ThrottlingValve.setBeanSize()` — does not exist
 

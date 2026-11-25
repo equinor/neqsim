@@ -39,6 +39,80 @@ energy/volume, covolume, and existing physical-property volume correction remain
 unchanged. Mixtures containing water can nevertheless change because the water
 attraction participates in the mixing rule.
 
+## Electrolyte CPA and dissolved salts
+
+`SystemElectrolyteCPAstatoil` exposes the same opt-in in Java and through JPype.
+Its legacy alpha is the default. The calibrated water attraction participates in the
+cubic mixture term in every fluid phase. The electrolyte model combines it with CPA
+association and the Fürst ion-solvent, ion-ion, and solvation contributions. The option
+uses the existing electrolyte parameter tables.
+
+```java
+SystemElectrolyteCPAstatoil brine = new SystemElectrolyteCPAstatoil(298.15, 1.01325);
+brine.setUseCaloricWaterAlpha(true);
+brine.addComponent("water", 55.508);
+brine.addComponent("Na+", 1.0);
+brine.addComponent("Cl-", 1.0);
+brine.createDatabase(true);
+brine.setMixingRule(10);
+new ThermodynamicOperations(brine).TPflash();
+brine.initProperties();
+double cp = brine.getPhase("aqueous").getCp("J/kgK");
+double brineDensity = brine.getPhase("aqueous").getWaterDensity("kg/m3");
+```
+
+For reactive brine, add the feed species and call `chemicalReactionInit()` before
+`createDatabase(true)` and mixing rule 10. The alpha selection persists when reaction
+species are added and when the fluid is cloned or serialized. Toggle with
+`setUseCaloricWaterAlpha(false)`, then reflash and initialize properties.
+
+### Brine benchmarks
+
+NaCl results at 25 °C and 1.01325 bara. The heat-capacity reference is the near-ambient
+saturation-pressure tabulation in Phillips et al.,
+[LBL-12810, Appendix I](https://escholarship.org/uc/item/788587qg), pp. 43 and 45.
+
+| NaCl in solution | Legacy Cp, kJ/(kg K) | Caloric Cp, kJ/(kg K) | Reference Cp, kJ/(kg K) |
+|---:|---:|---:|---:|
+| 2 wt% | 3.562 | 4.072 | 4.075 |
+| 5 wt% | 3.435 | 3.914 | 3.935 |
+| 10 wt% | 3.235 | 3.666 | 3.732 |
+
+- At 25 and 50 °C, all six NaCl Cp comparisons are within 3%. The 25–50 °C sensible
+  enthalpy increments are within 2.4%, using temperature differences on both sides to
+  cancel enthalpy reference offsets.
+- For 0.5 and 1 mol/kg KCl at 25 °C, the bulk Cp errors are below 2%. The test converts
+  the apparent molar Cp data in [Partanen et al., Part 2](https://doi.org/10.1021/acs.jced.9b00373),
+  Table 1 and Equation 6, to a mass basis with IAPWS pure-water Cp. An independent
+  25–40 °C enthalpy comparison at 0.2 mol/kg KCl combines
+  [Part 1](https://doi.org/10.1021/acs.jced.9b00031), Tables 7–9, with the IAPWS water
+  increment and [NIST-JANAF solid KCl](https://janaf.nist.gov/tables/Cl-036.html).
+  At 50 °C and 1.01325 or 44 bara, the heat capacities for 1 mol/kg NaCl and KCl
+  also agree with the fixed-composition enthalpy derivative.
+- At 25 °C, the NaCl water activities at 1, 2 and 3 mol/kg agree within 0.004
+  absolute with osmotic-coefficient references from
+  [Partanen and Partanen](https://doi.org/10.1021/acs.jced.0c00402).
+- At the same temperature, `getWaterDensity("kg/m3")` uses the empirical
+  Laliberté–Cooper aqueous density route. It agrees within 0.15% with the
+  [NaCl](https://advancedthermo.com/electrolytes/density_NaCl.html) and
+  [KCl](https://advancedthermo.com/electrolytes/density_KCl.html) tables at the
+  tested molalities. The EOS-based `getDensity("kg/m3")` is still 4.7% low for
+  10 wt% NaCl. The empirical density is a separate reporting property and does
+  not enter equilibrium, EOS volumes, or thermodynamic derivatives.
+- At 50 °C, 50.3 bara and 1 mol/kg NaCl, the opt-in predicts 0.598 mol CO₂ per
+  kg water versus 0.650 ± 0.058 in
+  [Messabeb et al. (NIST ThermoML)](https://trc.nist.gov/ThermoML/10.1021/acs.jced.6b00505.html).
+  The reactive PH flash recovers the original TP temperature and enthalpy.
+- For CO₂-saturated brines at 50 °C and 1 or 2 mol/kg NaCl, the default
+  `getpH()` output was 4.12 and 4.24 versus 3.17 and 3.18 in
+  [Haghi et al., Table 5](https://doi.org/10.1016/j.ijggc.2017.10.001).
+  The alpha moves the default pH by less than 0.01 units in both cases.
+  The measured comparison needs further work on the reaction and pH conventions.
+
+These checks cover the listed states. Treat mixed salts, glycols, additional
+pressures, precipitation, and hydrate equilibrium as separate qualification cases.
+The tests are in `ElectrolyteCPAWaterCaloricTest`.
+
 ## Equations and provenance
 
 The reduced-temperature polynomial is
@@ -128,7 +202,7 @@ they are not NeqSim runtime dependencies.
 
 ```bash
 uv run --project devtools --locked devtools/generate_water_caloric_alpha_reference.py --refit --output-dir /tmp/cpa-water-reference
-./mvnw -Dtest=CPAWaterCaloricTest,SystemSrkCPAstatoilTest,PHFlashCPATest test
+./mvnw -Dtest=CPAWaterCaloricTest,ElectrolyteCPAWaterCaloricTest,SystemSrkCPAstatoilTest,PHFlashCPATest test
 ```
 
 The checked-in `src/test/resources/thermo/water_caloric_alpha_fit.json` records

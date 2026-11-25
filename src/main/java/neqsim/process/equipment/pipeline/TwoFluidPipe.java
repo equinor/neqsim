@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -5778,6 +5779,7 @@ public class TwoFluidPipe extends Pipeline {
    * @throws IllegalStateException for unsupported configuration, missing phase composition or preparation failure
    * @see #prepareUnsplitTransient(double, UnsplitTransientSolver, PhaseDensityModel)
    */
+  @SuppressFBWarnings(value = "IS2_INCONSISTENT_SYNC", justification = "This public preparation boundary is synchronized and snapshots the legacy slug toggle and tracker before detached trial execution")
   public synchronized PreparedInterval prepareUnsplitTransient(double dt, double maximumTimeStep,
       UnsplitTransientSolver solver, PhaseDensityModel densityModel) {
     validateUnsplitPreparation(dt, solver);
@@ -5817,7 +5819,18 @@ public class TwoFluidPipe extends Pipeline {
     synchronized (equations) {
       trialEquations = SerializationUtils.clone(equations);
     }
-    trialEquations.setConservativeSlugs(null);
+    LagrangianSlugTracker trialSlugTracker = null;
+    if (enableSlugTracking && slugTrackingMode == SlugTrackingMode.CONSERVATIVE_LAGRANGIAN) {
+      if (lagrangianSlugTracker == null || !lagrangianSlugTracker.isConservativeFilmCouplingEnabled()) {
+        throw new IllegalStateException("Conservative unsplit slug transport requires an initialized film tracker");
+      }
+      trialSlugTracker = SerializationUtils.clone(lagrangianSlugTracker);
+      trialSlugTracker.setClosedBoundaries(inletBCType == BoundaryCondition.CLOSED,
+          outletBCType == BoundaryCondition.CLOSED);
+      trialEquations.setConservativeSlugs(trialSlugTracker.getSlugs());
+    } else {
+      trialEquations.setConservativeSlugs(null);
+    }
     trialEquations.setIncludeEnergyEquation(false);
     trialEquations.setIncludeMassTransfer(false);
     trialEquations.setConsistentPhasePressureEnabled(true);
@@ -5846,7 +5859,7 @@ public class TwoFluidPipe extends Pipeline {
       trialEquations.setInletPhaseFlowBoundaryState(inletFace);
     }
     TwoFluidUnsplitIntegrator integrator = new TwoFluidUnsplitIntegrator(trialEquations, densityModel, solver, 8,
-        getMaximumTransientSubsteps());
+        getMaximumTransientSubsteps(), trialSlugTracker);
     integrator.setPressureInterpolationEnabled(unsplitPressureInterpolationEnabled);
     PreparedInterval interval = integrator.prepareInterval(snapshot, dx, dt, simulationTime, outletPressure,
         outletBCType == BoundaryCondition.CONSTANT_PRESSURE, 1.0e-8, maximumTimeStep);
@@ -5882,10 +5895,13 @@ public class TwoFluidPipe extends Pipeline {
     }
     if (componentTransportEnabled || includeEnergyEquation || includeMassTransfer || enableHeatTransfer
         || directElectricalHeatingPowerPerMeter != 0.0 || upstreamCompressibleVolume != null
-        || enableSlugTracking && slugTrackingMode != SlugTrackingMode.DISABLED || equations.isStiffBubbleDragEnabled()
-        || equations.isConservativeSlugForceIntegrationEnabled() || equations.isRusanovInternalFluxEnabled()) {
+        || enableSlugTracking && slugTrackingMode != SlugTrackingMode.CONSERVATIVE_LAGRANGIAN
+        || equations.isStiffBubbleDragEnabled()
+        || equations.isConservativeSlugForceIntegrationEnabled()
+            && (!enableSlugTracking || slugTrackingMode != SlugTrackingMode.CONSERVATIVE_LAGRANGIAN)
+        || equations.isRusanovInternalFluxEnabled()) {
       throw new IllegalStateException("Unsplit preparation requires isothermal flow without component/phase transfer, "
-          + "heat, slug tracking, upstream volume, two-sided Rusanov transport or separately integrated bubble/subcell sources");
+          + "heat, unowned slug geometry, upstream volume, two-sided Rusanov transport or unsupported stiff sources");
     }
     if (!(inletBCType == BoundaryCondition.CLOSED || inletBCType == BoundaryCondition.STREAM_CONNECTED
         || inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlowSet)
@@ -6946,6 +6962,11 @@ public class TwoFluidPipe extends Pipeline {
     // Classification changes diagnostics only. Do not apply legacy primitive recovery to a strict endpoint.
     for (TwoFluidSection section : endpoint) {
       flowRegimeDetector.classify(section);
+    }
+    LagrangianSlugTracker acceptedSlugTracker = interval.getAcceptedSlugTracker();
+    if (acceptedSlugTracker != null) {
+      lagrangianSlugTracker = acceptedSlugTracker;
+      equations.setConservativeSlugs(lagrangianSlugTracker.getSlugs());
     }
     beginIntervalPressureEnvelope(false);
     sections = endpoint;

@@ -1,0 +1,417 @@
+{
+  "interpretation": "Both arms reach C2; method size and compilation evidence do not establish the slowdown mechanism. Exact full logs retained losslessly in supporting qualification archive.",
+  "runs": [
+    {
+      "run": "p0_n5_init3_r4_base",
+      "lossless_log_gzip_sha256": "278b72b3bb7d379a04efca67cd74bc3fdd75945b29af321e00bb178303ed9ae6",
+      "compiled_evaluator_methods": [
+        {
+          "compile_id": "4016",
+          "compiler": "c1",
+          "level": "3",
+          "size": "86864",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z)D",
+          "stamp": "6.558"
+        },
+        {
+          "compile_id": "4101",
+          "compiler": "c2",
+          "level": "4",
+          "size": "118136",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z)D",
+          "stamp": "7.243"
+        }
+      ]
+    },
+    {
+      "run": "p0_n5_init3_r4_candidate",
+      "lossless_log_gzip_sha256": "4d56b828f6ba491b32f8a9c2351c5a030da1b40364cda0466a8ba13d64924917",
+      "compiled_evaluator_methods": [
+        {
+          "compile_id": "4019",
+          "compiler": "c1",
+          "level": "3",
+          "size": "88880",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z[[D)D",
+          "stamp": "6.829"
+        },
+        {
+          "compile_id": "4104",
+          "compiler": "c2",
+          "level": "4",
+          "size": "121288",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z[[D)D",
+          "stamp": "7.596"
+        }
+      ]
+    },
+    {
+      "run": "p2_n15_flash_r4_base",
+      "lossless_log_gzip_sha256": "9db7bf1d9b8cf83bd77adb65cb27bbc84499b33e615edad33623665a0f506ab7",
+      "compiled_evaluator_methods": [
+        {
+          "compile_id": "4465",
+          "compiler": "c1",
+          "level": "3",
+          "size": "86864",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z)D",
+          "stamp": "8.378"
+        },
+        {
+          "compile_id": "4509",
+          "compile_kind": "osr",
+          "compiler": "c2",
+          "level": "4",
+          "size": "112704",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z)D",
+          "stamp": "8.660"
+        },
+        {
+          "compile_id": "4510",
+          "compiler": "c2",
+          "level": "4",
+          "size": "90520",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z)D",
+          "stamp": "8.842"
+        },
+        {
+          "compile_id": "4528",
+          "compile_kind": "osr",
+          "compiler": "c1",
+          "level": "3",
+          "size": "93080",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z)D",
+          "stamp": "8.872"
+        },
+        {
+          "compile_id": "4529",
+          "compiler": "c1",
+          "level": "3",
+          "size": "86864",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z)D",
+          "stamp": "8.880"
+        },
+        {
+          "compile_id": "4558",
+          "compile_kind": "osr",
+          "compiler": "c2",
+          "level": "4",
+          "size": "179824",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z)D",
+          "stamp": "9.659"
+        },
+        {
+          "compile_id": "4559",
+          "compiler": "c2",
+          "level": "4",
+          "size": "198152",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z)D",
+          "stamp": "10.664"
+        },
+        {
+          "compile_id": "4564",
+          "compiler": "c1",
+          "level": "3",
+          "size": "86864",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z)D",
+          "stamp": "10.680"
+        },
+        {
+          "compile_id": "4571",
+          "compiler": "c2",
+          "level": "4",
+          "size": "146544",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z)D",
+          "stamp": "11.061"
+        }
+      ]
+    },
+    {
+      "run": "p2_n15_flash_r4_candidate",
+      "lossless_log_gzip_sha256": "5fdb8865935bae55ac882d18852359f18adec82f78cba4d0a14eecf0e0defc66",
+      "compiled_evaluator_methods": [
+        {
+          "compile_id": "4467",
+          "compiler": "c1",
+          "level": "3",
+          "size": "88880",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z[[D)D",
+          "stamp": "9.636"
+        },
+        {
+          "compile_id": "4511",
+          "compile_kind": "osr",
+          "compiler": "c2",
+          "level": "4",
+          "size": "119176",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z[[D)D",
+          "stamp": "10.004"
+        },
+        {
+          "compile_id": "4512",
+          "compiler": "c2",
+          "level": "4",
+          "size": "90832",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z[[D)D",
+          "stamp": "10.198"
+        },
+        {
+          "compile_id": "4530",
+          "compile_kind": "osr",
+          "compiler": "c1",
+          "level": "3",
+          "size": "94984",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z[[D)D",
+          "stamp": "10.235"
+        },
+        {
+          "compile_id": "4531",
+          "compiler": "c1",
+          "level": "3",
+          "size": "88880",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z[[D)D",
+          "stamp": "10.243"
+        },
+        {
+          "compile_id": "4560",
+          "compile_kind": "osr",
+          "compiler": "c2",
+          "level": "4",
+          "size": "181280",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z[[D)D",
+          "stamp": "10.850"
+        },
+        {
+          "compile_id": "4561",
+          "compiler": "c2",
+          "level": "4",
+          "size": "200432",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z[[D)D",
+          "stamp": "11.976"
+        },
+        {
+          "compile_id": "4566",
+          "compiler": "c1",
+          "level": "3",
+          "size": "88880",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z[[D)D",
+          "stamp": "11.992"
+        },
+        {
+          "compile_id": "4573",
+          "compiler": "c2",
+          "level": "4",
+          "size": "159384",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z[[D)D",
+          "stamp": "12.533"
+        }
+      ]
+    },
+    {
+      "run": "p2_n15_init3_r4_base",
+      "lossless_log_gzip_sha256": "2f94c4cb08e2820bfdc2fc359cd481eb485e3fc572c178d7cc7429266a7133b2",
+      "compiled_evaluator_methods": [
+        {
+          "compile_id": "4465",
+          "compiler": "c1",
+          "level": "3",
+          "size": "86864",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z)D",
+          "stamp": "8.137"
+        },
+        {
+          "compile_id": "4509",
+          "compile_kind": "osr",
+          "compiler": "c2",
+          "level": "4",
+          "size": "112704",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z)D",
+          "stamp": "8.447"
+        },
+        {
+          "compile_id": "4510",
+          "compiler": "c2",
+          "level": "4",
+          "size": "90520",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z)D",
+          "stamp": "8.648"
+        },
+        {
+          "compile_id": "4528",
+          "compile_kind": "osr",
+          "compiler": "c1",
+          "level": "3",
+          "size": "93080",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z)D",
+          "stamp": "8.688"
+        },
+        {
+          "compile_id": "4529",
+          "compiler": "c1",
+          "level": "3",
+          "size": "86864",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z)D",
+          "stamp": "8.695"
+        },
+        {
+          "compile_id": "4558",
+          "compile_kind": "osr",
+          "compiler": "c2",
+          "level": "4",
+          "size": "179824",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z)D",
+          "stamp": "9.271"
+        },
+        {
+          "compile_id": "4559",
+          "compiler": "c2",
+          "level": "4",
+          "size": "198152",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z)D",
+          "stamp": "10.205"
+        },
+        {
+          "compile_id": "4564",
+          "compiler": "c1",
+          "level": "3",
+          "size": "86864",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z)D",
+          "stamp": "10.217"
+        },
+        {
+          "compile_id": "4571",
+          "compiler": "c2",
+          "level": "4",
+          "size": "146544",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z)D",
+          "stamp": "10.584"
+        }
+      ]
+    },
+    {
+      "run": "p2_n15_init3_r4_candidate",
+      "lossless_log_gzip_sha256": "514961c8912b4a37d2dfd1214a49e31a7bd8b1a6c955281ec686699c3e2956b9",
+      "compiled_evaluator_methods": [
+        {
+          "compile_id": "4462",
+          "compiler": "c1",
+          "level": "3",
+          "size": "88880",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z[[D)D",
+          "stamp": "8.555"
+        },
+        {
+          "compile_id": "4506",
+          "compile_kind": "osr",
+          "compiler": "c2",
+          "level": "4",
+          "size": "119176",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z[[D)D",
+          "stamp": "8.853"
+        },
+        {
+          "compile_id": "4507",
+          "compiler": "c2",
+          "level": "4",
+          "size": "90832",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z[[D)D",
+          "stamp": "9.035"
+        },
+        {
+          "compile_id": "4525",
+          "compile_kind": "osr",
+          "compiler": "c1",
+          "level": "3",
+          "size": "94984",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z[[D)D",
+          "stamp": "9.070"
+        },
+        {
+          "compile_id": "4526",
+          "compiler": "c1",
+          "level": "3",
+          "size": "88880",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z[[D)D",
+          "stamp": "9.078"
+        },
+        {
+          "compile_id": "4555",
+          "compile_kind": "osr",
+          "compiler": "c2",
+          "level": "4",
+          "size": "174456",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z[[D)D",
+          "stamp": "9.647"
+        },
+        {
+          "compile_id": "4556",
+          "compiler": "c2",
+          "level": "4",
+          "size": "200432",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z[[D)D",
+          "stamp": "10.641"
+        },
+        {
+          "compile_id": "4561",
+          "compiler": "c1",
+          "level": "3",
+          "size": "88880",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z[[D)D",
+          "stamp": "10.657"
+        },
+        {
+          "compile_id": "4568",
+          "compiler": "c2",
+          "level": "4",
+          "size": "159384",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z[[D)D",
+          "stamp": "11.166"
+        }
+      ]
+    },
+    {
+      "run": "p2_n5_init3_r4_base",
+      "lossless_log_gzip_sha256": "5a311dbeab36e08670b909b0c88f2e7ae5a21f4f266dd4227ed0d36415cb329f",
+      "compiled_evaluator_methods": [
+        {
+          "compile_id": "4023",
+          "compiler": "c1",
+          "level": "3",
+          "size": "86864",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z)D",
+          "stamp": "6.862"
+        },
+        {
+          "compile_id": "4113",
+          "compiler": "c2",
+          "level": "4",
+          "size": "193904",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z)D",
+          "stamp": "7.933"
+        }
+      ]
+    },
+    {
+      "run": "p2_n5_init3_r4_candidate",
+      "lossless_log_gzip_sha256": "f2789a7663705668909299a191664ef100d80b234b2743889adcca7f1c12f287",
+      "compiled_evaluator_methods": [
+        {
+          "compile_id": "4023",
+          "compiler": "c1",
+          "level": "3",
+          "size": "88880",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z[[D)D",
+          "stamp": "6.914"
+        },
+        {
+          "compile_id": "4112",
+          "compiler": "c2",
+          "level": "4",
+          "size": "190872",
+          "method": "neqsim.thermo.component.ComponentGENRTLmodifiedHV getGammaWithRowPureTerms (Lneqsim/thermo/phase/PhaseInterface;IDDLneqsim/thermo/phase/PhaseType;[[D[[D[[D[[D[[Ljava/lang/String;[D[Z[[D)D",
+          "stamp": "7.944"
+        }
+      ]
+    }
+  ]
+}

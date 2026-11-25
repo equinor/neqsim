@@ -1523,8 +1523,8 @@ public abstract class SystemThermo implements SystemInterface {
     checkStability = val;
   }
 
-  /** Mark initialized chemical-reaction topology stale after a component identity change. */
-  private void markChemicalReactionStateStale() {
+  /** Invalidate initialized chemistry when the reaction basis or the component identities change. */
+  protected final void markChemicalReactionStateStale() {
     if (chemicalReactionOperations != null) {
       chemicalReactionStateStale = true;
     }
@@ -1534,7 +1534,7 @@ public abstract class SystemThermo implements SystemInterface {
   private void requireCurrentChemicalReactionState() {
     if (chemicalReactionStateStale) {
       throw new IllegalStateException(
-          "Chemical-reaction state is stale because component identities changed after chemicalReactionInit(). "
+          "Chemical-reaction state is stale because component identities or the reaction basis changed after chemicalReactionInit(). "
               + "Re-run chemicalReactionInit(), createDatabase(true), and setMixingRule(...) before the next reactive calculation.");
     }
   }
@@ -5292,6 +5292,22 @@ public abstract class SystemThermo implements SystemInterface {
   public void setAttractiveTerm(int i) {
     for (int k = 0; k < getMaxNumberOfPhases(); k++) {
       phaseArray[k].setAttractiveTerm(i);
+    }
+  }
+
+  /**
+   * Set the system attraction selector for existing and future components and discard cached reference phases.
+   *
+   * @param selector attractive-term number
+   */
+  final void setAttractiveTermAndInvalidateReferences(int selector) {
+    attractiveTermNumber = selector;
+    setAttractiveTerm(selector);
+    // Reference phases can be shared by clones. Discard the array instead of modifying its phases.
+    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
+      if (phaseArray[i] != null) {
+        phaseArray[i].setRefPhase((PhaseInterface[]) null);
+      }
     }
   }
 

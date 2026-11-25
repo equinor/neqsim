@@ -68,6 +68,22 @@ class WellSystemTest {
     assertTrue(bhp >= 0, "BHP should be non-negative");
   }
 
+  /** Linear PI uses pressure drawdown and a pressure update retains the configured inlet object. */
+  @Test
+  void testLinearProductionIndexAndReservoirPressureUpdate() {
+    WellSystem well = new WellSystem("linear_pi_well", reservoirStream);
+    well.setProductionIndex(20.0, "Sm3/day/bar");
+
+    double[][] curve = well.generateIPRCurve(3);
+    assertEquals(2500.0, curve[0][1], 1.0e-10);
+    assertEquals(125.0, curve[1][1], 1.0e-10);
+
+    well.setReservoirPressure(220.0, "bara");
+    assertEquals(220.0, well.getReservoirPressure("bara"), 1.0e-12);
+    assertEquals(220.0, reservoirStream.getPressure("bara"), 1.0e-12);
+    assertTrue(well.getInletStream() == reservoirStream);
+  }
+
   @Test
   void testCollapsedBracketStoresBhpAtOperatingRate() {
     double productivityIndex = 1.0e-3;

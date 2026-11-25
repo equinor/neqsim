@@ -15,8 +15,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.TwoFluidMassBalanceReport.Phase;
+import neqsim.process.equipment.pipeline.twophasepipe.LagrangianSlugTracker;
+import neqsim.process.equipment.pipeline.twophasepipe.LagrangianSlugTracker.SlugBubbleUnit;
+import neqsim.process.equipment.pipeline.twophasepipe.LiquidAccumulationTracker.SlugCharacteristics;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.TimeIntegrator;
+import neqsim.process.equipment.pipeline.twophasepipe.numerics.TwoFluidUnsplitIntegrator;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.UnsplitTransientSolver;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -168,6 +172,89 @@ class TwoFluidPipeUnsplitRunTest {
   }
 
   @Test
+  void conservativeSlugGeometryAdvancesOnlyWithAnAcceptedUnsplitInterval() throws Exception {
+    TwoFluidPipe pipe = createPipe(true, 4);
+    prepareClosedConservativeSlug(pipe);
+    SlugBubbleUnit originalMarker = seedSlug(pipe, 15.0, 25.0);
+    double originalFront = originalMarker.frontPosition;
+    pipe.setUnsplitTransientSolver(solver(), 0.005);
+    pipe.setMaximumTransientSubsteps(1);
+    byte[] before = SerializationUtils.serialize(pipe);
+    assertThrows(RuntimeException.class, () -> pipe.runTransient(0.01, UUID.randomUUID()));
+    assertArrayEquals(before, SerializationUtils.serialize(pipe));
+    assertEquals(0.0, originalMarker.age, 0.0);
+    assertEquals(originalFront, originalMarker.frontPosition, 0.0);
+
+    pipe.setMaximumTransientSubsteps(256);
+    pipe.runTransient(0.01, UUID.randomUUID());
+    LagrangianSlugTracker accepted = pipe.getLagrangianSlugTracker();
+    assertEquals(1, accepted.getSlugCount());
+    SlugBubbleUnit acceptedMarker = accepted.getSlugs().get(0);
+    assertEquals(0.01, acceptedMarker.age, 1.0e-14);
+    assertTrue(Double.isFinite(acceptedMarker.frontPosition));
+    assertTrue(Double.isFinite(acceptedMarker.tailPosition));
+    assertTrue(acceptedMarker.frontPosition != originalFront);
+    assertEquals(0.0, originalMarker.age, 0.0, "The accepted endpoint must replace, not mutate, the old tracker");
+    for (Phase phase : Phase.values()) {
+      assertEquals(0.0, pipe.getLastMassBalanceReport().getRelativeResidual(phase), 1.0e-8);
+    }
+  }
+
+  @Test
+  void trackedSubcellForcesRemainTransactionalAndConservative() throws Exception {
+    TwoFluidPipe pipe = createPipe(true, 4);
+    prepareClosedConservativeSlug(pipe);
+    seedSlug(pipe, 15.0, 25.0);
+    TwoFluidSection[] cells = (TwoFluidSection[]) field(pipe, "sections");
+    for (TwoFluidSection cell : cells) {
+      double[] state = cell.getStateVector();
+      state[3] = 1.5 * state[0];
+      state[4] = 0.4 * state[1];
+      state[5] = 0.4 * state[2];
+      cell.setConservativeEndpoint(state, 1.0e-8);
+    }
+    pipe.setSharedSlugForceBalanceEnabled(true);
+    pipe.setConservativeSlugForceIntegrationEnabled(true);
+    pipe.setUnsplitTransientSolver(solver(), 0.005);
+    pipe.setMaximumTransientSubsteps(1);
+    byte[] before = SerializationUtils.serialize(pipe);
+    assertThrows(RuntimeException.class, () -> pipe.runTransient(0.01, UUID.randomUUID()));
+    assertArrayEquals(before, SerializationUtils.serialize(pipe));
+
+    pipe.setMaximumTransientSubsteps(256);
+    TwoFluidUnsplitIntegrator.PreparedInterval interval = pipe.prepareUnsplitTransient(0.01, 0.005, solver(),
+        pipe.createUnsplitDensityModel());
+    double impulse = 0.0;
+    for (double[] cellImpulse : interval.getConservativeFrictionImpulsePerLength()) {
+      for (double phaseImpulse : cellImpulse) {
+        assertTrue(Double.isFinite(phaseImpulse));
+        impulse += Math.abs(phaseImpulse);
+      }
+    }
+    assertTrue(impulse > 0.0, "The accepted tracked cells must publish their passive momentum impulse");
+    for (double residual : interval.getMassResidualKg()) {
+      assertEquals(0.0, residual, 1.0e-8);
+    }
+    assertEquals(0.0, pipe.getSimulationTime(), 0.0, "Preparation must not publish a prefix");
+
+    pipe.runTransient(0.01, UUID.randomUUID());
+    for (Phase phase : Phase.values()) {
+      assertEquals(0.0, pipe.getLastMassBalanceReport().getRelativeResidual(phase), 1.0e-8);
+    }
+    assertEquals(0.01, pipe.getLagrangianSlugTracker().getSlugs().get(0).age, 1.0e-14);
+  }
+
+  @Test
+  void movingSlugFilmCouplingIsStableAcrossMeshAndTimeStepRefinement() throws Exception {
+    double coarse = runMovingSlugCase(4, 0.01);
+    double refinedTime = runMovingSlugCase(4, 0.005);
+    double refinedMesh = runMovingSlugCase(8, 0.005);
+    assertEquals(coarse, refinedTime, 0.02);
+    assertEquals(refinedTime, refinedMesh, 0.04,
+        "The accepted marker front must agree to well below one percent of the refined cell length");
+  }
+
+  @Test
   void aChangedInletCompositionRejectsWithoutReassigningPhaseInventories() {
     TwoFluidPipe pipe = createPipe(false, 4);
     pipe.setUnsplitTransientSolver(solver(), 0.001);
@@ -209,6 +296,55 @@ class TwoFluidPipeUnsplitRunTest {
     pipe.setSteadyStateMaxWallClockTime(Double.POSITIVE_INFINITY);
     pipe.run();
     return pipe;
+  }
+
+  private static double runMovingSlugCase(int cells, double maximumStep) throws Exception {
+    TwoFluidPipe pipe = createPipe(true, cells);
+    prepareClosedConservativeSlug(pipe);
+    seedSlug(pipe, 15.0, 25.0);
+    pipe.setUnsplitTransientSolver(solver(), maximumStep);
+    pipe.runTransient(0.01, UUID.randomUUID());
+    TwoFluidMassBalanceReport report = pipe.getLastMassBalanceReport();
+    for (Phase phase : Phase.values()) {
+      assertEquals(0.0, report.getRelativeResidual(phase), 1.0e-8);
+    }
+    SlugBubbleUnit marker = pipe.getLagrangianSlugTracker().getSlugs().get(0);
+    assertEquals(0.01, marker.age, 1.0e-14);
+    assertTrue(Math.abs(marker.frontPosition - 25.0) > 1.0e-6);
+    return marker.frontPosition;
+  }
+
+  private static void prepareClosedConservativeSlug(TwoFluidPipe pipe) throws Exception {
+    pipe.closeInlet();
+    pipe.closeOutlet();
+    pipe.setSlugTrackingMode(TwoFluidPipe.SlugTrackingMode.CONSERVATIVE_LAGRANGIAN);
+    pipe.getLagrangianSlugTracker().setEnableInletSlugGeneration(false);
+    pipe.getLagrangianSlugTracker().setEnableTerrainSlugGeneration(false);
+    pipe.getLagrangianSlugTracker().setEnableWakeEffects(false);
+    TwoFluidSection[] cells = (TwoFluidSection[]) field(pipe, "sections");
+    for (TwoFluidSection cell : cells) {
+      double[] state = cell.getStateVector();
+      state[3] = 0.0;
+      state[4] = 0.0;
+      state[5] = 0.0;
+      cell.setPressure(60.0e5);
+      cell.setConservativeEndpoint(state, 1.0e-8);
+    }
+  }
+
+  private static SlugBubbleUnit seedSlug(TwoFluidPipe pipe, double tail, double front) throws Exception {
+    pipe.getLagrangianSlugTracker().setEnableTerrainSlugGeneration(true);
+    SlugCharacteristics characteristics = new SlugCharacteristics();
+    characteristics.tailPosition = tail;
+    characteristics.frontPosition = front;
+    characteristics.length = front - tail;
+    characteristics.holdup = 0.9;
+    TwoFluidSection[] cells = (TwoFluidSection[]) field(pipe, "sections");
+    characteristics.volume = characteristics.length * cells[0].getArea() * characteristics.holdup;
+    SlugBubbleUnit marker = pipe.getLagrangianSlugTracker().initializeTerrainSlug(characteristics, cells);
+    pipe.getLagrangianSlugTracker().setEnableTerrainSlugGeneration(false);
+    assertNotNull(marker);
+    return marker;
   }
 
   private static UnsplitTransientSolver solver() {

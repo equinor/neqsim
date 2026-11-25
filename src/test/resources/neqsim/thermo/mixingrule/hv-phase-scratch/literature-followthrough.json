@@ -1,0 +1,26 @@
+{
+  "timestamp": "2026-11-24",
+  "owner": "equinor/neqsim#4576",
+  "boundary": "No tuple, alpha, formulation or empirical acceptance change in the invocation-local scratch batch.",
+  "leads": [
+    {
+      "doi": "10.1016/S0021-9614(81)80009-2",
+      "title": "Thermodynamic properties of organic oxygen compounds L. The vapour pressures of 1,2-ethanediol (ethylene glycol) and bis(2-hydroxyethyl) ether (diethylene glycol)",
+      "primary_url": "https://www.sciencedirect.com/science/article/pii/S0021961481800092",
+      "access_result": "Primary direct open returned 403. Publisher-indexed abstract distinguishes measured 374\u2013496 K ethylene-glycol ebulliometry from ambient extrapolated equations and mentions subsequent measurements. No full numeric table/image recovered or adopted.",
+      "required_next": "Recover legally accessible full primary article and identify actual subsequent low-temperature observations, uncertainty and source lineage before claiming compatible 288.16\u2013298.29 K controls."
+    },
+    {
+      "doi": "10.1016/j.fluid.2011.05.010",
+      "primary_url": "https://www.sciencedirect.com/science/article/pii/S037838121100241X",
+      "access_result": "Direct primary open returned 403; publisher preview remains available. Tables2/3 and complete SRK/PR pure-MEG conventions still unverified.",
+      "required_next": "Primary images/numeric tuples/pure inputs and independent inhibitor partition or bidirectional holdouts before selection/fit."
+    }
+  ],
+  "rejected_shortcuts": [
+    "Secondary handbook/correlation coefficients are not primary observations.",
+    "Atmospheric-temperature extrapolated equations cannot be relabeled measured low-temperature controls.",
+    "A hydrate-model abstract cannot qualify ordinary fluid mixing accuracy or supply unseen coefficients."
+  ],
+  "disposition": "Precise source blockers retained; continue dependency-ready numerical/performance work. No calibrated numbers invented."
+}

@@ -59,12 +59,29 @@ ASSESSMENTS = (
     ("KClCO2OstwaldReferenceAssessmentTest",
      "kcl-co2-ostwald-yasunishi-yoshida1979-assessment.csv", 7,
      "co2_kcl_ostwald_yasunishi_yoshida1979.csv"),
+    ("CO2ChlorideSaltPairCurvatureAssessmentTest",
+     "co2-chloride-salt-pair-curvature-assessment.csv", 7,
+     ("co2_kcl_solubility_he_morse1993.csv",
+      "co2_kcl_ostwald_yasunishi_yoshida1979.csv",
+      "co2_water_nacl_solubility_liu2021.csv")),
+    ("CO2HeMorseStandardStateAuditTest",
+     "co2-he-morse-standard-state-audit.csv", 6,
+     "co2_kcl_solubility_he_morse1993.csv"),
     ("CO2BrineHydrateReferenceAssessmentTest",
      "co2-brine-hydrate-reference-assessment.csv", 12,
      "co2_brine_hydrate_phase_state_burgass2023.csv"),
     ("CO2WaterBaselineReferenceAssessmentTest",
      "co2-water-baseline-carroll1991-assessment.csv", 57,
      "co2_water_carroll1991_evaluation.csv"),
+    ("CO2SaltPairHelmholtzCompositionAssessmentTest",
+     "co2-salt-pair-helmholtz-composition-assessment.csv", 7, None),
+    ("CO2SaltPairTemperatureLawAssessmentTest",
+     "co2-salt-pair-temperature-law-assessment.csv", 10,
+     ("co2_kcl_solubility_he_morse1993.csv",
+      "co2_kcl_ostwald_yasunishi_yoshida1979.csv")),
+    ("KClCO2SaltPairTransferAssessmentTest",
+     "co2-kcl-salt-pair-transfer-assessment.csv", 13,
+     "co2_kcl_solubility_mousavi_chapoy_burgass2024.csv"),
     ("CO2BrineHydrateFullFamilyAssessmentTest",
      "co2-brine-hydrate-dholabhai1993-full-assessment.csv", 110,
      "co2_brine_hydrate_dholabhai1993_full.csv"),
@@ -158,7 +175,13 @@ def collect(root, output, selected, context, checkout_sha):
             source = SOURCE_DIR + producer + ".java"
             entry["producer_source"] = {"path": source, "sha256": digest(root / source)}
             entry["provenance"] = {"path": PROVENANCE, "sha256": digest(root / PROVENANCE)}
-            if fixture:
+            if isinstance(fixture, tuple):
+                entry["fixtures"] = [
+                    {"path": FIXTURE_DIR + name,
+                     "sha256": digest(root / FIXTURE_DIR / name)}
+                    for name in fixture
+                ]
+            elif fixture:
                 fixture_path = FIXTURE_DIR + fixture
                 entry["fixture"] = {"path": fixture_path,
                                     "sha256": digest(root / fixture_path)}
