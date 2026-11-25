@@ -165,15 +165,36 @@ def test_changed_source_is_reported(tmp_path):
             session.close_case(case)
 
 
-def test_limit_ends_own_process_and_raises_timeout():
+def test_limit_ends_own_process_raises_once_and_session_restarts():
     session, _, killed = make_session([set(), {42}])
     session.start()
     with pytest.raises(UniSimTimeout, match="slow step exceeded"):
         with session.limit(0.05, "slow step"):
             time.sleep(0.3)
-    assert killed == [42]
-    with pytest.raises(UniSimTimeout):
-        session.close()
+    assert killed == [42] and not session.usable
+    with session.limit(0.05, "slow step"):  # a fresh, fast block is not a timeout
+        pass
+    session.close()  # the timeout was already raised once
+
+
+def test_reader_does_not_retry_open_after_its_limit_ended_unisim(tmp_path):
+    from unisim_reader import UniSimReader
+    source = tmp_path / "plant.usc"
+    source.write_bytes(b"case")
+    session, app, _ = make_session([set(), {42}])
+    opens = []
+
+    def slow_open(path):
+        opens.append(path)
+        time.sleep(0.3)
+        raise Exception("The RPC server is unavailable.")
+    app.SimulationCases.Open = slow_open
+    reader = UniSimReader(time_limit_s=0.05)
+    reader._session = session.start()
+    with pytest.raises(UniSimTimeout, match="reading plant.usc exceeded"):
+        reader.read(str(source), export_e300=False)
+    assert len(opens) == 1
+    reader.close(error=True)
 
 
 def test_solve_status_names_inconsistent_and_empty_objects():

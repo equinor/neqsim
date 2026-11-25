@@ -328,9 +328,17 @@ class UniSimSession:
         self.app = None
         self.pid: Optional[int] = None
         self.watchdog = None
+        #: Label of a limit that fired and has not been raised yet.
         self.timed_out: Optional[str] = None
+        #: True after a limit ended the process; ``restart()`` clears it.
+        self.ended_by_limit = False
         self.report: Dict[str, Any] = {"pids": [], "sources": [], "popups": [], "solves": [],
                                        "timeouts": []}
+
+    @property
+    def usable(self) -> bool:
+        """True while the own process runs and no limit has ended it."""
+        return self.app is not None and not self.ended_by_limit
 
     # -- lifetime -------------------------------------------------------------
 
@@ -345,9 +353,9 @@ class UniSimSession:
         """Start the own UniSim process (no-op when already running)."""
         if self.app is not None:
             return self
-        self.timed_out = None
         self.app, self.pid, waited = start_owned_unisim(
             self._dispatch, self._pids, self.wait_closing_s, self.poll_closing_s, self._sleep)
+        self.ended_by_limit = False
         self.report["pids"].append(self.pid)
         if waited:
             self.report["waited_for_closing_unisim"] = waited
@@ -370,8 +378,8 @@ class UniSimSession:
         """Close every open case, quit and end the own process, check sources.
 
         Unless ``error`` says an exception is already on its way, raises
-        ``UniSimTimeout`` if a limit ended the process and ``UniSimSessionError``
-        if a source file changed.
+        ``UniSimTimeout`` if a limit ended the process and the timeout was not
+        raised yet, and ``UniSimSessionError`` if a source file changed.
         """
         self._end_process()
         if self._work_dir is not None and self._given_work_dir is None:
@@ -382,8 +390,9 @@ class UniSimSession:
                 entry["unchanged"] = _safe(lambda e=entry: sha256(e["source"])) == entry["sha256"]
         changed = [s["source"] for s in self.report["sources"] if s["unchanged"] is False]
         self.report["sources_unchanged"] = not changed
-        if self.timed_out and not error:
-            raise UniSimTimeout(f"{self.timed_out}: UniSim process ended")
+        pending, self.timed_out = self.timed_out, None
+        if pending and not error:
+            raise UniSimTimeout(f"{pending}: UniSim process ended")
         unreported = [s["source"] for s in self.report["sources"]
                       if s["unchanged"] is False and not s.get("reported")]
         if unreported and not error:
@@ -411,16 +420,24 @@ class UniSimSession:
             if self.pid is None:
                 return
             self.timed_out = what
+            self.ended_by_limit = True
             self.report["timeouts"].append({"what": what, "pid": self.pid})
             logger.error("%s: ending own UniSim process %s", what, self.pid)
             self._kill(self.pid)
+
+    def _take_timeout(self, label: str) -> Optional["UniSimTimeout"]:
+        """The timeout for ``label`` if it fired (cleared, so it is raised once)."""
+        if self.timed_out != label:
+            return None
+        self.timed_out = None
+        return UniSimTimeout(f"{label}: UniSim process ended")
 
     @contextlib.contextmanager
     def limit(self, seconds: Optional[float], what: str = "UniSim work"):
         """End the own process when the block takes longer than ``seconds``.
 
-        ``None`` or 0 disables the limit. Raises ``UniSimTimeout`` when it fires;
-        the session must then be restarted or closed.
+        ``None`` or 0 disables the limit. Raises ``UniSimTimeout`` once when it
+        fires; ``usable`` is then False until ``restart()``.
         """
         if not seconds:
             yield
@@ -432,13 +449,15 @@ class UniSimSession:
         try:
             yield
         except Exception as exc:
-            if self.timed_out == label:
-                raise UniSimTimeout(f"{label}: UniSim process ended") from exc
+            timeout = self._take_timeout(label)
+            if timeout is not None:
+                raise timeout from exc
             raise
         finally:
             timer.cancel()
-        if self.timed_out == label:
-            raise UniSimTimeout(f"{label}: UniSim process ended")
+        timeout = self._take_timeout(label)
+        if timeout is not None:
+            raise timeout
 
     # -- cases ----------------------------------------------------------------
 

@@ -522,14 +522,17 @@ class UniSimWriter:
         prevent stale early-bound wrappers from causing E_ACCESSDENIED.
         A UniSim that is already running is never attached to or quit.
         """
-        if self._session is None or self._session.app is None:
+        if self._session is None or not self._session.usable:
             # Clear gencache to avoid stale type-library wrappers
             self._clear_gencache()
             logger.info("Starting own UniSim Design process via COM...")
             if self._session is None:
                 self._session = _session_module().UniSimSession(
                     visible=self._visible)
-            self._session.start()
+            if self._session.app is None:
+                self._session.start()
+            else:
+                self._session.restart()  # a time limit ended the last build
             self._app = self._session.app
             time.sleep(self.COM_DELAY_LONG)
             logger.info("UniSim started (PID %s).", self._session.pid)

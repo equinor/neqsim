@@ -252,7 +252,7 @@ add-on skills should import it rather than write their own:
 |---|---|
 | Own process only | Starts UniSim late-bound with `CoCreateInstanceEx`, diffs the `UniSimDesign.exe` process list, waits up to 60 s for a UniSim that is closing, otherwise raises `UniSimSessionError`. A running UniSim is never driven or quit. On close: `Quit()`, then end only the own PID if it is still alive. |
 | Pop-up watchdog | Background thread (win32gui, no COM) records and dismisses dialogs of the own PID: OK / Close / Cancel / No, never Yes. Events are in `session.popups`; the writer turns each into a warning and the reader logs them and stores them in `model.session_report["popups"]`. |
-| Wall-clock limits | `session.limit(seconds, what)` and `session.solve(case, cap_s)` end the own process at the limit and raise `UniSimTimeout`. Reader and writer default to `time_limit_s=1800` per read/build (`--time-limit-s` on both CLIs, 0 disables). |
+| Wall-clock limits | `session.limit(seconds, what)` and `session.solve(case, cap_s)` end the own process at the limit and raise `UniSimTimeout` once; `session.usable` is then False and reader/writer restart a fresh process on their next call. Reader and writer default to `time_limit_s=1800` per read/build (`--time-limit-s` on both CLIs, 0 disables). |
 | Work on a copy | `session.open_copy(path)` copies to a temp folder, clears the read-only flag `shutil.copy2` keeps, opens the copy, closes it with `Close(False)` and compares the source SHA-256 before and after (`UniSimSessionError` if it changed). |
 | Solve status | `session.solve_status(case)` returns `is_solving`, stream `MassFlow`/`Pressure`/`Temperature` and tee `Splits` flagged `IsInconsistent`, and streams whose values are empty, with flowsheet paths. |
 
@@ -275,7 +275,11 @@ Rules that still hold:
   left no UniSim process and an unchanged source hash.
 - **One UniSim at a time on a machine.** A second session refuses to start
   while another UniSim stays open; close it (or end the orphan) first. Batch
-  runs stay sequential, one subprocess per case.
+  runs stay sequential, one subprocess per case: `unisim_batch_check.py`
+  gives each child's reader a limit below `--timeout`, and if a child is
+  killed anyway it ends the UniSim processes that appeared during that case,
+  so one hung case cannot block the rest. `UniSimNeqSimBridge` closes its
+  reader before starting its writer and vice versa.
 - `pywin32` is imported only when a session starts, so the module, the reader
   and the writer import (and their tests run) without Windows.
 

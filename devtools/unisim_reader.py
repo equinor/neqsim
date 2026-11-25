@@ -917,7 +917,7 @@ class UniSimReader:
         """
         if self._session is None:
             self._session = _session_module().UniSimSession(visible=self._visible)
-        if self._session.app is not None and not self._session.timed_out:
+        if self._session.usable:
             self._app = self._session.app
             return
         logger.info("Starting own UniSim Design process via COM...")
@@ -1121,21 +1121,20 @@ class UniSimReader:
         Raises:
             RuntimeError: When the case cannot be opened, with the likely cause.
         """
-        timeout_type = _session_module().UniSimTimeout
         try:
             return self._session.open_copy(usc_path)
-        except timeout_type:
-            raise
         except Exception as first_error:  # noqa: BLE001 - COM raises com_error
+            if self._session.ended_by_limit:
+                raise  # the read limit ended UniSim; read() raises UniSimTimeout
             logger.warning("Open failed (%s); retrying in a fresh UniSim "
                            "process", first_error)
             self._session.restart()
             self._app = self._session.app
             try:
                 return self._session.open_copy(usc_path)
-            except timeout_type:
-                raise
             except Exception as retry_error:  # noqa: BLE001
+                if self._session.ended_by_limit:
+                    raise
                 raise RuntimeError(
                     f"UniSim refused to open '{os.path.basename(usc_path)}'. "
                     f"This usually means the case needs a UniSim extension or "
