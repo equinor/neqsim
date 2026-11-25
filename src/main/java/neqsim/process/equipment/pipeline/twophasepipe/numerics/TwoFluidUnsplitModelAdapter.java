@@ -379,13 +379,16 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
           evaluation.getDirectionalPhaseFaceFluxes(), solvedFaces);
     }
     double[][] conservativeFrictionImpulsePerLength = new double[endpointState.length][PHASE_COUNT];
-    if (conservativeFrictionSplitEnabled) {
+    boolean conservativeSlugForceSplitEnabled = equations.isConservativeSlugForceIntegrationEnabled();
+    if (conservativeFrictionSplitEnabled || conservativeSlugForceSplitEnabled) {
       double[][] transportEndpointState = copyMatrixArray(endpointState);
       synchronized (equations) {
         boolean savedConservativeFriction = equations.isConservativeFrictionEnabled();
         try {
-          equations.setConservativeFrictionEnabled(true);
-          endpointState = equations.applyConservativeFriction(endpointState, midpoint, timeStep);
+          equations.setConservativeFrictionEnabled(conservativeFrictionSplitEnabled);
+          endpointState = conservativeSlugForceSplitEnabled
+              ? equations.applyConservativeSlugFriction(endpointState, midpoint, timeStep)
+              : equations.applyConservativeFriction(endpointState, midpoint, timeStep);
         } finally {
           equations.setConservativeFrictionEnabled(savedConservativeFriction);
         }
@@ -428,10 +431,13 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
   void validatePreparedOperator() {
     synchronized (equations) {
       if (equations.isIncludeEnergyEquation() || equations.isIncludeMassTransfer() || equations.isHeatTransferEnabled()
-          || equations.isImplicitInterfacialPressure() || equations.isStiffBubbleDragEnabled()
-          || equations.isConservativeSlugForceIntegrationEnabled()) {
+          || equations.isImplicitInterfacialPressure() || equations.isStiffBubbleDragEnabled()) {
         throw new IllegalStateException("Prepared unsplit steps require an isothermal operator without phase transfer "
-            + "or separately split stiff/subcell source integration");
+            + "or unsupported stiff source integration");
+      }
+      if (conservativeFrictionSplitEnabled && equations.isConservativeSlugForceIntegrationEnabled()) {
+        throw new IllegalStateException(
+            "Mean-cell and tracked subcell friction cannot own the same accepted source interval");
       }
     }
   }

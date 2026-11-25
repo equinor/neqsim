@@ -57,6 +57,12 @@ class TwoFluidUnsplitTengesdalPreparationTest {
     verifyPreparation(cells, maximumStep, 0.1, UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER, true);
   }
 
+  @ParameterizedTest
+  @CsvSource({"16,0.1", "16,0.05", "24,0.05"})
+  void shortTrackedSubcellForceRiserHandoffIsConservative(int cells, double maximumStep) {
+    verifyTrackedSubcellForces(cells, maximumStep);
+  }
+
   @Tag("slow")
   @EnabledIfSystemProperty(named = "neqsim.unsplit.tengesdal.qualification", matches = "true")
   @ParameterizedTest
@@ -283,6 +289,53 @@ class TwoFluidUnsplitTengesdalPreparationTest {
       return Double.NaN;
     }
     return TwoFluidBenchmarkMetrics.relativeMeshSpread(reference, refined);
+  }
+
+  private static void verifyTrackedSubcellForces(int count, double maximumStep) {
+    TwoFluidPipe pipe = createPipe(count);
+    pipe.setUnsplitPressureInterpolationEnabled(true);
+    pipe.setBlendInclinedAnnularSlugTransitions(true);
+    pipe.setSignedDonorTransportEnabled(true);
+    pipe.setSlugTrackingMode(TwoFluidPipe.SlugTrackingMode.CONSERVATIVE_LAGRANGIAN);
+    pipe.configureLagrangianSlugTracking(false, true, false);
+    LiquidAccumulationTracker.SlugCharacteristics characteristics =
+        new LiquidAccumulationTracker.SlugCharacteristics();
+    characteristics.tailPosition = 18.0;
+    characteristics.frontPosition = 24.0;
+    characteristics.length = characteristics.frontPosition - characteristics.tailPosition;
+    characteristics.holdup = 0.9;
+    characteristics.volume =
+        characteristics.length * pipe.getSectionSnapshots()[0].getArea() * characteristics.holdup;
+    LagrangianSlugTracker.SlugBubbleUnit original =
+        pipe.getLagrangianSlugTracker().initializeTerrainSlug(characteristics, pipe.getSectionSnapshots());
+    assertTrue(original != null);
+    pipe.getLagrangianSlugTracker().setEnableTerrainSlugGeneration(false);
+    pipe.setSharedSlugForceBalanceEnabled(true);
+    pipe.setConservativeSlugForceIntegrationEnabled(true);
+
+    UnsplitTransientSolver solver = new UnsplitTransientSolver();
+    solver.setRelativeTolerance(1.0e-9);
+    solver.setTimeIntegrationMethod(UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER);
+    PreparedInterval interval =
+        pipe.prepareUnsplitTransient(0.1, maximumStep, solver, pipe.createUnsplitDensityModel());
+    assertEquals(0.1, interval.getEndTimeSeconds(), 0.0);
+    assertEquals(0.0, pipe.getSimulationTime(), 0.0);
+    assertEquals(0.0, original.age, 0.0);
+    LagrangianSlugTracker accepted = interval.getAcceptedSlugTracker();
+    assertTrue(accepted != null);
+    assertEquals(1, accepted.getSlugCount());
+    assertEquals(0.1, accepted.getSlugs().get(0).age, 1.0e-12);
+    double impulse = 0.0;
+    for (double[] cellImpulse : interval.getConservativeFrictionImpulsePerLength()) {
+      for (double phaseImpulse : cellImpulse) {
+        assertTrue(Double.isFinite(phaseImpulse));
+        impulse += Math.abs(phaseImpulse);
+      }
+    }
+    assertTrue(impulse > 0.0);
+    for (double residual : interval.getMassResidualKg()) {
+      assertEquals(0.0, residual, 1.0e-8);
+    }
   }
 
   private static void verifyPreparation(int count, double maximumStep, double duration) {
