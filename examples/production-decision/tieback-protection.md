@@ -39,7 +39,15 @@ To replay all ten scenarios, the time and grid refinements, and the fully rated 
 python examples/production-decision/verify_tieback_protection.py --run tieback-cases > qualification.json
 ```
 
-The coupled well rate is initialized independently on each mesh with the same installed resistance. Both meshes run without a normal-operation trip and both detect an LC1 exceedance with isolation unavailable. The verifier reports separate functional and numerical verdicts. The normal case must remain online at all three mesh/timestep combinations. The numerical screen compares the pressure histories at both physical route endpoints within the timing window, the substep-resolved peak in each zone, and the HIPPS trip and both seat-feedback times. A **numerical HOLD** records any difference above the fixture tolerances of 0.5 bar or 0.5 s. The matrix also includes `normal-.125-1.json` and an internal Courant-number refinement, `psd_failed-cfl.125-1.json`. Selecting a reinforced length or final setpoints requires an independently benchmarked pressure envelope. The riser-base peak is not yet mesh-converged (see below). The 90 s results cover only the simulated interval.
+The coupled well rate is initialized independently on each mesh with the same installed resistance.
+The lost-isolation case must exceed the LC1 allowable on both the 60- and 120-cell meshes. The
+normal case must remain online on 60, 120 and 240 cells, including the 60-cell run with a
+0.125 s outer step. The verifier reports separate functional and numerical verdicts. The numerical
+screen compares the pressure histories at both physical route endpoints within the timing window,
+the substep-resolved peak in each zone, and the HIPPS trip and both seat-feedback times. It compares
+60 to 120 cells and then 120 to 240 cells at fixed outer step and Courant number. Both time
+refinements use the 60-cell reference. A **numerical HOLD** records any difference above the
+fixture tolerances of 0.5 bar or 0.5 s. The 90 s results cover the simulated interval.
 
 The DEXPI 2.0.1 physical design projects the well as an inlet boundary, the tree and active manifold branch as individual valves, the hydraulic route as the named FL-201 line, and each PSV as a side branch. The output contains a tag register, cause/effect connections, XML and read-back evidence. The P&ID sheets trace the series valves and each relief takeoff through numbered continuations. Instrument detail sheets identify the measured valve ports and the declared shutdown functions. Each of the 15 functional links has a signal identifier and reciprocal sheet references. The receipt reports material drawing coverage separately and lists any unresolved attachments or incomplete signals. The separate PFD overview still has layout and coverage findings. Alternative rate/phase models, measured response curves, verified hydraulic boundaries and the project SRS are required for asset use.
 
@@ -67,18 +75,18 @@ available:
 | Mesh 120 cells | 0.00 | +0.01 | +0.36 bar | all +0.25 s earlier | 0.49 bar |
 | Mesh 240 cells (single run) | +0.06 | +0.20 | +0.96 bar | not screened | not screened |
 
-The verifier passes all three gated refinements with functional PASS and numerical PASS. The
-endpoint criterion matches each reference sample with the refined history inside the 0.5 s timing
-window and requires 0.5 bar. Front arrival is therefore judged once, by the timing tolerance applied
-to trip and seat feedback. The strict same-time differences remain in each comparison as
-`endpoint_history_differences`. The largest is 1.10 bar at 41.5 s on 120 cells, where HIPV-A seats
-one scan earlier. The tightest tube margin is the 120-cell subsea end at 66 s (0.49 bar), a slow
-post-isolation drift. That is a spatial error, not a timing shift.
+The earlier verifier screened through 120 cells and returned functional PASS and numerical PASS.
+The 240-cell LC2/riser result adds a separate 0.60 bar increment over 120 cells, above the 0.5 bar
+criterion. The endpoint criterion matches each reference sample with the refined history inside
+the 0.5 s timing window and requires 0.5 bar. The strict same-time differences remain in each
+comparison as `endpoint_history_differences`. In the 60-to-120-cell comparison, the largest
+same-time difference was 1.10 bar at 41.5 s, where HIPV-A seats one scan earlier. The subsea
+timing-window difference reached 0.49 bar at 66 s during slow post-isolation drift.
 
 The riser-base peak is converged in time but not in space. It rises by 0.36 bar from 60 to
 120 cells and by 0.60 bar from 120 to 240 cells, and the excursion is local to one cell. With
 isolation available the 82 bara LC2 allowable keeps a margin of 1.0 bar on the finest mesh.
 Before that margin is credited, an independent benchmark of riser-base liquid fallback and
 gas-pocket collapse must confirm it. The lost-isolation case peaks at 80.9 bara in LC2 and still
-exceeds the LC1 allowable by 0.28 bar. Existing receipt directories must be regenerated: receipts
-without `pipe_cfl` and `zone_envelope_bara` are rejected.
+exceeds the LC1 allowable by 0.28 bar. Regenerate older receipt directories or add the
+`normal-.25-4.json` and `psd_failed-.25-4.json` receipts on the same source and fixture basis.

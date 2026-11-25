@@ -2,7 +2,7 @@
 name: neqsim-process-safety
 version: "1.5.0"
 description: "Process safety methodology - barriers, PSFs/SCEs, HAZOP, LOPA, SIL per IEC 61511, integrated safety response, change revalidation, bow-tie, risk matrix, TR3001 overpressure studies, trapped-liquid rupture. USE WHEN: a task needs barrier registers, hazard identification, LOPA, SIF SIL assignment, ESD/blowdown/relief/flare evidence, safety revalidation, overpressure governing cases, PFP demand or risk evaluation. Anchors on neqsim.process.safety.barrier, .risk, .overpressure, .rupture."
-last_verified: "2026-11-22"
+last_verified: "2026-11-25"
 requires:
   java_packages: [neqsim.process.safety.barrier, neqsim.process.safety.risk, neqsim.process.safety.overpressure, neqsim.process.safety.rupture, neqsim.process.safety.risk.sis.nog070, neqsim.process.safety.esd, neqsim.process.safety.api14c, neqsim.process.safety.compliance]
 ---
@@ -43,7 +43,9 @@ PSV sizing, or an adequate screen as API tank-vent sizing or conformity.
 
 For a well-to-platform case, use the [executable pressure-protection study](../../../examples/production-decision/tieback-protection.md).
 Record each zone's pressure datum and allowable transient pressure, valve feedback, actual boundary transfers and refinement sensitivity.
-Carry the numerical and drawing HOLD into the study. Evaluate channel independence and reliability with project data.
+Use the verifier's adjacent 60→120 and 120→240 cell comparisons for the synthetic case. Carry
+the resulting numerical verdict and the drawing findings into the study. Evaluate channel
+independence and reliability with project data.
 
 A `TwoFluidPipe` blocked-outlet or HIPPS run must enable `setEnableCoupledPressureMomentum(true)` and
 `setEnableInterfacialPressure(true)`. Without them the pressure behind a `CLOSED` boundary stays flat while mass
