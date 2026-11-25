@@ -175,6 +175,80 @@ def _validate_existing_wells_comparison(block) -> Tuple[List[str], List[str]]:
     return errors, warnings
 
 
+def _rows_of(block, key: str) -> list:
+    """Return the list of rows of a block that is either a list or an object holding the list under ``key``."""
+    if isinstance(block, list):
+        return block
+    if isinstance(block, dict):
+        rows = block.get(key)
+        if isinstance(rows, list):
+            return rows
+    return []
+
+
+def _validate_scenario_cv_blocks(results: dict) -> Tuple[List[str], List[str]]:
+    """Validate scenario_register, valve_cv_inputs and cv_sensitivity of an overpressure / failed-open study.
+
+    A reviewer must see which scenario each relief rate belongs to (study status, valve states, limiting mechanism,
+    governing or not), which installed valve Cv the rates rest on (value, source, quality) and how the rates depend on
+    Cv for failed-open and for blocked outlet. Structural problems are errors; missing parts are warnings.
+    ``{"not_applicable": "<reason>"}`` is accepted for each block.
+
+    Args:
+        results: parsed results.json
+
+    Returns:
+        (errors, warnings)
+    """
+    errors: List[str] = []
+    warnings: List[str] = []
+    specs = (
+        ("scenario_register", "scenarios", (("study_status", "status"), ("valves", "valve_states"), ("limit", "limiting_mechanism"), ("governing", "governs")),
+         "one row per scenario with study status (calculated / simple estimate / qualitative), valve states, limiting mechanism, relief result and governing yes/no"),
+        ("valve_cv_inputs", "inputs", (("element", "valve", "tag"), ("value",), ("source",), ("grade", "quality")),
+         "every flow-limiting valve and PSV with installed Cv or capacity, source (document, revision, page or ASSUMED) and quality grade"),
+        ("cv_sensitivity", None, (), "relief rate, time to set pressure and peak pressure against installed Cv for failed-open and for blocked outlet"),
+    )
+    for key, rows_key, fields, hint in specs:
+        block = results.get(key)
+        if block is None:
+            warnings.append(
+                f"{key}: the task is an overpressure / failed-open study but has no {key} block ({hint}; "
+                "see neqsim-hp-lp-interface-overpressure section 2c)"
+            )
+            continue
+        if not isinstance(block, (dict, list)):
+            errors.append(f"{key}: must be a JSON object")
+            continue
+        if isinstance(block, dict) and "not_applicable" in block:
+            if not str(block.get("not_applicable") or "").strip():
+                warnings.append(f"{key}.not_applicable: give the reason")
+            continue
+        if key == "cv_sensitivity":
+            if not isinstance(block, dict):
+                errors.append("cv_sensitivity: must be a JSON object")
+                continue
+            if not _first_present(block, ("ivo_cc", "failed_open", "ivocc")):
+                warnings.append("cv_sensitivity.ivo_cc: add the failed-open (IVO/choke collapse) sensitivity against choke Cv, PV Cv and source pressure")
+            if not _first_present(block, ("blocked_outlet", "blocked")):
+                warnings.append("cv_sensitivity.blocked_outlet: add the blocked-outlet sensitivity (source cap against choke Cv at the actual dP)")
+            if not _first_present(block, ("findings", "statement")):
+                warnings.append("cv_sensitivity.findings: state what the relief rate depends on and what it does not")
+            continue
+        rows = _rows_of(block, rows_key)
+        if not rows:
+            warnings.append(f"{key}.{rows_key}: list the rows ({hint})")
+            continue
+        for names in fields:
+            if not any(isinstance(r, dict) and any(r.get(n) for n in names) for r in rows):
+                warnings.append(f"{key}.{rows_key}: no row gives {'/'.join(names)}")
+            else:
+                missing = [i for i, r in enumerate(rows) if isinstance(r, dict) and not any(r.get(n) for n in names)]
+                if len(missing) > len(rows) // 2:
+                    warnings.append(f"{key}.{rows_key}: most rows lack {'/'.join(names)} (rows {missing[:5]}...)")
+    return errors, warnings
+
+
 def _mentions_pvt_tuning(results: dict) -> bool:
     text = " ".join(str(results.get(k, "")) for k in ("approach", "conclusions", "objective", "task_statement")).lower()
     return any(h in text for h in PVT_TUNING_HINTS)
@@ -342,6 +416,12 @@ def validate(results: dict) -> Tuple[List[str], List[str]]:
             "(compare the new source with existing/previous wells and inputs to the receiving separator/header, and check "
             "blocked outlet against current inflow; see neqsim-hp-lp-interface-overpressure section 2b)"
         )
+
+    # scenario_register, valve_cv_inputs, cv_sensitivity (mandatory reporting blocks for overpressure / failed-open studies)
+    if _mentions_overpressure_study(results) or any(k in results for k in ("scenario_register", "valve_cv_inputs", "cv_sensitivity")):
+        e, w = _validate_scenario_cv_blocks(results)
+        errors.extend(e)
+        warnings.extend(w)
 
     # figure_discussion entries
     fd = results.get("figure_discussion")
