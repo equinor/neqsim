@@ -1488,9 +1488,26 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Check whether side draws, pumparounds, or hydraulics add outer tear variables.
+   * Check whether AUTO should first try the simultaneous-correction solver on this column.
    *
-   * @return {@code true} when an outer tear-variable solve is required
+   * <p>
+   * The direct Naphtali-Sandholm solve is the fastest route for a column with both a condenser and a reboiler and ideal
+   * stages. Columns with an outer tear loop, side draws, a reactive section or Murphree efficiencies below one keep the
+   * sequential candidate ladder: the simultaneous solver represents Murphree efficiency with a different model, and the
+   * tear loops call the inner solver from a state the sequential solvers reuse.
+   * </p>
+   *
+   * @return {@code true} when the direct simultaneous-correction probe applies
+   */
+  boolean isPreferredSimultaneousCorrectionCandidate() {
+    return hasReboiler && hasCondenser && numberOfTrays > 1 && !isReactive() && !hasActiveColumnTearVariables()
+        && !hasActiveSideDrawFractions() && !hasNonidealMurphreeStages();
+  }
+
+  /**
+   * Check whether an outer column tear loop is configured.
+   *
+   * @return {@code true} when side-draw specifications, pumparounds or hydraulic pressure-drop coupling are active
    */
   private boolean hasActiveColumnTearVariables() {
     return !sideDrawSpecifications.isEmpty() || !pumparounds.isEmpty() || hydraulicPressureDropCouplingEnabled;

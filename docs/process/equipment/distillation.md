@@ -415,6 +415,54 @@ DistillationColumn.SolverType used = column.getLastSolverTypeUsed();
 The measurements do not cover CPA or other associating fluids, absorbers without a reboiler, side
 draws or pumparounds.
 
+### Simultaneous correction: analytic Jacobian and step control
+
+`NAPHTALI_SANDHOLM` solves the material, equilibrium-summation and energy (or terminal
+specification) equations of all stages together. The stage variables are the liquid component
+flows, the temperature and the total vapor flow.
+
+The Jacobian is built from analytic thermodynamic derivatives. The stage K-values are defined by
+$\ln K_i = \ln \phi^L_i(T, x) - \ln \phi^V_i(T, y)$ with $y_i = K_i x_i / \sum_k K_k x_k$.
+Differentiating this fixed point gives one linear system per stage,
+
+$$
+\left(I + A^V \operatorname{diag}(y)\right) d\ln K
+  = \left(B^L - B^V\right) dT
+  + \left(A^L - A^V \operatorname{diag}(K / s)\right) \frac{dl}{L},
+$$
+
+where $A = \partial \ln \phi_i / \partial n_k$ and $B = \partial \ln \phi_i / \partial T$ come
+from the equation of state, $l$ are the liquid component flows, $L = \sum l$ and $s = \sum K x$.
+Enthalpy derivatives use the heat capacity and the partial molar enthalpies
+$\bar h_i = h_i^{ig} - R T^2 \, \partial \ln \phi_i / \partial T$. A Jacobian costs two phase
+evaluations per stage instead of the $C + 2$ perturbed stage evaluations of the former
+finite-difference build, and it is the exact derivative of the residual that the line search
+measures, including the state-dependent scale of the energy equation.
+
+Finite differences are still used for stages with a Murphree efficiency below one and for a
+thermodynamic model whose derivatives fail the built-in checks (composition derivatives homogeneous
+of degree zero, partial molar enthalpies summing to the phase enthalpy).
+
+```java
+column.setSolverType(DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
+column.run();
+int analyticColumns = column.getLastNaphtaliAnalyticJacobianColumns();
+int finiteDifferenceColumns = column.getLastNaphtaliFiniteDifferenceJacobianColumns();
+double jacobianSeconds = column.getLastNaphtaliJacobianBuildTimeSeconds();
+```
+
+Each Newton step is scaled as a whole, so the direction and the closure of the linear material
+balances are kept. The limits per stage are 10 K on temperature, half the vapor flow plus 5 % of the
+flow scale, and for each liquid component flow half that flow plus 5 % of the stage liquid flow.
+The last limit was previously 0.1 % of the flow scale, which let one trace component throttle the
+whole step. A component flow that a step would still make negative is damped exponentially for that
+variable only, as proposed by Naphtali and Sandholm (1971).
+
+The Sum-Rates initialization phase is skipped when a condenser reflux ratio or reboiler boilup
+ratio is active. Its sweeps use terminal energy equations and diverged on those columns, after
+which the bubble-point state was restored. It still runs for columns specified by terminal
+temperatures.
+
 ### Anderson mixing in the sequential solvers
 
 `DIRECT_SUBSTITUTION`, `DAMPED_SUBSTITUTION` and the `WEGSTEIN` fallback mix the tray outlet states

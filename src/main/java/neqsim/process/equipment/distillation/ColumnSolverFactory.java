@@ -140,6 +140,10 @@ final class ColumnSolverFactory {
       if (preferredResult != null) {
         return preferredResult;
       }
+      preferredResult = runPreferredSimultaneousCorrection(column, id, summary, feasibilityReport);
+      if (preferredResult != null) {
+        return preferredResult;
+      }
 
       DistillationColumn candidateSource = createAutoCandidate(column);
       if (candidateSource == null) {
@@ -689,6 +693,57 @@ final class ColumnSolverFactory {
       appendAutoCandidateSummary(summary, DistillationColumn.SolverType.SUM_RATES, null,
           "preferred candidate failed: " + exception.getMessage());
       DistillationColumn.logger.debug("Preferred reboiler-only SUM_RATES candidate failed for {}.", column.getName(),
+          exception);
+      return null;
+    }
+  }
+
+  /**
+   * Try direct simultaneous correction before the sequential AUTO ladder.
+   *
+   * <p>
+   * For a column with a condenser, a reboiler and ideal stages the Naphtali-Sandholm solver with its analytic Jacobian
+   * converges the full MESH system in a fraction of the time of the relaxed sequential base solve. The candidate is a
+   * copy, runs without its own damped fallback, and is accepted only when the simultaneous solver itself finished with
+   * {@link DistillationColumn.SolveStatus#RIGOROUS_CONVERGED}. Any other outcome leaves the live column untouched and
+   * continues with the unchanged ladder.
+   * </p>
+   *
+   * @param column live AUTO column
+   * @param id calculation identifier
+   * @param summary automatic solver summary builder
+   * @param feasibilityReport feasibility report already produced for the live column
+   * @return accepted simultaneous-correction result, or {@code null} when AUTO should use the base ladder
+   */
+  private static ColumnSolveResult runPreferredSimultaneousCorrection(DistillationColumn column, UUID id,
+      StringBuilder summary, String feasibilityReport) {
+    DistillationColumn.SolverType solverType = DistillationColumn.SolverType.NAPHTALI_SANDHOLM;
+    if (!column.isPreferredSimultaneousCorrectionCandidate() || hasAdjustableProductSpecification(column)) {
+      return null;
+    }
+    DistillationColumn candidate = createAutoCandidate(column);
+    if (candidate == null) {
+      appendAutoCandidateSummary(summary, solverType, null,
+          "preferred candidate copy failed; robust base ladder retained");
+      return null;
+    }
+    candidate.setLastAutoFeasibilityReport(feasibilityReport);
+    prepareAutoCandidate(candidate, solverType);
+    try {
+      ColumnSolveResult result = runAutoProbeCandidate(candidate, solverType, id);
+      appendAutoCandidateSummary(summary, solverType, result, autoProbeNote(solverType, candidate, result));
+      if (!isAcceptableAutoCandidate(candidate, result) || result.getSolverType() != solverType
+          || candidate.getLastSolveStatus() != DistillationColumn.SolveStatus.RIGOROUS_CONVERGED) {
+        return null;
+      }
+      column.acceptAutoSolverCandidate(candidate, result.getSolverType());
+      column.setLastAutoFeasibilityReport(feasibilityReport);
+      column.setLastAutoSolverSummary(summary.toString());
+      column.recordAutoSolverEvent("selected preferred " + result.getSolverType());
+      return ColumnSolveResult.from(column, result.getSolverType());
+    } catch (RuntimeException exception) {
+      appendAutoCandidateSummary(summary, solverType, null, "preferred candidate failed: " + exception.getMessage());
+      DistillationColumn.logger.debug("Preferred NAPHTALI_SANDHOLM candidate failed for {}.", column.getName(),
           exception);
       return null;
     }
