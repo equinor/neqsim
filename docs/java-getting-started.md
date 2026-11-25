@@ -184,7 +184,7 @@ reference over the operating envelope.
 | `SystemGERG2008Eos` | Covered natural-gas properties | Confirm mixture/property coverage; not every derivative or phase-equilibrium path is implemented |
 | `SystemUMRPRUMCEos` | UMR-PRU hydrocarbon screening | Confirm group assignment and validate the intended temperature/composition range |
 
-See [thermodynamic models](thermo/thermodynamic_models) and
+See [thermodynamic models](thermo/thermodynamic_models.md) and
 [system implementations](thermo/system/) before extending a screening model to
 engineering decisions.
 
@@ -254,6 +254,6 @@ use the wrapper-managed project configuration.
 - [JavaDoc API reference](https://equinor.github.io/neqsim/javadoc/index.html)
 - [Current releases](https://github.com/equinor/neqsim/releases)
 - [Java examples catalog](examples/)
-- [Docker getting started](docker-getting-started)
+- [Docker getting started](docker-getting-started.md)
 - [Contributing guide](https://github.com/equinor/neqsim/blob/master/CONTRIBUTING.md)
 - [GitHub Discussions](https://github.com/equinor/neqsim/discussions)

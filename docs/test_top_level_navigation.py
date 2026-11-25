@@ -29,6 +29,25 @@ PROCESS_NAVIGATION_TARGETS = {
     ),
 }
 
+SOURCE_SAFE_ROOT_NAVIGATION_TARGETS = {
+    DOCS / "docker-getting-started.md": {
+        "java-getting-started.md": DOCS / "java-getting-started.md",
+        "quickstart/python-quickstart.md": DOCS / "quickstart" / "python-quickstart.md",
+        "development/DEVELOPER_SETUP.md": DOCS / "development" / "DEVELOPER_SETUP.md",
+        "modules.md": DOCS / "modules.md",
+    },
+    DOCS / "java-getting-started.md": {
+        "thermo/thermodynamic_models.md": DOCS / "thermo" / "thermodynamic_models.md",
+        "docker-getting-started.md": DOCS / "docker-getting-started.md",
+    },
+    DOCS / "modules.md": {
+        "wiki/distillation_column.md": DOCS / "wiki" / "distillation_column.md",
+        "index.md": DOCS / "index.md",
+        "README.md": DOCS / "README.md",
+        "REFERENCE_MANUAL_INDEX.md": DOCS / "REFERENCE_MANUAL_INDEX.md",
+    },
+}
+
 FRONT_MATTER = re.compile(r"\A---\n(?P<fields>.*?)\n---\n", re.DOTALL)
 MARKDOWN_LINK = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 HTML_LINK = re.compile(r'href=["\']([^"\']+)["\']')
@@ -154,6 +173,19 @@ def test_top_level_landing_relative_targets_resolve() -> None:
             assert any(candidate.exists() for candidate in candidates), (
                 f"{page}: unresolved relative target {target}"
             )
+
+
+def test_root_navigation_uses_explicit_source_targets() -> None:
+    for source, expected in SOURCE_SAFE_ROOT_NAVIGATION_TARGETS.items():
+        targets = _link_targets(source.read_text(encoding="utf-8"))
+        for explicit_source, target in expected.items():
+            assert targets.count(explicit_source) == 1, (
+                f"{source}: expected one explicit source link to {explicit_source}"
+            )
+            assert explicit_source[:-3] not in targets, (
+                f"{source}: extensionless source link survived for {explicit_source}"
+            )
+            assert target.is_file(), f"{source}: missing target {target}"
 
 
 def test_main_landing_routes_to_foundational_package_guides() -> None:
@@ -399,6 +431,7 @@ def load_tests(
             test_top_level_landing_metadata_and_rendered_titles,
             test_all_landing_pages_use_front_matter_title_only,
             test_top_level_landing_relative_targets_resolve,
+            test_root_navigation_uses_explicit_source_targets,
             test_main_landing_routes_to_foundational_package_guides,
             test_main_landing_routes_to_standards_and_measurement_guides,
             test_main_landing_routes_to_compressor_guide,
