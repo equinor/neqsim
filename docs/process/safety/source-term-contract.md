@@ -51,9 +51,12 @@ Version 1 emits `evidenceLevel: UNQUALIFIED`. Calculated frames also carry an op
 references. Existing v1 frames without that extension remain schema-compatible. The
 `independentEvidence` flag is true only when at least one retained record was produced outside
 the model implementation. The ideal-gas Fanno manifest includes the public NASA GFSSP analytical
-case. The HEM manifest includes the published STEP flashing-propane rate, but explicitly records
-that the declared liquid withdrawal is not comparable to the current gas-only equilibrium
-upstream state and that measurement uncertainty is missing. It also retains six published
+case. The HEM manifest includes the published STEP flashing-propane rate. Its selected-liquid
+comparison retains `upstreamPreparation=PRESERVE_SELECTED_PHASE` and
+`selectedUpstreamPhase=OIL` in the model object, while ordinary overall-state requests emit
+`EQUILIBRATE_TP` and no selected phase. These additive fields preserve v1 compatibility. The STEP
+comparison records the adverse rate error, EOS saturation-boundary deviation and missing
+measurement uncertainty instead of promoting the evidence level. It also retains six published
 dense-liquid CO2 restriction cases with reported uncertainty. Their ambient expansions encounter
 the fail-closed solid-risk boundary, so failed frames contain diagnostics but no source payload and
 the comparison receipts intentionally omit calculated rates and errors. Every
