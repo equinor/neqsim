@@ -36,58 +36,58 @@ thermo/
 
 ### Core Guides
 
-- [Component Reference List](component_list.md): Searchable NeqSim component names, aliases, CAS numbers, and equation-of-state availability.
-- [Reservoir Fluid Classification](fluid_classification.md): Screen reservoir fluids using C7+, GOR, and phase-envelope classification routes.
-- [Reading Fluid Properties](reading_fluid_properties.md): Initialize and read thermodynamic and transport properties with explicit units and API boundaries.
-- [CPA Water Caloric Alpha](cpa_water_caloric.md): Opt-in liquid-water heat-capacity improvement, IAPWS-95 calibration, thermodynamic consistency and validation limits.
-- [Homogeneous-equilibrium Acoustic Speed](equilibrium_sound_speed.md): Explicit isentropic EOS-density derivative for single-phase and vapor-liquid fluids, with closure, step convergence and phase-boundary diagnostics; distinct from legacy phase averaging.
-- [Thermodynamic Models Guide](thermodynamic_models.md): **Comprehensive overview** of all thermodynamic models in NeqSim, including equations of state, CPA, reference equations (GERG-2008, EOS-CG), activity coefficient models, electrolyte models, and the auto-select feature. Covers theory, usage, and model selection guidelines.
-- [Experimental Solid Helmholtz Models](solid_helmholtz_models.md): **Pure solid-state and freezing-point workflows** for solid argon and para-hydrogen, with explicit units, validity ranges, structured convergence diagnostics, and opt-in limitations.
-- [Mercury Thermodynamics](mercury_thermodynamics.md): **Mercury-focused workflow** for SRK-TwuCoon-Statoil-EOS, UMR-PRU-MC with the mercury calculator parameters and a separate mercury phase, TPflash setup, INTER-table usage, and thesis-linked correlation guidance.
-- [Søreide-Whitson Model](SoreideWhitsonModel.md): **Gas solubility in brine** - Modified Peng-Robinson EoS with salinity-dependent alpha function for water. Essential for produced water emission calculations and used in **NeqSimLive**. Includes mathematical formulation, salt type coefficients, validation data, and literature references.
-- [Fluid Creation Guide](fluid_creation_guide.md): **Comprehensive guide** to creating fluids in NeqSim, including all available equations of state, mixing rules, and model selection guidelines.
-- [Mixing Rules Guide](mixing_rules_guide.md): **Detailed documentation** on mixing rules, including mathematical formulations, binary interaction parameters, and usage examples for different applications.
-- [Flash Calculations Guide](flash_calculations_guide.md): **Comprehensive documentation** of flash calculations available via ThermodynamicOperations, including TP, PH, PS, VU flashes, saturation calculations, and hydrate equilibria.
-- [Reactive Flash](reactive_flash.md): **Simultaneous chemical and phase equilibrium** using the Modified RAND method. Covers reactive TP and PH flash for systems with gas-phase reactions, ionic equilibria, and multiphase reactive systems.
-- [Reaction Model Audit](reaction_model_audit.md): **Read-only provenance and compatibility diagnostics** for active reaction sets, concentration bases, stored parameters, and model-specific validation declarations.
-- [Hydrate Models Guide](hydrate_models.md): **Comprehensive documentation** of gas hydrate thermodynamic models, including van der Waals-Platteeuw theory, Structure I/II hydrates, CPA and PVTsim implementations, and inhibitor modeling.
-- [Electrolyte CPA Model](ElectrolyteCPAModel.md): **Detailed documentation** of the electrolyte CPA model, including Fürst electrostatic contributions, validation data, and usage examples.
-- [Pitzer Parameter Provenance and Coverage](pitzer_parameter_provenance.md): **Dataset and safety reference** for Pitzer equation conventions, source/licensing comparisons, mixed-ion coverage diagnostics, and parameter-adoption gates.
-- [CO2-ion Furst Layer Ablation](co2_divalent_furst_ablation.md): **Diagnostic/HOLD** — controlled no-fit CaCl2/MgCl2 screen of the Furst CO2-ion contribution; not a production parameter qualification.
-- [Pitzer Hydrate Equilibrium](pitzer_hydrate_equilibrium.md): CO2/chloride-brine hydrate onset temperatures, pressures and curves, explicit neutral interaction inputs, and reference-state and temperature limits.
-- [Electrolyte VLE and VLLE Phase Boundaries](electrolyte_phase_boundaries.md): **Bracketed saturation API** for Pitzer and electrolyte-EOS gas, oil and aqueous phase appearance with balance, charge, fugacity and topology diagnostics.
+- [Component Reference List](component_list): Searchable NeqSim component names, aliases, CAS numbers, and equation-of-state availability.
+- [Reservoir Fluid Classification](fluid_classification): Screen reservoir fluids using C7+, GOR, and phase-envelope classification routes.
+- [Reading Fluid Properties](reading_fluid_properties): Initialize and read thermodynamic and transport properties with explicit units and API boundaries.
+- [CPA Water Caloric Alpha](cpa_water_caloric): Opt-in liquid-water heat-capacity improvement, IAPWS-95 calibration, thermodynamic consistency and validation limits.
+- [Homogeneous-equilibrium Acoustic Speed](equilibrium_sound_speed): Explicit isentropic EOS-density derivative for single-phase and vapor-liquid fluids, with closure, step convergence and phase-boundary diagnostics; distinct from legacy phase averaging.
+- [Thermodynamic Models Guide](thermodynamic_models): **Comprehensive overview** of all thermodynamic models in NeqSim, including equations of state, CPA, reference equations (GERG-2008, EOS-CG), activity coefficient models, electrolyte models, and the auto-select feature. Covers theory, usage, and model selection guidelines.
+- [Experimental Solid Helmholtz Models](solid_helmholtz_models): **Pure solid-state and freezing-point workflows** for solid argon and para-hydrogen, with explicit units, validity ranges, structured convergence diagnostics, and opt-in limitations.
+- [Mercury Thermodynamics](mercury_thermodynamics): **Mercury-focused workflow** for SRK-TwuCoon-Statoil-EOS, UMR-PRU-MC with the mercury calculator parameters and a separate mercury phase, TPflash setup, INTER-table usage, and thesis-linked correlation guidance.
+- [Søreide-Whitson Model](SoreideWhitsonModel): **Gas solubility in brine** - Modified Peng-Robinson EoS with salinity-dependent alpha function for water. Essential for produced water emission calculations and used in **NeqSimLive**. Includes mathematical formulation, salt type coefficients, validation data, and literature references.
+- [Fluid Creation Guide](fluid_creation_guide): **Comprehensive guide** to creating fluids in NeqSim, including all available equations of state, mixing rules, and model selection guidelines.
+- [Mixing Rules Guide](mixing_rules_guide): **Detailed documentation** on mixing rules, including mathematical formulations, binary interaction parameters, and usage examples for different applications.
+- [Flash Calculations Guide](flash_calculations_guide): **Comprehensive documentation** of flash calculations available via ThermodynamicOperations, including TP, PH, PS, VU flashes, saturation calculations, and hydrate equilibria.
+- [Reactive Flash](reactive_flash): **Simultaneous chemical and phase equilibrium** using the Modified RAND method. Covers reactive TP and PH flash for systems with gas-phase reactions, ionic equilibria, and multiphase reactive systems.
+- [Reaction Model Audit](reaction_model_audit): **Read-only provenance and compatibility diagnostics** for active reaction sets, concentration bases, stored parameters, and model-specific validation declarations.
+- [Hydrate Models Guide](hydrate_models): **Comprehensive documentation** of gas hydrate thermodynamic models, including van der Waals-Platteeuw theory, Structure I/II hydrates, CPA and PVTsim implementations, and inhibitor modeling.
+- [Electrolyte CPA Model](ElectrolyteCPAModel): **Detailed documentation** of the electrolyte CPA model, including Fürst electrostatic contributions, validation data, and usage examples.
+- [Pitzer Parameter Provenance and Coverage](pitzer_parameter_provenance): **Dataset and safety reference** for Pitzer equation conventions, source/licensing comparisons, mixed-ion coverage diagnostics, and parameter-adoption gates.
+- [CO2-ion Furst Layer Ablation](co2_divalent_furst_ablation): **Diagnostic/HOLD** — controlled no-fit CaCl2/MgCl2 screen of the Furst CO2-ion contribution; not a production parameter qualification.
+- [Pitzer Hydrate Equilibrium](pitzer_hydrate_equilibrium): CO2/chloride-brine hydrate onset temperatures, pressures and curves, explicit neutral interaction inputs, and reference-state and temperature limits.
+- [Electrolyte VLE and VLLE Phase Boundaries](electrolyte_phase_boundaries): **Bracketed saturation API** for Pitzer and electrolyte-EOS gas, oil and aqueous phase appearance with balance, charge, fugacity and topology diagnostics.
 
 ### Database Documentation
 
-- [Component Database Guide](component_database_guide.md): **Detailed documentation** of the COMP pure component parameters database, including parameter descriptions, units, and links to thermodynamic models.
-- [INTER Table Guide](inter_table_guide.md): **Detailed documentation** of the INTER binary interaction parameters database, including column reference for all EoS, CPA, Huron-Vidal, Wong-Sandler, and NRTL parameters.
+- [Component Database Guide](component_database_guide): **Detailed documentation** of the COMP pure component parameters database, including parameter descriptions, units, and links to thermodynamic models.
+- [INTER Table Guide](inter_table_guide): **Detailed documentation** of the INTER binary interaction parameters database, including column reference for all EoS, CPA, Huron-Vidal, Wong-Sandler, and NRTL parameters.
 
 ### Reference Documentation
 
-- [Henry-Law Reference States and Aqueous Gas-Solubility Evidence](henry_law_reference.md): Pure-water correlations, GE/Pitzer standard-state mapping, provenance, and validation boundaries.
-- [Empirical Solid Fugacity References](empirical_solid_fugacity.md): Liquid and sublimation-pressure reference choices, density units, domain checks, and solid-selection behavior.
-- [Mathematical Models](mathematical_models.md): Equations of state, activity-coefficient formulations, and transport correlations available in NeqSim.
-- [GERG-2008 and EOS-CG](gerg2008_eoscg.md): Detailed guide to the reference equations of state for natural gas and CCS applications.
-- [EOS-CG CO2/SO2 Mixture](eoscg_co2_so2.md): Executable mixture flash with phase densities, pressure closure, component balances, and a bounded numerical validation range.
+- [Henry-Law Reference States and Aqueous Gas-Solubility Evidence](henry_law_reference): Pure-water correlations, GE/Pitzer standard-state mapping, provenance, and validation boundaries.
+- [Empirical Solid Fugacity References](empirical_solid_fugacity): Liquid and sublimation-pressure reference choices, density units, domain checks, and solid-selection behavior.
+- [Mathematical Models](mathematical_models): Equations of state, activity-coefficient formulations, and transport correlations available in NeqSim.
+- [GERG-2008 and EOS-CG](gerg2008_eoscg): Detailed guide to the reference equations of state for natural gas and CCS applications.
+- [EOS-CG CO2/SO2 Mixture](eoscg_co2_so2): Executable mixture flash with phase densities, pressure closure, component balances, and a bounded numerical validation range.
 
 ### Acid Gas and Sour Fluid Modeling
 
-- [H2S Distribution Guide](H2S_distribution_guide.md): **H2S phase distribution modeling** between gas, oil, and water using SRK, PR, CPA, and Electrolyte-CPA equations of state. Covers acid-base chemistry, pH effects, and salinity impacts.
-- [H2S Distribution Modeling (Detailed)](H2S_DISTRIBUTION_MODELING.md): **Comprehensive H2S modeling** including chemical reactions, model selection guidance, and validation examples.
-- [Amine CO2 Solubility (Kent-Eisenberg)](amine_co2_solubility.md): **Screening-level CO2 solubility** in aqueous MEA / DEA / MDEA / activated-MDEA solvents using the Kent-Eisenberg apparent-equilibrium-constant model. Covers the validated screening API, validation status, equations, and usage examples.
+- [H2S Distribution Guide](H2S_distribution_guide): **H2S phase distribution modeling** between gas, oil, and water using SRK, PR, CPA, and Electrolyte-CPA equations of state. Covers acid-base chemistry, pH effects, and salinity impacts.
+- [H2S Distribution Modeling (Detailed)](H2S_DISTRIBUTION_MODELING): **Comprehensive H2S modeling** including chemical reactions, model selection guidance, and validation examples.
+- [Amine CO2 Solubility (Kent-Eisenberg)](amine_co2_solubility): **Screening-level CO2 solubility** in aqueous MEA / DEA / MDEA / activated-MDEA solvents using the Kent-Eisenberg apparent-equilibrium-constant model. Covers the validated screening API, validation status, equations, and usage examples.
 
 ### Application Guides
 
-- [Thermodynamic Workflows](thermodynamic_workflows.md): How to set up systems, select models, and perform common equilibrium calculations.
-- [Adsorption Isotherm Models](adsorption_isotherms.md): **Complete reference** for all adsorption isotherm models — Langmuir, Extended Langmuir, BET, Freundlich, Sips, DRA potential theory, capillary condensation, and the parameter database.
-- [PVT and Fluid Characterization](pvt_fluid_characterization.md): Building realistic fluid descriptions, including heavy-end handling and lab-data reconciliation.
-- [Thermodynamic Operations](thermodynamic_operations.md): Flash calculations, phase envelopes, and other process-centric operations.
-- [Physical Properties](physical_properties.md): Thermodynamic/transport API boundaries and links to the maintained [physical-properties package guide](../physical_properties/README.md).
-- [Attainable Metastability — Volume Balancing Method](attainable_metastability.md): **Superheat / pressure-undershoot limit of a rapidly depressurising liquid** (Log, 2025). Rarefaction-outflow vs. Plesset-Zwick bubble-growth balance, the `n_bub` tuning parameter, and a CO₂ blowdown example.
+- [Thermodynamic Workflows](thermodynamic_workflows): How to set up systems, select models, and perform common equilibrium calculations.
+- [Adsorption Isotherm Models](adsorption_isotherms): **Complete reference** for all adsorption isotherm models — Langmuir, Extended Langmuir, BET, Freundlich, Sips, DRA potential theory, capillary condensation, and the parameter database.
+- [PVT and Fluid Characterization](pvt_fluid_characterization): Building realistic fluid descriptions, including heavy-end handling and lab-data reconciliation.
+- [Thermodynamic Operations](thermodynamic_operations): Flash calculations, phase envelopes, and other process-centric operations.
+- [Physical Properties](physical_properties): Thermodynamic/transport API boundaries and links to the maintained [physical-properties package guide](../physical_properties/README).
+- [Attainable Metastability — Volume Balancing Method](attainable_metastability): **Superheat / pressure-undershoot limit of a rapidly depressurising liquid** (Log, 2025). Rarefaction-outflow vs. Plesset-Zwick bubble-growth balance, the `n_bub` tuning parameter, and a CO₂ blowdown example.
 
 ---
 
 Examples are written for the Java API unless a page says otherwise. Python uses the
 NeqSim gateway and different import conventions; follow the
-[Python quickstart](../quickstart/python-quickstart.md) rather than translating Java
+[Python quickstart](../quickstart/python-quickstart) rather than translating Java
 syntax literally.

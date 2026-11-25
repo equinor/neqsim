@@ -54,7 +54,7 @@ class ThermoLandingPageNavigationTest(unittest.TestCase):
             with self.subTest(guide=guide):
                 self.assertIn(f"(thermo/{guide})", self.reference)
 
-    def test_scope_navigation_uses_explicit_markdown_sources(self):
+    def test_scope_navigation_uses_extensionless_published_routes(self):
         for page in SCOPE_NAVIGATION_PAGES:
             source = page.read_text(encoding="utf-8")
             for raw_target in MARKDOWN_LINK.findall(source):
@@ -66,13 +66,15 @@ class ThermoLandingPageNavigationTest(unittest.TestCase):
                     or target.endswith("/")
                 ):
                     continue
+                suffix = Path(target).suffix
                 with self.subTest(page=page, target=target):
-                    self.assertTrue(
-                        Path(target).suffix,
-                        msg=f"Extensionless source link in {page}: {raw_target}",
+                    self.assertNotEqual(
+                        suffix,
+                        ".md",
+                        msg=f"Published link retains .md suffix in {page}: {raw_target}",
                     )
-                    if Path(target).suffix == ".md":
-                        linked_source = (page.parent / target).resolve()
+                    if not suffix:
+                        linked_source = (page.parent / (target + ".md")).resolve()
                         self.assertTrue(
                             linked_source.is_file(),
                             msg=f"Missing Markdown source from {page}: {target}",

@@ -10,12 +10,12 @@ models, and interfacial-property calculations.
 ## Contents
 
 - **Overview** (this page) - Package architecture and basic usage
-- [Viscosity Models](viscosity_models.md) - Dynamic viscosity calculation methods
-- [Thermal Conductivity Models](thermal_conductivity_models.md) - Thermal conductivity methods
-- [Diffusivity Models](diffusivity_models.md) - Binary and multicomponent diffusion coefficients
-- [Interfacial Properties](interfacial_properties.md) - Surface tension and related calculations
-- [Density Models](density_models.md) - Liquid density correlations
-- [Property Method Alignment Audit](method_alignment_audit.md) - Handbook editions, verified repairs, coverage and qualification gaps
+- [Viscosity Models](viscosity_models) - Dynamic viscosity calculation methods
+- [Thermal Conductivity Models](thermal_conductivity_models) - Thermal conductivity methods
+- [Diffusivity Models](diffusivity_models) - Binary and multicomponent diffusion coefficients
+- [Interfacial Properties](interfacial_properties) - Surface tension and related calculations
+- [Density Models](density_models) - Liquid density correlations
+- [Property Method Alignment Audit](method_alignment_audit) - Handbook editions, verified repairs, coverage and qualification gaps
 
 ## Calculation workflow
 
@@ -87,7 +87,7 @@ physical-property model.
 | `BASIC` | Minimal property calculations |
 
 The aqueous phases of `GLYCOL`, `AMINE` and `CO2WATER` use Filippov conductivity with
-the enabled pressure option. Its [documented pressure factor](thermal_conductivity_models.md#filippov-liquid-mixing-and-pressure-factor)
+the enabled pressure option. Its [documented pressure factor](thermal_conductivity_models#filippov-liquid-mixing-and-pressure-factor)
 is the CHEMPAK Missenard-derived expression; mixture/parameter accuracy remains unqualified.
 The general `DEFAULT`/PFCT paths are unaffected by that correction.
 
@@ -171,18 +171,18 @@ Diffusion coefficients are available from the phase's `PhysicalProperties` objec
 `getDiffusionCoefficient(i, j)` or `getDiffusionCoefficient(component1, component2)` for a
 Maxwell-Stefan binary coefficient. Call `calcEffectiveDiffusionCoefficients()` before reading an
 effective coefficient with `getEffectiveDiffusionCoefficient(...)`. See the
-[diffusivity guide](diffusivity_models.md) for model selection, Fick coefficients, and complete
+[diffusivity guide](diffusivity_models) for model selection, Fick coefficients, and complete
 access patterns.
 
 Surface tension requires two existing phases and an initialized interfacial model. Use phase
 guards and follow the complete examples in the
-[interfacial-properties guide](interfacial_properties.md); do not assume that phase indexes 0 and
+[interfacial-properties guide](interfacial_properties); do not assume that phase indexes 0 and
 1 identify a valid interface.
 
 ## Model tuning
 
 Viscosity tuning parameters are model-specific. The LBC, PFCT/CSP, and advanced friction-theory
-interfaces are documented and tested in the [viscosity guide](viscosity_models.md). Use parameter
+interfaces are documented and tested in the [viscosity guide](viscosity_models). Use parameter
 sets from independent measurements or validated literature, preserve their units and validity
 range, and reinitialize the affected phase after changing them.
 
@@ -248,6 +248,6 @@ The package separates these responsibilities:
 
 ## See also
 
-- [Fluid Creation Guide](../thermo/fluid_creation_guide.md) - Creating thermodynamic systems
-- [Flash Calculations Guide](../thermo/flash_calculations_guide.md) - Phase-equilibrium calculations
-- [Thermodynamic Operations](../thermo/thermodynamic_operations.md) - Thermodynamic calculation workflow
+- [Fluid Creation Guide](../thermo/fluid_creation_guide) - Creating thermodynamic systems
+- [Flash Calculations Guide](../thermo/flash_calculations_guide) - Phase-equilibrium calculations
+- [Thermodynamic Operations](../thermo/thermodynamic_operations) - Thermodynamic calculation workflow
