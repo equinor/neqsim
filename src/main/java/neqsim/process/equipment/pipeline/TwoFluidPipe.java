@@ -922,7 +922,7 @@ public class TwoFluidPipe extends Pipeline {
    * See {@link #setAnnularFlowingDensityFriction(boolean)} for the measurement behind the default.
    * </p>
    */
-  private boolean useFlowingDensityAnnularFriction = true;
+  private volatile boolean useFlowingDensityAnnularFriction = true;
 
   /**
    * Feed phase mass fractions (gas, oil, aqueous) of the last source-free steady solution, or null.

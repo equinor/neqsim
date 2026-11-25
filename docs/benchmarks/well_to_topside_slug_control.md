@@ -43,6 +43,18 @@ configuration. It is reported rather than hidden by retuning the common
 separator loops independently between cases. The complete series contains 91
 samples per mode. The MCP replay completed in 67.8 s on the qualification host.
 
+The table and the CSV receipt are the values recorded when the study was added.
+Later builds do not reproduce them digit for digit. Measured 2026-11-25 on the
+same input, the separator pressure range is 1.024 bar open loop and 0.900 bar
+regulated (-12.1%) before the `TwoFluidPipe` feed split was flashed at the
+solved inlet pressure, and 1.022 and 0.929 bar (-9.1%) after it; mean production
+is 18.11 and 17.92 kg/s (-1.0%) and the peak riser liquid rate 14.48 and
+13.35 kg/s (-7.8%). The feed-split change adds 0.4% gas to the steady start.
+Both ranges are about 1 bar, so 0.03 bar moves their ratio by 3 points; the
+regression test requires a reduction of more than 5%. The study keeps the
+hold-up weighted annular friction it was qualified with
+(`setAnnularFlowingDensityFriction(false)`).
+
 ## Boundary qualification
 
 The riser outlet remains at the exact qualified pressure, `56.40099362 bara`.

@@ -358,6 +358,8 @@ public final class WellToTopsideSlugControlStudy {
     pipe.setEnableCoupledPressureMomentum(true);
     // The study's qualified evidence was produced with equilibrium phase densities.
     pipe.setFrozenCompositionDensityUpdate(false);
+    // It was also produced with annular wall friction charged at the hold-up weighted mixture density.
+    pipe.setAnnularFlowingDensityFriction(false);
     pipe.setEnableInterfacialPressure(true);
     pipe.setTimeIntegrationMethod(TimeIntegrator.Method.EULER);
     pipe.setEnableAdaptiveTimestepping(true);

@@ -53,7 +53,10 @@ class PipelineRunnerWellToTopsideSlugControlTest {
     JsonObject data = result.getAsJsonObject("data");
     assertTrue(data.get("meanProductionRelativeDifference").getAsDouble() < 0.02);
     assertTrue(data.get("liquidPeakRelativeChange").getAsDouble() < -0.02);
-    assertTrue(data.get("separatorPressureRangeRelativeChange").getAsDouble() < -0.10);
+    // The pressure range is about 1 bar in both modes, so 0.03 bar moves this ratio by 3 points. It was -0.121
+    // with the feed split flashed at the choke outlet pressure and is -0.091 with it flashed at the solved pipe
+    // inlet pressure (0.4 per cent more gas in the steady start).
+    assertTrue(data.get("separatorPressureRangeRelativeChange").getAsDouble() < -0.05);
     assertTrue(data.getAsJsonObject("openLoop").get("maximumPipeResidual_kg").getAsDouble() < 1.0e-8);
     assertTrue(data.getAsJsonObject("regulated").get("maximumPipeResidual_kg").getAsDouble() < 1.0e-8);
     assertTrue(data.getAsJsonObject("openLoop").getAsJsonArray("timeSeries").size() >= 90);
