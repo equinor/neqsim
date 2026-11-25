@@ -148,8 +148,7 @@ public class ProducedWaterTreatmentTrainTest {
     ThreePhaseSeparator separator = new ThreePhaseSeparator("Production Separator", feed);
     StreamInterface oilOut = separator.getOilOutStream();
     StreamInterface waterOut = separator.getWaterOutStream();
-    ProducedWaterTreatmentTrain treatment =
-        new ProducedWaterTreatmentTrain("PW Treatment", waterOut);
+    ProducedWaterTreatmentTrain treatment = new ProducedWaterTreatmentTrain("PW Treatment", waterOut);
     treatment.setInletOilConcentration(800.0);
 
     ProcessSystem process = new ProcessSystem();
@@ -159,17 +158,14 @@ public class ProducedWaterTreatmentTrainTest {
 
     double waterMassFlowKgPerHour = waterOut.getFlowRate("kg/hr");
     double oilMassFlowKgPerHour = oilOut.getFlowRate("kg/hr");
-    double producedLiquidMassFlowKgPerHour =
-        oilMassFlowKgPerHour + waterMassFlowKgPerHour;
+    double producedLiquidMassFlowKgPerHour = oilMassFlowKgPerHour + waterMassFlowKgPerHour;
     assertTrue(producedLiquidMassFlowKgPerHour > 0.0);
 
-    double producedLiquidWaterMassFraction =
-        waterMassFlowKgPerHour / producedLiquidMassFlowKgPerHour;
+    double producedLiquidWaterMassFraction = waterMassFlowKgPerHour / producedLiquidMassFlowKgPerHour;
     assertTrue(producedLiquidWaterMassFraction >= 0.0);
     assertTrue(producedLiquidWaterMassFraction <= 1.0);
     assertTrue(Double.isFinite(treatment.getOilInWaterMgL()));
-    assertEquals(
-        treatment.getOilInWaterMgL() <= ProducedWaterTreatmentTrain.NCS_OIW_LIMIT_MGL,
+    assertEquals(treatment.getOilInWaterMgL() <= ProducedWaterTreatmentTrain.NCS_OIW_LIMIT_MGL,
         treatment.isDischargeCompliant());
     assertNotNull(treatment.getTreatedWaterStream());
     assertNotNull(treatment.getRecoveredOilStream());
