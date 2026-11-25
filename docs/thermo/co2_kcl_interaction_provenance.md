@@ -991,6 +991,61 @@ hydrate transfer, convergence, non-regression and timing. No empirical
 temperature offset, fitted coefficient, relaxed tolerance or hydrate
 qualification is introduced here.
 
+## Salt-pair Helmholtz composition kernel
+
+`CO2SaltPairHelmholtzCompositionAssessmentTest` advances the equation-level
+candidate without activating a production term or selecting a parameter. The
+topology follows the neutral-cation-anion Pitzer `zeta` family already
+implemented separately in `PhasePitzer`. The primary Pitzer equation lineage
+is documented in the
+[Pitzer parameter provenance](pitzer_parameter_provenance.md), including
+Pitzer (1973), DOI `10.1021/j100621a026`, and the audited public-domain PHREEQC
+implementation. No coefficient is copied from those sources.
+
+For neutral CO2, one cation, one anion and water solvent, the proposed
+unit-response composition kernel is
+
+$$
+B=\frac{n_{\mathrm{CO_2}}n_+n_-}
+        {(M_w n_w)^2},
+\qquad
+\frac{A^E_{\mathrm{pair}}}{RT}=\zeta(T,P)B.
+$$
+
+Here $M_w n_w$ is the water mass in kg and a compatible coefficient
+$\zeta$ has units kg$^2$/mol$^2$. The expression is first-degree homogeneous
+in all amounts, vanishes when any tuple member is absent, and gives a
+quadratic neutral-CO2 chemical-potential response when a 1:1 salt amount is
+scaled. Its analytic first and second composition derivatives are retained in
+the executable assessment. Centered finite differences, Hessian symmetry,
+Euler's identity and the degree-one Hessian homogeneity identity are all
+gated without using an experimental point or a fitted value.
+
+On the normalized algebraic state, the maximum absolute first-derivative
+residual is `1.03e-11` and the maximum second-derivative residual is
+`6.99e-12`. Hessian symmetry and the fourfold neutral chemical-potential
+response on doubling both 1:1 salt ions are exact at displayed precision;
+Euler and Hessian-homogeneity residuals are at most `1.39e-17`. These are
+equation-consistency results, not experimental accuracy statistics.
+
+This kernel addresses only the composition algebra. It does not establish the
+required $\zeta(T,P)$ law, standard-state conversion, volume derivative or
+partial-molar-volume contribution. The current Furst block also produces
+nonlinear concentration response through its denominator and packing terms;
+therefore the candidate must be calibrated jointly or with a declared
+orthogonalization/ablation, not added on top and called independent. The
+He-Morse covariance remains unidentifiable from its five-temperature saturated
+basis, and Plummer-Busenberg identifies the adopted pure-water anchor rather
+than an independent raw family. Production activation remains blocked until
+an independently compatible temperature/pressure family or a predeclared
+lower-dimensional physical law supplies bounds and uncertainty, followed by
+single-salt calibration and the frozen Table A.24 and hydrate holdouts.
+
+The retained CSV contains seven algebraic checks only. The unit coefficient is
+a normalization of the kernel, not an invented physical parameter. No
+Electrolyte-CPA result, database row, tolerance, hydrate equation or default is
+changed.
+
 ## He-Morse standard-state and temperature-covariance audit
 
 `CO2HeMorseStandardStateAuditTest` addresses the first remaining source
