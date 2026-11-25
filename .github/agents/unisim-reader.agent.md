@@ -522,9 +522,12 @@ Then run the converter regression tests in `devtools/test_unisim_outputs.py`
 
 Two hard rules:
 
-- **The UniSim COM server is a singleton.** Never run two COM scripts at once —
-  the second gets `RPC server is unavailable`, and `close()` quits UniSim for
-  both.
+- **One UniSim at a time, and only your own.** `UniSimReader` and
+  `UniSimWriter` run through `devtools/unisim_session.py`: each starts its own
+  UniSim process, refuses to drive or quit a UniSim that is already running,
+  reads a copy of the case, dismisses pop-ups (never Yes) and ends its own
+  process at `time_limit_s`. Do not start two batches at once; close any
+  other UniSim before a run.
 - **Never edit `unisim_reader.py` while a batch is running.** Each subprocess
   re-imports it, so a mid-run edit mixes old and new behaviour and a
   half-written file makes the remaining cases fail with "no result file".
@@ -536,11 +539,12 @@ Two hard rules:
 | Error | Cause | Fix |
 |-------|-------|-----|
 | UniSim COM not found | UniSim not installed | Install UniSim Design |
-| `com_error ... E_ACCESSDENIED` from `Open` | Case needs a UniSim extension/licensed module that is not installed (e.g. CCC controls, EO electrical) | Not a converter bug — report the case as environment-limited |
-| `RPC server is unavailable` | A second COM script touched the shared singleton UniSim instance | Never run two UniSim COM scripts concurrently |
+| `com_error ... E_ACCESSDENIED` from `Open` | Case needs a UniSim extension/licensed module that is not installed (e.g. CCC controls, EO electrical), or the licence server is unreachable | Check the licence server first; otherwise report the case as environment-limited |
+| `UniSimSessionError: no dedicated UniSim process started` | Another UniSim (a user's session or an orphan) is running | Ask the user to close it, or end the orphan; never attach to it |
+| `UniSimTimeout` | A pop-up the watchdog could not dismiss, or a read/solve over the limit | Report the pop-ups in `model.session_report["popups"]`; raise `time_limit_s` only for a genuinely large case |
 | "no result file" across a batch | `unisim_reader.py` was edited while the batch ran | Re-run the batch after the edit; never edit mid-run |
 | File won't open | Corrupted/wrong version | Try with `visible=True` to see error |
-| Empty compositions | Stream not solved | Open in UniSim GUI, run solver first |
+| Empty compositions | Stream not solved | Check `model.session_report["empty_streams"]`; open in UniSim GUI, run solver first |
 | `NullPointerException ... is null` on run | Equipment built with a None inlet | Converter must synthesise a boundary feed |
 | `Feed tray index must be between 0 and N-1` | Column/absorber fed outside 0..n-1 | NeqSim trays run bottom=0 to top=n-1 |
 | Run TIMEOUT on a column case | Converted column iterating without converging | Hard iteration cap on the column |

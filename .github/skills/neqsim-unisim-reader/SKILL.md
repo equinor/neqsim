@@ -1,7 +1,7 @@
 ---
 name: neqsim-unisim-reader
-description: "Reads Honeywell UniSim Design / Aspen HYSYS .usc files via COM and converts them to NeqSim ProcessSystem / ProcessModule models. USE WHEN: a user has UniSim/HYSYS files to recreate or compare in NeqSim. Covers COM navigation, column feed/product connectivity, component mapping, E300 fluid transfer, the operation-handler registry, topology and sub-flowsheets, batch regression against the sample library and result verification."
-last_verified: "2026-09-07"
+description: "Reads Honeywell UniSim Design / Aspen HYSYS .usc files via COM and converts them to NeqSim ProcessSystem / ProcessModule models, and writes NeqSim JSON back to .usc. USE WHEN: a user has UniSim/HYSYS files to recreate or compare in NeqSim. Covers own-process COM sessions (copy, pop-up watchdog, time limit), COM navigation, column connectivity, component mapping, E300 fluid transfer, operation handlers, sub-flowsheets, batch regression and result verification."
+last_verified: "2026-11-25"
 ---
 
 # UniSim Design / HYSYS → NeqSim Conversion Skill
@@ -30,6 +30,7 @@ Supporting tools:
 
 | Tool | Purpose |
 |------|---------|
+| `devtools/unisim_session.py` | Shared COM session: own UniSim process, pop-up watchdog, wall-clock limits, work on a copy, solve status (Section 1, "Own the UniSim process") |
 | `devtools/unisim_batch_check.py` | Convert a whole corpus, one subprocess per case; timings, unmapped types, warnings, compile + undefined-name checks |
 | `devtools/unisim_run_generated.py` | Execute every generated model in its own subprocess and report how far it gets |
 | `devtools/unisim_probe_ops.py` | Dump the readable COM properties of an operation type |
@@ -175,59 +176,56 @@ The recommended extraction order (as implemented in `unisim_reader.py`):
 
 ### Key COM Patterns
 
+Start UniSim through `UniSimSession`, never with a bare
+`Dispatch('UnisimDesign.Application')` + `app.Quit()` (see the next section
+for why). The navigation below is the same either way.
+
 ```python
-import win32com.client
-import time
+from unisim_session import UniSimSession   # toolkit module; in a checkout put devtools/ on sys.path
 
-# Start UniSim
-app = win32com.client.dynamic.Dispatch('UnisimDesign.Application')
-app.Visible = True  # or False for headless
+with UniSimSession(visible=True) as session:        # own UniSim process, ended on exit
+    with session.limit(1800, "explore case"):       # ends the own process instead of hanging
+        case = session.open_copy(r'C:\path\to\file.usc')   # a writable temp copy
 
-# Open a case
-case = app.SimulationCases.Open(r'C:\path\to\file.usc')
-time.sleep(3)  # Wait for loading
+        # Pause solver during extraction
+        solver = case.Solver
+        solver.CanSolve = False
 
-# Pause solver during extraction
-solver = case.Solver
-solver.CanSolve = False
+        # Access data
+        fs = case.Flowsheet
+        stream = fs.MaterialStreams.Item(0)
+        temp_C = stream.Temperature.GetValue('C')
+        pres_bar = stream.Pressure.GetValue('bar')
+        flow_kgh = stream.MassFlow.GetValue('kg/h')
+        comp_fracs = stream.ComponentMolarFraction.GetValues()
 
-# Access data
-fs = case.Flowsheet
-stream = fs.MaterialStreams.Item(0)
-temp_C = stream.Temperature.GetValue('C')
-pres_bar = stream.Pressure.GetValue('bar')
-flow_kgh = stream.MassFlow.GetValue('kg/h')
-comp_fracs = stream.ComponentMolarFraction.GetValues()
+        # Unit operations
+        op = fs.Operations.Item(0)
+        op_type = op.TypeName  # e.g. "compressor", "valveop", "sep3op"
+        op_name = op.name
 
-# Unit operations
-op = fs.Operations.Item(0)
-op_type = op.TypeName  # e.g. "compressor", "valveop", "sep3op"
-op_name = op.name
+        # Feed/product streams — varies by operation type!
+        # For single-stream ops (compressor, valve, cooler, pump, heater):
+        feed_name = op.FeedStream.name
+        prod_name = op.ProductStream.name
 
-# Feed/product streams — varies by operation type!
-# For single-stream ops (compressor, valve, cooler, pump, heater):
-feed_name = op.FeedStream.name
-prod_name = op.ProductStream.name
+        # For mixers: Feeds[] array + Product singular
+        for i in range(op.Feeds.Count):
+            feed_name = op.Feeds.Item(i).name
+        prod_name = op.Product.name  # singular!
 
-# For mixers: Feeds[] array + Product singular
-for i in range(op.Feeds.Count):
-    feed_name = op.Feeds.Item(i).name
-prod_name = op.Product.name  # singular!
+        # For separators: Feeds[] + VapourProduct / LiquidProduct
+        for i in range(op.Feeds.Count):
+            feed_name = op.Feeds.Item(i).name
+        vap_name = op.VapourProduct.name
+        liq_name = op.LiquidProduct.name
 
-# For separators: Feeds[] + VapourProduct / LiquidProduct
-for i in range(op.Feeds.Count):
-    feed_name = op.Feeds.Item(i).name
-vap_name = op.VapourProduct.name
-liq_name = op.LiquidProduct.name
+        # For tee/splitter: FeedStream + Products[]
+        feed_name = op.FeedStream.name
+        for i in range(op.Products.Count):
+            prod_name = op.Products.Item(i).name
 
-# For tee/splitter: FeedStream + Products[]
-feed_name = op.FeedStream.name
-for i in range(op.Products.Count):
-    prod_name = op.Products.Item(i).name
-
-# Close
-case.Close()
-app.Quit()
+        session.close_case(case)   # Close(False) + SHA-256 check of the source
 ```
 
 ### Important Notes
@@ -237,17 +235,49 @@ app.Quit()
 - Property values accessed via `.GetValue(unit_string)`
 - Composition accessed via `.GetValues()` returning a sequence
 
-### GOTCHA: the UniSim COM server is a SINGLETON
+### Own the UniSim process (`devtools/unisim_session.py`)
 
-`Dispatch('UnisimDesign.Application')` attaches to the **one** running UniSim
-instance, it does not start a private one. Consequences:
+COM attaches to a UniSim that is already running instead of starting a
+private one, and a modal dialog blocks every COM call. Before the session
+helper, the reader and writer used `dynamic.Dispatch(...)` and finished with
+`app.Quit()`: a user's open UniSim was driven and then closed, an unattended
+run could hang (one solve in another UniSim tool sat for more than 12 h on an
+"efficiency above 100 %" message), the reader opened the user's `.usc` itself,
+and an unsolved case was visible only as `-32767` values.
 
-- Running a second COM script while a batch runs gives
-  `com_error: The RPC server is unavailable`.
-- `reader.close()` calls `app.Quit()`, which closes UniSim for **every** other
-  script using it.
-- **Never run two UniSim COM scripts concurrently.** Subprocess isolation makes
-  a crash survivable, but it does not make concurrency safe.
+`UniSimReader` and `UniSimWriter` now run everything through `UniSimSession`;
+add-on skills should import it rather than write their own:
+
+| Guard | What the session does |
+|---|---|
+| Own process only | Starts UniSim late-bound with `CoCreateInstanceEx`, diffs the `UniSimDesign.exe` process list, waits up to 60 s for a UniSim that is closing, otherwise raises `UniSimSessionError`. A running UniSim is never driven or quit. On close: `Quit()`, then end only the own PID if it is still alive. |
+| Pop-up watchdog | Background thread (win32gui, no COM) records and dismisses dialogs of the own PID: OK / Close / Cancel / No, never Yes. Events are in `session.popups`; the writer turns each into a warning and the reader logs them and stores them in `model.session_report["popups"]`. |
+| Wall-clock limits | `session.limit(seconds, what)` and `session.solve(case, cap_s)` end the own process at the limit and raise `UniSimTimeout`. Reader and writer default to `time_limit_s=1800` per read/build (`--time-limit-s` on both CLIs, 0 disables). |
+| Work on a copy | `session.open_copy(path)` copies to a temp folder, clears the read-only flag `shutil.copy2` keeps, opens the copy, closes it with `Close(False)` and compares the source SHA-256 before and after (`UniSimSessionError` if it changed). |
+| Solve status | `session.solve_status(case)` returns `is_solving`, stream `MassFlow`/`Pressure`/`Temperature` and tee `Splits` flagged `IsInconsistent`, and streams whose values are empty, with flowsheet paths. |
+
+```python
+from unisim_session import UniSimSession, UniSimTimeout
+
+with UniSimSession() as session:
+    case = session.open_copy(r"C:\models\plant.usc")
+    seconds, finished = session.solve(case, cap_s=600)   # UniSimTimeout at cap + 30 s
+    status = session.solve_status(case)                  # {"is_solving", "inconsistent", "empty_streams"}
+    session.close_case(case)
+print(session.report)   # pids, sources + hashes, popups, solves, timeouts
+```
+
+Rules that still hold:
+
+- Verified on R510 (2026-11-25): a second session started while the first
+  ran attached to the first UniSim, refused after its wait, and left the first
+  process running and usable; a TUTOR1 read through the reader took 9.1 s and
+  left no UniSim process and an unchanged source hash.
+- **One UniSim at a time on a machine.** A second session refuses to start
+  while another UniSim stays open; close it (or end the orphan) first. Batch
+  runs stay sequential, one subprocess per case.
+- `pywin32` is imported only when a session starts, so the module, the reader
+  and the writer import (and their tests run) without Windows.
 
 ### Prefer readiness polling over fixed sleeps
 
@@ -263,9 +293,10 @@ TUTOR1 read from 18.3 s to 6.8 s and the 66-case corpus from 816 s to 656 s.
 `SimulationCases.Open` raises a bare `com_error ... E_ACCESSDENIED
 (-2147024891)` for cases needing a UniSim extension that is not installed (the
 R510 `CCC Series 5\*` controls cases and the EO electrical case). The files are
-not read-only — verified. `UniSimReader._open_case()` retries once on a fresh
-session (which does fix a genuinely wedged shared session) and then raises a
-`RuntimeError` naming the likely cause.
+not read-only — verified. The same error came from `Open` while the licence
+server was unreachable and disappeared once it was reachable (issue #5271).
+`UniSimReader._open_case()` retries once in a fresh own UniSim process and then
+raises a `RuntimeError` naming both causes.
 
 ### 1.1 Extracting Binary Interaction Parameters (BIPs / kij)
 
@@ -1114,10 +1145,19 @@ defined`.
 | Temperature | < 1 °C | < 3 °C | Flash calculation differences |
 | Pressure | 0% | 0% | Should match exactly (input) |
 | Mass flow | < 0.1% | < 1% | Mass balance differences |
-| Density | < 2% | < 5% | EOS differences (PR vs SRK) |
+| Density | < 2% | < 5% | EOS differences (PR vs SRK); see the volume-correction note below |
 | Vapour fraction | < 0.02 | < 0.05 | Phase split sensitivity |
 | Compressor power | < 5% | < 10% | Efficiency model differences |
 | Heat duty | < 5% | < 10% | Enthalpy model differences |
+
+**Density versus Z — compare like with like.** NeqSim's
+`getDensity("kg/m3")` includes the Peneloux volume correction, while
+NeqSim's `getZ()` and UniSim's SRK density do not. On one lean-gas compressor
+loop (issue #5271: NeqSim 3.29 SRK, classic mixing rule, against UniSim R510
+SRK, about 68 to 117 bara) Z agreed to −0.04 % but density differed by
+0.26 %. Before reporting a density deviation, compare UniSim's density with
+NeqSim's `getDensity()` (no argument: kg/m3 without the Peneloux correction)
+or compare Z; the remaining difference is then the EOS, not the volume shift.
 
 ### Factors Causing Deviations
 
@@ -1696,9 +1736,11 @@ licence blocks writing. Probe `variable.CanModify` before concluding otherwise.
 
 When the Python process exits, the COM server closes the case; a follow-up
 script doing `SimulationCases.Item(i)` gets `IndexError`. Every script must
-`app.SimulationCases.Open(path)` itself. Start each run by closing any open work
-case and `shutil.copy2`-ing a fresh copy from the source, otherwise repeated
-runs stack duplicate feeds onto the same mixer.
+open the case itself. Use `UniSimSession.open_copy(path)` for every run: each
+run gets a fresh copy of the source, so repeated runs cannot stack duplicate
+feeds onto the same mixer, and the source file is checked unchanged on close.
+Wrap each step in `session.limit(...)` or use `session.solve(case, cap_s)` so a
+pop-up the watchdog cannot dismiss ends the run with `UniSimTimeout`.
 
 ### Interpreting a tie-in result
 
@@ -1722,9 +1764,12 @@ runs stack duplicate feeds onto the same mixer.
 | Issue | Cause | Fix |
 |-------|-------|-----|
 | `pywintypes.com_error` | UniSim not installed or wrong version | Verify UniSim installation |
-| Empty stream values | Stream not solved in UniSim | Open file in UniSim GUI, run solver first |
+| Empty stream values | Stream not solved in UniSim | Check `model.session_report["empty_streams"]` and `["inconsistent"]`; open the file in UniSim GUI and run the solver first |
 | `-32767` values | UniSim empty marker | Filter with `val > -30000` check |
-| COM timeout | Large model loading | Increase `time.sleep()` after `.Open()` |
+| COM timeout | Large model loading | Increase `CASE_OPEN_TIMEOUT_S` (readiness polling) |
+| `UniSimSessionError: no dedicated UniSim process started` | Another UniSim (a user's session or an orphan) is running | Close it or end the orphan, then rerun; the session never drives or quits it |
+| `UniSimTimeout: ... exceeded N s` | A pop-up the watchdog could not dismiss, or a solve that does not finish | Read `session.report["popups"]`/`model.session_report["popups"]`; raise `time_limit_s` only for a genuinely large case |
+| `UniSimSessionError: source model changed` | Something wrote to the source `.usc` while its copy was open | Re-run on a stable file; never `SaveAs` over the source |
 | Wrong component count | Multiple fluid packages | Check which FP the stream uses |
 | Missing operations | Sub-flowsheet not recursed | Use `model.all_operations()` |
 | Composition doesn't sum to 1 | Hypothetical components excluded | Re-normalize after filtering |
@@ -1875,25 +1920,36 @@ handler strategy, and JSON `_unisim_operation_mapping` summaries.
 tools and the results can be compared directly.
 
 ```python
-from devtools.unisim_writer import UniSimWriter
+from unisim_writer import UniSimWriter   # toolkit module; in a checkout put devtools/ on sys.path
 
-writer = UniSimWriter(
-    visible=True,
-    template_path="licensed_case.usc",  # copy first — it is modified
-    clear_template=True,                # empty flowsheet + fluid package
-)
-writer.build_from_json(json_str, save_path="gas_compression.usc")
-writer.close()
+with UniSimWriter(visible=True) as writer:   # own UniSim process; template optional
+    writer.build_from_json(json_str, save_path="gas_compression.usc")
+    print(writer.get_build_report())         # pop-ups, unsolved streams, renames end up here
 ```
+
+`template_path="case.usc"` (with `clear_template=True` to empty it) still
+works; the template is opened as a temporary copy and never modified, and
+`save_path` may not point at it.
 
 ### Verified COM rules (UniSim Design R510)
 
-1. **The template must come from a licensed UniSim session.** A `.usc` saved
-   from a case created by `SimulationCases.Add()` inherits restricted write
-   access: reads and `MaterialStreams.Add` succeed, but every
-   `Operations.Add` and `variable.SetValue` fails with E_ACCESSDENIED
-   (`-2147024891`). Symptom: "Operations created: 0" with 10+ access-denied
-   warnings. Fix: point `template_path` at a real saved case.
+1. **A blank case is writable when the licence server is reachable; the writer
+   probes before building.** Building a compressor loop (mixer, heater,
+   separator, compressor, cooler, tee, valve, recycle; SRK, 11 library
+   components) in `SimulationCases.Add()` worked end to end: basis change, 11
+   streams, 9 operations, a solve and `SaveAs`; the saved file, reopened in a
+   new session, accepted `SetValue`, `MaterialStreams.Add`, `Operations.Add`
+   and `Solver.CanSolve` toggling (issue #5271). The only `E_ACCESSDENIED`
+   (`-2147024891`) came from `SimulationCases.Open` while the licence server
+   was unreachable. The rule this replaces came from a run where a `.usc`
+   saved from a blank case refused every `Operations.Add` and
+   `variable.SetValue` ("Operations created: 0" with 10+ access-denied
+   warnings); that is consistent with a licence-state effect but was not
+   re-tested. The writer therefore adds a
+   probe stream, calls `Temperature.SetValue`, removes it, and on
+   `E_ACCESSDENIED` raises `RuntimeError` naming the licence server and
+   `template_path` instead of building an empty case. Re-checked 2026-11-25:
+   the probe passed on a blank R510 case and the case was built and saved.
 2. **Fluid-package edits require a basis change.** Wrap component add/remove in
    `BasisManager.StartBasisChange()` … `EndBasisChange()` (or the
    `…Invisibly` variants). Outside a basis change, `Components.Add` returns
@@ -1913,6 +1969,31 @@ writer.close()
    convergence failure.
 6. `Pressure.Calculate()` can be denied even when `Pressure.SetValue(v, 'bar')`
    works — always try `SetValue` first, `Calculate` as fallback.
+7. **A compressor specified by discharge temperature needs its default
+   efficiency erased.** A new UniSim compressor carries a default 75 %
+   adiabatic efficiency, so setting the product temperature over-specifies it
+   and the case does not solve. `op.CompAdiabaticEff.Erase()` and
+   `op.CompPolytropicEff.Erase()`, then product pressure and temperature, and
+   UniSim calculates both efficiencies. The writer does this when the JSON
+   compressor has `outTemperature` / `outletTemperature` (NeqSim
+   `setOutTemperature`; a bare number is kelvin), skips any efficiency in the
+   JSON with a warning, and warns when a compressor has neither (UniSim's 75 %
+   default then applies silently). Re-checked through the writer on R510
+   (2026-11-25): blank case, SRK lean gas 68 → 117 bara with a 75 °C outlet
+   solved, and UniSim calculated 88.2 % adiabatic and 88.9 % polytropic
+   efficiency.
+8. **`Operations.Add` can rename silently.** `Operations.Add("Compressor",
+   "compressor")` returned an operation named `K-100` without an error. The
+   writer compares `op.name` with the requested name, sets it back, and warns
+   if UniSim refuses the rename (setting `name` through COM is not yet
+   verified on R510; the warning names the real object).
+9. **A zero-flow recycle loop solves.** A tee product at zero mass flow, a
+   valve and a recycle back to a mixer solved without special handling, so a
+   loop can be written closed and opened later in UniSim.
+10. **Report what did not solve.** After the solve the writer reads
+    `solve_status`: every variable flagged `IsInconsistent` and every stream
+    without flow, pressure or temperature becomes a named warning, and every
+    dismissed pop-up is listed in the build report.
 
 Discover member names for an unfamiliar operation with early binding
 (`win32com.client.gencache.EnsureDispatch`) in a throwaway process, then keep
@@ -1935,3 +2016,15 @@ one JSON gave:
 
 Sub-1 % agreement on power is the expected level for identical SRK setups; the
 residual comes from small differences in the polytropic path integration.
+
+A lean-gas compressor operating point (about 68 to 117 bara; NeqSim 3.29 SRK
+with the classic mixing rule against UniSim R510 SRK, issue #5271) agreed as
+follows (NeqSim relative to UniSim):
+
+| Quantity | Deviation |
+|---|---|
+| Polytropic head | −0.3 % |
+| Polytropic efficiency | −0.5 points |
+| Power | +0.4 % |
+| Z | −0.04 % |
+| Density (`getDensity("kg/m3")`) | 0.26 % — Peneloux correction, see Section 6 "Density versus Z" |

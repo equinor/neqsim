@@ -108,7 +108,7 @@ process = converter.build_and_run()
 
 #### 1. Reading the UniSim File
 
-The `UniSimReader` opens UniSim Design via COM automation, pauses the solver, and extracts all process data:
+The `UniSimReader` starts its own UniSim Design process via COM, opens a temporary copy of each case, pauses the solver, and extracts all process data:
 
 ```python
 from devtools.unisim_reader import UniSimReader
@@ -128,6 +128,8 @@ models = reader.read_multiple([
 # Always close when done (or use context manager)
 reader.close()
 ```
+
+The reader never attaches to or quits a UniSim that is already running: it refuses to start instead. It dismisses modal pop-ups (OK/Close/Cancel/No, never Yes), ends its own process when a read exceeds `time_limit_s` (default 1800 s), and records in `model.session_report` the source SHA-256, variables UniSim flags as inconsistent, streams without values and the pop-ups it dismissed. The shared helper is `devtools/unisim_session.py`.
 
 **Extracted data includes:**
 
@@ -411,13 +413,20 @@ writer.close()
 
 ### Using a Template File
 
-For best results, open an existing licensed-saved `.usc` file as a template:
+A template is optional. Without one the writer builds in a new blank case after a write probe; if UniSim refuses writes (`E_ACCESSDENIED`, seen while the licence server was unreachable) it raises an error that says so. A template is opened as a temporary copy and never modified:
 
 ```python
 writer = UniSimWriter(visible=True, template_path=r"C:\Templates\blank.usc")
 writer.build_from_json(neqsim_json_str, save_path="output.usc")
 writer.close()
 ```
+
+### What the Writer Checks
+
+- **Own process only**: like the reader, the writer starts its own UniSim, dismisses pop-ups (each becomes a build warning) and ends its own process after `time_limit_s`.
+- **Compressor specified by outlet temperature**: a JSON compressor with `outTemperature` gets UniSim's default efficiencies erased before the product temperature is set, so UniSim calculates the efficiency. A compressor with neither efficiency nor outlet temperature gets a warning that UniSim's default 75 % adiabatic efficiency applies.
+- **Renamed operations**: if UniSim creates an operation under a default name (`K-100`), the writer renames it or warns with the real name.
+- **Solve status**: after the solve, variables flagged inconsistent and streams without values are listed in `get_build_report()`.
 
 ### Reverse Mapping Tables
 
@@ -821,35 +830,30 @@ Different UniSim operation types expose different COM properties for feed/produc
 
 ### Key COM Patterns
 
+Start UniSim through `UniSimSession` (`devtools/unisim_session.py`), not a bare `Dispatch(...)` plus `app.Quit()`: the bare form attaches to a UniSim the user already has open and the final `Quit()` closes it.
+
 ```python
-import win32com.client
-import time
+from unisim_session import UniSimSession  # with devtools/ on sys.path
 
-# Start UniSim
-app = win32com.client.dynamic.Dispatch('UnisimDesign.Application')
-app.Visible = True
+with UniSimSession(visible=True) as session:  # own process, ended on exit
+    case = session.open_copy(r'C:\path\to\file.usc')  # temporary writable copy
+    solver = case.Solver
+    solver.CanSolve = False
 
-# Open case and pause solver
-case = app.SimulationCases.Open(r'C:\path\to\file.usc')
-time.sleep(3)
-solver = case.Solver
-solver.CanSolve = False
+    # Read stream data
+    fs = case.Flowsheet
+    stream = fs.MaterialStreams.Item(0)
+    temp_C = stream.Temperature.GetValue('C')
+    pres_bar = stream.Pressure.GetValue('bar')
+    flow_kgh = stream.MassFlow.GetValue('kg/h')
+    comp_fracs = stream.ComponentMolarFraction.GetValues()
 
-# Read stream data
-fs = case.Flowsheet
-stream = fs.MaterialStreams.Item(0)
-temp_C = stream.Temperature.GetValue('C')
-pres_bar = stream.Pressure.GetValue('bar')
-flow_kgh = stream.MassFlow.GetValue('kg/h')
-comp_fracs = stream.ComponentMolarFraction.GetValues()
+    # Read operation data
+    op = fs.Operations.Item(0)
+    print(f"Type: {op.TypeName}, Name: {op.name}")
 
-# Read operation data
-op = fs.Operations.Item(0)
-print(f"Type: {op.TypeName}, Name: {op.name}")
-
-# Clean up
-case.Close()
-app.Quit()
+    print(session.solve_status(case))  # inconsistent variables, streams without values
+    session.close_case(case)           # Close(False) + source hash check
 ```
 
 ---
@@ -954,6 +958,7 @@ if not result.isError():
 |------|---------|
 | `devtools/unisim_reader.py` | Core module: `UniSimReader`, `UniSimToNeqSim`, `UniSimComparator`, and the `UniSimOperationHandler` registry |
 | `devtools/unisim_writer.py` | Reverse direction: `UniSimWriter` — NeqSim JSON to `.usc` |
+| `devtools/unisim_session.py` | Shared COM session for reader, writer and add-on scripts: own UniSim process, pop-up watchdog, time limits, work on a copy, solve status |
 | `devtools/explore_unisim_com.py` | Diagnostic tool: dump COM object model from any `.usc` file |
 | `devtools/test_unisim_outputs.py` | Pure-Python regression tests for output modes, E300 fluid export, operation handler strategy, and mapping summaries (no COM needed) |
 | `examples/notebooks/unisim_to_neqsim_conversion.ipynb` | Example notebook with test cases |
