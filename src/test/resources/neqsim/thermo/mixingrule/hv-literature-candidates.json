@@ -865,5 +865,13 @@
     "ownership": "setParams retains supplied references; supported system clones bind detached handler tables; finish configuration before worker evaluation.",
     "executable_contract": "HuronVidalPhasePureRequestTest",
     "parameter_changes": "none; no tuple, EOS/pure alpha convention, provenance, validity range or default activation changed"
+  },
+  "phase_invocation_scratch": {
+    "status": "rejected for production; retained negative performance evidence",
+    "scope": "Invocation-local scratch storage, no computed-result cache. Both tuple-array and fixed-field descriptor trials preserve numerical endpoints but do not qualify latency non-regression.",
+    "resource": "hv-phase-scratch/README.md",
+    "contract": "HuronVidalPhasePureRequestTest; existing selected-pair ThermodynamicModelTest/clone/workspace suites; atomic benchmark receipt guards",
+    "parameter_changes": "None. Existing directed tuples, EOS/pure-alpha conventions, provenance, ranges, staged status and defaults remain unchanged.",
+    "next_dependency": "Resolve the measured Java17 small-PR latency before any storage-reuse adoption. Physical profile work independently requires compatible pure controls, source inputs and bidirectional holdouts."
   }
 }

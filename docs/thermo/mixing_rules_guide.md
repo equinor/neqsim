@@ -561,6 +561,15 @@ are unchanged. See the [phase row-reuse contract and qualification protocol](../
 for independent numerical controls, the frozen multi-JVM matrix, allocation
 tradeoffs and the separate legacy-constructor/Wong-Sandler qualification boundary.
 
+The [rejected scratch-allocation trials](../../src/test/resources/neqsim/thermo/mixingrule/hv-phase-scratch/README.md)
+retain complete matched rule2/rule4 initialization and flash measurements.
+Invocation-local storage reuse reduced allocation but reproduced a small-PR
+Java17 latency regression, including after a fixed-field descriptor trial.
+Neither proposal changes the production evaluator. The new changed-state
+regression preserves exact standalone activity/derivative comparisons; benchmark
+receipts use atomic replacement to protect earlier evidence from failed writes.
+Lower allocation is not experimental accuracy or throughput acceptance.
+
 The [quarantined CO2-in-MEG source receipts](../../src/test/resources/neqsim/thermo/mixingrule/hv-co2-meg-receipts/README.md)
 retain both manuscript/archive phase labels and duplicate measurements. Their
 offline audit preserves source identities and uncertainty semantics; it supplies

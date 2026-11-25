@@ -1,0 +1,20 @@
+{
+  "utc": "2026-11-24T23:51:11.058110+00:00",
+  "results": [
+    {
+      "runtime": "java17",
+      "java": "/tmp/neqsim-jdk17/bin/java",
+      "probe_child_pid": 30,
+      "held_after_controller_kill": true,
+      "released_on_native_JVM_exit": true
+    },
+    {
+      "runtime": "java21",
+      "java": "/usr/bin/java",
+      "probe_child_pid": 50,
+      "held_after_controller_kill": true,
+      "released_on_native_JVM_exit": true
+    }
+  ],
+  "scope": "Separate four-second diagnostic handshake, no thermodynamic or timed benchmark work. Only the probe controller was killed; each probe JVM exited naturally."
+}
