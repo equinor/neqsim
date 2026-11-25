@@ -39,7 +39,7 @@ class ProducedWaterTreatmentDocumentationTest(unittest.TestCase):
         self.assertTrue(self.guide.startswith("---\ntitle:"))
         body = self.guide.split("---", 2)[2]
         body_without_fences = re.sub(
-            r"\`\`\`.*?\`\`\`", "", body, flags=re.DOTALL
+            r"```.*?```", "", body, flags=re.DOTALL
         )
         self.assertNotRegex(body_without_fences, r"(?m)^# ")
 
@@ -119,7 +119,7 @@ class ProducedWaterTreatmentDocumentationTest(unittest.TestCase):
 
     def test_audit_marks_produced_water_case_resolved(self):
         match = re.search(
-            r"### 2\\.5 .*?(?=\\n### 2\\.6 )",
+            r"### 2\.5 .*?(?=\n### 2\.6 )",
             self.audit,
             flags=re.DOTALL,
         )
@@ -127,7 +127,7 @@ class ProducedWaterTreatmentDocumentationTest(unittest.TestCase):
         section = match.group(0)
         self.assertIn("resolved", section.lower())
         self.assertIn("test_produced_water_treatment_documentation.py", section)
-        self.assertNotIn("| \`docs/process/equipment/water_treatment.md\`", section)
+        self.assertNotIn("| `docs/process/equipment/water_treatment.md`", section)
 
 
 if __name__ == "__main__":
