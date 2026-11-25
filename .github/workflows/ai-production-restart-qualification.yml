@@ -34,6 +34,14 @@ jobs:
           cache-dependency-glob: devtools/uv.lock
       - name: Compile the PR physics and resolve its runtime classpath
         run: ./mvnw -B -ntp -DskipTests compile dependency:build-classpath -Dmdep.outputFile=target/restart-classpath.txt
+      - name: Qualify the tracked-force five-second mesh and time-step matrix
+        run: >-
+          ./mvnw -B -ntp
+          -Dtest=TwoFluidUnsplitTengesdalPreparationTest#fiveSecondTrackedSubcellForceRiserQualificationMustCompleteTheWholeInterval
+          -Dgroups=slow
+          -DexcludedTestGroups=
+          -Dneqsim.unsplit.tengesdal.tracked-force-qualification=true
+          test
       - name: Exercise the installed restart, instrument holdouts and blind decisions
         run: |
           export NEQSIM_CLASSPATH="$PWD/target/classes:$(cat target/restart-classpath.txt)"

@@ -25,9 +25,10 @@ phase lock and amplitude/period refinement are unresolved. The route now accepts
 advances the tracker only after the nonlinear and conservation gates accept the substep. Rejected
 attempts leave marker age and position unchanged. Accepted tracked cells may now opt into the
 reconstructed body/film friction source; ordinary friction remains owned by untracked cells, and
-the accepted ledger records the passive momentum impulse. The 0.1 s 16/24-cell startup matrix checks
-rollback, mass closure and time-step refinement. Tracking-enabled five-second publication and
-settled-cycle gates remain open, so this does not promote the experimental gate.
+the accepted ledger records the passive momentum impulse. The default 0.1 s 16/24-cell startup matrix
+checks rollback, mass closure and time-step refinement. Run the opt-in tracking-enabled five-second
+16/0.1, 16/0.05 and 24/0.05 matrix as the next hosted numerical gate before any 180/600 s or
+settled-cycle claim. Completion and an enforced sign alone do not promote the experimental gate.
 
 ## Extend the existing unit operation
 

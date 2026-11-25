@@ -48,7 +48,10 @@ Rejected attempts cannot advance marker state or publish a source impulse. Keep
 `setUnsplitPressureInterpolationEnabled(false)` when using reconstructed slug faces. The 0.1 s
 Tengesdal startup probe uses this configuration at 16 cells with 0.1 and 0.05 s steps and at
 24 cells with a 0.05 s step. It checks numerical conservation across these discretizations.
-The tracking-enabled five-second and 600 s publication gates remain open.
+An opt-in tracking-enabled five-second gate now repeats the same 16/0.1, 16/0.05 and
+24/0.05 mesh/time-step matrix with the accepted marker and subcell-force owner. It must
+complete conservatively before any tracking-enabled 180/600 s publication or experimental-cycle
+claim; an enforced sign or a short startup alone is not qualification.
 
 The earlier 65.163 kPa inlet-pressure amplitude is below
 the unchanged 68.6 kPa lower bound; the unchanged liquid-trough detector finds no

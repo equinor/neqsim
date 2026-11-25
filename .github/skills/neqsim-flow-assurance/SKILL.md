@@ -28,8 +28,9 @@ slug/film geometry is accepted transactionally by the unsplit route and has clos
 four/eight-cell and one/two-step conservation checks. Accepted tracked cells can also use the
 reconstructed body/film friction owner while untracked cells retain ordinary friction; the 0.1 s
 16/24-cell startup matrix checks rollback, passive impulse, mass closure and time-step refinement.
-The full five-second publication matrix with tracking enabled and the experimental cycle gates
-remain open; keep the gate opt-in until all of them pass.
+Run the opt-in tracking-enabled five-second 16/0.1, 16/0.05 and 24/0.05 matrix as the next hosted
+numerical gate. Do not advance to tracking-enabled 180/600 s publication or the experimental cycle
+gates until it passes; completion and an enforced sign alone are not physical qualification.
 
 > A complete study report with pipeline drawings (route, profiles, hydrate margin, threat matrix,
 > validation) is produced by `neqsim flow-assurance-report` — see the
