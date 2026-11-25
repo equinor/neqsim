@@ -44,10 +44,11 @@ The separate `setConservativeSlugForceIntegrationEnabled(true)` option remains
 experimental and off by default. When it is paired with explicit
 `CONSERVATIVE_LAGRANGIAN` tracking, the unsplit route now keeps ordinary cell friction on
 untracked cells and applies reconstructed body/film friction once to accepted tracked cells.
-Rejected attempts cannot advance marker state or publish a source impulse. A 0.1 s Tengesdal
-startup probe covers 16 cells at 0.1/0.05 s and 24 cells at 0.05 s; it is numerical
-conservation/refinement evidence only. The unchanged five-second and 600 s tracking-enabled
-publication gates remain open.
+Rejected attempts cannot advance marker state or publish a source impulse. Keep
+`setUnsplitPressureInterpolationEnabled(false)` when using reconstructed slug faces. The 0.1 s
+Tengesdal startup probe uses this configuration at 16 cells with 0.1 and 0.05 s steps and at
+24 cells with a 0.05 s step. It checks numerical conservation across these discretizations.
+The tracking-enabled five-second and 600 s publication gates remain open.
 
 The earlier 65.163 kPa inlet-pressure amplitude is below
 the unchanged 68.6 kPa lower bound; the unchanged liquid-trough detector finds no

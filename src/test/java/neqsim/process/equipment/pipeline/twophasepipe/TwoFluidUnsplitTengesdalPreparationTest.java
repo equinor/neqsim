@@ -291,9 +291,14 @@ class TwoFluidUnsplitTengesdalPreparationTest {
     return TwoFluidBenchmarkMetrics.relativeMeshSpread(reference, refined);
   }
 
+  /**
+   * Verify the startup ledger for reconstructed slug friction with the compatible face operator.
+   *
+   * @param count number of pipe sections
+   * @param maximumStep maximum nominal substep in seconds
+   */
   private static void verifyTrackedSubcellForces(int count, double maximumStep) {
     TwoFluidPipe pipe = createPipe(count);
-    pipe.setUnsplitPressureInterpolationEnabled(true);
     pipe.setBlendInclinedAnnularSlugTransitions(true);
     pipe.setSignedDonorTransportEnabled(true);
     pipe.setSlugTrackingMode(TwoFluidPipe.SlugTrackingMode.CONSERVATIVE_LAGRANGIAN);
@@ -317,6 +322,9 @@ class TwoFluidUnsplitTengesdalPreparationTest {
     PreparedInterval interval = pipe.prepareUnsplitTransient(0.1, maximumStep, solver,
         pipe.createUnsplitDensityModel());
     assertEquals(0.1, interval.getEndTimeSeconds(), 0.0);
+    for (PreparedStep step : interval.getSubsteps()) {
+      assertEquals(0.0, step.getPressureInterpolationTimeScale(), 0.0);
+    }
     assertEquals(0.0, pipe.getSimulationTime(), 0.0);
     assertEquals(0.0, original.age, 0.0);
     LagrangianSlugTracker accepted = interval.getAcceptedSlugTracker();
