@@ -20,6 +20,7 @@ import neqsim.process.equipment.pipeline.twophasepipe.LagrangianSlugTracker.Slug
 import neqsim.process.equipment.pipeline.twophasepipe.LiquidAccumulationTracker.SlugCharacteristics;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.TimeIntegrator;
+import neqsim.process.equipment.pipeline.twophasepipe.numerics.TwoFluidUnsplitIntegrator;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.UnsplitTransientSolver;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -197,6 +198,50 @@ class TwoFluidPipeUnsplitRunTest {
     for (Phase phase : Phase.values()) {
       assertEquals(0.0, pipe.getLastMassBalanceReport().getRelativeResidual(phase), 1.0e-8);
     }
+  }
+
+  @Test
+  void trackedSubcellForcesRemainTransactionalAndConservative() throws Exception {
+    TwoFluidPipe pipe = createPipe(true, 4);
+    prepareClosedConservativeSlug(pipe);
+    seedSlug(pipe, 15.0, 25.0);
+    TwoFluidSection[] cells = (TwoFluidSection[]) field(pipe, "sections");
+    for (TwoFluidSection cell : cells) {
+      double[] state = cell.getStateVector();
+      state[3] = 1.5 * state[0];
+      state[4] = 0.4 * state[1];
+      state[5] = 0.4 * state[2];
+      cell.setConservativeEndpoint(state, 1.0e-8);
+    }
+    pipe.setSharedSlugForceBalanceEnabled(true);
+    pipe.setConservativeSlugForceIntegrationEnabled(true);
+    pipe.setUnsplitTransientSolver(solver(), 0.005);
+    pipe.setMaximumTransientSubsteps(1);
+    byte[] before = SerializationUtils.serialize(pipe);
+    assertThrows(RuntimeException.class, () -> pipe.runTransient(0.01, UUID.randomUUID()));
+    assertArrayEquals(before, SerializationUtils.serialize(pipe));
+
+    pipe.setMaximumTransientSubsteps(256);
+    TwoFluidUnsplitIntegrator.PreparedInterval interval = pipe.prepareUnsplitTransient(0.01, 0.005, solver(),
+        pipe.createUnsplitDensityModel());
+    double impulse = 0.0;
+    for (double[] cellImpulse : interval.getConservativeFrictionImpulsePerLength()) {
+      for (double phaseImpulse : cellImpulse) {
+        assertTrue(Double.isFinite(phaseImpulse));
+        impulse += Math.abs(phaseImpulse);
+      }
+    }
+    assertTrue(impulse > 0.0, "The accepted tracked cells must publish their passive momentum impulse");
+    for (double residual : interval.getMassResidualKg()) {
+      assertEquals(0.0, residual, 1.0e-8);
+    }
+    assertEquals(0.0, pipe.getSimulationTime(), 0.0, "Preparation must not publish a prefix");
+
+    pipe.runTransient(0.01, UUID.randomUUID());
+    for (Phase phase : Phase.values()) {
+      assertEquals(0.0, pipe.getLastMassBalanceReport().getRelativeResidual(phase), 1.0e-8);
+    }
+    assertEquals(0.01, pipe.getLagrangianSlugTracker().getSlugs().get(0).age, 1.0e-14);
   }
 
   @Test

@@ -92,6 +92,9 @@ public final class TwoFluidUnsplitIntegrator {
         || maximumSubsteps < 1) {
       throw new IllegalArgumentException("Interval preparation requires equations, densities, solver and valid limits");
     }
+    if (equations.isConservativeSlugForceIntegrationEnabled() && conservativeSlugTracker == null) {
+      throw new IllegalArgumentException("Tracked subcell forces require a conservative Lagrangian marker owner");
+    }
     this.equations = equations;
     this.densityModel = densityModel;
     this.solver = solver;
@@ -213,7 +216,8 @@ public final class TwoFluidUnsplitIntegrator {
       double interpolationTimeScale = pressureInterpolationEnabled ? timeWeight * dt : 0.0;
       synchronizeSlugGeometry(localSlugTracker);
       TwoFluidUnsplitModelAdapter adapter = new TwoFluidUnsplitModelAdapter(equations, local, spatialStep, densityModel,
-          interpolationTimeScale, !pressureInterpolationEnabled);
+          interpolationTimeScale,
+          !pressureInterpolationEnabled && !equations.isConservativeSlugForceIntegrationEnabled());
       double[][] state = new double[local.length][];
       double[] pressure = new double[local.length];
       double[] area = new double[local.length];

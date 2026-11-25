@@ -309,9 +309,18 @@ class TwoFluidUnsplitModelAdapterTest {
     equations.setEnableStiffBubbleDrag(true);
     assertThrows(IllegalStateException.class, () -> adapter.prepareStep(result, dt, 0.0, 4.999e6, true, 1.0e-8));
     equations.setEnableStiffBubbleDrag(false);
-    equations.setConservativeSlugForceIntegrationEnabled(true);
-    assertThrows(IllegalStateException.class, () -> adapter.prepareStep(result, dt, 0.0, 4.999e6, true, 1.0e-8));
     assertMatrixEquals(before, states(accepted));
+  }
+
+  @Test
+  void rejectsOverlappingFrictionOwners() {
+    TwoFluidSection[] accepted = {section(0.0), section(10.0)};
+    TwoFluidConservationEquations equations = isothermalEquations();
+    equations.setConservativeSlugForceIntegrationEnabled(true);
+    adapter(equations, accepted).validatePreparedOperator();
+    TwoFluidUnsplitModelAdapter adapter = new TwoFluidUnsplitModelAdapter(equations, accepted, 10.0,
+        (cell, state, pressure, time) -> new double[] {40.0, 700.0, 1000.0}, 0.0, true);
+    assertThrows(IllegalStateException.class, adapter::validatePreparedOperator);
   }
 
   @Test

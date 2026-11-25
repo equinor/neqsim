@@ -5896,10 +5896,12 @@ public class TwoFluidPipe extends Pipeline {
     if (componentTransportEnabled || includeEnergyEquation || includeMassTransfer || enableHeatTransfer
         || directElectricalHeatingPowerPerMeter != 0.0 || upstreamCompressibleVolume != null
         || enableSlugTracking && slugTrackingMode != SlugTrackingMode.CONSERVATIVE_LAGRANGIAN
-        || equations.isStiffBubbleDragEnabled() || equations.isConservativeSlugForceIntegrationEnabled()
+        || equations.isStiffBubbleDragEnabled()
+        || equations.isConservativeSlugForceIntegrationEnabled()
+            && (!enableSlugTracking || slugTrackingMode != SlugTrackingMode.CONSERVATIVE_LAGRANGIAN)
         || equations.isRusanovInternalFluxEnabled()) {
       throw new IllegalStateException("Unsplit preparation requires isothermal flow without component/phase transfer, "
-          + "heat, nonconservative slug tracking, upstream volume, two-sided Rusanov transport or separately integrated bubble/subcell sources");
+          + "heat, unowned slug geometry, upstream volume, two-sided Rusanov transport or unsupported stiff sources");
     }
     if (!(inletBCType == BoundaryCondition.CLOSED || inletBCType == BoundaryCondition.STREAM_CONNECTED
         || inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlowSet)
