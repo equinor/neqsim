@@ -15,10 +15,10 @@ import org.junit.jupiter.api.Test;
  * Transfers the source-space KCl salt-pair curvature law to independent dense-KCl states.
  *
  * <p>
- * The transfer is deliberately first order: at fixed model CO2 fugacity it maps the fitted
- * activity-coefficient increment {@code delta ln(gamma_CO2) = zeta(T) m_KCl^2} to
- * {@code x_CO2,candidate = x_CO2,baseline exp(-zeta(T) m_KCl^2)}. It neither changes production
- * parameters nor claims a coupled-flash result.
+ * The transfer is deliberately first order: at fixed model CO2 fugacity it maps the fitted activity-coefficient
+ * increment {@code delta ln(gamma_CO2) = zeta(T) m_KCl^2} to
+ * {@code x_CO2,candidate = x_CO2,baseline exp(-zeta(T) m_KCl^2)}. It neither changes production parameters nor claims a
+ * coupled-flash result.
  *
  * @author OpenAI
  * @version 1.0
@@ -39,8 +39,8 @@ class KClCO2SaltPairTransferAssessmentTest {
   @Tag("slow")
   @Test
   void frozenHeMorseLawTransfersToIndependentDenseKclSeries() throws Exception {
-    List<KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Reference> references =
-        KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.loadReferences();
+    List<KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Reference> references = KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest
+        .loadReferences();
     List<String> rows = new ArrayList<String>();
     rows.add("point_id,temperature_K,total_pressure_MPa,kcl_mass_fraction_percent,"
         + "kcl_molality_mol_per_kg_water,zeta_kg2_per_mol2,source_co2_mole_percent_salt_free,"
@@ -61,15 +61,14 @@ class KClCO2SaltPairTransferAssessmentTest {
           || reference.mgcl2MassFractionPercent != 0.0) {
         continue;
       }
-      KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result baseline =
-          KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.calculate(reference, 10.0);
+      KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result baseline = KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest
+          .calculate(reference, 10.0);
       double molality = kclMolality(reference.kclMassFractionPercent);
       double activityCorrection = zeta * molality * molality;
       double candidateMolePercent = baseline.molecularMolePercent * Math.exp(-activityCorrection);
       double baselineLogResidual = Math.log(baseline.molecularMolePercent / reference.sourceCo2MolePercent);
       double candidateLogResidual = Math.log(candidateMolePercent / reference.sourceCo2MolePercent);
-      double baselineRelativeError = 100.0
-          * (baseline.molecularMolePercent / reference.sourceCo2MolePercent - 1.0);
+      double baselineRelativeError = 100.0 * (baseline.molecularMolePercent / reference.sourceCo2MolePercent - 1.0);
       double candidateRelativeError = 100.0 * (candidateMolePercent / reference.sourceCo2MolePercent - 1.0);
 
       baselineSquaredLogResidual += baselineLogResidual * baselineLogResidual;
@@ -86,10 +85,10 @@ class KClCO2SaltPairTransferAssessmentTest {
       groupStatistics[group][6] += Math.abs(candidateRelativeError);
       selected++;
       rows.add(reference.pointId + "," + reference.temperatureK + "," + reference.totalPressureMpa + ","
-          + reference.kclMassFractionPercent + "," + molality + "," + zeta + ","
-          + reference.sourceCo2MolePercent + "," + baseline.molecularMolePercent + ","
-          + candidateMolePercent + "," + baselineLogResidual + "," + candidateLogResidual + ","
-          + activityCorrection + "," + baselineRelativeError + "," + candidateRelativeError);
+          + reference.kclMassFractionPercent + "," + molality + "," + zeta + "," + reference.sourceCo2MolePercent + ","
+          + baseline.molecularMolePercent + "," + candidateMolePercent + "," + baselineLogResidual + ","
+          + candidateLogResidual + "," + activityCorrection + "," + baselineRelativeError + ","
+          + candidateRelativeError);
     }
 
     assertEquals(9, selected, "independent 323.15 K KCl states");
@@ -100,12 +99,10 @@ class KClCO2SaltPairTransferAssessmentTest {
     for (int group = 0; group < groupStatistics.length; group++) {
       double count = groupStatistics[group][0];
       rows.add("SUMMARY-KCL" + (group == 0 ? 10 : group == 1 ? 15 : 22) + ",,,,,,,,,"
-          + Math.sqrt(groupStatistics[group][1] / count) + ","
-          + Math.sqrt(groupStatistics[group][2] / count) + ",," + (groupStatistics[group][5] / count) + ","
-          + (groupStatistics[group][6] / count));
+          + Math.sqrt(groupStatistics[group][1] / count) + "," + Math.sqrt(groupStatistics[group][2] / count) + ",,"
+          + (groupStatistics[group][5] / count) + "," + (groupStatistics[group][6] / count));
     }
-    rows.add("SUMMARY,,,,,,,,," + baselineLogRmse + "," + candidateLogRmse + ",,"
-        + baselineMape + "," + candidateMape);
+    rows.add("SUMMARY,,,,,,,,," + baselineLogRmse + "," + candidateLogRmse + ",," + baselineMape + "," + candidateMape);
     Files.createDirectories(Paths.get("target"));
     Files.write(Paths.get(OUTPUT), rows, StandardCharsets.UTF_8);
 
@@ -126,8 +123,7 @@ class KClCO2SaltPairTransferAssessmentTest {
    * @return salt-pair curvature coefficient in kg^2/mol^2
    */
   private static double zeta(double temperatureK) {
-    return ZETA_298_KG2_PER_MOL2
-        + ZETA_INVERSE_T_KG2_PER_MOL2 * (REFERENCE_TEMPERATURE_K / temperatureK - 1.0);
+    return ZETA_298_KG2_PER_MOL2 + ZETA_INVERSE_T_KG2_PER_MOL2 * (REFERENCE_TEMPERATURE_K / temperatureK - 1.0);
   }
 
   /**
