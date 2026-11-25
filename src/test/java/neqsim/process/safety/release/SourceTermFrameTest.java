@@ -50,6 +50,8 @@ class SourceTermFrameTest extends neqsim.NeqSimTest {
     metadata.clear();
     assertEquals(json, frame.toJson());
     JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+    assertEquals("EQUILIBRATE_TP", root.getAsJsonObject("model").get("upstreamPreparation").getAsString());
+    assertFalse(root.getAsJsonObject("model").has("selectedUpstreamPhase"));
     assertEquals("kg/s", root.getAsJsonObject("source").getAsJsonObject("massFlowRate").get("unit").getAsString());
     assertTrue(root.getAsJsonObject("source").getAsJsonObject("massFlowRate").get("value").getAsDouble() > 0.0);
   }

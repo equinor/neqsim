@@ -33,18 +33,19 @@ public final class HomogeneousEquilibriumReleaseModel implements ReleaseFlowMode
   /** @return numerical model version, including guarded phase, solid-risk and external evidence records */
   @Override
   public String getModelVersion() {
-    return "1.2.5";
+    return "1.2.6";
   }
 
   /** {@inheritDoc} */
   @Override
   public ReleaseModelEvidence getEvidence() {
-    return new ReleaseModelEvidence("homogeneous-equilibrium-orifice:1.2.5",
+    return new ReleaseModelEvidence("homogeneous-equilibrium-orifice:1.2.6",
         Arrays.asList("SHORT_ORIFICE", "EQUILIBRIUM_PHASE_TRANSFER", "MULTICOMPONENT_EOS"),
-        Arrays.asList("NO_SLIP", "NO_DELAYED_FLASHING", "NO_SOLID_BEARING_FLOW", "EXPERIMENTAL_INPUT_PHASE_MISMATCH",
-            "MEASUREMENT_UNCERTAINTY_NOT_REPORTED", "DENSE_CO2_AMBIENT_SOLID_BEARING_PATH_UNSUPPORTED",
-            "DENSE_CO2_RESTRICTION_PLANE_SENSITIVITY_ONLY", "AVERAGE_FEED_COMPOSITION_PROXY",
-            "PUBLISHED_PHASE_FRACTIONS_MODEL_DERIVED", "NO_ENGINEERING_QUALIFICATION"),
+        Arrays.asList("NO_SLIP", "NO_DELAYED_FLASHING", "NO_SOLID_BEARING_FLOW", "STEP_SELECTED_LIQUID_ROOT_PRESERVED",
+            "STEP_SRK_SATURATION_PRESSURE_DEVIATION", "MEASUREMENT_UNCERTAINTY_NOT_REPORTED",
+            "DENSE_CO2_AMBIENT_SOLID_BEARING_PATH_UNSUPPORTED", "DENSE_CO2_RESTRICTION_PLANE_SENSITIVITY_ONLY",
+            "AVERAGE_FEED_COMPOSITION_PROXY", "PUBLISHED_PHASE_FRACTIONS_MODEL_DERIVED",
+            "NO_ENGINEERING_QUALIFICATION"),
         Arrays.asList(
             new ReleaseModelEvidence.Record("hem-component-energy-closure", ReleaseModelEvidence.Type.CONSERVATION,
                 "src/test/java/neqsim/process/safety/release/ReleaseFlowModelTest.java",
@@ -55,9 +56,9 @@ public final class HomogeneousEquilibriumReleaseModel implements ReleaseFlowMode
             new ReleaseModelEvidence.Record("witlox-step-propane-2007", ReleaseModelEvidence.Type.EXPERIMENTAL,
                 "DOI 10.1016/j.jhazmat.2006.06.126; "
                     + "src/test/resources/neqsim/process/safety/release/witlox-step-propane-2007.csv",
-                "Published STEP propane liquid-withdrawal rate; executable applicability evidence records that the "
-                    + "declared liquid withdrawal is not comparable to the current gas-only equilibrium upstream "
-                    + "state, and that measurement uncertainty is not reported",
+                "Published STEP propane liquid-withdrawal rate; executable evidence preserves the declared liquid "
+                    + "source root, quantifies the SRK saturation-pressure deviation and compares the HEM rate while "
+                    + "retaining that measurement uncertainty is not reported",
                 true),
             new ReleaseModelEvidence.Record("hammer-dense-co2-restrictions-2022",
                 ReleaseModelEvidence.Type.EXPERIMENTAL,
@@ -93,7 +94,13 @@ public final class HomogeneousEquilibriumReleaseModel implements ReleaseFlowMode
       ReleaseFlowRequest.positive(upstream.getTemperature(), "upstream temperature");
       ReleaseFlowRequest.positive(upstream.getTotalNumberOfMoles(), "inventory");
       supported(upstream);
-      new ThermodynamicOperations(upstream).TPflash();
+      boolean selectedPhase = request
+          .getUpstreamPreparation() == ReleaseFlowRequest.UpstreamPreparation.PRESERVE_SELECTED_PHASE;
+      if (selectedPhase) {
+        requireSelectedUpstreamPhase(upstream, request.getSelectedUpstreamPhase());
+      } else {
+        new ThermodynamicOperations(upstream).TPflash();
+      }
       upstream.init(3);
       supported(upstream);
       ReleaseState initial = ReleaseState.fromFluid(upstream, 0.0);
@@ -109,6 +116,10 @@ public final class HomogeneousEquilibriumReleaseModel implements ReleaseFlowMode
       diagnostics.add(new Diagnostic("ENTROPY_SOLVER",
           upstream.getNumberOfComponents() == 1 ? "Pure-fluid PS flash retains saturation quality"
               : "Cold TP entropy bracket with guarded same-EOS incipient-phase continuation when required"));
+      if (selectedPhase) {
+        diagnostics.add(new Diagnostic("UPSTREAM_SELECTED_PHASE_PRESERVED", "Preserved caller-selected "
+            + request.getSelectedUpstreamPhase() + " source root; downstream expansion remains equilibrium HEM"));
+      }
       if (upper <= lower) {
         states.put(Station.THROAT_CRITICAL, initial);
         states.put(Station.ORIFICE_EXIT, initial);
@@ -403,6 +414,20 @@ public final class HomogeneousEquilibriumReleaseModel implements ReleaseFlowMode
       if (type != PhaseType.GAS && type != PhaseType.OIL && type != PhaseType.LIQUID && type != PhaseType.AQUEOUS) {
         throw new UnsupportedOperationException("Unsupported phase: " + type);
       }
+    }
+  }
+
+  /**
+   * Verifies that the supplied upstream snapshot is exactly the declared selected material phase.
+   *
+   * @param fluid selected upstream snapshot
+   * @param selectedPhase declared selected phase
+   * @throws IllegalArgumentException when the snapshot is not exactly the declared phase
+   */
+  private static void requireSelectedUpstreamPhase(SystemInterface fluid, PhaseType selectedPhase) {
+    if (fluid.getNumberOfPhases() != 1 || fluid.getPhase(0).getType() != selectedPhase) {
+      throw new IllegalArgumentException(
+          "Selected upstream snapshot must contain exactly one " + selectedPhase + " phase");
     }
   }
 
