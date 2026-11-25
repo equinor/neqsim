@@ -2,7 +2,7 @@
 name: neqsim-relief-flare-network
 version: "1.0.0"
 description: "Relief and flare design - PSV sizing per API 520 (gas/liquid/two-phase, fire), API 521 fire heat input, flare load summation, tip sizing, radiation contours, header back-pressure and Mach, and the TR3001 overpressure-study engine. USE WHEN: PSV sizing, relief contingency analysis, thermal relief of trapped liquid, flare hydraulics or radiation, PSV-to-flare integration, or a TR3001/API 521 study. Anchors on ReliefValveSizing, safety.overpressure, Flare, SafetyValve."
-last_verified: "2026-11-18"
+last_verified: "2026-11-25"
 requires:
   java_packages: [neqsim.process.util.fire, neqsim.process.safety.overpressure, neqsim.process.equipment.flare, neqsim.process.equipment.valve]
 ---
@@ -344,7 +344,9 @@ modeling.
 
 Use `SteadyFlareGasNetwork.rate` for the simultaneous fixed-opening capacity of tagged branches
 with individual inlet and tailpipe losses. Supply the project device pressure limits, gas properties,
-pipe geometry and tip characteristic. Inspect each capacity and outlet-pressure margin alongside
+pipe geometry and tip characteristic. Use `SteadyFlareGasNetwork.TipCurve` for rated dry-gas
+flow (kg/s) and absolute tip-inlet pressure (bara) points on the modeled gas and outlet basis.
+Inspect each capacity and outlet-pressure margin alongside
 the network mass residual and pipe Mach values. For a blowdown history, recreate the source
 pressures and openings at the common sampled peak and call `ratePeakGasCapacity`. See the
 [worked gas-network example](../../../docs/safety/depressurization_per_API_521.md#steady-dry-gas-capacity-at-a-coincident-load).

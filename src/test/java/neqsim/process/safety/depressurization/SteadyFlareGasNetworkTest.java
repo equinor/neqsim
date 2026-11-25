@@ -12,6 +12,7 @@ import neqsim.process.safety.depressurization.DepressurizationSimulator.Depressu
 import neqsim.process.safety.depressurization.SteadyFlareGasNetwork.DeviceRating;
 import neqsim.process.safety.depressurization.SteadyFlareGasNetwork.Pipe;
 import neqsim.process.safety.depressurization.SteadyFlareGasNetwork.Result;
+import neqsim.process.safety.depressurization.SteadyFlareGasNetwork.TipCurve;
 
 /**
  * Independent flange, conservation and applicability checks for a dry-gas star header.
@@ -157,6 +158,65 @@ class SteadyFlareGasNetworkTest {
     assertThrows(IllegalStateException.class, () -> network.rate(demands));
     network.setKnockoutPressureDrop("V-KO", flow, new double[] {0, 0, 0});
     assertEquals(without.totalKgS, network.rate(demands).totalKgS, 2e-8);
+  }
+
+  /** Independently set a subcritical operating point inside the tabulated tip range. */
+  @Test
+  void tabulatedTipAndKnockoutDetermineLocalFlangePressures() {
+    double[] flow = {0.0, 0.05, 0.15, 0.25};
+    double[] pressure = {1.2, 1.25, 1.55, 1.65};
+    TipCurve curve = new TipCurve(flow, pressure);
+    SteadyFlareGasNetwork network = new SteadyFlareGasNetwork("H", NO_LOSS, "T", curve, 300, 0.020, 1, 1.3);
+    network.setKnockoutPressureDrop("KO", new double[] {0.0, 0.2}, new double[] {0.0, 0.1});
+    double sourceBara = 1.8;
+    double expectedTipBara = 1.4;
+    double expectedFlangeBara = 1.45;
+    double ratio = expectedFlangeBara / sourceBara;
+    double gamma = 1.3;
+    double massFlux = sourceBara * 1e5 * Math.sqrt(
+        2 * gamma / ((gamma - 1) * RT_OVER_M) * (Math.pow(ratio, 2 / gamma) - Math.pow(ratio, (gamma + 1) / gamma)));
+    double area = .05 / massFlux;
+    network.addDevice("A", sourceBara, NO_LOSS, area, 1.0, NO_LOSS, 1.42);
+    double preOpening = network.rate(Collections.singletonMap("A", .05)).headerBara;
+    network.addDevice("B", sourceBara, NO_LOSS, area, 1.0, NO_LOSS, null);
+    Map<String, Double> demands = new LinkedHashMap<>();
+    demands.put("A", .05);
+    demands.put("B", .05);
+    pressure[2] = 10;
+    flow[1] = 0;
+    curve.getPressureBara()[0] = 10;
+    curve.getFlowKgS()[3] = 2;
+    Result result = network.rate(demands);
+    assertEquals(.10, result.totalKgS, 1e-8);
+    assertEquals(0.0, result.massResidualKgS, 1e-8);
+    assertEquals(expectedTipBara, result.tipBara, 1e-7);
+    assertEquals(expectedFlangeBara, result.headerOutletBara, 1e-7);
+    assertEquals(expectedFlangeBara, result.devices.get("A").outletBara, 1e-7);
+    assertEquals(-.03, result.devices.get("A").outletPressureMarginBar, 1e-7);
+    assertEquals(preOpening, result.devices.get("B").steadyPreOpeningBara, 1e-8);
+    assertEquals(1.2, result.zeroFlowStaticBara, 0.0);
+    assertEquals(1.65, result.ratedTipBara, 0.0);
+    assertEquals(.25, result.ratedFlowKgS, 0.0);
+    assertTrue(result.toJson()
+        .contains("\"tipCurve\":{\"flowKgS\":[0.0,0.05,0.15,0.25]," + "\"pressureBara\":[1.2,1.25,1.55,1.65]}"));
+  }
+
+  /** Enforce monotone, positive absolute pressure data and reject a flow beyond the last rating. */
+  @Test
+  void tabulatedTipRejectsInvalidAndUnratedOperation() {
+    double[] flow = {0.0, 0.01, 0.02};
+    assertThrows(IllegalArgumentException.class, () -> new TipCurve(flow, new double[] {1.2, 1.25}));
+    assertThrows(IllegalArgumentException.class, () -> new TipCurve(flow, new double[] {0.0, 1.25, 1.3}));
+    assertThrows(IllegalArgumentException.class, () -> new TipCurve(flow, new double[] {1.2, 1.25, 1.23}));
+    assertThrows(IllegalArgumentException.class, () -> new TipCurve(flow, new double[] {1.2, 1.25, Double.NaN}));
+    assertThrows(IllegalArgumentException.class,
+        () -> new TipCurve(new double[] {.005, .01, .02}, new double[] {1.2, 1.25, 1.3}));
+    assertThrows(IllegalArgumentException.class,
+        () -> new TipCurve(new double[] {0.0, .01, .01}, new double[] {1.2, 1.25, 1.3}));
+    TipCurve curve = new TipCurve(flow, new double[] {1.2, 1.25, 1.3});
+    SteadyFlareGasNetwork network = new SteadyFlareGasNetwork("H", NO_LOSS, "T", curve, 300, 0.020, 1, 1.3);
+    network.addDevice("A", 8, NO_LOSS, 2e-4, .95, NO_LOSS, null);
+    assertThrows(IllegalStateException.class, () -> network.rate(Collections.singletonMap("A", .01)));
   }
 
   /** Missing demand, extrapolated tip and high pipe Mach cannot produce an accepted result. */
