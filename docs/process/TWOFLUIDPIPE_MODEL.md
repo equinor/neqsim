@@ -41,7 +41,16 @@ transient initialization are now enabled by default; those changes do not qualif
 the severe-slugging benchmark or replace its required opt-in settings.
 
 The separate `setConservativeSlugForceIntegrationEnabled(true)` option remains
-experimental and off by default. Its 65.163 kPa inlet-pressure amplitude is below
+experimental and off by default. When it is paired with explicit
+`CONSERVATIVE_LAGRANGIAN` tracking, the unsplit route now keeps ordinary cell friction on
+untracked cells and applies reconstructed body/film friction once to accepted tracked cells.
+Rejected attempts cannot advance marker state or publish a source impulse. Keep
+`setUnsplitPressureInterpolationEnabled(false)` when using reconstructed slug faces. The 0.1 s
+Tengesdal startup probe uses this configuration at 16 cells with 0.1 and 0.05 s steps and at
+24 cells with a 0.05 s step. It checks numerical conservation across these discretizations.
+The tracking-enabled five-second and 600 s publication gates remain open.
+
+The earlier 65.163 kPa inlet-pressure amplitude is below
 the unchanged 68.6 kPa lower bound; the unchanged liquid-trough detector finds no
 completed cycle intervals, and pressure limits still activate. Do not use these
 results as qualification of slug loads or extreme pressure transients.

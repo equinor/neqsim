@@ -56,7 +56,15 @@ Leaving shared slug forces disabled does not repair the earlier default-mode
 5.757% inventory-drift result. This release preparation does not change defaults.
 
 The separate `setConservativeSlugForceIntegrationEnabled(true)` option remains
-experimental and off by default. Its 65.163 kPa inlet-pressure amplitude is below
+experimental and off by default. With explicit conservative Lagrangian tracking, the unsplit
+transaction now leaves mean-cell friction on untracked cells and applies reconstructed body/film
+friction once after a tracked step passes nonlinear and conservation checks. Rejected attempts
+publish neither marker motion nor source impulse. Keep `setUnsplitPressureInterpolationEnabled(false)`
+when using reconstructed slug faces. The 0.1 s Tengesdal startup probe uses this configuration at
+16 cells with 0.1 and 0.05 s steps and at 24 cells with a 0.05 s step. The tracking-enabled
+five-second and 600 s publication gates remain open.
+
+The earlier 65.163 kPa inlet-pressure amplitude is below
 the unchanged 68.6 kPa lower bound; the unchanged liquid-trough detector finds no
 completed cycle intervals, and pressure limits still activate. Do not use these
 results as qualification of slug loads or extreme pressure transients. This is a historical
