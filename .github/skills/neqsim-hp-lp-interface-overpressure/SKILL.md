@@ -1,8 +1,8 @@
 ---
 name: neqsim-hp-lp-interface-overpressure
-version: "1.0.0"
-description: "Assess overpressure when a high-pressure well, flowline or separator feeds a low-pressure system. Covers shut-in and packed-line pressures, inadvertent valve opening with choke collapse (IVO+CC), relief and flare capacity, PAHH and HIPPS credit, LOPA, SIL verification and mitigation ranking. Use for HP/LP tie-ins, specification breaks, trip settings or reuse of an approved study with a new fluid or source pressure."
-last_verified: "2026-11-24"
+version: "1.1.0"
+description: "Assess overpressure when a high-pressure well, flowline or separator feeds a low-pressure system: shut-in and packed-line pressures, inadvertent valve opening with choke collapse, relief and flare capacity, PAHH/HIPPS credit, LOPA, SIL, mitigation ranking. Mandatory comparison with existing wells and blocked outlet vs current inflow. Use for HP/LP tie-ins, spec breaks or reuse of an approved study with a new source."
+last_verified: "2026-11-25"
 requires:
   java_packages: [neqsim.process.safety.overpressure, neqsim.process.safety.risk.sis, neqsim.process.safety.risk.fta, neqsim.process.safety.risk.eta, neqsim.process.safety.depressurization]
 ---
@@ -27,6 +27,21 @@ Distilled from a screening study of a gas well with SIWHP ~241 bara produced aga
 3. Calibrate on the approved case: pack volume from the peak LP pressure, upstream friction from the steady "pressure boundary" relief case; keep LP2/LP3-type cases as independent checks. Cross-check the PZV area against the data sheet (reference: 113 vs 115.7 cm2) and the flows against `PsvValveModel` and `ControlValveFailureRelief` (the nozzle model is ~11 % above ISA for Cv 418).
 4. Sweep pack pressure (PAHH level), volume, Cv and PZV count; Monte Carlo (lognormal volume, uniform Cv/area/lift) and a tornado. Mass balance of every run must close within 0.5 %.
 
+## 2b. Mandatory: compare with existing wells and inputs, and check blocked outlet against current inflow
+
+Do both before the conclusions; reviewers ask for them whenever a new well or tie-in feeds a receiving separator or header that already has producers. Skipping them leaves the answer to "is the new source above what the system was approved for?" unproven.
+
+**A. Compare against existing/previous wells and inputs to the receiving separator/header.** Tabulate for each existing well or input and for the new source: riser/inlet (arrival) pressure, flowing and shut-in wellhead pressure (design-basis SIWHP and recorded maximum), rates (MSm3/d and kg/s), choke dP, and what the PSV/relief basis was sized for (source pressure, case, relieving rate, PSV capacity; say "not documented" when the sizing case is missing). Then:
+
+1. Compute the ratio new/historical for source pressure (approved basis, highest existing design-basis SIWHP, highest recorded value, any original design basis) and for choke dP and rate.
+2. Rerun the calibrated IVO+CC model at each historical source pressure, for the existing and the new fluid, and report peak LP pressure, relief rate through the LP PSVs, PV flow and receiving-separator PSV load, each as a ratio to the approved case. Include the cases with and without the pressure-limiting barrier, because an approval that rests on a PAHH is only comparable when the barrier holds.
+3. State separately whether the new source pressure exceeds anything used or observed before, by how much, and for how long (depletion year when it falls below the approved basis).
+4. Check data quality: daily historian or allocation values are not SIWHP; a well that was converted from injection can show non-producer pressures; a design-basis table may be a profile rather than a measurement.
+
+**B. Blocked outlet as a function of current inflow (not design inflow).** Compute margin = PSV capacity / gas inflow for the receiving separator and for the LP header as a function of the inflow, with cases for current rate (last 90 days), 12-month P50/P95/maximum, forecast profile, original design rate and the new source on top. State explicitly whether blocked outlet governs. Caveats to carry: lower production today reduces blocked outlet but does not reduce IVO+CC, whose relief rate follows pack pressure, stored mass and valve Cv; when the new source pressure exceeds earlier wells, failed-open or choke-collapse is usually the governing PSV case; the margins are stationary estimates, not dynamic; lowering a PSV set pressure cuts its capacity roughly in proportion and invalidates the margin, so recheck when a set pressure changes; do not take credit for trips in sizing.
+
+Record both in `results.json` under `existing_wells_comparison` (keys: `existing_inputs`, `relief_basis`, `ratios`, `relief_effect`, `blocked_outlet` with `governs`, `statement` and `inflow_cases`, `findings`, `sources`, `blockers`; `devtools/validate_task_results.py` warns when an overpressure study lacks the block) and in two report sections: "Sammenligning med eksisterende brønner mot <separator>" / "Comparison with existing wells to <separator>" and "Blokkert utløp som dimensjonerende case" / "Blocked outlet as design case", each with a table and one figure. Read-only data sources (PDM/allocation, historian, STID datasheets and HAZOPs, design basis, earlier tasks) are listed per source with the exact blocker when unreachable; never open a new interactive sign-in to fetch them. Site-specific source locations belong in the enterprise skills (enterprise skill `enterprise-relief-device-register`, section "Receiving-system history").
+
 ## 3. Risk side
 
 - LOPA with `LOPAResult.getSTS0131OverpressureTargetFrequency(eventBara, designBara, testBara)` (categories are checked in the order 2 x design, test, design). Initiating frequency = f_IVO x P_CC (x exposure E; design basis E = 1).
@@ -45,5 +60,6 @@ Distilled from a screening study of a gas well with SIWHP ~241 bara produced aga
 - Rich (gas-condensate) pack fluid: use homogeneous mixture density for the inventory; lean separator gas (study fluid) understates stored mass (+60 % in the reference case, +2.4 bar on the peak).
 - Cold shut-in isenthalpic expansion can pass the LP MDMT (-46 C reference); the approved study only reported the warm case.
 - Percent-format task scripts convert with `devtools/py_to_notebook.py`; for runner execution build the notebooks with nbformat and submit them to `neqsim_runner.AgentBridge`.
+- Reference-case evidence for 2b (screening, one gas well, 2026-11): the new source was 1.74 times the approved pack pressure (+102 bar), 1.43 times the highest existing design-basis SIWHP; with the PAHH in place the pack pressure was unchanged and rich gas added 14 % relief; without it LP-PSV relief was 1.65 times the approved case. Blocked outlet had margin 3.7-9.5 at current inflow and became governing only above the PSV capacity (about 18 MSm3/d) or if the receiving-separator PSV set pressure were lowered. An existing-wells table built from design-basis SIWHP, daily allocation data and a recorded maximum gave three different "highest existing" values; report all three.
 
-References: TR3001 v4.02, STS0131, NORSOK S-001/P-002, API STD 521/520, API RP 14C App. E, API STD 17O, Guideline 070 rev 3, GL0139.
+References: TR3001 v4.02, STS0131, NORSOK S-001/P-002, API STD 521/520, API RP 14C App. E, API STD 17O, Guideline 070 rev 3, GL0139. Related: `neqsim-process-safety` (Method 9), `neqsim-relief-flare-network`, `neqsim-task-workflow` (safety and overpressure tasks).

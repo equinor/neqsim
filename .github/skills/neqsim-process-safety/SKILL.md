@@ -1,6 +1,6 @@
 ---
 name: neqsim-process-safety
-version: "1.5.0"
+version: "1.6.0"
 description: "Process safety methodology - barriers, PSFs/SCEs, HAZOP, LOPA, SIL per IEC 61511, integrated safety response, change revalidation, bow-tie, risk matrix, TR3001 overpressure studies, trapped-liquid rupture. USE WHEN: a task needs barrier registers, hazard identification, LOPA, SIF SIL assignment, ESD/blowdown/relief/flare evidence, safety revalidation, overpressure governing cases, PFP demand or risk evaluation. Anchors on neqsim.process.safety.barrier, .risk, .overpressure, .rupture."
 last_verified: "2026-11-25"
 requires:
@@ -571,6 +571,16 @@ disposal.getGoverningContributor();
 - Hand the disposal load off to `neqsim-relief-flare-network` for flare-tip and
   header hydraulics. Verified by `OverpressureProtectionStudyTest` +
   `OverpressureExtensionsTest`.
+- **Mandatory when a new well, tie-in or source feeds a separator or header that already has
+  producers:** (1) *compare against existing/previous wells and inputs to the receiving
+  separator/header* — riser/inlet pressure, SIWHP, rates, choke dP, what the PSV/relief
+  basis was sized for, the ratio new versus historical, and the effect on the failed-open /
+  choke-collapse relief load; (2) *check blocked outlet as a function of current inflow, not
+  design inflow*, and state explicitly whether it governs. Today's lower production reduces
+  blocked outlet but not IVO+CC, so failed-open or choke-collapse is usually the governing PSV
+  case when the new source pressure exceeds earlier wells. Method, caveats and the
+  `existing_wells_comparison` results key are in `neqsim-hp-lp-interface-overpressure` (section 2b);
+  `devtools/validate_task_results.py` warns when the block is missing.
 
 ## Common Mistakes
 
@@ -592,6 +602,7 @@ disposal.getGoverningContributor();
 - [ ] SIL claimed ≤ SIL achieved by PFD_avg
 - [ ] Spurious-trip rate documented (production impact)
 - [ ] Results saved to `results.json` with `safety_analysis` section + JSON from `LOPAResult.toJson()` / `SILVerificationResult.toJson()`
+- [ ] Overpressure study for a new source on an existing header: `existing_wells_comparison` present (existing-input table, relief basis, ratio new/historical, IVO+CC effect, blocked outlet vs current inflow with a stated verdict)
 
 ## Verification Tests
 
@@ -602,6 +613,7 @@ disposal.getGoverningContributor();
 ## Related Skills
 
 - [`neqsim-relief-flare-network`](../neqsim-relief-flare-network/SKILL.md) — when LOPA shows PSV is the IPL of last resort
+- [`neqsim-hp-lp-interface-overpressure`](../neqsim-hp-lp-interface-overpressure/SKILL.md) — HP source against an LP system: IVO+CC, PAHH credit, comparison with existing wells and blocked outlet against current inflow
 - [`neqsim-firewater-deluge-design`](../neqsim-firewater-deluge-design/SKILL.md) — sizing and adjudicating the active fire-protection barrier (deluge coverage, nozzle net, monitors, active-vs-passive substitution rules)
 - [`neqsim-trapped-liquid-fire-rupture`](../neqsim-trapped-liquid-fire-rupture/SKILL.md) — blocked-in liquid fire rupture, PFP demand, and source-term handoff
 - [`neqsim-self-heating-ignition`](../neqsim-self-heating-ignition/SKILL.md) — spontaneous ignition of combustible liquid absorbed into porous insulation (lagging fires); use for any fire with no identified ignition source

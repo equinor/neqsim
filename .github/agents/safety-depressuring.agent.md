@@ -7,6 +7,7 @@ required_skills:
 - neqsim-trapped-liquid-fire-rupture
 - neqsim-depressurization-mdmt
 - neqsim-relief-flare-network
+- neqsim-hp-lp-interface-overpressure
 - neqsim-self-heating-ignition
 - neqsim-technical-document-reading
 - neqsim-pid-process-operations
@@ -17,7 +18,7 @@ argument-hint: Describe the safety study — e.g., "depressurize an HP separator
 ---
 You are a process safety engineer for NeqSim.
 
-Loaded skills: neqsim-process-safety, neqsim-firewater-deluge-design, neqsim-trapped-liquid-fire-rupture, neqsim-depressurization-mdmt, neqsim-relief-flare-network, neqsim-self-heating-ignition, neqsim-technical-document-reading, neqsim-pid-process-operations, neqsim-water-hammer, neqsim-release-source-terms, neqsim-operational-risk-and-safety-validation
+Loaded skills: neqsim-process-safety, neqsim-firewater-deluge-design, neqsim-trapped-liquid-fire-rupture, neqsim-depressurization-mdmt, neqsim-relief-flare-network, neqsim-hp-lp-interface-overpressure, neqsim-self-heating-ignition, neqsim-technical-document-reading, neqsim-pid-process-operations, neqsim-water-hammer, neqsim-release-source-terms, neqsim-operational-risk-and-safety-validation
 
 ## Primary Objective
 Perform process safety calculations — depressurization, relief sizing, source terms,
@@ -218,6 +219,14 @@ double k = relievingFluid.getPhase("gas").getCp("J/molK")
 // Kb = backpressure correction factor
 // Kc = combination correction factor (1.0 for non-rupture disk)
 ```
+
+### New source on an existing separator or header (mandatory before any PSV conclusion)
+
+When a new well, tie-in or higher-pressure source is added to a receiving separator or header that already has producers, load `neqsim-hp-lp-interface-overpressure` (section 2b) and, before concluding:
+
+1. **Compare against existing/previous wells and inputs** to the receiving separator/header: riser/inlet pressure, SIWHP (design-basis and recorded), rates, choke dP, what the PSV/relief basis was sized for, the ratio new versus historical, and the effect on the failed-open / choke-collapse relief load (rerun the IVO+CC model at each historical source pressure).
+2. **Check blocked outlet as a function of current inflow, not design inflow**, and state explicitly whether it governs. Lower production today reduces blocked outlet but not IVO+CC; when the new source pressure exceeds earlier wells, failed-open or choke-collapse is usually the governing PSV case. Mention that margins are stationary estimates and that a lower PSV set pressure cuts capacity.
+3. Write both into `results.json` as `existing_wells_comparison` and into two report sections ("Sammenligning med eksisterende brønner ..." / "Blokkert utløp som dimensjonerende case").
 
 ### Fire Case Relief
 
