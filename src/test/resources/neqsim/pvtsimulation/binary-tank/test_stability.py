@@ -61,12 +61,14 @@ def mixture(temperature, pressure, methane_fraction):
     return a, b, a * pressure / (R * temperature) ** 2, b * pressure / (R * temperature)
 
 
-def accepted_states():
+def accepted_states(initial_moles=None):
     """Reconstruct initial, sixteen extraction endpoints and one surface state."""
     temperature, pressure, volume = 323.15, 80e5, 100.0
     x, y, liquid_volume, gas_volume = REFERENCE.tie(temperature, pressure)
     amounts = [70 / gas_volume * y + 30 / liquid_volume * x,
                70 / gas_volume * (1 - y) + 30 / liquid_volume * (1 - x)]
+    if initial_moles is not None:
+        amounts = list(initial_moles)
     initial = amounts[:]
     states = [(temperature, pressure, amounts[:])]
     cumulative_production = [0.0, 0.0]
@@ -97,9 +99,10 @@ def require_common_tangent(gaps):
         raise ValueError("Sampled common-tangent stability check failed")
 
 
-def diagnose():
+def diagnose(initial_moles=None, closed_cell_states=()):
     """Check every physical root at 1001 grid points plus accepted phase points."""
-    states, balance_error = accepted_states()
+    states, balance_error = accepted_states(initial_moles)
+    states.extend(closed_cell_states)
     minima, root_checks = [], 0
     cubic_error = pressure_error = fugacity_error = volume_error = lever_error = 0.0
     state_results = []
@@ -146,7 +149,7 @@ def diagnose():
                               "liquid_methane_fraction": x, "vapor_methane_fraction": y,
                               "minimum_gibbs_gap": min(gaps)})
     metrics = [cubic_error, pressure_error, volume_error, lever_error]
-    if len(states) != 18 or any(not math.isfinite(value) or value > BOUND for value in metrics):
+    if len(states) != 18 + len(closed_cell_states) or any(not math.isfinite(value) or value > BOUND for value in metrics):
         raise ValueError("Frozen numerical/domain gate failed")
     if not math.isfinite(fugacity_error) or fugacity_error > 2e-9:
         raise ValueError("Fugacity equality failed")

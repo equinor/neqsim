@@ -1,7 +1,7 @@
 ---
 name: neqsim-eos-regression
 description: "EOS parameter regression workflow for fitting equation-of-state models to experimental data. USE WHEN: tuning binary interaction parameters (kij), matching saturation pressures, fitting PVT data (CME, CVD, DL), characterizing C7+ fractions, or validating EOS predictions against lab measurements. Covers SRK, PR, CPA parameter fitting strategies."
-last_verified: "2026-11-21"
+last_verified: "2026-11-25"
 ---
 
 # EOS Parameter Regression Workflow
@@ -408,3 +408,11 @@ Read `OFFGRID_SCOPE.md` and `OFFGRID_VALIDATION.md` in that reference folder for
 current-master compatibility. Numerical case counts are not independent
 experimental measurements or laboratory/reservoir holdout evidence.
 Guide: `docs/pvtsimulation/depletion_pvt_generation.md#wet-gas-fixed-cell-aqueous-transitions`.
+
+For a representative homogeneous sample entering a compositional tank, use
+`CompositionalReservoirHistory.fromSampleComposition` to preserve its bulk
+composition across initial-volume trials. It derives EOS phase-volume fractions
+at reservoir T/P; arbitrary geological phase volumes can imply a different bulk
+mixture. Keep the original constructor for that explicit alternative and preserve
+its provenance. See the same-sample independent binary benchmark and limits in
+`docs/pvtsimulation/reservoir_phase_production.md`.

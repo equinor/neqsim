@@ -245,3 +245,73 @@ The specified reservoir phase volumes imply their own explicitly calculated
 bulk composition. Thus this experiment tests transfer of an independently
 identified binary interaction across a synthetic composition family. It does
 not establish a composition-identical measured sample-to-reservoir chain.
+
+## Preserve the laboratory sample during tank initialization
+
+Use `CompositionalReservoirHistory.fromSampleComposition(model, historyReference,
+components, temperatureK, pressureBara, steps)` for a representative homogeneous
+sample whose initial bulk composition should be retained. It restores the tuned
+checkpoint independently, flashes it at reservoir T/P and derives the initial
+gas/oil/aqueous **EOS phase-volume fractions**. Missing phases receive exactly
+zero volume; unsupported or duplicate phase types, invalid volumes and failed
+flashes reject explicitly. The factory retains caller-accepted EOS/multiphase
+settings. It does not reconstruct spatial gas/oil contacts from a single sample.
+
+For each equilibrium phase, its fraction is $f_\alpha=V_\alpha/\sum_\gamma V_\gamma$.
+The existing tank initialization multiplies its component amounts by
+$V_\mathrm{trial}f_\alpha/V_\alpha=V_\mathrm{trial}/\sum_\gamma V_\gamma$.
+Every phase therefore receives the same factor, preserving the complete bulk
+composition for every volume trial. These are the EOS volumes used by
+`SimpleReservoir`, rather than molar phase beta or separately density-corrected
+phase volumes. Neither substitute guarantees equal phase scaling.
+
+The original constructor with explicit phase-volume fractions remains available
+for geological phase-volume assumptions that deliberately imply a different bulk
+mixture. Record that distinction in sample/history provenance. Both routes retain
+immutable original/tuned models and transactional trial restart; only pore volume
+is fitted. This initialization adds one TP flash when constructing the opt-in
+history and leaves the original constructor unchanged. Phase-selective replay
+now checks the necessary whole-interval mole balance before its first substep:
+initial moles plus all interval injection minus all phase extraction must remain
+positive. Exact sums of the supplied floating-point amounts avoid cancellation
+and intermediate-overflow rejection of positive residuals. Passing this admission
+check does not establish temporal or phase feasibility; the existing
+withdrawal-before-injection availability checks still apply. It adds no replay
+TP flash and leaves measured-component replay unchanged.
+
+The [same-sample benchmark](../../src/test/resources/neqsim/pvtsimulation/binary-tank/SAME_SAMPLE_SCOPE.md)
+keeps methane0.8/n-heptane0.2 throughout the laboratory and initial tank. It uses
+the same independent PR constants and600K/200bara kij identification as the binary
+family test, retains the entire650K CCE holdout, and adds an entire323.15K
+closed-mass two-phase CCE at80/70/60/50bara. The native calculation uses the actual
+closed-mass CCE protocol with no withdrawal. Independent fugacity equality and
+lever rule predict cell volume, phase amounts and phase compositions.
+
+At the same sample's323.15K/80bara state, the independently derived phase-volume
+split initializes100m3. Four prescribed extraction/injection intervals and a
+single288.15K/1.01325bara separator give independently predicted pressures,
+produced compositions and final-basis GOR. The first three pressures alone fit
+volume over[80,120]m3; the final pressure/composition/GOR are held out. The
+[complete reference outputs](../../src/test/resources/neqsim/pvtsimulation/binary-tank/same-sample-reference.json)
+and native receipts preserve the numerical results, frozen bounds and runtime.
+The Java test `SampleCompositionReservoirHistoryTest` checks the factory call,
+named-basis conservation, gas/oil/wet limits, duplicate/unsupported phase guards,
+volume scaling, serialization and immutable checkpoints. The dedicated native
+Python test qualifies the full independent chain against workspace Java.
+
+The independent initial gas/oil EOS volume fractions are 0.860817100494 /
+0.139182899506; the molar sample composition remains 0.8/0.2. The independent
+finite four-substep protocol predicts:
+
+| Interval | Pressure, bara | Produced methane, mol/mol | Surface GOR, m3/m3 |
+| --- | --- | --- | --- |
+| 1 | 78.070298613 | 0.853319428 | 1255.154224 |
+| 2 | 76.140117252 | 0.852139863 | 1239.892967 |
+| 3 | 74.209281999 | 0.850943690 | 1224.749297 |
+| 4 (held out) | 72.277619736 | 0.849730544 | 1209.721713 |
+
+This closes composition-identical initialization for the stated synthetic case.
+It does not establish measured laboratory/field accuracy, wet production,
+critical-degenerate depletion, general global stability, continuous-flow
+convergence, aquifer/Bayesian acceptance, multi-tank matching or the Tran method.
+All remaining #4740 acceptance criteria and the final merged audit still apply.

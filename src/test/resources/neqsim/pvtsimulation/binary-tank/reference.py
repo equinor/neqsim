@@ -129,6 +129,19 @@ def generate(substeps=4):
     t,p,v = 323.15,80e5,100.0
     x,y,vl,vg = tie(t,p)
     n = [v*0.7/vg*y+v*0.3/vl*x, v*0.7/vg*(1-y)+v*0.3/vl*(1-x)]
+    return replay(n,substeps)
+
+
+def replay(initial_moles, substeps=4):
+    """Replay the frozen schedule for supplied two-phase initial component mol."""
+    if isinstance(substeps,bool) or not isinstance(substeps,int) or substeps <= 0:
+        raise ValueError('Positive integer subdivisions required')
+    if len(initial_moles) != 2 or any(not math.isfinite(n) or n <= 0 for n in initial_moles):
+        raise ValueError('Two positive finite initial component amounts required')
+    t,p,v = 323.15,80e5,100.0
+    n = list(initial_moles)
+    if abs(equilibrium(t,p,n)[0]/v-1) > 1e-9:
+        raise ValueError('Initial component amounts do not occupy the frozen tank volume')
     initial = n[:]
     rows = []
     for _ in range(4):
