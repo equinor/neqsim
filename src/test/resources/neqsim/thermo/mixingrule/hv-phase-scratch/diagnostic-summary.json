@@ -1,0 +1,947 @@
+{
+  "interpretation": "Whole-process sampled Java stacks include warmup and measurement, not isolated timed intervals; no instrumented timing is pooled. Sample counts are not CPU-time fractions or call counts. Recorded deoptimizations do not establish a cause for the historical lost observation.",
+  "runs": [
+    {
+      "name": "p0_n5_init3_r4_base",
+      "event_counts": {
+        "jdk.ObjectAllocationSample": 619,
+        "jdk.Deoptimization": 94,
+        "jdk.Compilation": 4,
+        "jdk.ExecutionSample": 154
+      },
+      "operation_samples": 144,
+      "hv_containing_samples": 135,
+      "leaf_neqsim_methods": [
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms",
+          132
+        ],
+        [
+          "neqsim/thermo/component/ComponentEos.logfugcoefdN",
+          4
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.excessGibbsSum",
+          2
+        ],
+        [
+          "neqsim/thermo/system/SystemThermo.initAnalytic",
+          2
+        ],
+        [
+          "neqsim/thermo/component/Component.isInert",
+          1
+        ],
+        [
+          "neqsim/thermo/component/ComponentEos.aT",
+          1
+        ],
+        [
+          "neqsim/thermo/phase/PhaseEos.molarVolume",
+          1
+        ],
+        [
+          "neqsim/thermo/phase/Phase.init",
+          1
+        ]
+      ],
+      "leaf_neqsim_lines": [
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:493",
+          54
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:242",
+          49
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:362",
+          22
+        ],
+        [
+          "neqsim/thermo/component/ComponentEos.logfugcoefdN:467",
+          4
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:495",
+          3
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.excessGibbsSum:98",
+          2
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:502",
+          2
+        ],
+        [
+          "neqsim/thermo/component/Component.isInert:2275",
+          1
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:455",
+          1
+        ],
+        [
+          "neqsim/thermo/system/SystemThermo.initAnalytic:4207",
+          1
+        ],
+        [
+          "neqsim/thermo/component/ComponentEos.aT:645",
+          1
+        ],
+        [
+          "neqsim/thermo/system/SystemThermo.initAnalytic:4170",
+          1
+        ]
+      ],
+      "operation_deoptimizations": 0,
+      "deoptimization_reasons": [],
+      "max_endpoint_difference": 0.0
+    },
+    {
+      "name": "p0_n5_init3_r4_candidate",
+      "event_counts": {
+        "jdk.ObjectAllocationSample": 294,
+        "jdk.Deoptimization": 94,
+        "jdk.ExecutionSample": 162,
+        "jdk.Compilation": 4
+      },
+      "operation_samples": 125,
+      "hv_containing_samples": 107,
+      "leaf_neqsim_methods": [
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms",
+          93
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.excessGibbsSum",
+          13
+        ],
+        [
+          "neqsim/thermo/component/ComponentEos.logfugcoefdN",
+          4
+        ],
+        [
+          "neqsim/thermo/phase/PhaseEos.molarVolume",
+          4
+        ],
+        [
+          "neqsim/thermo/mixingrule/EosMixingRuleHandler$SRKHuronVidal2.init",
+          3
+        ],
+        [
+          "neqsim/thermo/system/SystemThermo.initAnalytic",
+          2
+        ],
+        [
+          "neqsim/thermo/phase/Phase.init",
+          2
+        ],
+        [
+          "neqsim/thermo/component/ComponentEos.ensureCompositionDerivativeCapacity",
+          1
+        ],
+        [
+          "neqsim/thermo/component/ComponentEos.aT",
+          1
+        ],
+        [
+          "neqsim/thermo/component/ComponentEos.Finit",
+          1
+        ],
+        [
+          "neqsim/thermo/phase/PhaseEos.init",
+          1
+        ]
+      ],
+      "leaf_neqsim_lines": [
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:250",
+          48
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:370",
+          28
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.excessGibbsSum:103",
+          13
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:501",
+          5
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:514",
+          5
+        ],
+        [
+          "neqsim/thermo/component/ComponentEos.logfugcoefdN:467",
+          4
+        ],
+        [
+          "neqsim/thermo/phase/PhaseEos.molarVolume:513",
+          4
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:507",
+          3
+        ],
+        [
+          "neqsim/thermo/mixingrule/EosMixingRuleHandler$SRKHuronVidal2.init:3030",
+          2
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:463",
+          2
+        ],
+        [
+          "neqsim/thermo/phase/Phase.init:550",
+          2
+        ],
+        [
+          "neqsim/thermo/component/ComponentEos.ensureCompositionDerivativeCapacity:207",
+          1
+        ]
+      ],
+      "operation_deoptimizations": 0,
+      "deoptimization_reasons": [],
+      "max_endpoint_difference": 0.0
+    },
+    {
+      "name": "p2_n5_init3_r4_base",
+      "event_counts": {
+        "jdk.ObjectAllocationSample": 605,
+        "jdk.Deoptimization": 94,
+        "jdk.Compilation": 4,
+        "jdk.ExecutionSample": 222
+      },
+      "operation_samples": 203,
+      "hv_containing_samples": 190,
+      "leaf_neqsim_methods": [
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms",
+          132
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffdiffaT",
+          23
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermPr.diffaT",
+          15
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermPr.diffalphaT",
+          9
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffdiffalphaT",
+          6
+        ],
+        [
+          "neqsim/thermo/component/ComponentEos.Finit",
+          5
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.excessGibbsSum",
+          3
+        ],
+        [
+          "neqsim/thermo/component/ComponentEos.logfugcoefdN",
+          2
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermPr.diffdiffaT",
+          2
+        ],
+        [
+          "neqsim/thermo/component/Component.isHydrocarbon",
+          1
+        ],
+        [
+          "neqsim/thermo/phase/PhaseGENRTLmodifiedHV.getExcessGibbsEnergy",
+          1
+        ],
+        [
+          "neqsim/thermo/system/SystemThermo.initAnalytic",
+          1
+        ]
+      ],
+      "leaf_neqsim_lines": [
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:242",
+          57
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffdiffaT:161",
+          23
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:419",
+          22
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermPr.diffaT:93",
+          15
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:399",
+          12
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermPr.diffalphaT:78",
+          9
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:401",
+          8
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffdiffalphaT:133",
+          6
+        ],
+        [
+          "neqsim/thermo/component/ComponentEos.Finit:252",
+          5
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:517",
+          5
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:497",
+          4
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:404",
+          3
+        ]
+      ],
+      "operation_deoptimizations": 0,
+      "deoptimization_reasons": [],
+      "max_endpoint_difference": 0.0
+    },
+    {
+      "name": "p2_n5_init3_r4_candidate",
+      "event_counts": {
+        "jdk.ObjectAllocationSample": 280,
+        "jdk.Deoptimization": 95,
+        "jdk.ExecutionSample": 225,
+        "jdk.Compilation": 4
+      },
+      "operation_samples": 184,
+      "hv_containing_samples": 173,
+      "leaf_neqsim_methods": [
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms",
+          75
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffdiffaT",
+          36
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.excessGibbsSum",
+          30
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffdiffalphaT",
+          16
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermPr.diffaT",
+          11
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermPr.diffdiffaT",
+          5
+        ],
+        [
+          "neqsim/thermo/mixingrule/EosMixingRuleHandler$SRKHuronVidal2.init",
+          2
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermPr.diffalphaT",
+          2
+        ],
+        [
+          "neqsim/thermo/component/ComponentEos.logfugcoefdN",
+          2
+        ],
+        [
+          "neqsim/thermo/phase/PhaseEos.init",
+          2
+        ],
+        [
+          "neqsim/thermo/phase/PhaseEos.molarVolume",
+          1
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermPr.aT",
+          1
+        ]
+      ],
+      "leaf_neqsim_lines": [
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffdiffaT:161",
+          36
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.excessGibbsSum:103",
+          30
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffdiffalphaT:133",
+          16
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:501",
+          14
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermPr.diffaT:93",
+          11
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:427",
+          10
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:529",
+          9
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:412",
+          6
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:440",
+          5
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermPr.diffdiffaT:99",
+          5
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:407",
+          5
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:406",
+          3
+        ]
+      ],
+      "operation_deoptimizations": 0,
+      "deoptimization_reasons": [],
+      "max_endpoint_difference": 0.0
+    },
+    {
+      "name": "p2_n15_init3_r4_base",
+      "event_counts": {
+        "jdk.ObjectAllocationSample": 13482,
+        "jdk.Deoptimization": 124,
+        "jdk.ExecutionSample": 3981,
+        "jdk.Compilation": 9
+      },
+      "operation_samples": 3931,
+      "hv_containing_samples": 3882,
+      "leaf_neqsim_methods": [
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms",
+          2786
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffaT",
+          460
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffdiffaT",
+          430
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffdiffalphaT",
+          112
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffalphaT",
+          56
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.aT",
+          19
+        ],
+        [
+          "neqsim/thermo/component/ComponentEos.logfugcoefdN",
+          10
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermPr.diffaT",
+          9
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.alpha",
+          6
+        ],
+        [
+          "neqsim/thermo/system/SystemThermo.initAnalytic",
+          5
+        ],
+        [
+          "neqsim/thermo/phase/PhaseEos.molarVolume",
+          5
+        ],
+        [
+          "neqsim/thermo/component/ComponentEos.Finit",
+          5
+        ]
+      ],
+      "leaf_neqsim_lines": [
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:398",
+          1114
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:242",
+          956
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffaT:155",
+          460
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffdiffaT:161",
+          430
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:399",
+          202
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:493",
+          196
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:495",
+          129
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:512",
+          124
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffdiffalphaT:133",
+          112
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffalphaT:117",
+          56
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:502",
+          30
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:455",
+          20
+        ]
+      ],
+      "operation_deoptimizations": 0,
+      "deoptimization_reasons": [],
+      "max_endpoint_difference": 0.0
+    },
+    {
+      "name": "p2_n15_init3_r4_candidate",
+      "event_counts": {
+        "jdk.ObjectAllocationSample": 920,
+        "jdk.Deoptimization": 124,
+        "jdk.ExecutionSample": 4486,
+        "jdk.Compilation": 8
+      },
+      "operation_samples": 4416,
+      "hv_containing_samples": 4358,
+      "leaf_neqsim_methods": [
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms",
+          3108
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffdiffaT",
+          479
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffaT",
+          456
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.excessGibbsSum",
+          116
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffdiffalphaT",
+          111
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffalphaT",
+          55
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.aT",
+          23
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermPr.diffaT",
+          13
+        ],
+        [
+          "neqsim/thermo/component/ComponentEos.logfugcoefdN",
+          12
+        ],
+        [
+          "neqsim/thermo/mixingrule/EosMixingRuleHandler$SRKHuronVidal2.init",
+          7
+        ],
+        [
+          "neqsim/thermo/component/ComponentEos.Finit",
+          6
+        ],
+        [
+          "neqsim/thermo/phase/PhaseEos.molarVolume",
+          5
+        ]
+      ],
+      "leaf_neqsim_lines": [
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:477",
+          1120
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:250",
+          876
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffdiffaT:161",
+          479
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffaT:155",
+          456
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:406",
+          244
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:407",
+          213
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:509",
+          143
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:529",
+          134
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:531",
+          124
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.excessGibbsSum:103",
+          116
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffdiffalphaT:133",
+          111
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:506",
+          97
+        ]
+      ],
+      "operation_deoptimizations": 0,
+      "deoptimization_reasons": [],
+      "max_endpoint_difference": 0.0
+    },
+    {
+      "name": "p2_n15_flash_r4_base",
+      "event_counts": {
+        "jdk.ObjectAllocationSample": 4630,
+        "jdk.ExecutionSample": 2657,
+        "jdk.Deoptimization": 135,
+        "jdk.Compilation": 14
+      },
+      "operation_samples": 2601,
+      "hv_containing_samples": 2506,
+      "leaf_neqsim_methods": [
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms",
+          2297
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffdiffaT",
+          64
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.aT",
+          51
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffdiffalphaT",
+          49
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffaT",
+          25
+        ],
+        [
+          "neqsim/thermo/component/ComponentEos.Finit",
+          13
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.alpha",
+          9
+        ],
+        [
+          "neqsim/thermo/component/Component.fitCompositionDerivativeArrays",
+          7
+        ],
+        [
+          "neqsim/thermo/phase/Phase.init",
+          6
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.excessGibbsSum",
+          5
+        ],
+        [
+          "neqsim/thermo/phase/Phase.setProperties",
+          5
+        ],
+        [
+          "neqsim/thermo/phase/PhaseEos.init",
+          5
+        ]
+      ],
+      "leaf_neqsim_lines": [
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:398",
+          2126
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffdiffaT:161",
+          64
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:242",
+          57
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.aT:111",
+          51
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffdiffalphaT:133",
+          49
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:455",
+          44
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffaT:155",
+          25
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:493",
+          22
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:451",
+          18
+        ],
+        [
+          "neqsim/thermo/component/ComponentEos.Finit:243",
+          13
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:399",
+          11
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.alpha:66",
+          9
+        ]
+      ],
+      "operation_deoptimizations": 16,
+      "deoptimization_reasons": [
+        {
+          "reason": "profile_predicate",
+          "action": "maybe_recompile",
+          "method": "org/ejml/dense/row/decomposition/TriangularSolver_DDRM.solveU",
+          "count": 4
+        },
+        {
+          "reason": "profile_predicate",
+          "action": "maybe_recompile",
+          "method": "org/ejml/dense/row/decomposition/lu/LUDecompositionBase_DDRM._solveVectorInternal",
+          "count": 4
+        },
+        {
+          "reason": "profile_predicate",
+          "action": "maybe_recompile",
+          "method": "neqsim/thermo/system/SystemThermo.calc_x_y",
+          "count": 4
+        },
+        {
+          "reason": "array_check",
+          "action": "maybe_recompile",
+          "method": "neqsim/thermo/phase/Phase.clone",
+          "count": 4
+        }
+      ],
+      "max_endpoint_difference": 0.0
+    },
+    {
+      "name": "p2_n15_flash_r4_candidate",
+      "event_counts": {
+        "jdk.ObjectAllocationSample": 3823,
+        "jdk.Deoptimization": 135,
+        "jdk.ExecutionSample": 2783,
+        "jdk.Compilation": 17
+      },
+      "operation_samples": 2710,
+      "hv_containing_samples": 2588,
+      "leaf_neqsim_methods": [
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms",
+          2390
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffdiffaT",
+          65
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffdiffalphaT",
+          60
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffaT",
+          36
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.aT",
+          24
+        ],
+        [
+          "neqsim/thermo/component/ComponentEos.Finit",
+          9
+        ],
+        [
+          "neqsim/thermo/mixingrule/EosMixingRuleHandler.clone",
+          8
+        ],
+        [
+          "neqsim/thermo/mixingrule/EosMixingRuleHandler$SRKHuronVidal2.init",
+          8
+        ],
+        [
+          "neqsim/thermo/component/Component.isHydrocarbon",
+          8
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.excessGibbsSum",
+          8
+        ],
+        [
+          "neqsim/thermo/phase/PhaseEos.molarVolume",
+          6
+        ],
+        [
+          "neqsim/thermo/component/Component.isIsIon",
+          5
+        ]
+      ],
+      "leaf_neqsim_lines": [
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:406",
+          2134
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:477",
+          70
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffdiffaT:161",
+          65
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffdiffalphaT:133",
+          60
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:250",
+          52
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:463",
+          37
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.diffaT:155",
+          36
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:464",
+          26
+        ],
+        [
+          "neqsim/thermo/component/attractiveeosterm/AttractiveTermTwuCoonParam.aT:111",
+          24
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:459",
+          18
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:407",
+          12
+        ],
+        [
+          "neqsim/thermo/component/ComponentGENRTLmodifiedHV.getGammaWithRowPureTerms:465",
+          10
+        ]
+      ],
+      "operation_deoptimizations": 16,
+      "deoptimization_reasons": [
+        {
+          "reason": "profile_predicate",
+          "action": "maybe_recompile",
+          "method": "org/ejml/dense/row/decomposition/TriangularSolver_DDRM.solveU",
+          "count": 4
+        },
+        {
+          "reason": "profile_predicate",
+          "action": "maybe_recompile",
+          "method": "org/ejml/dense/row/decomposition/lu/LUDecompositionBase_DDRM._solveVectorInternal",
+          "count": 4
+        },
+        {
+          "reason": "profile_predicate",
+          "action": "maybe_recompile",
+          "method": "neqsim/thermo/system/SystemThermo.calc_x_y",
+          "count": 4
+        },
+        {
+          "reason": "array_check",
+          "action": "maybe_recompile",
+          "method": "neqsim/thermo/phase/Phase.clone",
+          "count": 4
+        }
+      ],
+      "max_endpoint_difference": 0.0
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "legacy_truncating_write_retained_valid_prefix": false,
+  "legacy_observed_bytes": "{\"run",
+  "candidate_failed_write_preserved_prior_bytes": true,
+  "cause": "Opening the checkpoint with mode w truncates it before the next JSON write succeeds; partial/full-device interruption destroys the prior accepted prefix.",
+  "owner": "4576 /2939 benchmark tooling",
+  "improvement": "Atomic same-directory checkpoint replacement, without automatic retry/resume or changed timing workload",
+  "acceptance": "Partial-write/fsync/replace/serialization failure, modes and cleanup-error preservation; raw312-JVM audit normal and-O."
+}

@@ -16,6 +16,8 @@ import platform
 import re
 import statistics
 import subprocess
+import stat
+import uuid
 
 from benchmark_huron_vidal_columns import artifact_fingerprint
 from run_huron_vidal_selected_pair_benchmark import validate_evidence
@@ -135,6 +137,43 @@ def audit(manifest, read):
             "interpretation": "Bounded code comparisons; retain fork/control variability; no empirical accuracy gate"}
 
 
+def write_json_atomic(path, value):
+    """Replace a receipt only after its complete JSON has been written and flushed.
+
+    Keep previous bytes and permissions if writing fails, and retain the usual
+    umask-based mode for a new file. This does not establish JVM lifetime,
+    authorize retries, or promise power-loss durability.
+    """
+    payload = (json.dumps(value, indent=2) + "\n").encode("utf-8")
+    try:
+        mode = stat.S_IMODE(path.stat().st_mode)
+    except FileNotFoundError:
+        mode = None
+    temporary = path.with_name(path.name + "." + uuid.uuid4().hex + ".tmp")
+    owned = False
+    failure = None
+    try:
+        with temporary.open("xb") as stream:
+            owned = True
+            if mode is not None:
+                os.chmod(temporary, mode)
+            stream.write(payload)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+    except BaseException as error:
+        failure = error
+        raise
+    finally:
+        if owned:
+            try:
+                temporary.unlink(missing_ok=True)
+            except OSError as cleanup:
+                if failure is None:
+                    raise
+                failure.add_note("Temporary receipt cleanup failed: %s: %s" % (temporary, cleanup))
+
+
 def main():
     """Run or re-audit the same frozen matrix without overwriting prior evidence."""
     parser = argparse.ArgumentParser(description=__doc__)
@@ -181,7 +220,7 @@ def main():
                     "driver_sha256": sha(Path(__file__).read_bytes()),
                     "start_utc": datetime.now(timezone.utc).isoformat(),
                     "planned_jvms": len(list(plan(matrix))), "runs": []}
-        (directory / "execution.json").write_text(json.dumps(manifest, indent=2) + "\n")
+        write_json_atomic(directory / "execution.json", manifest)
         for key in plan(matrix):
             fork, profile, size, scenario, rule, label = key
             if sha((classes[label] / COMPONENT_CLASS).read_bytes()) != hashes[label]:
@@ -194,7 +233,7 @@ def main():
                     result = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, timeout=600)
             except subprocess.TimeoutExpired:
                 manifest["runs"].append({"key": key, "exit": None, "failure": "JVM exceeded 600 seconds"})
-                (directory / "execution.json").write_text(json.dumps(manifest, indent=2) + "\n")
+                write_json_atomic(directory / "execution.json", manifest)
                 raise
             run = {"key": key, "exit": result.returncode}
             manifest["runs"].append(run)
@@ -207,9 +246,9 @@ def main():
                         Path(str(path) + ".states.csv").open())), profile, rule, scenario, size)
                 except Exception as error:
                     run["failure"] = str(error)
-                    (directory / "execution.json").write_text(json.dumps(manifest, indent=2) + "\n")
+                    write_json_atomic(directory / "execution.json", manifest)
                     raise
-            (directory / "execution.json").write_text(json.dumps(manifest, indent=2) + "\n")
+            write_json_atomic(directory / "execution.json", manifest)
             if result.returncode:
                 raise RuntimeError("Failed process: " + stem(key))
             print(json.dumps({"completed": len(manifest["runs"]), "planned": manifest["planned_jvms"],
@@ -217,9 +256,9 @@ def main():
         if fingerprints != {label: artifact_fingerprint(paths) for label, paths in classpaths.items()}:
             raise ValueError("Changed full classpath during experiment")
         manifest["finish_utc"] = datetime.now(timezone.utc).isoformat()
-        (directory / "execution.json").write_text(json.dumps(manifest, indent=2) + "\n")
+        write_json_atomic(directory / "execution.json", manifest)
     summary = audit(manifest, lambda name: (directory / name).read_bytes())
-    (directory / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
+    write_json_atomic(directory / "summary.json", summary)
     print(json.dumps({key: value for key, value in summary.items() if key != "cells"}, indent=2))
 
 
