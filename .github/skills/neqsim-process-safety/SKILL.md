@@ -44,8 +44,11 @@ PSV sizing, or an adequate screen as API tank-vent sizing or conformity.
 For a well-to-platform case, use the [executable pressure-protection study](../../../examples/production-decision/tieback-protection.md).
 Record each zone's pressure datum and allowable transient pressure, valve feedback, actual boundary transfers and refinement sensitivity.
 Use the verifier's adjacent 60→120 and 120→240 cell comparisons for the synthetic case. Carry
-the resulting numerical verdict and the drawing findings into the study. Evaluate channel
-independence and reliability with project data.
+the resulting numerical verdict and the drawing findings into the study. Compare the two end
+stations and the fixed riser-base station, retaining the zone substep maxima and the pressure
+front, trip and seat times. Use `--benchmark` for a synchronized independent reference from the
+same fixture. Carry a HOLD when a matched reference is missing. Evaluate channel independence
+and reliability with project data.
 
 A `TwoFluidPipe` blocked-outlet or HIPPS run must enable `setEnableCoupledPressureMomentum(true)` and
 `setEnableInterfacialPressure(true)`. Without them the pressure behind a `CLOSED` boundary stays flat while mass

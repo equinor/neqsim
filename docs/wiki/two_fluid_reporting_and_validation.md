@@ -241,14 +241,14 @@ HIPPS isolation varied as follows:
 | 0.125 | 0.25 s, 60 cells | 80.36 bara |
 
 The outer step changes the internal substep because each call takes at least two substeps of
-equal length. At CFL 0.5 that perturbation moved the peak by up to 7.9 bar. At CFL 0.25 the
-outer-step and Courant-number refinements agreed within 0.33 bar. The 60/120-cell pair agreed
-within 0.36 bar. The 240-cell mesh added 0.60 bar. The excursion is local to the riser-base cell,
-and the increments grow with refinement, so the peak is time-converged but not mesh-converged.
-Upstream zones agreed within 0.06 bar at both Courant numbers on 60 and 120 cells. For
-riser-base or countercurrent liquid-fallback studies, set `setCflNumber(0.25)` and confirm the
-envelope with one Courant-number and two mesh refinements. Treat a growing mesh increment as an
-open qualification item, not a converged value. Do not rely on the default.
+equal length. On that source revision, the CFL 0.5 envelope moved by up to 7.9 bar across outer
+steps. At CFL 0.25 the 60-cell temporal refinements agreed within 0.33 bar and the last mesh
+refinement changed the peak by 0.60 bar. A new source replay in
+[#5249](https://github.com/equinor/neqsim/pull/5249) found both temporal and both spatial
+comparisons above their pressure or timing limits. Use CFL 0.25 as the study starting point and
+repeat the outer-step, CFL and two mesh refinements on the source revision under assessment.
+At the fixed 5,000 m riser-base station, compare the pressure history and first pressure-rise time
+across meshes. Retain the location and time of the separate zone-wide substep peak.
 
 Recommended transient CSV columns:
 
