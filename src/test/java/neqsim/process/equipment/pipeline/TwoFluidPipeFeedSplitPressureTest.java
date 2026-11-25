@@ -30,6 +30,18 @@ class TwoFluidPipeFeedSplitPressureTest {
    * @return the solved pipe
    */
   private static TwoFluidPipe solve(double feedStreamPressure) {
+    return solve(feedStreamPressure, false, SECTIONS);
+  }
+
+  /**
+   * Solve the line using the selected source-free admission condition.
+   *
+   * @param feedStreamPressure stream pressure in bara
+   * @param streamPhaseSplit whether the stream supplies the phase mass fractions
+   * @param sections number of finite-volume cells
+   * @return solved pipe
+   */
+  static TwoFluidPipe solve(double feedStreamPressure, boolean streamPhaseSplit, int sections) {
     SystemInterface fluid = new SystemSrkEos(273.15 + 40.0, feedStreamPressure);
     fluid.addComponent("methane", 95.0);
     fluid.addComponent("ethane", 3.0);
@@ -46,12 +58,13 @@ class TwoFluidPipeFeedSplitPressureTest {
     pipe.setLength(30000.0);
     pipe.setDiameter(0.355);
     pipe.setRoughness(4.5e-5);
-    pipe.setNumberOfSections(SECTIONS);
-    pipe.setElevationProfile(new double[SECTIONS + 1]);
+    pipe.setNumberOfSections(sections);
+    pipe.setElevationProfile(new double[sections + 1]);
     pipe.setIncludeEnergyEquation(true);
     pipe.setHeatTransferCoefficient(2.0);
     pipe.setSurfaceTemperature(5.0, "C");
     pipe.setOutletPressure(80.0, "bara");
+    pipe.setUseStreamPhaseSplit(streamPhaseSplit);
     pipe.setAnnularFlowingDensityFriction(true);
     pipe.run();
     Assertions.assertTrue(pipe.isSteadyStateConverged(), "the line must converge");
@@ -95,6 +108,22 @@ class TwoFluidPipeFeedSplitPressureTest {
       pipe.runTransient(0.1, null);
     }
     Assertions.assertEquals(steadyGasFlow, pipe.getGasMassFlowProfile()[0], 1.0e-3 * steadyGasFlow);
+  }
+
+  /** A metered inlet admits the upstream phase rates at steady state and after a change in total flow. */
+  @Test
+  void streamPhaseSplitPreservesSuppliedPhaseRates() {
+    TwoFluidPipe pipe = solve(140.0, true, SECTIONS);
+    Stream feed = (Stream) pipe.getInletStream();
+    double streamGas = feed.getFluid().getPhase("gas").getFlowRate("kg/sec");
+    Assertions.assertEquals(streamGas, pipe.getGasMassFlowProfile()[0], 1.0e-6);
+    feed.setFlowRate(50.0, "kg/sec");
+    feed.run();
+    pipe.runTransient(0.01, null);
+    Assertions.assertEquals(feed.getFluid().getPhase("gas").getFlowRate("kg/sec"), pipe.getGasMassFlowProfile()[0],
+        1.0e-6);
+    Assertions.assertEquals(feed.getFluid().getPhase("oil").getFlowRate("kg/sec"), pipe.getOilMassFlowProfile()[0],
+        1.0e-6);
   }
 
   /** Round-off in an upstream reflash must not switch the admitted gas back to its nominal-pressure value. */

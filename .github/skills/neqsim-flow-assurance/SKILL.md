@@ -895,6 +895,11 @@ for (double qgMSm3d : gasRates) {
 > 0.021 to 0.009 for stream pressures of 90 to 140 bara). There is no need to iterate the stream
 > pressure to the solved inlet pressure for a steady solve. A transient continued from that
 > solution uses the current inlet-cell pressure and feed temperature and composition for the split.
+> For separately metered phases, configure the connected stream with the intended phase proportions
+> and select `setUseStreamPhaseSplit(true)` before the steady run.
+> For the 39-cell rich and lean gas transient hand-offs, IMEX pressure correction with interfacial pressure
+> and coupled pressure–momentum passed 1 s versus 0.1 s reporting-interval checks. Compare the first-cell
+> pressure history and phase balances. The 60 s runs still drift from the steady pressure.
 
 > **The historical 73.8 km comparison is not a public qualification basis.**
 > Its complete input and measurement package is unavailable in the repository,

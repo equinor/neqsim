@@ -65,7 +65,9 @@ This release updates the feed calculation and adds a steady annular friction opt
   The pressure of the inlet stream used to set the gas, oil and aqueous rates carried down the
   line; it is now only a starting value. Results change wherever the stream pressure differed
   from the solved inlet pressure. During a transient the connected feed uses the current inlet-cell pressure, feed temperature
-  and composition to set the admitted phase rates.
+  and composition to set the admitted phase rates. For separately metered phases, select
+  `setUseStreamPhaseSplit(true)` to take the source-free inlet split from the connected stream
+  throughout steady and transient operation.
 
 Migration:
 

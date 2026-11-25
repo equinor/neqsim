@@ -1,12 +1,14 @@
 package neqsim.process.equipment.pipeline;
 
 import java.lang.reflect.Method;
+import org.apache.commons.lang3.SerializationUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
 import neqsim.process.equipment.pipeline.TwoFluidMassBalanceReport.Phase;
 import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
+import neqsim.process.equipment.pipeline.twophasepipe.numerics.TimeIntegrator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -172,6 +174,45 @@ class TwoFluidPipeAnnularFlowingFrictionTest {
     Assertions.assertEquals(OLGA_INLET_PRESSURE, flowing, 0.08 * OLGA_INLET_PRESSURE);
     Assertions.assertTrue(holdupWeighted > 1.12 * OLGA_INLET_PRESSURE,
         "the hold-up weighted density over-predicts this line, got " + holdupWeighted + " bara");
+  }
+
+  /** Compare the first physical second at fixed boundaries on the 39-cell lean line and rich riser. */
+  @Test
+  @Tag("slow")
+  void coupledImexPressureProfileConvergesAcrossReportingIntervals() {
+    for (TwoFluidPipe steady : new TwoFluidPipe[] {TwoFluidPipeFeedSplitPressureTest.solve(114.0, false, SECTIONS),
+        solveRichGasLine(true)}) {
+      double[] initial = steady.getPressureProfile();
+      double[] coarse = firstSecondPressures(SerializationUtils.clone(steady), 1);
+      double[] fine = firstSecondPressures(steady, 10);
+      for (int cell = 0; cell < initial.length; cell++) {
+        Assertions.assertEquals(fine[cell], coarse[cell], 1000.0, steady.getName() + " interval spread (Pa)");
+        Assertions.assertEquals(initial[cell], coarse[cell], 10000.0, steady.getName() + " startup drift (Pa)");
+      }
+    }
+  }
+
+  /**
+   * Replay a fixed-boundary hand-off for one second with coupled pressure, energy, and drag-limited IMEX steps.
+   *
+   * @param pipe initialized steady pipe
+   * @param intervals number of reporting intervals in the first second
+   * @return final cell pressures in Pa
+   */
+  private static double[] firstSecondPressures(TwoFluidPipe pipe, int intervals) {
+    pipe.setTimeIntegrationMethod(TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION);
+    pipe.setEnableInterfacialPressure(true);
+    pipe.setEnableCoupledPressureMomentum(true);
+    for (int i = 0; i < intervals; i++) {
+      pipe.runTransient(1.0 / intervals, null);
+      for (Phase phase : new Phase[] {Phase.GAS, Phase.OIL, Phase.WATER}) {
+        Assertions.assertEquals(0.0, pipe.getLastMassBalanceReport().getResidualKg(phase), 1.0e-8);
+      }
+    }
+    Assertions.assertEquals(1.0, pipe.getSimulationTime(), 1.0e-12);
+    Assertions.assertFalse(pipe.isTransientCoupledPressureMomentumFailureDetected());
+    Assertions.assertFalse(pipe.isTransientCoupledPressureMomentumCorrectionLimited());
+    return pipe.getPressureProfile();
   }
 
   /** Fixed-boundary, 60 s hand-off on the coupled momentum and energy path without steady momentum calibration. */

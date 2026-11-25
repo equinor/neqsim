@@ -924,6 +924,9 @@ public class TwoFluidPipe extends Pipeline {
    */
   private volatile boolean useFlowingDensityAnnularFriction;
 
+  /** Use the connected stream's phase mass fractions for a source-free, phase-metered inlet. */
+  private volatile boolean useStreamPhaseSplit;
+
   /** Last feed object used for a transient inlet flash. A replacement can carry a different EOS or components. */
   private transient SystemInterface splitFeed;
   /** Temperature (K), inlet-cell pressure (Pa) and overall mole fractions at the last transient inlet flash. */
@@ -1936,7 +1939,7 @@ public class TwoFluidPipe extends Pipeline {
         // re-evaluate it where the pressure boundary has moved the inlet, so the phase rates carried down the line
         // do not depend on a pressure the pipe never sees. The snapshot above holds the rates before this update,
         // so the change is part of the thermodynamic residual.
-        if (!includeMassTransfer
+        if (!includeMassTransfer && !useStreamPhaseSplit
             && Math.abs(P_inlet - sourceFreeSplitPressure) > FEED_SPLIT_PRESSURE_TOLERANCE * P_inlet) {
           double[] feedPhaseMassFractions = sourceFreeFeedPhaseMassFractions(P_inlet);
           sourceFreeSplitPressure = P_inlet;
@@ -7202,6 +7205,7 @@ public class TwoFluidPipe extends Pipeline {
     ssMaxWallClockTime = candidate.ssMaxWallClockTime;
     useSeparatedFrictionModel = candidate.useSeparatedFrictionModel;
     useFlowingDensityAnnularFriction = candidate.useFlowingDensityAnnularFriction;
+    useStreamPhaseSplit = candidate.useStreamPhaseSplit;
     splitFeed = null;
     steadyConsistentTransient = candidate.steadyConsistentTransient;
     steadyConsistencyCalibrated = candidate.steadyConsistencyCalibrated;
@@ -9390,7 +9394,7 @@ public class TwoFluidPipe extends Pipeline {
    */
   private double[] sourceFreeFeedPhaseMassFractions(double inletPressurePa) {
     SystemInterface feed = getInletStream().getFluid();
-    return referenceFluid == null ? calculateInletPhaseMassFractions(feed)
+    return useStreamPhaseSplit || referenceFluid == null ? calculateInletPhaseMassFractions(feed)
         : flashFeedPhaseMassFractions(feed, inletPressurePa, sections[0].getTemperature());
   }
 
@@ -9440,7 +9444,7 @@ public class TwoFluidPipe extends Pipeline {
    * @return gas, oil and aqueous mass fractions for read-only use
    */
   private double[] inletFeedPhaseMassFractions(SystemInterface feed) {
-    if (includeMassTransfer || referenceFluid == null || !(outletPressureSet || inletPressureSet)
+    if (useStreamPhaseSplit || includeMassTransfer || referenceFluid == null || !(outletPressureSet || inletPressureSet)
         || !(feed.getTotalNumberOfMoles() > 0.0)) {
       return calculateInletPhaseMassFractions(feed);
     }
@@ -12082,6 +12086,17 @@ public class TwoFluidPipe extends Pipeline {
    */
   public boolean isHeatTransferEnabled() {
     return enableHeatTransfer && heatTransferCoefficient > 0;
+  }
+
+  /**
+   * Use the phase mass fractions supplied by a connected stream for a source-free flow inlet. Select this when upstream
+   * equipment meters the gas and liquid separately. Both steady and transient calculations scale the supplied fractions
+   * by the boundary mass rate. By default the feed equilibrates at the pipe inlet pressure.
+   *
+   * @param enable true to use the stream phase split
+   */
+  public void setUseStreamPhaseSplit(boolean enable) {
+    useStreamPhaseSplit = enable;
   }
 
   /**
