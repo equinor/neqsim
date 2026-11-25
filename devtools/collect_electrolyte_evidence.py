@@ -73,6 +73,8 @@ ASSESSMENTS = (
     ("CO2WaterBaselineReferenceAssessmentTest",
      "co2-water-baseline-carroll1991-assessment.csv", 57,
      "co2_water_carroll1991_evaluation.csv"),
+    ("CO2SaltPairHelmholtzCompositionAssessmentTest",
+     "co2-salt-pair-helmholtz-composition-assessment.csv", 7, None),
     ("CO2BrineHydrateFullFamilyAssessmentTest",
      "co2-brine-hydrate-dholabhai1993-full-assessment.csv", 110,
      "co2_brine_hydrate_dholabhai1993_full.csv"),

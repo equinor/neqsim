@@ -90,11 +90,11 @@ class ElectrolyteEvidenceTest(unittest.TestCase):
         manifest, errors = self.collect(selected)
         self.assertEqual(errors, [])
         self.assertTrue(manifest["selected_evidence_complete"])
-        self.assertEqual(manifest["selected_assessment_count"], 18)
+        self.assertEqual(manifest["selected_assessment_count"], 19)
         self.assertEqual([item["data_rows"] for item in manifest["assessments"]],
                          [28, 10, 26, 20, 26, 78, 36, 18, 34, 48, 84, 7, 7,
-                          6, 12, 57, 110, 110])
-        self.assertEqual(sum(item["data_rows"] for item in manifest["assessments"]), 717)
+                          6, 12, 57, 7, 110, 110])
+        self.assertEqual(sum(item["data_rows"] for item in manifest["assessments"]), 724)
         self.assertEqual(manifest["assessments"][1]["fixture"]["basis"],
                          "inline reference values")
 
