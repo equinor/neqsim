@@ -30,6 +30,9 @@ FLUID_COLORS = {"gas": "#C0392B", "oil": "#7D5A1E", "water": "#2471A3", "glycol"
                 "util": "#707B7C", "mixed": "#1E8449", "other": "#333333"}
 FLUID_LABELS = {"gas": "gas", "oil": "oil / liquid HC", "water": "water", "glycol": "glycol (TEG/MEG)", "liquid": "liquid",
                 "util": "utility / other", "mixed": "multiphase", "other": "other"}
+FLUID_LABELS_NO = {"gas": "gass", "oil": "olje / væske HC", "water": "vann", "glycol": "glykol (TEG/MEG)", "liquid": "væske",
+                   "util": "utilitet / annet", "mixed": "flerfase", "other": "annet"}
+BAND_LABELS = {"en": {"gas": "GAS", "oil": "OIL / LIQUID HC", "water": "WATER"}, "no": {"gas": "GASS", "oil": "OLJE / VÆSKE HC", "water": "VANN"}}
 NAVY = "#1F3A5F"
 SIDE_VEC = {"l": (-1.0, 0.0), "r": (1.0, 0.0), "t": (0.0, -1.0), "b": (0.0, 1.0)}
 
@@ -38,7 +41,7 @@ class PfdDiagram:
     """Collects nodes and edges, routes lines, places labels, draws and checks the diagram."""
 
     def __init__(self, title, width_in=7.0, height_in=5.0, kind="pfd", footer=None, subtitle=None, font_pt=6.4, label_pt=6.0,
-                 intended_width_mm=165.0, line_pt=1.3, top_band=9.0, bottom_band=9.0, flow="lr", options=None):
+                 intended_width_mm=165.0, line_pt=1.3, top_band=9.0, bottom_band=9.0, flow="lr", options=None, language="en", fluid_labels=None):
         self.title, self.subtitle, self.footer, self.kind = title, subtitle, footer, kind
         self.width_in, self.height_in = float(width_in), float(height_in)
         self.W = 100.0
@@ -49,6 +52,8 @@ class PfdDiagram:
         self.flow = flow
         self.bub_r = 1.7
         self.options = options or {}
+        self.language = "no" if str(language).lower() in ("no", "nb", "nn") else "en"  # legend and phase-band texts: "en" (default) or "no" (Norwegian)
+        self.fluid_labels = dict(fluid_labels or {})  # per-diagram legend overrides, for example {"other": "tiltak"}
         self.nodes, self.edges, self.notes, self.junctions = [], [], [], []
         self.bands = []
         self._ids = {}
@@ -67,7 +72,7 @@ class PfdDiagram:
         """
         y0 = self.top if y0 is None else y0
         y1 = self.content_bottom if y1 is None else y1
-        labels = labels or {"gas": "GAS", "oil": "OIL / LIQUID HC", "water": "WATER"}
+        labels = labels or BAND_LABELS[self.language]
         fluids = fluids or {"gas": ["gas"], "oil": ["oil", "liquid", "condensate"], "water": ["water"]}
         total = float(sum(weights))
         out, y = {}, y0
@@ -415,7 +420,7 @@ class PfdDiagram:
         x = 1.5
         items = []
         for f in fluids:
-            lab = FLUID_LABELS.get(f, f)
+            lab = self.fluid_labels.get(f) or (FLUID_LABELS_NO if self.language == "no" else FLUID_LABELS).get(f, f)
             tw, th = self.text_size(lab, self.label_pt)
             items.append((f, x, y, lab, tw, th))
             x += 5.5 + 1.2 + tw + 3.5

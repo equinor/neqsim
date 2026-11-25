@@ -538,6 +538,22 @@ class, search the source to confirm:
 - Report break-even gas price from the model by bisection, never a rounded literal; keep literals out of narrative strings (derive them from the results dict).
 - HPHT dew point: do not trust `dewPointPressureFlash` (wrong root at 168 C); use a TP-flash bisection and CCE dropout. `TiebackAnalyzer` rejects shallow hosts through its water-depth gate; screen those hosts with the explicit pipe model.
 
+### Back-pressure routing screening (gas-condensate well versus receiving pressure)
+
+Use when a well can tie into several receivers at different pressures (e.g. LP manifold, dew-point plant, a
+1st-stage separator) and the question is what the receiving pressure costs in recoverable gas.
+
+- Chain, all in NeqSim: PR/Peneloux fluid with C7+ plus fraction -> CCE/CVD benchmark against lab data -> CVD material balance (cumulative
+  produced fraction, gas Z and viscosity, surface condensate yield) -> tubing VLP table `WHP(Pwf, q)` from `PipeBeggsAndBrills`
+  for 3-5 depletion states -> flowline + riser dP table -> required wellhead pressure = separator pressure + dP + choke margin.
+- Inflow: radial pseudo-pressure equation with skin, non-Darcy `D*q` and a condensate-banking productivity loss below the dew point.
+  Without a test, calibrate the effective kh to the reservoir team's profile and say so; report the ranking against kh, not only the level.
+- Read the answer as recoverable gas versus constant separator pressure (about 5-7 MSm3 per bar for a 600 MSm3 well); receiving-capacity
+  limits mostly shift gas in time, so also report cumulative gas in the first three years.
+- Check the minimum hydrate-free rate per receiver (higher receiving pressure raises the hydrate temperature and the minimum rate).
+- Worked implementation: a task-local `p4lib.py` (CCE/CVD loop, pipe, compressor, hydrate helpers) and `p4model.py` (vectorised engine); promote
+  to a tested helper when a second task needs it (NIP-03/NIP-04 in the originating task).
+
 ### Qualification output retention
 
 Keep required regression inputs, compact independent references and reproduction
