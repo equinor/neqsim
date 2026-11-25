@@ -1,7 +1,7 @@
 ---
 name: neqsim-flow-assurance
 description: "Flow assurance patterns for NeqSim. USE WHEN: predicting hydrate, wax, asphaltene, CO2/H2S corrosion (NORSOK M-506), mineral scale and brine mixing, valve scale drift and remediation, sulfur S8 deposition, metal-loss screening, pipeline hydraulics, DNV-RP-F109/F105/F104/F110/F114 screening, water hammer, slug flow, thermal analysis or inhibitor dosing. Code patterns plus the governing standards for every threat."
-last_verified: "2026-11-24"
+last_verified: "2026-11-25"
 ---
 
 # Flow Assurance Analysis with NeqSim
@@ -874,6 +874,28 @@ for (double qgMSm3d : gasRates) {
 > REDUCE the gradient, inverting the terrain response. The separated form is scoped to
 > stratified flow because its perimeters come from a circular-segment layer; annular flow,
 > whose film wets the whole perimeter, is not that geometry.
+>
+> **Annular friction is charged at the flowing (no-slip) density.** In annular flow the film
+> moves several times slower than the mixture, so the holdup-weighted density over-charged the
+> wall by `rho_m / rho_f` (1.05 on a lean high-pressure line, 1.3 to 2.5 on a rich low-pressure
+> line). `setAnnularFlowingDensityFriction(false)` restores the holdup-weighted density.
+> Measured 2026-11-25 against OLGA 2025.1.0, same fluid, geometry and boundaries, inlet pressure
+> for a fixed outlet (OLGA / holdup-weighted / flowing density, bara): rich gas with 38 % liquid
+> by mass on 15.5 km x 285.7 mm with a 121 m riser and 13 bara at the outlet, 18 kg/s
+> 26.49 / 30.95 / 26.05, 37 kg/s 49.71 / 59.27 / 47.22, 55 kg/s 71.88 / 83.97 / 67.86; lean
+> gas-condensate on 30 km x 355 mm with 80 bara at the outlet 113.85 / 114.04 / 112.44. On ΔP
+> that is 3 to 7 % BELOW OLGA (non-conservative: add a margin) where the earlier form was 21 to
+> 33 % above on the rich line and 0.6 % above on the lean line. Annular holdup is NOT improved
+> (−38 %, +12 %, +48 % and −1 % against OLGA on those four cases); do not quote it on a rich
+> low-pressure line.
+>
+> **With a prescribed outlet pressure the feed split is flashed at the solved inlet pressure.**
+> The inlet stream pressure is only a starting value and no longer changes the answer; before
+> 2026-11-25 it set the gas/liquid split carried down the line (lean line above: mean holdup
+> 0.021 to 0.009 for stream pressures of 90 to 140 bara). There is no need to iterate the stream
+> pressure to the solved inlet pressure for a steady solve. A transient continued from that
+> solution admits the same split while the stream keeps its temperature, pressure and
+> composition.
 
 > **The historical 73.8 km comparison is not a public qualification basis.**
 > Its complete input and measurement package is unavailable in the repository,
@@ -1431,7 +1453,8 @@ A line is not "flat plus a riser" once it is longer than about 2 km, and one rat
    bed of the same length and riser on the SAME model before saying the seabed does not matter.
 2. **Fix the outlet, solve the inlet.** `TwoFluidPipe.setOutletPressure(p, "bara")` gives the inlet
    pressure the line needs, which is the number a VFP or nodal curve wants. Fixing the inlet and
-   reading the outlet hides how fast the line pressure runs away at low rate.
+   reading the outlet hides how fast the line pressure runs away at low rate. The pressure of the
+   inlet stream is only a starting value: the feed split is flashed at the solved inlet pressure.
 3. **Sweep the rate downwards** (about 10 to 200 % of plateau, with and without lift gas, at the lowest and
    highest water cut) and report each limit by name; the minimum flow is the largest of them:
    - hydraulic: the rate where the required inlet pressure stops falling (U-shape: friction falls,
