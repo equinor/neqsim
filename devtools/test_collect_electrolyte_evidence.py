@@ -90,11 +90,11 @@ class ElectrolyteEvidenceTest(unittest.TestCase):
         manifest, errors = self.collect(selected)
         self.assertEqual(errors, [])
         self.assertTrue(manifest["selected_evidence_complete"])
-        self.assertEqual(manifest["selected_assessment_count"], 20)
+        self.assertEqual(manifest["selected_assessment_count"], 21)
         self.assertEqual([item["data_rows"] for item in manifest["assessments"]],
                          [28, 10, 26, 20, 26, 78, 36, 18, 34, 48, 84, 7, 7,
-                          6, 12, 57, 7, 10, 110, 110])
-        self.assertEqual(sum(item["data_rows"] for item in manifest["assessments"]), 734)
+                          6, 12, 57, 7, 10, 13, 110, 110])
+        self.assertEqual(sum(item["data_rows"] for item in manifest["assessments"]), 747)
         self.assertEqual(manifest["assessments"][1]["fixture"]["basis"],
                          "inline reference values")
 
@@ -148,6 +148,20 @@ class ElectrolyteEvidenceTest(unittest.TestCase):
             [{"path": evidence.FIXTURE_DIR + fixture,
               "sha256": evidence.digest(self.root / evidence.FIXTURE_DIR / fixture)}
              for fixture in fixtures])
+
+    def test_transfer_assessment_hashes_independent_dense_kcl_fixture(self):
+        producer, filename, rows, fixture = evidence.ASSESSMENTS[18]
+        self.assertEqual(producer, "KClCO2SaltPairTransferAssessmentTest")
+        self.assertEqual(rows, 13)
+        self.assertEqual(fixture, "co2_kcl_solubility_mousavi_chapoy_burgass2024.csv")
+        self.report(producer=producer)
+        self.csv(filename=filename, rows=rows)
+        manifest, errors = self.collect({evidence.PACKAGE + producer})
+        self.assertEqual(errors, [])
+        item = manifest["assessments"][18]
+        self.assertTrue(manifest["selected_evidence_complete"])
+        self.assertEqual(item["fixture"]["sha256"],
+                         evidence.digest(self.root / evidence.FIXTURE_DIR / fixture))
 
     def test_full_family_numerical_failure_retains_all_110_rows(self):
         producer, filename, rows, fixture = evidence.ASSESSMENTS[-2]
