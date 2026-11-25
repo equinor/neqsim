@@ -6,7 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.separator.ThreePhaseSeparator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.watertreatment.ProducedWaterTreatmentTrain.StageType;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.process.equipment.watertreatment.ProducedWaterTreatmentTrain.WaterTreatmentStage;
 
 /**
@@ -121,4 +127,49 @@ public class ProducedWaterTreatmentTrainTest {
     assertNotNull(report, "Report should not be null");
     assertTrue(report.contains("Treatment"), "Report should contain 'Treatment'");
   }
+
+  /**
+   * Executes the documented separator-to-treatment handoff and current result APIs.
+   */
+  @Test
+  void documentedSeparatorIntegrationUsesCurrentResultApis() {
+    SystemInterface fluid = new SystemSrkCPAstatoil(273.15 + 42.0, 10.0);
+    fluid.addComponent("methane", 72.0);
+    fluid.addComponent("n-heptane", 14.0);
+    fluid.addComponent("water", 40.0);
+    fluid.setMixingRule(10);
+
+    Stream feed = new Stream("Well stream", fluid);
+    feed.setTemperature(72.0, "C");
+    feed.setPressure(10.7, "bara");
+    feed.setFlowRate(720.0, "kg/hr");
+    feed.run();
+
+    ThreePhaseSeparator separator = new ThreePhaseSeparator("Production Separator", feed);
+    StreamInterface oilOut = separator.getOilOutStream();
+    StreamInterface waterOut = separator.getWaterOutStream();
+    ProducedWaterTreatmentTrain treatment = new ProducedWaterTreatmentTrain("PW Treatment", waterOut);
+    treatment.setInletOilConcentration(800.0);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(separator);
+    process.add(treatment);
+    process.run();
+
+    double waterMassFlowKgPerHour = waterOut.getFlowRate("kg/hr");
+    double oilMassFlowKgPerHour = oilOut.getFlowRate("kg/hr");
+    double producedLiquidMassFlowKgPerHour = oilMassFlowKgPerHour + waterMassFlowKgPerHour;
+    assertTrue(producedLiquidMassFlowKgPerHour > 0.0);
+
+    double producedLiquidWaterMassFraction = waterMassFlowKgPerHour / producedLiquidMassFlowKgPerHour;
+    assertTrue(producedLiquidWaterMassFraction >= 0.0);
+    assertTrue(producedLiquidWaterMassFraction <= 1.0);
+    assertTrue(Double.isFinite(treatment.getOilInWaterMgL()));
+    assertEquals(treatment.getOilInWaterMgL() <= ProducedWaterTreatmentTrain.NCS_OIW_LIMIT_MGL,
+        treatment.isDischargeCompliant());
+    assertNotNull(treatment.getTreatedWaterStream());
+    assertNotNull(treatment.getRecoveredOilStream());
+    assertTrue(treatment.generateReport().contains("NCS Compliant"));
+  }
+
 }
