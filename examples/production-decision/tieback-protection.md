@@ -43,8 +43,9 @@ The coupled well rate is initialized independently on each mesh with the same in
 The lost-isolation case must exceed the LC1 allowable on both the 60- and 120-cell meshes. The
 normal case must remain online on 60, 120 and 240 cells, including the 60-cell run with a
 0.125 s outer step. The verifier reports separate functional and numerical verdicts. The numerical
-screen compares the pressure histories at both physical route endpoints within the timing window,
-the substep-resolved peak in each zone, and the HIPPS trip and both seat-feedback times. It compares
+screen compares the pressure histories at the subsea inlet face, riser base (5,000 m) and riser
+outlet (5,400 m), the substep-resolved peak in each zone, and the HIPPS trip and both seat-feedback
+times. It compares
 60 to 120 cells and then 120 to 240 cells at fixed outer step and Courant number. Both time
 refinements use the 60-cell reference. A **numerical HOLD** records any difference above the
 fixture tolerances of 0.5 bar or 0.5 s. The 90 s results cover the simulated interval.
@@ -77,16 +78,45 @@ available:
 
 The earlier verifier screened through 120 cells and returned functional PASS and numerical PASS.
 The 240-cell LC2/riser result adds a separate 0.60 bar increment over 120 cells, above the 0.5 bar
-criterion. The endpoint criterion matches each reference sample with the refined history inside
-the 0.5 s timing window and requires 0.5 bar. The strict same-time differences remain in each
-comparison as `endpoint_history_differences`. In the 60-to-120-cell comparison, the largest
-same-time difference was 1.10 bar at 41.5 s, where HIPV-A seats one scan earlier. The subsea
-timing-window difference reached 0.49 bar at 66 s during slow post-isolation drift.
+criterion. A later replay reported in [#5249](https://github.com/equinor/neqsim/pull/5249)
+also failed both temporal refinements and both spatial comparisons. These runs quantify
+discretization sensitivity. An independent riser-base fallback benchmark is required before
+assigning a pressure margin to the local peak.
 
-The riser-base peak is converged in time but not in space. It rises by 0.36 bar from 60 to
-120 cells and by 0.60 bar from 120 to 240 cells, and the excursion is local to one cell. With
-isolation available the 82 bara LC2 allowable keeps a margin of 1.0 bar on the finest mesh.
-Before that margin is credited, an independent benchmark of riser-base liquid fallback and
-gas-pocket collapse must confirm it. The lost-isolation case peaks at 80.9 bara in LC2 and still
-exceeds the LC1 allowable by 0.28 bar. Regenerate older receipt directories or add the
-`normal-.25-4.json` and `psd_failed-.25-4.json` receipts on the same source and fixture basis.
+### Fixed-station traces and independent reference
+
+Every receipt labels the three pressure stations in `pressure_probes_m`. The riser-base scan
+value interpolates pressure between the two cell centres bracketing the geometric bend. The
+distance weight uses the nonuniform cell spacing. This scan-level diagnostic complements the
+accepted-substep zone maximum, which retains the pressure, time and location of a local peak
+even if it occurs away from the tap or between scans.
+
+`endpoint_tube_differences` measures the largest error in either direction. At each scan, the
+verifier finds the nearest pressure attained by the other piecewise-linear history within 0.5 s.
+The reverse check catches excursions present only on the finer trace. `endpoint_history_differences`
+also reports the zero-window comparison. `pressure_fronts` reports the first interpolated 0.5 bar
+rise above each station's pressure at the instant of host blockage, with time relative to blockage.
+The rise provides a reproducible arrival marker for this fixture. An absent or
+shifted marker can hold the screen even if pressures fit within the timing window. The arrival
+marker shares the provisional 0.5 s screen tolerance with the recorded trip and two seat times.
+
+Pass `--benchmark /path/to/reference.json` to the same verifier command to screen the 240-cell
+failed-primary-PSD case against an independently generated trace. The file contains four parts.
+
+- `case`, `basis` and `pressure_probes_m`, matching the native fixture. Match the installed route,
+  initial fluid and flow, boundary conditions, blockage and actuator sequence in the source study.
+- `trace`, covering 0 through 90 s on a common study clock, with strictly increasing times no more
+  than 0.25 s apart. Each row contains `s` and the measured absolute pressures `subsea_bara`,
+  `riser_base_bara` and `riser_bara`. The expected blockage epoch is 2 s, with the pressure at that
+  instant taken before the new closed boundary has affected the solution.
+- `events`, holding independently recorded `outlet_blocked_s`, `hipps_trip_s`,
+  `hipv_a_seated_s` and `hipv_b_seated_s` on the same clock. Seat times are final-element feedback.
+- `provenance`, holding `method` (`experiment` or `independent_solver`), `source`, `case_id`
+  and `data_rights`. Record the source setup, instrumentation or numerical resolution, and rights
+  to use the trace in the source package.
+
+`independent_shut_in_screening` reports HOLD if reference evidence is absent or the matched
+signals exceed the fixture tolerances. The reference screen checks these pressure stations and
+event times. Qualification of the route-wide peak, full protection system and project SRS remains
+under [#5124](https://github.com/equinor/neqsim/issues/5124). Regenerate older native receipts to
+obtain pressure histories at all three stations.

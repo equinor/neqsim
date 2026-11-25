@@ -18,6 +18,11 @@ from host_chart import assess_point, load_chart
 from pvt_evidence import check as check_density
 
 
+ROUTE_SEGMENTS = ((800, -278, 8), (900, -252, 9), (850, -289, 9),
+                  (1100, -270, 11), (1350, -280, 13), (400, 25, 10))
+RISER_BASE_M = sum(segment[0] for segment in ROUTE_SEGMENTS[:-1])
+
+
 def stream(n, name, eos, pressure, rate):
     if isinstance(eos, Path):
         model = n.thermo.util.readwrite.EclipseFluidReadWrite.read(str(eos))
@@ -40,8 +45,7 @@ def make_pipe(eq, feed, refinement):
     pipe = eq.pipeline.TwoFluidPipe("5.4 km flowline and riser", feed)
     faces = [-260.0]
     lengths = []
-    for length, end, count in zip((800, 900, 850, 1100, 1350, 400),
-                                  (-278, -252, -289, -270, -280, 25), (8, 9, 9, 11, 13, 10)):
+    for length, end, count in ROUTE_SEGMENTS:
         start = faces[-1]
         count *= refinement
         lengths.extend([length / count] * count)

@@ -4,12 +4,13 @@ import argparse
 import json
 import math
 import os
+from bisect import bisect_right
 from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 
 import jpype
 
-from tieback import make_pipe, stream
+from tieback import RISER_BASE_M, ROUTE_SEGMENTS, make_pipe, stream
 from tieback_host import HostResponse, INLET_SEAT_TIME_S, SEPARATOR_PSHH_BARA
 
 
@@ -36,10 +37,11 @@ HOST_BARA = 58.5
 DESIGN_RATE = 20.
 SERIES_RESISTANCE = (80. - 69.55044648172829) / DESIGN_RATE**2
 # Internal Courant number of the pipe solver. With the library default of 0.5, intermittent
-# gas-pocket collapses at the riser base produced substep peaks that changed by up to 6 bar
-# with the outer step. At 0.25 the substep envelope agrees within 0.4 bar across outer step,
-# Courant number and mesh refinement. See tieback-protection.md.
+# local excursions at the riser base were sensitive to the outer step. This setting is a
+# study input whose adequacy must be rechecked through refinement on the current solver.
 PROTECTION_CFL = .25
+PRESSURE_PROBES_M = {"subsea_bara": 0., "riser_base_bara": float(RISER_BASE_M),
+                     "riser_bara": float(sum(segment[0] for segment in ROUTE_SEGMENTS))}
 
 
 @dataclass(frozen=True)
@@ -207,6 +209,9 @@ def run(n, case, dt=.25, duration=90., mesh=1, basis=ProtectionBasis(), cfl=PROT
     groups = zone_indices(zones, pipe)
     dhsv.setStrokeTime(basis.dhsv_stroke_s)
     locations = list(pipe.getPositionProfile())
+    riser_cell = bisect_right(locations, RISER_BASE_M)
+    left, right = locations[riser_cell - 1:riser_cell + 1]
+    riser_base_fraction = (RISER_BASE_M - left) / (right - left)
     p = n.process
     detector = p.logic.sis.Detector
 
@@ -324,7 +329,10 @@ def run(n, case, dt=.25, duration=90., mesh=1, basis=ProtectionBasis(), cfl=PROT
         dhsv_open = dhsv.getPercentValveOpening() / 100.
         rate = supply_rate(line_p, DESIGN_RATE, resistance, dhsv_open, openings, seated_tree,
                            case == "choke_failed_open" and t >= 2.)
-        trace.append({"s": t, "subsea_bara": line_p, "riser_bara": riser_p,
+        left_pressure, right_pressure = pressures[riser_cell - 1:riser_cell + 1]
+        base_pressure = left_pressure + riser_base_fraction * (right_pressure - left_pressure)
+        trace.append({"s": t, "subsea_bara": line_p, "riser_base_bara": base_pressure,
+                      "riser_bara": riser_p,
                       "zone_peaks_bara": zone_max, "zone_envelope_bara": zone_envelope,
                       "hipps_readings_bara": readings,
                       "hipv_open_fraction": openings, "dhsv_open_fraction": dhsv_open,
@@ -386,6 +394,7 @@ def run(n, case, dt=.25, duration=90., mesh=1, basis=ProtectionBasis(), cfl=PROT
         peak["rated_for_source_at_common_datum"] = zone.design_bara >= 120.
     return {"case": case, "dt_s": dt, "mesh_cells": len(locations), "pipe_cfl": cfl,
             "duration_s": duration,
+            "pressure_probes_m": PRESSURE_PROBES_M,
             "basis": asdict(basis), "qualification": "TRANSIENT_SCREENING",
             "peak_basis": "accepted internal substeps and scan samples",
             "transient_pressure_limiter_count": int(pipe.getTransientPressureLimitCount()),

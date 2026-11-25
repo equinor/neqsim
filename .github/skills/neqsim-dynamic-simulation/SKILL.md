@@ -1,7 +1,7 @@
 ---
 name: neqsim-dynamic-simulation
 description: "Dynamic simulation guidance for NeqSim. USE WHEN: running transient simulations, modeling startup/shutdown, tuning PID controllers, analyzing pressure/level dynamics, performing blowdown/depressurization, or setting up measurement devices and control loops. Covers runTransient, DynamicProcessHelper, controller tuning, and dynamic equipment configuration."
-last_verified: "2026-11-24"
+last_verified: "2026-11-25"
 ---
 
 # Dynamic Simulation Guidance
@@ -695,10 +695,11 @@ For pressure-protection, rating or allowable checks on a `TwoFluidPipe`, take zo
 `isLastIntervalPressureEnvelopeSubstepResolved()`. Riser-base gas-pocket collapse after shut-in can
 rise and decay inside one outer step. Measured 2026-11-20 on the synthetic tie-back
 (`examples/production-decision/tieback-protection.md`): at the default CFL 0.5 the substep envelope
-moved by up to 7.9 bar with the outer step. At `setCflNumber(0.25)`, outer-step, CFL and mesh
-refinements agreed within 0.36 bar on 60/120 cells. A 240-cell mesh added 0.60 bar, so the local
-riser-base peak is time-converged but not mesh-converged. Use CFL 0.25 for riser-base/countercurrent
-fallback studies, show one CFL and two mesh refinements, and report a growing mesh increment as open. See `docs/wiki/two_fluid_reporting_and_validation.md`.
+moved by up to 7.9 bar with the outer step. A later replay on `5a09e550` with CFL 0.25 changed the
+LC2 peak by 2.80 bar when halving the outer step and by 5.88 bar when refining from 60 to 120
+cells. Use CFL 0.25 as the fixture's starting point and repeat outer-step, CFL and adjacent mesh
+comparisons on the current source. Record the fixed riser-base pressure history and wave arrival
+alongside zone-wide substep peaks. See `docs/wiki/two_fluid_reporting_and_validation.md`.
 Condensation must use equilibrium hydrocarbon-liquid and aqueous-liquid **mass**
 contributions; never use the current cell water cut to identify a phase that is not yet present.
 For evaporation, withdraw from the actual oil and water conservative inventories and bound each
