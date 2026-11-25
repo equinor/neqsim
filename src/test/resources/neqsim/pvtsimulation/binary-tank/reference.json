@@ -1,0 +1,87 @@
+{
+  "initial_volume_m3": 100.0,
+  "initial_moles": [
+    312005.64505928487,
+    170132.45635795125
+  ],
+  "substeps": 4,
+  "rows": [
+    {
+      "pressure_bara": 77.96782786193614,
+      "retained_moles": [
+        303672.6853807764,
+        168675.41603645965
+      ],
+      "produced_moles": [
+        8532.959678508425,
+        1467.0403214915746
+      ],
+      "produced_methane_fraction": 0.8532959678508425,
+      "gor": 1254.8474512012428
+    },
+    {
+      "pressure_bara": 75.93647726944779,
+      "retained_moles": [
+        295352.1525791752,
+        167205.94883806084
+      ],
+      "produced_moles": [
+        8520.532801601188,
+        1479.467198398811
+      ],
+      "produced_methane_fraction": 0.8520532801601188,
+      "gor": 1238.7857095369347
+    },
+    {
+      "pressure_bara": 73.90575026638022,
+      "retained_moles": [
+        287044.22249617527,
+        165723.8789210608
+      ],
+      "produced_moles": [
+        8507.930082999957,
+        1492.0699170000428
+      ],
+      "produced_methane_fraction": 0.8507930082999957,
+      "gor": 1222.864849422537
+    },
+    {
+      "pressure_bara": 71.87545058843939,
+      "retained_moles": [
+        278749.07486423705,
+        164229.02655299907
+      ],
+      "produced_moles": [
+        8495.14763193826,
+        1504.8523680617386
+      ],
+      "produced_methane_fraction": 0.8495147631938261,
+      "gor": 1207.0828643936243
+    }
+  ],
+  "laboratory": {
+    "temperature_k": 600.0,
+    "pressure_pa": 20000000.0,
+    "molar_volume_m3": 0.00024898835926602026,
+    "identified_kij": 0.019999999999997856,
+    "holdout_temperature_k": 650.0,
+    "holdout": [
+      {
+        "pressure_pa": 20000000.0,
+        "molar_volume_m3": 0.0002759542120199769
+      },
+      {
+        "pressure_pa": 15000000.0,
+        "molar_volume_m3": 0.0003607733777739816
+      },
+      {
+        "pressure_pa": 10000000.0,
+        "molar_volume_m3": 0.0005348990797196347
+      },
+      {
+        "pressure_pa": 5000000.0,
+        "molar_volume_m3": 0.0010686010781842782
+      }
+    ]
+  }
+}

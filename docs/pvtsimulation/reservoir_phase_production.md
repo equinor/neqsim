@@ -183,3 +183,65 @@ existing pressure likelihood only. Compare held-out measured GOR/compositions
 separately on the same sample/interval/standard/separator basis; do not reuse their
 measurements to prescribe the produced composition or silently count them in a
 pressure likelihood. In-place pore volume is not recoverable reserves.
+
+## Independent binary two-phase numerical chain
+
+The [binary PR reference](../../src/test/resources/neqsim/pvtsimulation/binary-tank/SCOPE.md)
+adds finite-protocol two-phase predictions independently of NeqSim. Its standard-library
+oracle isolates cubic roots by derivative extrema/bisection, solves liquid/vapor
+fugacity equality for binary tie lines, applies the lever rule and bisects pressure
+at fixed tank volume. Independent all-root Gibbs checks sample the bounded path;
+they are not a general phase-stability or near-critical guarantee.
+
+The synthetic methane/n-heptane sample has explicitly declared critical constants,
+acentric factors and PR coefficients. An independent 600 K/200 bara occupied-volume
+observation identifies only the symmetric interaction parameter. An entire 650 K CCE
+is withheld. Original and tuned serialized checkpoints remain separate. No reservoir
+measurement enters that identification. The source, synthetic observations and
+reference implementation are original project work under the repository license;
+no third-party laboratory dataset is redistributed. The mathematical model follows
+[Peng and Robinson (1976)](https://doi.org/10.1021/i160057a011), with the numerical
+coefficients explicitly frozen in the reference rather than inferred from a database.
+
+At 323.15 K/80 bara the initial gas/oil volume fractions are 0.7/0.3 in a 100 m3
+tank. These are **volume**, not mole fractions. Each of four 86400 s intervals
+withdraws 8000 mol reservoir gas and 2000 mol reservoir oil and injects 200 mol
+methane/10 mol n-heptane, with four equal substeps. Produced component amounts
+are predictions from equilibrium phase compositions, not prescribed component
+histories. A single equilibrium separator at 288.15 K/1.01325 bara defines both
+final product volumes; GOR is gas m3/oil m3 on that named basis.
+
+The first three pressures calibrate only bounded initial volume [80,120] m3.
+The fourth pressure, produced composition and GOR are held out. The native
+[workspace test](../../devtools/test_binary_reservoir_java.py) checks those outputs
+at the fitted volume, independent reference inventories, held-out exclusion,
+failed-trial restart and byte-identical EOS checkpoints. It also compares matched
+finite protocols at 1/2/4/8/16 substeps. No finite subdivision count is silently
+called a converged continuous-flow result. The [retained reference values](../../src/test/resources/neqsim/pvtsimulation/binary-tank/reference.json)
+and frozen tolerances make the numerical benchmark reproducible.
+
+| Interval | Reference pressure, bara | Produced methane, mol/mol | Reference surface GOR, m3/m3 |
+| --- | --- | --- | --- |
+| 1 | 77.967827862 | 0.853295968 | 1254.847451 |
+| 2 | 75.936477269 | 0.852053280 | 1238.785710 |
+| 3 | 73.905750266 | 0.850793008 | 1222.864849 |
+| 4 (held out) | 71.875450588 | 0.849514763 | 1207.082864 |
+
+Run the oracle's `test_*.py` modules with unittest discovery. Compile the workspace
+and dependency classpath, then run `devtools/test_binary_reservoir_java.py` through
+pytest in its own process with `NEQSIM_TEST_RESERVOIR_JAVA=1`. The test owns its JVM
+and validates that history classes come from workspace `target/classes`. CI performs
+both commands explicitly and retains numerical diagnostics in its log.
+
+This strengthens **independent synthetic numerical qualification** of the existing
+single-tank/phase-extraction/separator APIs. It does not establish measured accuracy,
+water behavior, wet/critical PVT paths, field inflow, relative permeability, aquifer
+or Bayesian uncertainty, multi-tank transmissibility, the Tran method, or whole-issue
+#4740 completion. Report fitted in-place pore volume; recoverable reserves require
+additional recovery physics and are outside this benchmark.
+
+The laboratory calibration/holdout composition is methane/heptane 0.8/0.2.
+The specified reservoir phase volumes imply their own explicitly calculated
+bulk composition. Thus this experiment tests transfer of an independently
+identified binary interaction across a synthetic composition family. It does
+not establish a composition-identical measured sample-to-reservoir chain.
