@@ -1,7 +1,7 @@
 ---
 name: neqsim-task-workflow
 description: "The full NeqSim engineering task workflow that @solve-task orchestrates. USE WHEN: executing any Standard or Comprehensive task end to end - setup and scale classification, scope and research, deep analysis, notebooks with benchmark validation and uncertainty/risk, quality gates, report and work record, knowledge capture, task-type guidance, delegation, NeqSim Improvement Proposals and lessons learned. Load one phase section at a time."
-last_verified: "2026-09-18"
+last_verified: "2026-11-25"
 ---
 
 # NeqSim Task Workflow
@@ -1909,6 +1909,16 @@ Document the independent check in `step2_analysis/notes.md` under a
 - **HTML report is especially valuable** for Type G — it provides a navigable,
   multi-section document linking all sub-analyses
 - Consider creating a summary notebook that imports results from all sub-analyses
+
+### Safety and overpressure tasks (PSV, relief, HIPPS, a new source on an existing separator or header)
+
+Checklist item for every task that sizes or verifies pressure protection for a new well, tie-in or higher source pressure on a receiving separator/header that already has producers (load `neqsim-hp-lp-interface-overpressure`, section 2b, and `neqsim-process-safety` Method 9):
+
+- [ ] **Compare against existing/previous wells and inputs** to the receiving separator/header: riser/inlet pressure, SIWHP, rates, choke dP, what the PSV/relief basis was sized for, ratio new versus historical, effect on the failed-open / choke-collapse relief load.
+- [ ] **Blocked outlet as a function of current inflow (not design inflow)** with an explicit statement whether it governs; carry the caveats (lower production today reduces blocked outlet but not IVO+CC; failed-open/choke-collapse usually governs when the new source pressure exceeds earlier wells; stationary estimate; PSV set-pressure changes invalidate the margin).
+- [ ] `results.json` key `existing_wells_comparison` (`existing_inputs`, `relief_basis`, `ratios`, `relief_effect`, `blocked_outlet` with `governs` / `statement` / `inflow_cases`, `findings`, `sources`, `blockers`). `devtools/validate_task_results.py` warns when an overpressure study lacks it; use `{"not_applicable": "<reason>"}` only when the receiving system has no existing inputs.
+- [ ] Two report sections with the names "Sammenligning med eksisterende brønner mot [separator]" / "Comparison with existing wells to [separator]" and "Blokkert utløp som dimensjonerende case" / "Blocked outlet as design case", each with a table and one figure (text at least 7 pt at report width); register the sources and any unreachable source as a blocker (never open a new interactive sign-in to fetch it).
+- [ ] Update the management summary and conclusions only where the comparison changes them, and say so when prior conclusions are unchanged. Site-specific source locations: enterprise skill `enterprise-relief-device-register` (section "Receiving-system history").
 
 ### Economics & NPV Calculations (applies to Type G and any task with economics)
 

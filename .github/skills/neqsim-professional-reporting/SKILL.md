@@ -2,7 +2,7 @@
 name: neqsim-professional-reporting
 version: "1.0.0"
 description: "Engineering deliverable quality - the nine analytical-depth moves, results.json schema, figure-discussion-results traceability, evidence matrices, assumptions/gaps registers, citations, KaTeX, units, executive-summary structure, AACE class. USE WHEN: producing a task report, a PEPR/M1/root-cause report, a notebook deliverable, or finalizing any engineering output that must read like a senior engineer's work."
-last_verified: "2026-07-09"
+last_verified: "2026-11-25"
 ---
 
 # NeqSim Professional Reporting Skill
@@ -415,6 +415,7 @@ assumptions/gaps register in both `results.json` and the report:
 | Standards basis | Standard number/year, clause/table/equation, PASS/FAIL/INFO status |
 | Segment summary | Segment id, limiting mode, event times, PFP margin, source-term handoff status |
 | Recommendations | Specific action: relief/PFP/procedure/data retrieval/detailed specialist analysis |
+| Existing wells and blocked outlet (overpressure study of a new source on an existing separator/header) | `existing_wells_comparison` block and two report sections: existing/previous wells and inputs (riser/inlet pressure, SIWHP, rates, choke dP), PSV/relief sizing basis, ratio new/historical, effect on failed-open/choke-collapse relief load, blocked outlet against current inflow with an explicit "governs / does not govern" (see `neqsim-hp-lp-interface-overpressure` section 2b) |
 
 Do not hide missing material certificates, flange/gasket/bolt ratings, fire-study
 heat fluxes, or acceptance criteria. A study may still provide screening results,

@@ -46,10 +46,14 @@
 - **Quiet by default (agents, skills, plugin):** no pop-up windows, no run-time installs, no surprise
   sign-ins. Child processes use `creationflags=CREATE_NO_WINDOW` (toolkit entry points call
   `quiet_subprocess.install()`); dependencies are declared in the skill `pyproject.toml` and installed
-  by the plugin in the background, never with `pip install` mid-task; tokens come silently from
-  `enterprise-sso-auth` (cached/`az` token, session warm-up), never `az login` or a browser unless every
-  silent route failed. Skill repos enforce it with `test_quiet_processes.py`; exceptions need
-  `# quiet-ok: <reason>`. Full rule: "Quiet by default" in each skills/agents repo's `CONTRIBUTING.md`.
+  by the plugin in the background, never with `pip install` mid-task; **one login per session**: tokens come
+  silently from `enterprise-sso-auth` (cache, broker, allow-listed `az account get-access-token`); a tool, hook
+  or retry loop never runs or suggests `az login`, never opens a browser and never builds an SDK client with its
+  own credential (`InteractiveBrowserCredential`, `ots_sdk.TimeseriesAPI()` without `azure_credential`: it prompts
+  in every new working directory). Run `python -m enterprise_sso_auth preflight --services <needed>` once and ask
+  the user for the ONE `login` command it prints. Skill repos enforce it with `test_quiet_processes.py` and
+  `test_no_implicit_interactive_login.py`; exceptions need `# quiet-ok: <reason>` / `# interactive-ok: <reason>`.
+  Full rule: "Quiet by default" in each skills/agents repo's `CONTRIBUTING.md`.
 - **Agent/MCP coverage:** `src/main/resources/neqsim/mcp/engineering-coverage.json` is a generated snapshot,
   not a source of truth. After Java formatting or agent/skill mapping changes, regenerate it with
   `uv run --project devtools --locked devtools/build_engineering_coverage.py` and stage the output.

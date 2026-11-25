@@ -55,6 +55,15 @@ PVT_TUNING_HINTS = (
     "tuned the eos", "split factor", "regression against measured pvt", "kij tuning",
 )
 
+#: Words that mean the task assesses overpressure, relief or a pressure-limiting barrier. Word-bounded
+#: matching; a task counts as an overpressure study when at least OVERPRESSURE_MIN_HINTS distinct hints appear.
+OVERPRESSURE_HINTS = (
+    r"overpressure", r"overtrykk", r"\bpsv\b", r"\bpzv\b", r"relief", r"avlast", r"hipps", r"pahh",
+    r"choke[- ]collapse", r"choke[- ]kollaps", r"inadvertent valve opening", r"\bivo\b", r"blocked outlet",
+    r"blokkert utl",
+)
+OVERPRESSURE_MIN_HINTS = 4
+
 
 def _validate_pvt_tuning_quality(block) -> Tuple[List[str], List[str]]:
     """Validate the pvt_tuning_quality block (the fluid-tuning reporting standard).
@@ -93,6 +102,76 @@ def _validate_pvt_tuning_quality(block) -> Tuple[List[str], List[str]]:
         warnings.append("pvt_tuning_quality.exclusions: list excluded samples/data with reasons (use [] when none)")
     if not block.get("figures"):
         warnings.append("pvt_tuning_quality.figures: add the parity/curve figure files of the tuning")
+    return errors, warnings
+
+
+def _mentions_overpressure_study(results: dict) -> bool:
+    """True when the task text is about overpressure/relief (at least OVERPRESSURE_MIN_HINTS distinct hints).
+
+    Args:
+        results: parsed results.json
+
+    Returns:
+        True for a substantial overpressure, relief or pressure-limiting-barrier study
+    """
+    parts = [str(results.get(k, "")) for k in ("task_statement", "approach", "conclusions")]
+    kr = results.get("key_results")
+    if isinstance(kr, dict):
+        parts.extend(str(k) for k in kr)
+    text = " ".join(parts).lower()
+    hits = sum(1 for pat in OVERPRESSURE_HINTS if re.search(pat, text))
+    return hits >= OVERPRESSURE_MIN_HINTS
+
+
+def _first_present(block: dict, names: Tuple[str, ...]):
+    """Return the first non-empty value among the alias keys, else None."""
+    for name in names:
+        val = block.get(name)
+        if val:
+            return val
+    return None
+
+
+def _validate_existing_wells_comparison(block) -> Tuple[List[str], List[str]]:
+    """Validate the existing_wells_comparison block of an overpressure study.
+
+    The block records the comparison of a new well/source with the existing or previous wells and inputs to the
+    receiving separator/header, and the blocked-outlet check as a function of current inflow. Structural problems are
+    errors; missing parts are warnings. ``{"not_applicable": "<reason>"}`` is accepted for systems without existing inputs.
+
+    Args:
+        block: the parsed ``existing_wells_comparison`` value
+
+    Returns:
+        (errors, warnings)
+    """
+    errors: List[str] = []
+    warnings: List[str] = []
+    if not isinstance(block, dict):
+        return ["existing_wells_comparison: must be a JSON object"], warnings
+    if "not_applicable" in block:
+        if not str(block.get("not_applicable") or "").strip():
+            warnings.append("existing_wells_comparison.not_applicable: give the reason (e.g. no existing producers on the receiving system)")
+        return errors, warnings
+    if not _first_present(block, ("existing_inputs", "wells")):
+        warnings.append("existing_wells_comparison.existing_inputs: list the existing/previous wells or inputs to the receiving separator/header "
+                        "(riser/inlet pressure, SIWHP, rates, choke dP)")
+    if not _first_present(block, ("relief_basis", "doc_basis")):
+        warnings.append("existing_wells_comparison.relief_basis: state what the PSV/relief basis was sized for (or that it is not documented)")
+    if not _first_present(block, ("ratios",)):
+        warnings.append("existing_wells_comparison.ratios: give the ratio new versus historical source pressure (and rate/choke dP)")
+    if not _first_present(block, ("relief_effect", "model_cases")):
+        warnings.append("existing_wells_comparison.relief_effect: give the effect on the failed-open / choke-collapse relief load at the historical pressures")
+    blocked = block.get("blocked_outlet")
+    if not isinstance(blocked, dict):
+        warnings.append("existing_wells_comparison.blocked_outlet: add the blocked-outlet check as a function of current inflow (object with governs, statement, inflow_cases)")
+    else:
+        if "governs" not in blocked:
+            warnings.append("existing_wells_comparison.blocked_outlet.governs: state explicitly whether blocked outlet governs the PSV case")
+        if not str(blocked.get("statement") or "").strip():
+            warnings.append("existing_wells_comparison.blocked_outlet.statement: add the verdict with the caveats (lower production today, stationary estimate)")
+        if not blocked.get("inflow_cases"):
+            warnings.append("existing_wells_comparison.blocked_outlet.inflow_cases: give margins for current (not design) inflow, forecast and design inflow")
     return errors, warnings
 
 
@@ -249,6 +328,19 @@ def validate(results: dict) -> Tuple[List[str], List[str]]:
         warnings.append(
             "pvt_tuning_quality: the task tunes a fluid to PVT data but reports no pvt_tuning_quality block "
             "(before/after error per experiment, tuned parameters with bounds, exclusions, figures)"
+        )
+
+    # existing_wells_comparison (mandatory reporting block for overpressure studies of a new source on an existing system)
+    ewc = results.get("existing_wells_comparison")
+    if ewc is not None:
+        e, w = _validate_existing_wells_comparison(ewc)
+        errors.extend(e)
+        warnings.extend(w)
+    elif _mentions_overpressure_study(results):
+        warnings.append(
+            "existing_wells_comparison: the task assesses overpressure/relief but has no existing_wells_comparison block "
+            "(compare the new source with existing/previous wells and inputs to the receiving separator/header, and check "
+            "blocked outlet against current inflow; see neqsim-hp-lp-interface-overpressure section 2b)"
         )
 
     # figure_discussion entries
