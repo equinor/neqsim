@@ -71,6 +71,12 @@ holdup/phase-velocity profiles include segmented terrain routes, and
 `compareMeshSensitivity` evaluates selected edges on detached meshes without changing
 the caller topology. Inspect every convergence status and mass-balance residual; these
 comparisons are integration evidence until independently qualified.
+After an accepted two-fluid solve, use `Result.compareTransientRateStep` for controlled
+steady-to-transient initialization and outer-time-step sensitivity. It starts every
+requested step size from the same detached steady state, advances to one common time and
+retains mass, named-component and conservative-energy ledgers plus final normalized profiles.
+Treat its microsecond production/injection acceptance cases as numerical handoff evidence,
+not moving-slug, closure, fluid or field-duration qualification.
 Use `FieldNetworkTopology` for stable production/injection node, edge, tag and port
 identity over that same graph. Its typed `addChoke`, `addPump`,
 `addPumpDifferentialPressure` and `addCompressor` methods create the existing canonical

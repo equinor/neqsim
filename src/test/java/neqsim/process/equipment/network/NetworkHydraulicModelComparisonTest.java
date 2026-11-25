@@ -20,6 +20,8 @@ import neqsim.process.equipment.network.NetworkHydraulicModelComparison.EdgeComp
 import neqsim.process.equipment.network.NetworkHydraulicModelComparison.MeshSensitivityResult;
 import neqsim.process.equipment.network.NetworkHydraulicModelComparison.ModelProfiles;
 import neqsim.process.equipment.network.NetworkHydraulicModelComparison.Result;
+import neqsim.process.equipment.network.NetworkHydraulicModelComparison.TransientTimeStepResult;
+import neqsim.process.equipment.network.NetworkHydraulicModelComparison.TransientTimeStepSensitivityResult;
 import neqsim.process.equipment.pipeline.TwoFluidConservativeEnergyReport;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.pipeline.TwoFluidMassBalanceReport;
@@ -86,6 +88,44 @@ class NetworkHydraulicModelComparisonTest {
     network.setFluidTemplate(richFluid(0.90));
     network.setNodeFluid("well-a", richFluid(0.92));
     network.setNodeFluid("well-b", richFluid(0.86));
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setTolerance(1.0);
+    network.setMaxIterations(80);
+    network.setCompositionalHydraulicsEnabled(true);
+    network.setThermalHydraulicsEnabled(true);
+    return topology;
+  }
+
+  /**
+   * Create a direct gas-injection tieback on the same typed topology and hydraulic model API.
+   *
+   * @param rateKgS injection rate in kg/s
+   * @return typed injection topology
+   */
+  private FieldNetworkTopology injectionTopology(double rateKgS) {
+    FieldNetworkTopology topology = new FieldNetworkTopology("qualification injection tieback");
+    topology.addPressureSource("host-injection", "HOST-I", NodeRole.INJECTION_SOURCE, Service.INJECTION, 160.0,
+        rateKgS * 3600.0, 0.0);
+    topology.addJunction("injection-plet", "PLET-I", NodeRole.PLET, Service.INJECTION, -100.0);
+    topology.addDemandSink("injection-well", "WI-I", NodeRole.INJECTION_WELL, Service.INJECTION, rateKgS * 3600.0,
+        -300.0);
+    NetworkPipe flowline = topology.addPipe("injection-flowline", "FL-I", EdgeRole.FLOWLINE, Service.INJECTION,
+        FlowDirection.FROM_TO, "host-injection", "out", "injection-plet", "in", 4000.0, 0.20,
+        PipeModelType.DARCY_WEISBACH);
+    NetworkPipe jumper = topology.addPipe("injection-jumper", "JP-I", EdgeRole.JUMPER, Service.INJECTION,
+        FlowDirection.FROM_TO, "injection-plet", "out", "injection-well", "in", 500.0, 0.15,
+        PipeModelType.DARCY_WEISBACH);
+    flowline.setMultiphaseSegments(6);
+    flowline.setAmbientTemperature(277.15);
+    flowline.setOverallHeatTransferCoeff(2.0);
+    flowline.setElevationProfile(new double[] {0.0, 2000.0, 4000.0}, new double[] {0.0, -80.0, -100.0});
+    jumper.setMultiphaseSegments(4);
+    jumper.setAmbientTemperature(279.15);
+    jumper.setOverallHeatTransferCoeff(2.5);
+    jumper.setElevationProfile(new double[] {0.0, 500.0}, new double[] {-100.0, -300.0});
+    LoopedPipeNetwork network = topology.getHydraulicNetwork();
+    network.setFluidTemplate(richFluid(0.96));
+    network.setNodeFluid("host-injection", richFluid(0.96));
     network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
     network.setTolerance(1.0);
     network.setMaxIterations(80);
@@ -215,6 +255,77 @@ class NetworkHydraulicModelComparisonTest {
         - coarse.getTwoFluidProfiles().getAverageLiquidHoldup()) < 0.2);
   }
 
+  /** Controlled rate steps retain conservation evidence and a common horizon at each outer time step. */
+  @Test
+  void comparesControlledTransientRateStepTimeSteps() {
+    FieldNetworkTopology topology = topology(2.0);
+    Result steady = new NetworkHydraulicModelComparison(topology).compare(Arrays.asList("flowline"), UUID.randomUUID());
+    TransientTimeStepSensitivityResult sensitivity = steady.compareTransientRateStep("flowline", 1.01, 4.0e-6,
+        Arrays.asList(1.0e-6, 2.0e-6), UUID.randomUUID());
+
+    assertEquals("flowline", sensitivity.getEdgeId());
+    assertEquals(2.0, sensitivity.getInitialMassFlowKgS(), 1.0e-6);
+    assertEquals(2.02, sensitivity.getSteppedMassFlowKgS(), 1.0e-6);
+    assertEquals(new HashSet<Double>(Arrays.asList(1.0e-6, 2.0e-6)), sensitivity.getOuterTimeStepsSeconds());
+    for (double timeStep : sensitivity.getOuterTimeStepsSeconds()) {
+      TransientTimeStepResult result = sensitivity.getResult(timeStep);
+      assertEquals(timeStep, result.getOuterTimeStepSeconds(), 0.0);
+      assertEquals(4.0e-6, result.getElapsedTimeSeconds(), 1.0e-15);
+      assertEquals((int) Math.ceil(4.0e-6 / timeStep), result.getOuterIntervalCount());
+      assertTrue(Double.isFinite(result.getMassResidualKg()));
+      assertTrue(Double.isFinite(result.getEnergyResidualJ()));
+      assertEquals(new HashSet<String>(Arrays.asList("methane", "n-heptane")), result.getComponentNames());
+      assertTrue(Math.abs(result.getComponentResidualKg("methane")) < 1.0e-6);
+      assertTrue(Math.abs(result.getComponentResidualKg("n-heptane")) < 1.0e-6);
+      assertTrue(result.getMaximumRelativeMassResidual() < 1.0e-6);
+      assertTrue(result.getMaximumRelativeComponentResidual() < 1.0e-6);
+      assertTrue(Math.abs(result.getEnergyResidualJ()) < 1.0e-3, "energy residual J=" + result.getEnergyResidualJ());
+      assertTrue(result.getMaximumRelativeEnergyResidual() < 1.0e-2,
+          "relative energy residual=" + result.getMaximumRelativeEnergyResidual());
+      assertTrue(result.getMaximumRelativeVolumeResidual() < 1.0e-6);
+      assertTrue(result.getMaximumRelativeThermodynamicEnergyResidual() < 1.0e-6);
+      assertProfilesPhysical(result.getFinalProfiles());
+    }
+    ModelProfiles fine = sensitivity.getResult(1.0e-6).getFinalProfiles();
+    ModelProfiles coarse = sensitivity.getResult(2.0e-6).getFinalProfiles();
+    assertArrayEquals(fine.getPressurePa(), coarse.getPressurePa(), 1.0);
+    assertArrayEquals(fine.getTemperatureK(), coarse.getTemperatureK(), 1.0e-5);
+    assertArrayEquals(fine.getLiquidHoldup(), coarse.getLiquidHoldup(), 1.0e-6);
+  }
+
+  /** The same comparison and steady-to-transient handoff accepts a typed injection route. */
+  @Test
+  void comparesInjectionTopologyAndInitializesRateStep() {
+    FieldNetworkTopology topology = injectionTopology(1.0);
+    LoopedPipeNetwork original = topology.getHydraulicNetwork();
+    Result steady = new NetworkHydraulicModelComparison(topology).compare(Arrays.asList("injection-flowline"),
+        UUID.randomUUID());
+    EdgeComparison edge = steady.getEdgeComparison("injection-flowline");
+    assertEquals(1.0, edge.getBeggsBrillFlowRateKgS(), 1.0e-6);
+    assertEquals(1.0, edge.getTwoFluidFlowRateKgS(), 1.0e-6);
+    assertProfilesPhysical(edge.getBeggsBrillProfiles());
+    assertProfilesPhysical(edge.getTwoFluidProfiles());
+    assertEquals(PipeModelType.DARCY_WEISBACH, original.getEffectiveHydraulicModelType("injection-flowline"));
+    assertEquals("NOT_RUN", original.getPipe("injection-flowline").getHydraulicModelStatus());
+
+    TransientTimeStepSensitivityResult sensitivity = steady.compareTransientRateStep("injection-flowline", 0.99, 2.0e-6,
+        Arrays.asList(1.0e-6, 2.0e-6), UUID.randomUUID());
+    assertEquals(0.99, sensitivity.getSteppedMassFlowKgS(), 1.0e-6);
+    for (double timeStep : sensitivity.getOuterTimeStepsSeconds()) {
+      TransientTimeStepResult result = sensitivity.getResult(timeStep);
+      assertEquals(2.0e-6, result.getElapsedTimeSeconds(), 1.0e-15);
+      assertEquals(new HashSet<String>(Arrays.asList("methane", "n-heptane")), result.getComponentNames());
+      assertTrue(Math.abs(result.getComponentResidualKg("methane")) < 1.0e-6);
+      assertTrue(Math.abs(result.getComponentResidualKg("n-heptane")) < 1.0e-6);
+      assertTrue(result.getMaximumRelativeMassResidual() < 1.0e-6);
+      assertTrue(result.getMaximumRelativeComponentResidual() < 1.0e-6);
+      assertTrue(Math.abs(result.getEnergyResidualJ()) < 1.0e-3, "energy residual J=" + result.getEnergyResidualJ());
+      assertTrue(result.getMaximumRelativeEnergyResidual() < 1.0e-2,
+          "relative energy residual=" + result.getMaximumRelativeEnergyResidual());
+      assertProfilesPhysical(result.getFinalProfiles());
+    }
+  }
+
   /** Reject missing evidence and unknown comparison edges explicitly. */
   @Test
   void rejectsUninitializedAndUnknownEdges() {
@@ -228,6 +339,15 @@ class NetworkHydraulicModelComparisonTest {
         () -> comparison.compareMeshSensitivity(Arrays.asList("flowline"), Arrays.asList(8, 8), UUID.randomUUID()));
     assertThrows(IllegalArgumentException.class,
         () -> comparison.compareMeshSensitivity(Arrays.asList("flowline"), Arrays.asList(1, 8), UUID.randomUUID()));
+    Result result = comparison.compare(Arrays.asList("flowline"), UUID.randomUUID());
+    assertThrows(IllegalArgumentException.class,
+        () -> result.compareTransientRateStep("flowline", 0.0, 1.0, Arrays.asList(0.1, 0.2), UUID.randomUUID()));
+    assertThrows(IllegalArgumentException.class,
+        () -> result.compareTransientRateStep("flowline", 1.0, 0.0, Arrays.asList(0.1, 0.2), UUID.randomUUID()));
+    assertThrows(IllegalArgumentException.class,
+        () -> result.compareTransientRateStep("flowline", 1.0, 1.0, Arrays.asList(0.1, 0.1), UUID.randomUUID()));
+    assertThrows(IllegalArgumentException.class,
+        () -> result.compareTransientRateStep("flowline", 1.0, 1.0, Arrays.asList(0.0, 0.1), UUID.randomUUID()));
   }
 
   /**

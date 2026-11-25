@@ -13,7 +13,12 @@ import org.apache.commons.lang3.SerializationUtils;
 import neqsim.process.equipment.network.LoopedPipeNetwork.NetworkPipe.HydraulicProfile;
 import neqsim.process.equipment.network.LoopedPipeNetwork.NetworkPipe;
 import neqsim.process.equipment.network.LoopedPipeNetwork.PipeModelType;
+import neqsim.process.equipment.pipeline.TwoFluidComponentConservationReport;
+import neqsim.process.equipment.pipeline.TwoFluidConservativeEnergyReport;
+import neqsim.process.equipment.pipeline.TwoFluidMassBalanceReport;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
+import neqsim.process.equipment.pipeline.TwoFluidPipe.BoundaryCondition;
+import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -197,6 +202,191 @@ public final class NetworkHydraulicModelComparison {
       Result result = resultsBySegmentCount.get(segmentCount);
       if (result == null) {
         throw new IllegalArgumentException("Segment count " + segmentCount + " was not evaluated");
+      }
+      return result;
+    }
+  }
+
+  /** Immutable evidence for one outer time step in a controlled two-fluid rate step. */
+  public static final class TransientTimeStepResult {
+    private final double outerTimeStepSeconds;
+    private final double elapsedTimeSeconds;
+    private final int outerIntervalCount;
+    private final double massResidualKg;
+    private final double maximumRelativeMassResidual;
+    private final Map<String, Double> componentResidualKg;
+    private final double maximumRelativeComponentResidual;
+    private final double energyResidualJ;
+    private final double maximumRelativeEnergyResidual;
+    private final double maximumRelativeVolumeResidual;
+    private final double maximumRelativeThermodynamicEnergyResidual;
+    private final ModelProfiles finalProfiles;
+
+    /**
+     * Create one transient time-step result.
+     *
+     * @param outerTimeStepSeconds requested outer time step in s
+     * @param elapsedTimeSeconds accepted common time horizon in s
+     * @param outerIntervalCount number of accepted outer calls
+     * @param massResidualKg signed sum of accepted total-mass residuals in kg
+     * @param maximumRelativeMassResidual worst accepted total-mass relative residual
+     * @param componentResidualKg signed accumulated named-component residuals in kg
+     * @param maximumRelativeComponentResidual worst accepted component-inventory relative residual
+     * @param energyResidualJ signed sum of accepted conservative-energy residuals in J
+     * @param maximumRelativeEnergyResidual worst accepted relative energy residual
+     * @param maximumRelativeVolumeResidual worst accepted occupied-volume residual
+     * @param maximumRelativeThermodynamicEnergyResidual worst accepted thermodynamic recovery residual
+     * @param finalProfiles final normalized distributed state
+     */
+    private TransientTimeStepResult(double outerTimeStepSeconds, double elapsedTimeSeconds, int outerIntervalCount,
+        double massResidualKg, double maximumRelativeMassResidual, Map<String, Double> componentResidualKg,
+        double maximumRelativeComponentResidual, double energyResidualJ, double maximumRelativeEnergyResidual,
+        double maximumRelativeVolumeResidual, double maximumRelativeThermodynamicEnergyResidual,
+        ModelProfiles finalProfiles) {
+      this.outerTimeStepSeconds = outerTimeStepSeconds;
+      this.elapsedTimeSeconds = elapsedTimeSeconds;
+      this.outerIntervalCount = outerIntervalCount;
+      this.massResidualKg = massResidualKg;
+      this.maximumRelativeMassResidual = maximumRelativeMassResidual;
+      this.componentResidualKg = Collections.unmodifiableMap(new LinkedHashMap<String, Double>(componentResidualKg));
+      this.maximumRelativeComponentResidual = maximumRelativeComponentResidual;
+      this.energyResidualJ = energyResidualJ;
+      this.maximumRelativeEnergyResidual = maximumRelativeEnergyResidual;
+      this.maximumRelativeVolumeResidual = maximumRelativeVolumeResidual;
+      this.maximumRelativeThermodynamicEnergyResidual = maximumRelativeThermodynamicEnergyResidual;
+      this.finalProfiles = finalProfiles;
+    }
+
+    /** @return requested outer time step in s */
+    public double getOuterTimeStepSeconds() {
+      return outerTimeStepSeconds;
+    }
+
+    /** @return accepted elapsed time in s */
+    public double getElapsedTimeSeconds() {
+      return elapsedTimeSeconds;
+    }
+
+    /** @return number of accepted outer transient calls */
+    public int getOuterIntervalCount() {
+      return outerIntervalCount;
+    }
+
+    /** @return signed sum of total-mass residuals in kg */
+    public double getMassResidualKg() {
+      return massResidualKg;
+    }
+
+    /** @return worst accepted total-mass relative residual */
+    public double getMaximumRelativeMassResidual() {
+      return maximumRelativeMassResidual;
+    }
+
+    /** @return immutable named-component set in deterministic report order */
+    public Set<String> getComponentNames() {
+      return Collections.unmodifiableSet(new LinkedHashSet<String>(componentResidualKg.keySet()));
+    }
+
+    /**
+     * Get the signed accumulated inventory residual for one named component.
+     *
+     * @param componentName NeqSim component name
+     * @return signed residual in kg
+     * @throws IllegalArgumentException when the component was not reported
+     */
+    public double getComponentResidualKg(String componentName) {
+      Double residual = componentResidualKg.get(componentName);
+      if (residual == null) {
+        throw new IllegalArgumentException("Component '" + componentName + "' was not reported");
+      }
+      return residual;
+    }
+
+    /** @return worst accepted component-inventory relative residual */
+    public double getMaximumRelativeComponentResidual() {
+      return maximumRelativeComponentResidual;
+    }
+
+    /** @return signed sum of conservative-energy residuals in J */
+    public double getEnergyResidualJ() {
+      return energyResidualJ;
+    }
+
+    /** @return worst accepted relative conservative-energy residual */
+    public double getMaximumRelativeEnergyResidual() {
+      return maximumRelativeEnergyResidual;
+    }
+
+    /** @return worst accepted occupied-volume relative residual */
+    public double getMaximumRelativeVolumeResidual() {
+      return maximumRelativeVolumeResidual;
+    }
+
+    /** @return worst accepted thermodynamic recovery relative residual */
+    public double getMaximumRelativeThermodynamicEnergyResidual() {
+      return maximumRelativeThermodynamicEnergyResidual;
+    }
+
+    /** @return final normalized two-fluid profiles */
+    public ModelProfiles getFinalProfiles() {
+      return finalProfiles;
+    }
+  }
+
+  /** Immutable same-initial-state rate-step results at two or more outer time steps. */
+  public static final class TransientTimeStepSensitivityResult {
+    private final String edgeId;
+    private final double initialMassFlowKgS;
+    private final double steppedMassFlowKgS;
+    private final Map<Double, TransientTimeStepResult> resultsByTimeStep;
+
+    /**
+     * Create rate-step time-step sensitivity evidence.
+     *
+     * @param edgeId canonical edge identifier
+     * @param initialMassFlowKgS converged steady two-fluid mass flow in kg/s
+     * @param steppedMassFlowKgS applied inlet mass flow in kg/s
+     * @param results results keyed by requested outer time step
+     */
+    private TransientTimeStepSensitivityResult(String edgeId, double initialMassFlowKgS, double steppedMassFlowKgS,
+        Map<Double, TransientTimeStepResult> results) {
+      this.edgeId = edgeId;
+      this.initialMassFlowKgS = initialMassFlowKgS;
+      this.steppedMassFlowKgS = steppedMassFlowKgS;
+      resultsByTimeStep = Collections.unmodifiableMap(new LinkedHashMap<Double, TransientTimeStepResult>(results));
+    }
+
+    /** @return canonical edge identifier */
+    public String getEdgeId() {
+      return edgeId;
+    }
+
+    /** @return converged steady two-fluid flow in kg/s */
+    public double getInitialMassFlowKgS() {
+      return initialMassFlowKgS;
+    }
+
+    /** @return applied rate-step inlet flow in kg/s */
+    public double getSteppedMassFlowKgS() {
+      return steppedMassFlowKgS;
+    }
+
+    /** @return immutable requested outer time steps in deterministic order */
+    public Set<Double> getOuterTimeStepsSeconds() {
+      return Collections.unmodifiableSet(new LinkedHashSet<Double>(resultsByTimeStep.keySet()));
+    }
+
+    /**
+     * Get evidence for one requested outer time step.
+     *
+     * @param outerTimeStepSeconds requested outer time step in s
+     * @return accepted transient evidence
+     * @throws IllegalArgumentException when the time step was not evaluated
+     */
+    public TransientTimeStepResult getResult(double outerTimeStepSeconds) {
+      TransientTimeStepResult result = resultsByTimeStep.get(outerTimeStepSeconds);
+      if (result == null) {
+        throw new IllegalArgumentException("Outer time step " + outerTimeStepSeconds + " s was not evaluated");
       }
       return result;
     }
@@ -448,6 +638,142 @@ public final class NetworkHydraulicModelComparison {
       pipe.prepareConservativeEnergyTransientFromSteadyState();
       return pipe;
     }
+
+    /**
+     * Apply one controlled inlet-rate step to independent copies of an accepted steady two-fluid state.
+     *
+     * <p>
+     * Every requested outer time step starts from the same converged distributed pressure, temperature, holdup,
+     * velocity, component-inventory and energy state. The pipe uses the supported constant-flow inlet and retained
+     * pressure outlet, and each run ends at the same requested physical time. Accepted mass, named-component and
+     * conservative-energy reports are accumulated without mutating the comparison result or caller topology.
+     * </p>
+     *
+     * <p>
+     * This is numerical initialization and time-step evidence. It does not independently qualify two-fluid closures,
+     * slug tracking, fluids, geometry or operating envelopes.
+     * </p>
+     *
+     * @param edgeId compared edge identifier
+     * @param rateMultiplier positive multiplier applied to the converged signed edge mass flow
+     * @param durationSeconds positive common transient horizon in s
+     * @param outerTimeStepsSeconds at least two distinct positive outer time steps in s
+     * @param id calculation identifier reused for the independent transient runs
+     * @return immutable time-step sensitivity evidence
+     */
+    public TransientTimeStepSensitivityResult compareTransientRateStep(String edgeId, double rateMultiplier,
+        double durationSeconds, List<Double> outerTimeStepsSeconds, UUID id) {
+      Objects.requireNonNull(outerTimeStepsSeconds, "outerTimeStepsSeconds cannot be null");
+      Objects.requireNonNull(id, "calculation id cannot be null");
+      EdgeComparison edge = getEdgeComparison(edgeId);
+      if (!(rateMultiplier > 0.0) || !Double.isFinite(rateMultiplier)) {
+        throw new IllegalArgumentException("Rate multiplier must be positive and finite");
+      }
+      if (!(durationSeconds > 0.0) || !Double.isFinite(durationSeconds)) {
+        throw new IllegalArgumentException("Transient duration must be positive and finite");
+      }
+      LinkedHashSet<Double> uniqueTimeSteps = new LinkedHashSet<Double>(outerTimeStepsSeconds);
+      if (uniqueTimeSteps.size() < 2 || uniqueTimeSteps.contains(null)) {
+        throw new IllegalArgumentException("At least two distinct non-null outer time steps are required");
+      }
+      for (Double timeStep : uniqueTimeSteps) {
+        if (!(timeStep > 0.0) || !Double.isFinite(timeStep)) {
+          throw new IllegalArgumentException("Outer time steps must be positive and finite");
+        }
+      }
+      double initialMassFlowKgS = edge.getTwoFluidFlowRateKgS();
+      double steppedMassFlowKgS = initialMassFlowKgS * rateMultiplier;
+      if (!Double.isFinite(steppedMassFlowKgS)) {
+        throw new IllegalArgumentException("Stepped inlet mass flow must be finite");
+      }
+      Map<Double, TransientTimeStepResult> results = new LinkedHashMap<Double, TransientTimeStepResult>();
+      for (Double timeStep : uniqueTimeSteps) {
+        results.put(timeStep,
+            runTransientRateStep(edgeId, steppedMassFlowKgS, durationSeconds, timeStep.doubleValue(), id));
+      }
+      return new TransientTimeStepSensitivityResult(edgeId, initialMassFlowKgS, steppedMassFlowKgS, results);
+    }
+
+    /**
+     * Execute one accepted-state rate-step run and accumulate its conservation diagnostics.
+     *
+     * @param edgeId compared edge identifier
+     * @param steppedMassFlowKgS constant inlet mass flow in kg/s
+     * @param durationSeconds common time horizon in s
+     * @param outerTimeStepSeconds requested outer time step in s
+     * @param id calculation identifier
+     * @return accepted transient evidence
+     */
+    private TransientTimeStepResult runTransientRateStep(String edgeId, double steppedMassFlowKgS,
+        double durationSeconds, double outerTimeStepSeconds, UUID id) {
+      TwoFluidPipe pipe = createConservativeEnergyInitializedTwoFluidPipe(edgeId);
+      pipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_FLOW);
+      pipe.setInletMassFlow(steppedMassFlowKgS);
+      double elapsed = 0.0;
+      int intervals = 0;
+      double massResidualKg = 0.0;
+      double maximumRelativeMassResidual = 0.0;
+      Map<String, Double> componentResidualKg = new LinkedHashMap<String, Double>();
+      double maximumRelativeComponentResidual = 0.0;
+      double energyResidualJ = 0.0;
+      double maximumRelativeEnergyResidual = 0.0;
+      double maximumRelativeVolumeResidual = 0.0;
+      double maximumRelativeThermodynamicEnergyResidual = 0.0;
+      double timeTolerance = 16.0 * Math.ulp(durationSeconds);
+      while (durationSeconds - elapsed > timeTolerance) {
+        double interval = Math.min(outerTimeStepSeconds, durationSeconds - elapsed);
+        pipe.runTransient(interval, id);
+        TwoFluidMassBalanceReport mass = pipe.getLastMassBalanceReport();
+        TwoFluidComponentConservationReport components = pipe.getLastComponentConservationReport();
+        TwoFluidConservativeEnergyReport energy = pipe.getLastConservativeEnergyReport();
+        if (mass == null || components == null || energy == null || !components.isConverged()) {
+          throw new IllegalStateException("Two-fluid rate step did not produce accepted conservation evidence");
+        }
+        massResidualKg += mass.getResidualKg(TwoFluidMassBalanceReport.Phase.TOTAL);
+        maximumRelativeMassResidual = Math.max(maximumRelativeMassResidual,
+            mass.getRelativeResidual(TwoFluidMassBalanceReport.Phase.TOTAL));
+        maximumRelativeComponentResidual = Math.max(maximumRelativeComponentResidual,
+            components.getMaximumRelativeInventoryResidual());
+        accumulateComponentResiduals(componentResidualKg, components);
+        energyResidualJ += energy.getResidualJ();
+        maximumRelativeEnergyResidual = Math.max(maximumRelativeEnergyResidual, energy.getRelativeResidual());
+        maximumRelativeVolumeResidual = Math.max(maximumRelativeVolumeResidual, energy.getMaxRelativeVolumeResidual());
+        maximumRelativeThermodynamicEnergyResidual = Math.max(maximumRelativeThermodynamicEnergyResidual,
+            energy.getMaxRelativeThermodynamicEnergyResidual());
+        elapsed += interval;
+        intervals++;
+      }
+      if (Math.abs(durationSeconds - elapsed) <= timeTolerance) {
+        elapsed = durationSeconds;
+      }
+      return new TransientTimeStepResult(outerTimeStepSeconds, elapsed, intervals, massResidualKg,
+          maximumRelativeMassResidual, componentResidualKg, maximumRelativeComponentResidual, energyResidualJ,
+          maximumRelativeEnergyResidual, maximumRelativeVolumeResidual, maximumRelativeThermodynamicEnergyResidual,
+          fromTwoFluidPipe(pipe));
+    }
+
+    /**
+     * Accumulate signed named-component inventory residuals with fail-closed component identity.
+     *
+     * @param accumulated residuals accumulated across accepted outer calls
+     * @param report accepted interval component report
+     */
+    private void accumulateComponentResiduals(Map<String, Double> accumulated,
+        TwoFluidComponentConservationReport report) {
+      String[] names = report.getComponentNames();
+      double[] residuals = report.getInventoryResidualKg();
+      boolean initialized = !accumulated.isEmpty();
+      if (initialized && accumulated.size() != names.length) {
+        throw new IllegalStateException("Two-fluid rate step changed its reported component identity");
+      }
+      for (int index = 0; index < names.length; index++) {
+        Double previous = accumulated.get(names[index]);
+        if (previous == null && initialized) {
+          throw new IllegalStateException("Two-fluid rate step changed its reported component identity");
+        }
+        accumulated.put(names[index], (previous == null ? 0.0 : previous.doubleValue()) + residuals[index]);
+      }
+    }
   }
 
   private final FieldNetworkTopology topology;
@@ -600,6 +926,41 @@ public final class NetworkHydraulicModelComparison {
     return new ModelProfiles(profile.getPositionM(), profile.getCellLengthM(), profile.getPressurePa(),
         profile.getTemperatureK(), profile.getLiquidHoldup(), profile.getGasSuperficialVelocityMs(),
         profile.getLiquidSuperficialVelocityMs());
+  }
+
+  /**
+   * Normalize the distributed state of a transient two-fluid pipe.
+   *
+   * @param pipe accepted transient pipe
+   * @return normalized final profiles
+   */
+  private static ModelProfiles fromTwoFluidPipe(TwoFluidPipe pipe) {
+    double[] holdup = pipe.getLiquidHoldupProfile();
+    double[] gasVelocity = pipe.getGasVelocityProfile();
+    double[] liquidVelocity = pipe.getLiquidVelocityProfile();
+    double[] gasSuperficialVelocity = new double[holdup.length];
+    double[] liquidSuperficialVelocity = new double[holdup.length];
+    for (int index = 0; index < holdup.length; index++) {
+      gasSuperficialVelocity[index] = gasVelocity[index] * (1.0 - holdup[index]);
+      liquidSuperficialVelocity[index] = liquidVelocity[index] * holdup[index];
+    }
+    return new ModelProfiles(pipe.getPositionProfile(), sectionLengths(pipe), pipe.getPressureProfile(),
+        pipe.getTemperatureProfile(), holdup, gasSuperficialVelocity, liquidSuperficialVelocity);
+  }
+
+  /**
+   * Read physical cell lengths from the accepted two-fluid state, including a uniform mesh.
+   *
+   * @param pipe accepted transient pipe
+   * @return cell lengths in m
+   */
+  private static double[] sectionLengths(TwoFluidPipe pipe) {
+    TwoFluidSection[] sections = pipe.getSectionSnapshots();
+    double[] lengths = new double[sections.length];
+    for (int index = 0; index < sections.length; index++) {
+      lengths[index] = sections[index].getLength();
+    }
+    return lengths;
   }
 
   /**
