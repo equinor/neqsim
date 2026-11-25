@@ -1092,3 +1092,45 @@ the rank/degree-of-freedom result. No coefficient, gauge, empirical temperature
 offset, production equation, solver tolerance or source value changes. Table
 A.24, Dholabhai/Burgass hydrate data, dense NaCl/KCl controls, divalent salts,
 Archer water activity and Burgass-Tohidi remain frozen holdouts.
+
+## Reduced KCl salt-pair temperature law
+
+`CO2SaltPairTemperatureLawAssessmentTest` addresses the zero-residual-degree-of-freedom blocker in the saturated
+He-Morse temperature basis without activating the Helmholtz kernel. In the source's molality convention it fits
+
+$$
+\ln \gamma_{\mathrm{CO_2}}(T,m)
+  = a_T m + \zeta(T)m^2,
+\qquad
+\zeta(T)=\zeta_{298}
+  +\zeta_{1/T}\left(\frac{298.15\ \mathrm{K}}{T}-1\right).
+$$
+
+The five $a_T$ values are nuisance salt-level linear coefficients. The two-parameter curvature law is a bounded,
+lower-dimensional alternative to one independent curvature coefficient at every temperature. Its inverse-temperature
+coordinate represents a first enthalpic temperature dependence over the measured 273.15--363.15 K interval; it is not
+claimed outside that interval and does not identify pressure response.
+
+The 26 He-Morse points give rank 7 with 19 residual degrees of freedom and condition number 65.64. Relative to the
+five-parameter linear-per-temperature baseline, log-space RMSE falls from 0.030543 to 0.017359 and AICc from -168.408
+to -190.567. The ten-parameter saturated-curvature comparator reaches RMSE 0.015895 but AICc -180.704, so the reduced
+law is preferred by 9.86 AICc units despite its lower flexibility. The source-space estimates are
+$\zeta_{298}=-0.0150603\pm0.0024605$ kg$^2$/mol$^2$ and
+$\zeta_{1/T}=-0.0780702\pm0.0188556$ kg$^2$/mol$^2$ (one standard error), with parameter correlation 0.8200.
+
+Leave-one-temperature-block-out prediction gives aggregate RMSE 0.019481 and maximum absolute log residual 0.041504.
+The fitted 363.15 K curvature is -0.0010865 kg$^2$/mol$^2$, but its propagated two-standard-error interval crosses zero.
+The high-temperature sign therefore remains uncertain. He-Morse contains only one CO2 partial pressure inside each
+temperature block, so no pressure coefficient is identifiable. The independent 298.15 K Yasunishi-Yoshida molarity
+series independently retains negative curvature and reduces RMSE from 0.018197 to 0.002824, but its
+-0.0082239 coefficient is not transferred across concentration bases.
+
+This is a source-space model-selection result, not a production parameter update. He-Morse activity coefficients retain
+their adopted pure-water standard-state dependence, while the existing full-Furst scale scan showed that one global
+scale cannot reconcile low-salinity Liu NaCl with the dense NaCl/KCl families. Before the salt-pair Helmholtz term can be
+activated, independent direct-molality single-salt data with pressure contrast must bound the pressure and high-temperature
+response. The candidate must then be mapped into the current electrolyte-CPA/Furst formulation with a declared joint
+fit or ablation and tested on frozen Table A.24 mixed brine, Dholabhai and Burgass hydrate families, divalent salts,
+Archer water activity, dense NaCl/KCl and Burgass-Tohidi controls. No empirical temperature offset, production
+coefficient, database row, solver tolerance or hydrate equation changes here.
+
