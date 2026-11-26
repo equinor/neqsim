@@ -1299,3 +1299,69 @@ and a salt-free reference on the same convention. The Table A.24 mixed-brine
 series and independent hydrate families remain frozen holdouts. No parameter,
 equation, tolerance, hydrate model or empirical temperature offset changes in
 this diagnostic.
+
+## Same-study pure-water KCl salt-effect discriminator
+
+`KClCO2SourceMatchedSaltEffectAssessmentTest` removes the absolute pure-water
+baseline mismatch from the dense KCl comparison. It combines only factual
+values already retained from the CC BY 4.0 Mousavi-Chapoy-Burgass source:
+Table A1 pure-water states bracket Tables A11-A13 KCl states at the same
+temperature. Linear interpolation of reported liquid CO2 mole percent in
+pressure defines the primary source-water value; log-mole-fraction
+interpolation is retained as a form-sensitivity check. No extrapolation is
+allowed. This selects seven KCl states at 323.15 K and six at 373.15 K. The
+remaining high-pressure states and all 423.15 K states are excluded because a
+same-temperature A1 bracket is absent.
+
+For each retained state the source and model salting effects are
+
+$$
+S_{source}=\ln(x_{water,source}/x_{KCl,source}),\qquad
+S_{model}=\ln(x_{water,model}/x_{KCl,model}).
+$$
+
+Every source-matched state has positive measured salting-out. The current
+model overstates it at all thirteen states. The model-minus-source log-effect
+bias, RMSE and maximum absolute residual are `+0.0894094`, `0.0933080` and
+`0.124556`, respectively. At 323.15 K they are `+0.104176`, `0.104833` and
+`0.124556`; at 373.15 K they are `+0.0721812`, `0.0777317` and `0.120354`.
+The maximum difference between linear and log interpolation is `0.0209953`
+log units overall and `0.00490401` at 323.15 K, smaller than the observed
+model residuals but retained explicitly rather than treated as measurement
+uncertainty.
+
+The exact model identity
+
+$$
+S_{model}=-\ln(f_{KCl}/f_{water})
++\ln[(f/x)_{KCl}/(f/x)_{water}]
+$$
+
+separates guest-side fugacity from the effective aqueous response. The maximum
+absolute guest contribution is `0.00202187`, while the minimum absolute
+effective-aqueous contribution is `0.172507`. On every retained row the guest
+term is at most `0.6769%` of the sum of the two absolute contributions. The
+reproducible discrepancy is therefore carried overwhelmingly by the aqueous
+CO2 activity/fugacity formulation, not by guest fugacity. This is a model-side
+decomposition; the source does not publish a separate aqueous CO2 fugacity and
+the result is not an independently measured partial molar property.
+
+The complete He-Morse source-minus-model law, including its temperature-block
+linear term and quadratic salt-pair curvature, is transferred without refit to
+the seven source-matched 323.15 K states. It improves every point: holdout RMSE
+falls from `0.104833` to `0.0502973`, bias from `+0.104176` to `+0.0486454`,
+and maximum absolute residual from `0.124556` to `0.0737390`. Propagated fit
+covariance is reported for every correction, and each correction exceeds three
+standard errors. The remaining positive bias proves that the complete
+low-pressure law is still an under-correction; it is a supported formulation
+direction, not a qualified parameter update.
+
+The smallest defensible implementation candidate is a thermodynamically
+consistent KCl salt-pair linear-plus-quadratic contribution in the electrolyte
+CPA residual Helmholtz energy, with all composition and state derivatives,
+explicit single-ion gauge, bounded refit and double-counting check against the
+existing Furst response. He-Morse remains calibration evidence; these
+same-source dense states are holdouts. Table A.24, Dholabhai/Burgass hydrate,
+NaCl/CaCl2/MgCl2, Archer water activity, Yasunishi-Yoshida and pure-water
+controls remain frozen. No production parameter, equation, tolerance, hydrate
+model or empirical temperature offset changes in this diagnostic.
