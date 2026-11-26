@@ -448,7 +448,11 @@ For subcritical liquid hydrogen with the Leachman EOS, NeqSim checks the
 dense-root interval above the isomer's critical density using Chebyshev
 refinement. The exact Leachman pressure and pressure slope qualify the root.
 A finer scan and bisection handle cases where the faster search cannot close
-the pressure equation.
+the pressure equation. For normal hydrogen, the pure-fluid bubble-point flash
+publishes equilibrium fugacity coefficients at the returned temperature.
+The phase Joule–Thomson getter returns K/bar, converting the Leachman kernel's
+K/kPa result by a factor of 100. The [cryogenic EOS regression cases](cryogenic_eos_validation.md)
+give the tested pressures and derivative comparisons.
 
 `PhaseSpanWagnerEos` caches its pure-CO2 reference-EOS state. Repeating initialization at
 unchanged temperature, pressure and effective phase selection republishes the same coherent

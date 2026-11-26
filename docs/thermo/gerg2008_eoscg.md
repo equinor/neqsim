@@ -52,6 +52,16 @@ GERG-2008 is the standard reference equation for **natural gas** transport, proc
 ### Supported Components (21)
 Methane, Nitrogen, Carbon Dioxide, Ethane, Propane, Butanes, Pentanes, Hexane, Heptane, Octane, Nonane, Decane, Hydrogen, Oxygen, Carbon Monoxide, Water, Helium, Argon.
 
+### Subcooled LNG TP flash
+
+GERG-2008 checks that a density root reproduces the specified pressure on a
+positive-slope branch. If the iterative vapor trial cannot provide such a root,
+NeqSim tries the bracketed dense branch at the same pressure and still runs
+the flash stability calculation. A single-phase subcritical result is labelled
+liquid when the gas and liquid requests identify the same dense root.
+See the [cryogenic EOS regression cases](cryogenic_eos_validation.md) for the
+tested LNG composition, phase transition and measured density comparisons.
+
 ### Liquid density and phase envelopes
 
 GERG-2008 liquid density calculations bracket the high-density root, then use

@@ -142,8 +142,6 @@ public class PhaseGERG2008Eos extends PhaseEos {
       a0 = getAlpha0_GERG2008();
       ar = getAlphares_GERG2008();
 
-      pressure = temp[0] / 100;
-
       Z = temp[1];
 
       W = temp[11];

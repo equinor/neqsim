@@ -197,7 +197,7 @@ public class PhaseLeachmanEos extends PhaseEos {
   /** {@inheritDoc} */
   @Override
   public double getJouleThomsonCoefficient() {
-    return JTcoef * 1e3;
+    return JTcoef * 100.0; // K/kPa to K/bar
   }
 
   /** {@inheritDoc} */
