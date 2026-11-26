@@ -991,6 +991,273 @@ hydrate transfer, convergence, non-regression and timing. No empirical
 temperature offset, fitted coefficient, relaxed tolerance or hydrate
 qualification is introduced here.
 
+## Salt-pair Helmholtz composition kernel
+
+`CO2SaltPairHelmholtzCompositionAssessmentTest` advances the equation-level
+candidate without activating a production term or selecting a parameter. The
+topology follows the neutral-cation-anion Pitzer `zeta` family already
+implemented separately in `PhasePitzer`. The primary Pitzer equation lineage
+is documented in the
+[Pitzer parameter provenance](pitzer_parameter_provenance.md), including
+Pitzer (1973), DOI `10.1021/j100621a026`, and the audited public-domain PHREEQC
+implementation. No coefficient is copied from those sources.
+
+For neutral CO2, one cation, one anion and water solvent, the proposed
+unit-response composition kernel is
+
+$$
+B=\frac{n_{\mathrm{CO_2}}n_+n_-}
+        {(M_w n_w)^2},
+\qquad
+\frac{A^E_{\mathrm{pair}}}{RT}=\zeta(T,P)B.
+$$
+
+Here $M_w n_w$ is the water mass in kg and a compatible coefficient
+$\zeta$ has units kg$^2$/mol$^2$. The expression is first-degree homogeneous
+in all amounts, vanishes when any tuple member is absent, and gives a
+quadratic neutral-CO2 chemical-potential response when a 1:1 salt amount is
+scaled. Its analytic first and second composition derivatives are retained in
+the executable assessment. Centered finite differences, Hessian symmetry,
+Euler's identity and the degree-one Hessian homogeneity identity are all
+gated without using an experimental point or a fitted value.
+
+On the normalized algebraic state, the maximum absolute first-derivative
+residual is `1.03e-11` and the maximum second-derivative residual is
+`6.99e-12`. Hessian symmetry and the fourfold neutral chemical-potential
+response on doubling both 1:1 salt ions are exact at displayed precision;
+Euler and Hessian-homogeneity residuals are at most `1.39e-17`. These are
+equation-consistency results, not experimental accuracy statistics.
+
+This kernel addresses only the composition algebra. It does not establish the
+required $\zeta(T,P)$ law, standard-state conversion, volume derivative or
+partial-molar-volume contribution. The current Furst block also produces
+nonlinear concentration response through its denominator and packing terms;
+therefore the candidate must be calibrated jointly or with a declared
+orthogonalization/ablation, not added on top and called independent. The
+He-Morse covariance remains unidentifiable from its five-temperature saturated
+basis, and Plummer-Busenberg identifies the adopted pure-water anchor rather
+than an independent raw family. Production activation remains blocked until
+an independently compatible temperature/pressure family or a predeclared
+lower-dimensional physical law supplies bounds and uncertainty, followed by
+single-salt calibration and the frozen Table A.24 and hydrate holdouts.
+
+The retained CSV contains seven algebraic checks only. The unit coefficient is
+a normalization of the kernel, not an invented physical parameter. No
+Electrolyte-CPA result, database row, tolerance, hydrate equation or default is
+changed.
+
+## He-Morse standard-state and temperature-covariance audit
+
+`CO2HeMorseStandardStateAuditTest` addresses the first remaining source
+dependency without changing the model. He and Morse (1993), DOI
+`10.1016/0016-7037(93)90137-L`, report molality-scale CO2 activity coefficients.
+The IUPAC-NIST SDS-62 compilation retains CO2 partial pressure, dissolved CO2
+molality and the activity coefficient at each KCl state. The source convention
+therefore implies, at fixed temperature,
+
+$$
+H^0(T)=\frac{p_{\mathrm{CO_2}}}
+{m_{\mathrm{CO_2}}\gamma_{\mathrm{CO_2}}}.
+$$
+
+The audit reconstructs one geometric-mean $H^0$ for each temperature directly
+from every printed row. Maximum absolute log residuals are 0.002234, 0.007976,
+0.003079, 0.004806 and 0.022633 at 273.15, 298.15, 323.15, 348.15 and 363.15 K,
+respectively. All are inside the compiled source's stated 4% relative
+activity-coefficient uncertainty. The corresponding $H^0$ values are 12.8011,
+29.3613, 51.3402, 74.8031 and 87.5786 atm kg/mol. This verifies that the
+retained columns are internally consistent with one temperature-specific
+molality standard state; it does not independently validate the pure-water
+anchor used to construct those activity coefficients.
+
+That distinction is material. Spycher and Pruess (2005), DOI
+`10.1016/j.gca.2005.01.015`, document that He and Morse combined saline Henry
+constants from their measurements with an infinite-dilution value adopted from
+Plummer and Busenberg (1982), and caution that inconsistencies in that anchor
+may explain deviations from other activity-coefficient sources. The present
+audit therefore preserves He-Morse as within-source shape evidence, not an
+absolute production calibration.
+
+He and Morse use the five-function temperature basis
+$1,T,T^2,1/T,\ln T$. On the five retained temperature blocks its design matrix
+has rank five, leaving zero residual degrees of freedom. A five-parameter law
+can interpolate the five block estimates but cannot provide a residual
+variance or identifiable covariance from this source alone. This is the
+numerical cause of the covariance blocker, not a request to relax a tolerance.
+An independent temperature family or a predeclared lower-dimensional physical
+temperature law is required before bounded calibration.
+
+The six-row retained report records the five reconstructed standard states and
+the rank/degree-of-freedom result. No coefficient, gauge, empirical temperature
+offset, production equation, solver tolerance or source value changes. Table
+A.24, Dholabhai/Burgass hydrate data, dense NaCl/KCl controls, divalent salts,
+Archer water activity and Burgass-Tohidi remain frozen holdouts.
+
+## Reduced KCl salt-pair temperature law
+
+`CO2SaltPairTemperatureLawAssessmentTest` addresses the zero-residual-degree-of-freedom blocker in the saturated
+He-Morse temperature basis without activating the Helmholtz kernel. In the source's molality convention it fits
+
+$$
+\ln \gamma_{\mathrm{CO_2}}(T,m)
+  = a_T m + \zeta(T)m^2,
+\qquad
+\zeta(T)=\zeta_{298}
+  +\zeta_{1/T}\left(\frac{298.15\ \mathrm{K}}{T}-1\right).
+$$
+
+The five $a_T$ values are nuisance salt-level linear coefficients. The two-parameter curvature law is a bounded,
+lower-dimensional alternative to one independent curvature coefficient at every temperature. Its inverse-temperature
+coordinate represents a first enthalpic temperature dependence over the measured 273.15--363.15 K interval; it is not
+claimed outside that interval and does not identify pressure response.
+
+The 26 He-Morse points give rank 7 with 19 residual degrees of freedom and condition number 65.64. Relative to the
+five-parameter linear-per-temperature baseline, log-space RMSE falls from 0.030543 to 0.017359 and AICc from -168.408
+to -190.567. The ten-parameter saturated-curvature comparator reaches RMSE 0.015895 but AICc -180.704, so the reduced
+law is preferred by 9.86 AICc units despite its lower flexibility. The source-space estimates are
+$\zeta_{298}=-0.0150603\pm0.0024605$ kg$^2$/mol$^2$ and
+$\zeta_{1/T}=-0.0780702\pm0.0188556$ kg$^2$/mol$^2$ (one standard error), with parameter correlation 0.8200.
+
+Leave-one-temperature-block-out prediction gives aggregate RMSE 0.019481 and maximum absolute log residual 0.041504.
+The fitted 363.15 K curvature is -0.0010865 kg$^2$/mol$^2$, but its propagated two-standard-error interval crosses zero.
+The high-temperature sign therefore remains uncertain. He-Morse contains only one CO2 partial pressure inside each
+temperature block, so no pressure coefficient is identifiable. The independent 298.15 K Yasunishi-Yoshida molarity
+series independently retains negative curvature and reduces RMSE from 0.018197 to 0.002824, but its
+-0.0082239 coefficient is not transferred across concentration bases.
+
+This is a source-space model-selection result, not a production parameter update. He-Morse activity coefficients retain
+their adopted pure-water standard-state dependence, while the existing full-Furst scale scan showed that one global
+scale cannot reconcile low-salinity Liu NaCl with the dense NaCl/KCl families. Before the salt-pair Helmholtz term can be
+activated, independent direct-molality single-salt data with pressure contrast must bound the pressure and high-temperature
+response. The candidate must then be mapped into the current electrolyte-CPA/Furst formulation with a declared joint
+fit or ablation and tested on frozen Table A.24 mixed brine, Dholabhai and Burgass hydrate families, divalent salts,
+Archer water activity, dense NaCl/KCl and Burgass-Tohidi controls. No empirical temperature offset, production
+coefficient, database row, solver tolerance or hydrate equation changes here.
+
+## Independent 323.15 K salt-pair transfer diagnostic
+
+`KClCO2SaltPairTransferAssessmentTest` tests the frozen reduced He-Morse
+curvature law against independent direct-solubility data before any production
+activation. It selects all nine Mousavi-Chapoy-Burgass KCl states at 323.15 K:
+four pressures at 10 mass percent KCl, three at 15 mass percent and two at 22
+mass percent. This temperature is inside the fitted 273.15--363.15 K He-Morse
+range. The other 17 KCl states at 373.15--423.15 K are excluded because using
+them would extrapolate the source law. The source fixture retains the article's
+CC BY 4.0 values and explicit salt-free aqueous CO2 mole-percent convention.
+No Table A.24, hydrate, divalent-salt or water-activity holdout is selected.
+
+The diagnostic evaluates the current electrolyte-CPA/Furst flash first, then
+applies only the exact first-order activity mapping at its calculated CO2
+fugacity:
+
+$$
+\Delta\ln\gamma_{\mathrm{CO_2}}=\zeta(T)m_{\mathrm{KCl}}^2,
+\qquad
+x_{\mathrm{CO_2},\mathrm{candidate}}
+=x_{\mathrm{CO_2},\mathrm{baseline}}
+ \exp[-\zeta(T)m_{\mathrm{KCl}}^2].
+$$
+
+At 323.15 K the frozen law gives
+$\zeta=-0.00902052\ \mathrm{kg^2\,mol^{-2}}$. KCl molality is reconstructed on
+exactly the same final-aqueous-water basis as the independent producer. The
+mapping is a tangent response, not a coupled flash, a refit, a pressure law or
+a transferable production coefficient. It does not change water activity,
+guest fugacity, phase equilibrium, the existing Furst block or any database
+row.
+
+The independent results are:
+
+| KCl mass percent | States | Baseline log-RMSE | Candidate log-RMSE | Baseline MAPE / % | Candidate MAPE / % |
+|---:|---:|---:|---:|---:|---:|
+| 10 | 4 | 0.08852 | 0.06905 | 8.277 | 6.421 |
+| 15 | 3 | 0.09912 | 0.05372 | 8.918 | 4.196 |
+| 22 | 2 | 0.05199 | 0.08046 | 4.863 | 8.249 |
+| All | 9 | 0.08578 | 0.06723 | 7.732 | 6.086 |
+
+The frozen law improves both lower-concentration groups and the aggregate, but
+fails the high-concentration transfer. At 22 mass percent (3.7833 mol/kg water)
+the current-model residuals of -3.49% and -6.23% reverse to +9.81% and +6.69%.
+Because the correction is constant within a concentration group, it cannot
+repair pressure-dependent residual structure. The numerical cause is therefore
+not a missing constant KCl curvature coefficient alone: direct superposition
+of the source-space quadratic term on the already nonlinear Furst response
+over-corrects the highest concentration.
+
+This result blocks default activation and an unqualified parameter update. The
+smallest defensible next model experiment is an opt-in coupled Helmholtz
+implementation of the already-audited composition kernel, evaluated jointly
+with the existing Furst response rather than added as an independent correction.
+It must preserve the frozen He-Morse coefficients and report whether the 22
+mass-percent reversal comes from thermodynamic coupling, double counting or a
+missing physically sourced high-ionic-strength dependence. Acceptance requires
+improvement without residual-sign reversal across the independent 10/15/22
+mass-percent family, exact composition/state derivatives, phase and fugacity
+closure, and no regression on pure water, NaCl, CaCl2/MgCl2, Archer water
+activity, Table A.24, Dholabhai and Burgass controls. If that experiment cannot
+remove the reversal without an extra coefficient, the precise missing evidence
+is an independent high-molality KCl temperature/concentration family capable of
+identifying a bounded saturation or ionic-strength law. No empirical
+temperature offset, invented pressure dependence, relaxed tolerance or hydrate
+qualification is introduced here.
+
+
+
+## Residual KCl curvature and independent-transfer diagnostic
+
+`KClCO2SaltPairTransferAssessmentTest` now distinguishes the total He-Morse
+source curvature from the curvature already produced by the current
+electrolyte-CPA/Furst formulation. For every He-Morse temperature block it
+calculates a matched pure-water state at the same temperature and CO2 partial
+pressure, then defines
+
+$$
+\ln\gamma_{\mathrm{CO_2}}^{\mathrm{model}}
+=\ln\left(\frac{m_{\mathrm{CO_2}}^{\mathrm{pure,model}}}
+                 {m_{\mathrm{CO_2}}^{\mathrm{KCl,model}}}\right),
+\qquad
+\ln\gamma_{\mathrm{CO_2}}^{\mathrm{residual}}
+=\ln\gamma_{\mathrm{CO_2}}^{\mathrm{source}}
+ -\ln\gamma_{\mathrm{CO_2}}^{\mathrm{model}}.
+$$
+
+Source, model and residual responses use the same five temperature-specific
+linear nuisance coefficients and the same reduced inverse-temperature
+quadratic law. At 323.15 K the source curvature is
+`-0.00902050 +/- 0.00151516 kg2/mol2`, whereas the current model curvature is
+`-0.01753862 +/- 0.00012732 kg2/mol2`. The identifiable incremental residual
+is therefore positive, `+0.00851812 +/- 0.00149621 kg2/mol2`, more than five
+standard errors from zero. This is the numerical cause of the prior dense-KCl
+overcorrection: applying the full negative source coefficient on top of the
+existing model double-counts curvature.
+
+The reduced law improves the source, model and residual fits over their
+linear-only comparators. Their log-space RMSE values are respectively
+`0.0305432 -> 0.0173592`, `0.0502774 -> 0.00145868`, and
+`0.0399819 -> 0.0171421`; corrected AICc changes are `-168.408 ->
+-190.567`, `-142.490 -> -319.349`, and `-154.405 -> -191.221`.
+The residual is thus statistically identifiable on the He-Morse design, but
+identifiability alone does not establish transferability.
+
+Both first-order mappings are evaluated against the frozen independent
+Mousavi-Chapoy-Burgass 323.15 K KCl series. The full-source correction retains
+its aggregate improvement in log-RMSE (`0.0857793 -> 0.0672304`) but still
+worsens 22 wt% KCl (`0.0519884 -> 0.0804617`) and reverses its residual sign.
+The non-double-counted residual correction worsens every concentration family:
+aggregate log-RMSE becomes `0.136861` and MAPE becomes `12.3379%`, compared
+with baseline `0.0857793` and `7.73204%`. The 10, 15 and 22 wt% residual
+log-RMSE values are `0.107098`, `0.145144` and `0.172480`.
+
+Disposition: neither the total source coefficient nor the identified residual
+coefficient is activated. The evidence rules out a standalone, pressure-
+independent first-order activity correction as the smallest defensible model
+change. The next formulation check must resolve the pressure/composition
+coupling that differs between the low-pressure He-Morse activity design and
+the dense MCB states before fitting any production parameter. Table A.24,
+Dholabhai/Burgass hydrate, NaCl/CaCl2/MgCl2, Archer water-activity and pure-water
+controls remain frozen holdouts; no temperature offset, parameter-table edit,
+tolerance relaxation or hydrate qualification is introduced.
+
 ## Dense-KCl residual pressure identifiability
 
 `KClCO2SaltPairTransferAssessmentTest` also tests the next proposed physical
