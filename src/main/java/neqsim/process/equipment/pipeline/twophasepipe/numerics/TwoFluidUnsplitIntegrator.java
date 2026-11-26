@@ -186,6 +186,7 @@ public final class TwoFluidUnsplitIntegrator {
     LagrangianSlugTracker localSlugTracker = conservativeSlugTracker == null ? null
         : SerializationUtils.clone(conservativeSlugTracker);
     synchronizeSlugGeometry(localSlugTracker);
+    boolean allowNewtonRestart = localSlugTracker != null && equations.isConservativeSlugForceIntegrationEnabled();
     TwoFluidUnsplitModelAdapter first = new TwoFluidUnsplitModelAdapter(equations, acceptedSections, spatialStep,
         densityModel);
     first.validatePreparedOperator();
@@ -229,7 +230,7 @@ public final class TwoFluidUnsplitIntegrator {
       }
       double localTolerance = localSolveTolerance(solver.getRelativeTolerance(), relativeTolerance, dt, duration);
       UnsplitTransientSolver.Result candidate = solver.solveWithTolerance(state, pressure, area, dt, time,
-          outletPressure, outletPressureFixed, adapter, localTolerance);
+          outletPressure, outletPressureFixed, adapter, localTolerance, allowNewtonRestart);
       evaluations += candidate.getModelEvaluations();
       if (!candidate.isConverged() || !candidate.isActiveSetStable()) {
         rejected++;

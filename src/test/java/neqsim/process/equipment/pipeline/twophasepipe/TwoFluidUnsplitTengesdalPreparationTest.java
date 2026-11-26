@@ -99,8 +99,9 @@ class TwoFluidUnsplitTengesdalPreparationTest {
     solver.setTimeIntegrationMethod(UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER);
     pipe.setUnsplitTransientSolver(solver, 0.1);
 
-    pipe.runTransient(180.0,
-        UUID.nameUUIDFromBytes("tracked-force-tengesdal:16:0.1:180.0".getBytes(StandardCharsets.UTF_8)));
+    UUID id = UUID.nameUUIDFromBytes("tracked-force-tengesdal:16:0.1:180.0".getBytes(StandardCharsets.UTF_8));
+    pipe.runTransient(180.0, id);
+    assertPublishedInterval(pipe, id, 0.1, 180.0);
   }
 
   @Tag("slow")
@@ -464,6 +465,25 @@ class TwoFluidUnsplitTengesdalPreparationTest {
 
     pipe.runTransient(duration, id);
 
+    TwoFluidMassBalanceReport report = assertPublishedInterval(pipe, id, maximumStep, duration);
+    logger.info(
+        "Published unsplit Tengesdal interval: cells={}, maximumStep={}, duration={}, substeps={}, gasClosure={}, oilClosure={}, waterClosure={}, outletFlow={}",
+        count, maximumStep, duration, report.getAcceptedSubsteps(), report.getRelativeResidual(Phase.GAS),
+        report.getRelativeResidual(Phase.OIL), report.getRelativeResidual(Phase.WATER),
+        pipe.getOutletStream().getFlowRate("kg/sec"));
+  }
+
+  /**
+   * Check the committed clock, full-interval mass balance and physical endpoint for a published riser run.
+   *
+   * @param pipe pipe that published the interval
+   * @param id interval calculation identifier
+   * @param maximumStep nominal step bound in seconds
+   * @param duration published duration in seconds
+   * @return the verified mass balance report
+   */
+  private static TwoFluidMassBalanceReport assertPublishedInterval(TwoFluidPipe pipe, UUID id, double maximumStep,
+      double duration) {
     assertEquals(duration, pipe.getSimulationTime(), 0.0);
     assertEquals(duration, pipe.getTime(), 0.0);
     assertEquals(id, pipe.getCalculationIdentifier());
@@ -480,11 +500,7 @@ class TwoFluidUnsplitTengesdalPreparationTest {
       assertTrue(Double.isFinite(section.getPressure()) && section.getPressure() > 0.0);
       assertEquals(1.0, section.getGasHoldup() + section.getOilHoldup() + section.getWaterHoldup(), 1.0e-8);
     }
-    logger.info(
-        "Published unsplit Tengesdal interval: cells={}, maximumStep={}, duration={}, substeps={}, gasClosure={}, oilClosure={}, waterClosure={}, outletFlow={}",
-        count, maximumStep, duration, report.getAcceptedSubsteps(), report.getRelativeResidual(Phase.GAS),
-        report.getRelativeResidual(Phase.OIL), report.getRelativeResidual(Phase.WATER),
-        pipe.getOutletStream().getFlowRate("kg/sec"));
+    return report;
   }
 
   /**

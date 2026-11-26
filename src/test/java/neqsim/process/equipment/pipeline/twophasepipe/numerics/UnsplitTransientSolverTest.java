@@ -683,6 +683,33 @@ class UnsplitTransientSolverTest {
     assertEquals(1.0, result.getMaximumScaledResidual(), 0.0);
   }
 
+  /** A restart can cross a closure jump, but the result still solves the original residual. */
+  @Test
+  void boundedRestartRecoversTheRootAcrossAClosureJump() {
+    double[][] state = filledState(1);
+    double[] pressure = {5.0e6};
+    UnsplitTransientSolver.Model model = (trial, trialPressure, closureState, closurePressure, time, outletPressure,
+        outletPressureFixed) -> {
+      double[][] rates = new double[1][6];
+      rates[0][3] = trial[0][3] < 0.5 ? 1.0 : 4.0;
+      return new UnsplitTransientSolver.Evaluation(rates, pressureDependentDensities(closurePressure));
+    };
+    UnsplitTransientSolver solver = new UnsplitTransientSolver();
+    solver.setTimeIntegrationMethod(UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER);
+    double[] areas = unitAreas(1);
+    UnsplitTransientSolver.Result original = solver.solve(state, pressure, areas, 1.0, 0.0, Double.NaN, false, model);
+    assertEquals(UnsplitTransientSolver.TerminationReason.LINE_SEARCH_FAILED, original.getTerminationReason());
+
+    UnsplitTransientSolver.Result restarted = solver.solveWithTolerance(state, pressure, areas, 1.0, 0.0, Double.NaN,
+        false, model, solver.getRelativeTolerance(), true);
+
+    assertTrue(restarted.isConverged());
+    assertEquals(4.0, restarted.getState()[0][3], solver.getRelativeTolerance());
+    assertTrue(restarted.getMaximumScaledResidual() <= solver.getRelativeTolerance());
+    assertTrue(restarted.getIterations() <= solver.getMaximumIterations());
+    assertEquals(0.0, state[0][3], 0.0);
+  }
+
   @Test
   void reportsExhaustedNewtonBudgetWithItsFinalAdmissibleIterate() {
     double[][] state = filledState(1);

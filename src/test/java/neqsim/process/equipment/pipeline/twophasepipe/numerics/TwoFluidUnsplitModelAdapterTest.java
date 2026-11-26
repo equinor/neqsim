@@ -12,6 +12,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.Collections;
+import neqsim.process.equipment.pipeline.twophasepipe.LagrangianSlugTracker.SlugBubbleUnit;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations.MassBalanceRate;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
@@ -150,6 +152,52 @@ class TwoFluidUnsplitModelAdapterTest {
     for (double residual : prepared.getMassResidualKg()) {
       assertEquals(0.0, residual, 1.0e-7);
     }
+  }
+
+  /**
+   * A probe of an absent liquid's momentum must leave tracked transport unchanged and retain its own residual.
+   *
+   * @param absentPhase index of the exactly absent liquid phase
+   */
+  @ParameterizedTest
+  @CsvSource({"1", "2"})
+  void absentPhaseMomentumProbeDoesNotDisableTrackedReconstruction(int absentPhase) {
+    TwoFluidSection[] accepted = {section(5.0), section(15.0)};
+    int presentLiquid = 3 - absentPhase;
+    int absentMomentum = absentPhase + 3;
+    for (TwoFluidSection cell : accepted) {
+      double[] state = cell.getStateVector();
+      double absentDensity = absentPhase == 1 ? cell.getOilDensity() : cell.getWaterDensity();
+      double presentDensity = presentLiquid == 1 ? cell.getOilDensity() : cell.getWaterDensity();
+      state[presentLiquid] += state[absentPhase] / absentDensity * presentDensity;
+      state[absentPhase] = 0.0;
+      state[absentMomentum] = 0.0;
+      cell.setConservativeEndpoint(state, 1.0e-10);
+    }
+    TwoFluidConservationEquations equations = isothermalEquations();
+    equations.getFluxCalculator().setSignedDonorTransportEnabled(true);
+    equations.setConservativeSlugForceIntegrationEnabled(true);
+    SlugBubbleUnit slug = new SlugBubbleUnit();
+    slug.tailPosition = 2.0;
+    slug.frontPosition = 7.0;
+    slug.slugHoldup = 0.9;
+    equations.setConservativeSlugs(Collections.singletonList(slug));
+    TwoFluidUnsplitModelAdapter adapter = adapter(equations, accepted);
+    UnsplitTransientSolver solver = solver();
+    double[][] state = states(accepted);
+    double[][] probe = states(accepted);
+    double[] pressure = pressures(accepted);
+    double[] area = areas(accepted);
+    double timeStep = 0.01;
+    double perturbation = 1.0e-6;
+    probe[0][absentMomentum] = perturbation;
+    double[] expected = solver.residual(state, pressure, state, pressure, area, timeStep, 0.0, Double.NaN, false,
+        adapter);
+    expected[absentMomentum] += perturbation;
+    assertArrayEquals(expected,
+        solver.residual(state, pressure, probe, pressure, area, timeStep, 0.0, Double.NaN, false, adapter), 0.0);
+    assertEquals(perturbation, probe[0][absentMomentum], 0.0);
+    assertMatrixEquals(state, states(accepted));
   }
 
   @Test
