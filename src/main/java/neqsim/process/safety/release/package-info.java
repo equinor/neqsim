@@ -9,6 +9,8 @@
  * <li>{@link neqsim.process.safety.release.ReleaseOrientation} - Jet orientation for dispersion modeling</li>
  * <li>{@link neqsim.process.safety.release.ReleaseSolidRiskAssessment} - Fail-closed mixture-specific solid and hydrate
  * applicability assessment</li>
+ * <li>{@link neqsim.process.safety.release.EquilibriumSolidCo2ReleaseModel} - Opt-in pure-CO2 choked short-opening
+ * model with an equilibrium gas/dry-ice ambient station</li>
  * <li>{@link neqsim.process.safety.release.ReleaseInventory} - Conservative rigid-inventory depletion coupled to a
  * selected release model</li>
  * <li>{@link neqsim.process.safety.release.ReleaseInventoryHeatTransfer} - Explicit adiabatic, constant-power or
@@ -60,26 +62,28 @@
  * LeakModel time integration is limited to a rigid, adiabatic, well-mixed gas inventory. It conserves component mass
  * and energy and fails explicitly if condensation occurs. The scalar release correlations remain screening methods. The
  * homogeneous-equilibrium model assesses its resolved stations for equilibrium solids and hydrate risk, but does not
- * calculate solid-bearing release flow. The quasi-steady finite-pipe models exclude transient decompression waves. The
- * separate perfect-gas transient model resolves waves and line packing but excludes heat transfer. The EOS-backed
- * transient model optionally applies prescribed distributed constant-U wall heat exchange or retains a cell-resolved
- * finite-capacitance wall with separate prescribed gas/environment coefficients. Its cylindrical adapter derives
- * outer-area conversion and capacity from explicit wall geometry and material properties. The lumped factory rejects Bi
- * &gt;= 0.1; the two-node factory resolves one conservative radial gradient through cylindrical resistance. Both
- * exclude predictive thermal correlations, higher-order radial convergence, pipe elasticity and solid-bearing
- * transport. The two-sided topology composes two adiabatic EOS-backed branches around an interior rupture plane,
- * preserves the opposing jets as separate frames and can impose one prescribed delayed linear effective-area ramp; it
- * does not predict fracture/opening, pipe-wall motion or pressure coupling across the open break. Separate
- * short-opening models can either apply a caller-declared gas/liquid velocity ratio or predict vertical-upward
- * bubbly/dispersed slip with a bounded Zuber-Findlay/Harmathy closure. A third model applies caller-parameterized
- * first-order phase-split relaxation before the same drift-flux closure. A fourth resolves component-specific
- * phase-partition relaxation and emits phase compositions while retaining exact component conservation. A fifth
- * predicts external-film component relaxation times from explicit Ranz-Marshall inputs for spherical gas bubbles. A
- * separate adapter accepts explicit spherical liquid-droplet diameter, gas-film properties, relative speed and
- * residence time, then fails closed outside dilute area, Eotvos, Weber, Reynolds and Schmidt limits. A seventh predicts
- * a conservative spherical-bubble diameter, resolved phase velocities and gas residence time from explicit
- * transfer-zone geometry before iterating the Ranz-Marshall and component-transfer calculations to a checked fixed
- * point. These models retain explicit phase-area and kinetic-energy closure; none predicts droplet hydrodynamics,
+ * calculate solid-bearing release flow. A separate pure-CO2 model resolves a bounded equilibrium gas/dry-ice ambient
+ * station only after proving a solid-free choked restriction rate; it excludes mixtures, solid restriction flow,
+ * particle size, slip, nucleation, deposition and transport. The quasi-steady finite-pipe models exclude transient
+ * decompression waves. The separate perfect-gas transient model resolves waves and line packing but excludes heat
+ * transfer. The EOS-backed transient model optionally applies prescribed distributed constant-U wall heat exchange or
+ * retains a cell-resolved finite-capacitance wall with separate prescribed gas/environment coefficients. Its
+ * cylindrical adapter derives outer-area conversion and capacity from explicit wall geometry and material properties.
+ * The lumped factory rejects Bi &gt;= 0.1; the two-node factory resolves one conservative radial gradient through
+ * cylindrical resistance. Both exclude predictive thermal correlations, higher-order radial convergence, pipe
+ * elasticity and solid-bearing transport. The two-sided topology composes two adiabatic EOS-backed branches around an
+ * interior rupture plane, preserves the opposing jets as separate frames and can impose one prescribed delayed linear
+ * effective-area ramp; it does not predict fracture/opening, pipe-wall motion or pressure coupling across the open
+ * break. Separate short-opening models can either apply a caller-declared gas/liquid velocity ratio or predict
+ * vertical-upward bubbly/dispersed slip with a bounded Zuber-Findlay/Harmathy closure. A third model applies
+ * caller-parameterized first-order phase-split relaxation before the same drift-flux closure. A fourth resolves
+ * component-specific phase-partition relaxation and emits phase compositions while retaining exact component
+ * conservation. A fifth predicts external-film component relaxation times from explicit Ranz-Marshall inputs for
+ * spherical gas bubbles. A separate adapter accepts explicit spherical liquid-droplet diameter, gas-film properties,
+ * relative speed and residence time, then fails closed outside dilute area, Eotvos, Weber, Reynolds and Schmidt limits.
+ * A seventh predicts a conservative spherical-bubble diameter, resolved phase velocities and gas residence time from
+ * explicit transfer-zone geometry before iterating the Ranz-Marshall and component-transfer calculations to a checked
+ * fixed point. These models retain explicit phase-area and kinetic-energy closure; none predicts droplet hydrodynamics,
  * interfacial heat transfer, entrainment, annular jets or solid-bearing flow. Both real-gas pipe models fail closed if
  * an equilibrium phase appears. The inventory heat boundary accepts caller-imposed power or conductance with
  * provenance; it does not predict fire heat flux or wall inertia. The opt-in non-equilibrium inventory retains

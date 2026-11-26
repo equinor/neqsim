@@ -228,6 +228,48 @@ public final class ReleaseState implements Serializable {
   }
 
   /**
+   * Creates an analytical station with an explicit component-resolved phase basis.
+   *
+   * <p>
+   * Package-private by design: release models own the caloric closure and the phase-property basis. The supplied
+   * density is derived from the phase fractions and phase densities so the scalar and per-phase representations cannot
+   * diverge.
+   * </p>
+   *
+   * @param compositionReference overall composition reference
+   * @param pressurePa absolute pressure in Pa
+   * @param temperatureK temperature in K
+   * @param enthalpyJkg specific enthalpy in J/kg
+   * @param entropyJkgK specific entropy in J/(kg K)
+   * @param velocityMs bulk axial velocity in m/s
+   * @param phaseMassFractions phase mass fractions summing to one
+   * @param phaseDensitiesKgM3 positive phase densities in kg/m3
+   * @param phaseComponentMassFractions normalized component mass fractions for every phase
+   * @return immutable analytical phase-basis station
+   */
+  static ReleaseState analyticalPhaseBasis(SystemInterface compositionReference, double pressurePa, double temperatureK,
+      double enthalpyJkg, double entropyJkgK, double velocityMs, Map<String, Double> phaseMassFractions,
+      Map<String, Double> phaseDensitiesKgM3, Map<String, Map<String, Double>> phaseComponentMassFractions) {
+    if (compositionReference == null || phaseMassFractions == null || phaseDensitiesKgM3 == null
+        || phaseComponentMassFractions == null) {
+      throw new IllegalArgumentException("Composition and explicit phase basis required");
+    }
+    Map<String, Double> checkedFractions = fractions(phaseMassFractions);
+    Map<String, Double> checkedDensities = positiveValues(phaseDensitiesKgM3, "phase density");
+    if (!checkedFractions.keySet().equals(checkedDensities.keySet())) {
+      throw new IllegalArgumentException("Matching phase mass fractions and densities required");
+    }
+    double specificVolumeM3Kg = 0.0;
+    for (Map.Entry<String, Double> entry : checkedFractions.entrySet()) {
+      specificVolumeM3Kg += entry.getValue() / checkedDensities.get(entry.getKey());
+    }
+    double densityKgM3 = ReleaseFlowRequest.positive(1.0 / specificVolumeM3Kg, "analytical density");
+    ReleaseState reference = new ReleaseState(compositionReference, pressurePa, temperatureK, densityKgM3, enthalpyJkg,
+        entropyJkgK, velocityMs);
+    return reference.withPhaseBasis(checkedFractions, checkedDensities, phaseComponentMassFractions);
+  }
+
+  /**
    * Returns the same thermodynamic snapshot with an explicit slip-flow velocity basis.
    *
    * <p>
