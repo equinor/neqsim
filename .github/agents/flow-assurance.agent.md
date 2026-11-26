@@ -205,6 +205,13 @@ including signed pressure work and transaction-safe diagnostics. Route that row 
 initialization checks. It does not change the handoff requirement for a stationary two-density pool, terrain drainage,
 shutdown/restart, severe slugging, dynamic pigging, or field/commercial qualification.
 
+For retrograde condensation during shutdown, depressurisation, hold and restart of long gas or
+gas-condensate lines, route `CompositionalLinePackPipe` with `RetrogradeDewPointScanner` and
+`DewPointGuardedOutletController` (skill `neqsim-flow-assurance` section 4). Report the liquid inventory
+in t and m3, where it sits, both liquid-mobility bounds, and the delivery policy. A restart must keep the
+outlet above the local dew point of the gas reaching it, not only the feed cricondenbar. State that
+slugs, flow regimes and finite-rate evaporation are not modelled.
+
 For riser-induced (severe) slugging questions use the two screens described in the
 `neqsim-flow-assurance` skill: `TwoFluidPipe.evaluateSevereSluggingSystem(riserBaseSection)`
 (Taitel stability margin on a solved profile) and `SevereSlugAnalyser` (lumped dynamic model

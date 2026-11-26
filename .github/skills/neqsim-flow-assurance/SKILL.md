@@ -1,7 +1,7 @@
 ---
 name: neqsim-flow-assurance
 description: "Flow assurance patterns for NeqSim. USE WHEN: predicting hydrate, wax, asphaltene, CO2/H2S corrosion (NORSOK M-506), mineral scale and brine mixing, valve scale drift and remediation, sulfur S8 deposition, metal-loss screening, pipeline hydraulics, DNV-RP-F109/F105/F104/F110/F114 screening, water hammer, slug flow, thermal analysis or inhibitor dosing. Code patterns plus the governing standards for every threat."
-last_verified: "2026-11-25"
+last_verified: "2026-11-26"
 ---
 
 # Flow Assurance Analysis with NeqSim
@@ -519,6 +519,40 @@ m.calculateArnOnsetPH(); m.calculateCalciumSoapOnsetPH();
 - Guide: `docs/pvtsimulation/flowassurance/naphthenate_precipitation.md`.
 
 ## 4. Pipeline Hydraulics
+
+### Retrograde condensation in long gas lines (shutdown, depressurisation, restart)
+
+For a rich gas line taken below its cricondenbar (settle-out, blowdown, hold, packing, restart) use
+`CompositionalLinePackPipe` with `RetrogradeDewPointScanner` and `DewPointGuardedOutletController`
+([docs](../../../docs/process/compositional-linepack-pipe.md)). It conserves component masses and energy and
+recovers the phase split from NeqSim flashes, so condensate forms and revaporises with the EOS. It bounds liquid
+mobility (`setLiquidSlipFactor` 0 or 1, optional `setLiquidGravityDriftVelocity`) instead of predicting it.
+
+```java
+CompositionalLinePackPipe pipe = new CompositionalLinePackPipe("export", feed); // feed: composition, kg/s, P, T
+pipe.setLength(707e3); pipe.setDiameter(1.013); pipe.setNumberOfSections(100);
+pipe.setElevationProfileFromPoints(chainageM, elevationM);   // after setLength/setNumberOfSections
+pipe.setHeatTransferCoefficient(5.0); pipe.setConstantSurfaceTemperature(278.15);
+pipe.initializeUniform(130.0, 283.15);                      // or pipe.run() for the steady flowing state
+pipe.setOutletMassFlowRate(400.0); pipe.runTransient(3600.0, UUID.randomUUID());
+double liquidKg = pipe.getLiquidInventory("kg");            // "kg", "tonnes", "m3"; other units throw
+```
+
+- **Restart without liquid at the receiving end.** Feeding the guard only the feed cricondenbar is not
+  enough: revaporised condensate leaves C3+-rich gas whose dew point is far higher. Measured 2026-11-26 on a
+  707 km rich-gas case: about 130 bara local against 103 bara feed. A fixed cricondenbar + 2 bar trigger let
+  170–180 t of liquid out under the no-slip bound; the local-dew-point guard let none out. Run both
+  `setLiquidSlipFactor(0)` and `(1)` and report liquid delivered from the no-slip run.
+- **Enable `TwoFluidPipe.setIncludeMassTransfer(true)` before using it to find in-line condensation.**
+  With the default frozen phase composition, steady initialisation of a cold 251 km blowdown section returned
+  single-phase gas where the EOS gives retrograde liquid. With mass transfer on, the same case gave 1,169 t
+  (max holdup 2.7 %, annular/stratified) against 1,586 t of accumulated, immobile liquid in
+  `CompositionalLinePackPipe` (2026-11-26). Use `TwoFluidPipe` (mass transfer on) for slip, holdup and
+  regime at a flowing state; use `CompositionalLinePackPipe` for the hours-to-days sequence. For pressure
+  drop the two agreed within 1.4–2 % on the same 707 km route.
+- Equilibrium is instantaneous, so "line liquid-free" times are optimistic; slugs and flow regimes are not
+  modelled.
+
 
 ### Simple Adiabatic Pipe
 

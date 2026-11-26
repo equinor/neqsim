@@ -10219,14 +10219,23 @@ public class TwoFluidPipe extends Pipeline {
    *
    * <p>
    * Calculates inventory from conservative mass per length, converted to volume using local liquid density. This
-   * ensures consistency with the solver's mass tracking.
+   * ensures consistency with the solver's mass tracking. Mass units return the summed oil and water mass; an
+   * unrecognised unit is rejected instead of silently returning cubic metres.
    * </p>
    *
-   * @param unit Volume unit ("m3", "bbl", "L")
-   * @return Liquid volume
+   * @param unit volume unit ("m3", "bbl", "L") or mass unit ("kg", "tonnes")
+   * @return liquid volume or mass in the requested unit
+   * @throws IllegalArgumentException if the unit is not supported
    */
   public double getLiquidInventory(String unit) {
+    String normalizedUnit = unit == null ? "" : unit.toLowerCase();
+    if (!("m3".equals(normalizedUnit) || "bbl".equals(normalizedUnit) || "l".equals(normalizedUnit)
+        || "kg".equals(normalizedUnit) || "tonnes".equals(normalizedUnit) || "t".equals(normalizedUnit))) {
+      throw new IllegalArgumentException(
+          "Unsupported liquid inventory unit '" + unit + "'; use m3, bbl, L, kg or tonnes");
+    }
     double volume = 0;
+    double liquidMass = 0;
     double pipeVolume = Math.PI * diameter * diameter / 4.0 * length; // Max possible volume
 
     for (TwoFluidSection sec : sections) {
@@ -10235,6 +10244,7 @@ public class TwoFluidPipe extends Pipeline {
       // Safety check for unreasonable mass values
       double maxMassPerSection = sec.getArea() * sec.getLength() * 1000.0; // Max: all water
       oilMass = Math.min(oilMass, maxMassPerSection);
+      liquidMass += oilMass;
 
       double rhoO = sec.getOilDensity();
       if (rhoO > 100) {
@@ -10248,6 +10258,7 @@ public class TwoFluidPipe extends Pipeline {
       // Calculate water volume from water mass and water density
       double waterMass = sec.getWaterMassPerLength() * sec.getLength();
       waterMass = Math.min(waterMass, maxMassPerSection);
+      liquidMass += waterMass;
 
       double rhoW = sec.getWaterDensity();
       if (rhoW > 100) {
@@ -10260,13 +10271,21 @@ public class TwoFluidPipe extends Pipeline {
     // Sanity check: volume cannot exceed pipe volume
     volume = Math.min(volume, pipeVolume);
 
-    switch (unit.toLowerCase()) {
+    switch (normalizedUnit) {
     case "bbl":
       return volume * 6.28981;
     case "l":
       return volume * 1000;
-    default:
+    case "m3":
       return volume;
+    case "kg":
+      return liquidMass;
+    case "tonnes":
+    case "t":
+      return liquidMass / 1000.0;
+    default:
+      throw new IllegalArgumentException(
+          "Unsupported liquid inventory unit '" + unit + "'; use m3, bbl, L, kg or tonnes");
     }
   }
 
