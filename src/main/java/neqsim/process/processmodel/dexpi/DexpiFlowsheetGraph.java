@@ -42,6 +42,15 @@ final class DexpiFlowsheetGraph {
   static final String PORT_ATTRIBUTE_SET = "NeqSimPortAttributes";
   /** Generic attribute holding the process role of a nozzle. */
   static final String PORT_ROLE = "PortRole";
+
+  /** Generic attribute on a piping segment; {@code false} marks a run without flow in normal operation. */
+  static final String NORMAL_FLOW = "NormalFlow";
+
+  /** Generic attribute on a valve or blind: {@code Open} or {@code Closed} in normal operation. */
+  static final String NORMAL_POSITION = "NormalPosition";
+
+  private static final Set<String> BLIND_COMPONENTS = new HashSet<>(
+      java.util.Arrays.asList("BlindFlange", "SpectacleBlind", "LineBlind"));
   /** Generic attribute holding the zero-based outlet index of a nozzle. */
   static final String PORT_INDEX = "PortIndex";
 
@@ -119,6 +128,8 @@ final class DexpiFlowsheetGraph {
   final Map<String, NozzleInfo> nozzles = new HashMap<>();
   /** Human-readable notes on dropped or collapsed content, in the form CODE|elementId|message. */
   final List<String> notes = new ArrayList<>();
+  /** Inbound off-page connectors without their own boundary feed; they carry the builder feed. */
+  final Set<String> inboundConnectors = new LinkedHashSet<>();
 
   private DexpiFlowsheetGraph() {
   }
@@ -134,6 +145,29 @@ final class DexpiFlowsheetGraph {
    */
   static DexpiFlowsheetGraph extract(Document document, DexpiTopologyResolver.ResolvedTopology topology,
       Map<String, EquipmentEnum> equipmentTypes, Map<String, EquipmentEnum> pipingMapping) {
+    return extract(document, topology, equipmentTypes, pipingMapping, java.util.Collections.<String>emptySet());
+  }
+
+  /**
+   * Extracts the material-flow graph, making the given off-page connectors boundary feed sources.
+   *
+   * <p>
+   * Off-page connectors with both an incoming and an outgoing connection (sheets stitched into one file) are collapsed
+   * as pass-through items. Connectors named in {@code sourceConnectorIds} become {@link EquipmentEnum#Stream} nodes.
+   * Other connectors end their connections as before. Valves with {@code NormalPosition=Closed} block flow like safety
+   * devices; blinds with {@code NormalPosition=Open} pass flow.
+   * </p>
+   *
+   * @param document parsed DEXPI document
+   * @param topology resolved topology
+   * @param equipmentTypes mapped equipment types by id
+   * @param pipingMapping piping component class mapping
+   * @param sourceConnectorIds ids of off-page connectors that are boundary feeds
+   * @return the material-flow graph
+   */
+  static DexpiFlowsheetGraph extract(Document document, DexpiTopologyResolver.ResolvedTopology topology,
+      Map<String, EquipmentEnum> equipmentTypes, Map<String, EquipmentEnum> pipingMapping,
+      Set<String> sourceConnectorIds) {
     DexpiFlowsheetGraph graph = new DexpiFlowsheetGraph();
     Map<String, String> owner = new HashMap<>();
     Set<String> passThrough = new LinkedHashSet<>();
@@ -164,7 +198,12 @@ final class DexpiFlowsheetGraph {
       owner.put(id, id);
       graph.collectNozzles(component, id, owner, order);
       EquipmentEnum mapped = pipingMapping.get(componentClass);
-      if (NO_FLOW_COMPONENTS.contains(componentClass)) {
+      String position = attributeValue(component, NORMAL_POSITION);
+      boolean closed = "closed".equalsIgnoreCase(position);
+      boolean blindOpen = BLIND_COMPONENTS.contains(componentClass) && "open".equalsIgnoreCase(position);
+      if (blindOpen) {
+        passThrough.add(id);
+      } else if (NO_FLOW_COMPONENTS.contains(componentClass) || closed) {
         noFlow.add(id);
       } else if (mapped == EquipmentEnum.ThrottlingValve
           && attributeValue(component, "OperatingPressureValue") != null) {
@@ -175,11 +214,35 @@ final class DexpiFlowsheetGraph {
       }
     }
 
+    Set<String> connectors = new LinkedHashSet<>();
+    Map<String, Element> connectorElements = new HashMap<>();
+    NodeList connectorNodes = document.getElementsByTagName("PipeOffPageConnector");
+    for (int i = 0; i < connectorNodes.getLength(); i++) {
+      Element connector = (Element) connectorNodes.item(i);
+      String id = connector.getAttribute("ID");
+      if (id == null || id.isEmpty() || owner.containsKey(id)) {
+        continue;
+      }
+      owner.put(id, id);
+      if (sourceConnectorIds.contains(id)) {
+        graph.nodes.put(id, connector);
+        graph.nodeTypes.put(id, EquipmentEnum.Stream);
+      } else {
+        connectors.add(id);
+        connectorElements.put(id, connector);
+      }
+    }
+
     // Raw edges from every Connection, plus implicit edges for valves that only sit inside a segment.
     List<Edge> raw = new ArrayList<>();
     NodeList segments = document.getElementsByTagName("PipingNetworkSegment");
     for (int i = 0; i < segments.getLength(); i++) {
       Element segment = (Element) segments.item(i);
+      if ("false".equalsIgnoreCase(attributeValue(segment, NORMAL_FLOW))) {
+        graph.notes.add("DEXPI_BUILD_NO_FLOW_BRANCH_EXCLUDED|" + segment.getAttribute("ID")
+            + "|pipe run marked NormalFlow=false (drain, flare, utility) excluded from the steady-state flowsheet");
+        continue;
+      }
       for (Element connection : directChildren(segment, "Connection")) {
         String from = connection.getAttribute("FromID");
         String to = connection.getAttribute("ToID");
@@ -200,9 +263,31 @@ final class DexpiFlowsheetGraph {
     Set<String> blocked = new HashSet<>(noFlow);
     for (String id : noFlow) {
       graph.notes.add("DEXPI_BUILD_NO_FLOW_BRANCH_EXCLUDED|" + id
-          + "|safety device or blind excluded from the steady-state material flowsheet");
+          + "|safety device, blind or normally closed valve excluded from the steady-state material flowsheet");
     }
     raw.removeIf(edge -> blocked.contains(edge.source) || blocked.contains(edge.target));
+
+    // Off-page connectors joining two stitched sheets pass flow; the others end the connection.
+    for (String id : connectors) {
+      boolean in = false;
+      boolean out = false;
+      for (Edge edge : raw) {
+        in |= edge.target.equals(id);
+        out |= edge.source.equals(id);
+      }
+      if (in && out) {
+        passThrough.add(id);
+      } else if (out && !sourceConnectorIds.isEmpty()) {
+        // With boundary feeds in use, the other inbound connectors carry the builder feed.
+        graph.nodes.put(id, connectorElements.get(id));
+        graph.nodeTypes.put(id, EquipmentEnum.Stream);
+        graph.inboundConnectors.add(id);
+      } else if (in || out) {
+        raw.removeIf(edge -> edge.source.equals(id) || edge.target.equals(id));
+        graph.notes.add("DEXPI_BUILD_CONNECTION_UNRESOLVED|" + id
+            + "|off-page connector continues on another sheet; connection ends here");
+      }
+    }
 
     // Collapse pass-through items (tees, isolation valves, reducers, unsupported equipment).
     for (String id : passThrough) {

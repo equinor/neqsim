@@ -81,6 +81,8 @@ public class SeparatorTest extends BasePVTsimulation {
     }
     getThermoSystem().setPressure(ThermodynamicConstantsInterface.referencePressure);
     getThermoSystem().setTemperature(288.15);
+    // The last stage may have replaced the working fluid with its isolated liquid phase.
+    thermoOps.setSystem(getThermoSystem());
     thermoOps.TPflash();
     oilVolumeStdCond = getThermoSystem().getPhase("oil").getVolume();
     getThermoSystem().initPhysicalProperties();
@@ -179,7 +181,7 @@ public class SeparatorTest extends BasePVTsimulation {
   }
 
   /**
-   * Returns the density of the stock-tank oil at standard conditions (288.15 K, 1.01325 bara).
+   * Returns the oil density after flashing the carried final-stage liquid at 288.15 K and 1.01325 bara.
    *
    * <p>
    * The density is Peneloux-corrected when the fluid uses volume correction.

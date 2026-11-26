@@ -15,7 +15,12 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * ConstantMassExpansion class.
+ * Constant-mass expansion PVT experiment.
+ *
+ * <p>
+ * The saturation volume used to normalize the expansion curve is the total corrected cell volume at the single-phase
+ * pressure bound of the final saturation bracket.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id

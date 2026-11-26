@@ -140,6 +140,10 @@ final class ColumnSolverFactory {
       if (preferredResult != null) {
         return preferredResult;
       }
+      preferredResult = runPreferredSimultaneousCorrection(column, id, summary, feasibilityReport);
+      if (preferredResult != null) {
+        return preferredResult;
+      }
 
       DistillationColumn candidateSource = createAutoCandidate(column);
       if (candidateSource == null) {
@@ -690,6 +694,78 @@ final class ColumnSolverFactory {
           "preferred candidate failed: " + exception.getMessage());
       DistillationColumn.logger.debug("Preferred reboiler-only SUM_RATES candidate failed for {}.", column.getName(),
           exception);
+      return null;
+    }
+  }
+
+  /**
+   * Try the residual-driven solvers before the sequential AUTO ladder.
+   *
+   * <p>
+   * For a column with a condenser, a reboiler and ideal stages the Naphtali-Sandholm solver with its analytic Jacobian
+   * converges the full MESH system in a fraction of the time of the relaxed sequential base solve. When it does not
+   * converge, the residual-gated inside-out solver is tried next, because the ladder would otherwise spend several
+   * damped and inside-out probes before reaching it. Each candidate is a copy, runs without its own damped fallback,
+   * and is accepted only when the requested solver itself finished with
+   * {@link DistillationColumn.SolveStatus#RIGOROUS_CONVERGED}. Any other outcome leaves the live column untouched and
+   * continues with the unchanged ladder.
+   * </p>
+   *
+   * @param column live AUTO column
+   * @param id calculation identifier
+   * @param summary automatic solver summary builder
+   * @param feasibilityReport feasibility report already produced for the live column
+   * @return accepted residual-driven result, or {@code null} when AUTO should use the base ladder
+   */
+  private static ColumnSolveResult runPreferredSimultaneousCorrection(DistillationColumn column, UUID id,
+      StringBuilder summary, String feasibilityReport) {
+    if (!column.isPreferredSimultaneousCorrectionCandidate() || hasAdjustableProductSpecification(column)) {
+      return null;
+    }
+    ColumnSolveResult result = runPreferredRigorousCandidate(column, id, summary, feasibilityReport,
+        DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
+    if (result == null) {
+      result = runPreferredRigorousCandidate(column, id, summary, feasibilityReport,
+          DistillationColumn.SolverType.MESH_RESIDUAL);
+    }
+    return result;
+  }
+
+  /**
+   * Probe one residual-driven solver on a copy and accept it only when it converged rigorously by itself.
+   *
+   * @param column live AUTO column
+   * @param id calculation identifier
+   * @param summary automatic solver summary builder
+   * @param feasibilityReport feasibility report already produced for the live column
+   * @param solverType residual-driven solver to probe
+   * @return accepted result, or {@code null} when the candidate was rejected or failed
+   */
+  private static ColumnSolveResult runPreferredRigorousCandidate(DistillationColumn column, UUID id,
+      StringBuilder summary, String feasibilityReport, DistillationColumn.SolverType solverType) {
+    DistillationColumn candidate = createAutoCandidate(column);
+    if (candidate == null) {
+      appendAutoCandidateSummary(summary, solverType, null,
+          "preferred candidate copy failed; robust base ladder retained");
+      return null;
+    }
+    candidate.setLastAutoFeasibilityReport(feasibilityReport);
+    prepareAutoCandidate(candidate, solverType);
+    try {
+      ColumnSolveResult result = runAutoProbeCandidate(candidate, solverType, id);
+      appendAutoCandidateSummary(summary, solverType, result, autoProbeNote(solverType, candidate, result));
+      if (!isAcceptableAutoCandidate(candidate, result) || result.getSolverType() != solverType
+          || candidate.getLastSolveStatus() != DistillationColumn.SolveStatus.RIGOROUS_CONVERGED) {
+        return null;
+      }
+      column.acceptAutoSolverCandidate(candidate, result.getSolverType());
+      column.setLastAutoFeasibilityReport(feasibilityReport);
+      column.setLastAutoSolverSummary(summary.toString());
+      column.recordAutoSolverEvent("selected preferred " + result.getSolverType());
+      return ColumnSolveResult.from(column, result.getSolverType());
+    } catch (RuntimeException exception) {
+      appendAutoCandidateSummary(summary, solverType, null, "preferred candidate failed: " + exception.getMessage());
+      DistillationColumn.logger.debug("Preferred {} candidate failed for {}.", solverType, column.getName(), exception);
       return null;
     }
   }

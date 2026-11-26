@@ -77,6 +77,10 @@ public final class SourceTermFrame implements Serializable {
     model.addProperty("id", result.getModelId());
     model.addProperty("version", result.getModelVersion());
     model.addProperty("fluidModel", request.getFluid().getModelName());
+    model.addProperty("upstreamPreparation", request.getUpstreamPreparation().name());
+    if (request.hasSelectedUpstreamPhase()) {
+      model.addProperty("selectedUpstreamPhase", request.getSelectedUpstreamPhase().name());
+    }
     model.addProperty("evidenceLevel", "UNQUALIFIED");
     model.add("evidence", evidence(result.getEvidence()));
     root.add("model", model);

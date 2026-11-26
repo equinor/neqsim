@@ -44,9 +44,11 @@ replace a requested rigorous stage with a screening surrogate without stating th
 | Steady looped network, choke or well setpoint optimisation | `neqsim-pipeline-and-terminal-networks` | `LoopedPipeNetwork`, `NetworkOptimizer` |
 | GAP-style well network: IPR + VLP correlation or VFPPROD table, gas lift at valve depth | `neqsim-pipeline-and-terminal-networks` | `LoopedPipeNetwork.TubingModel`, `addTubingVfp`, `calculateGasLiftResponse` |
 | Delivery quality (CO2, Wobbe, RVP) along a network | `neqsim-pipeline-and-terminal-networks` | `NetworkQualitySpecification`, `NetworkQualityEvaluator` |
+| Same-topology Beggs-Brill/two-fluid comparison and controlled steady-to-transient rate step | `neqsim-pipeline-and-terminal-networks` | `FieldNetworkTopology`, `NetworkHydraulicModelComparison` |
 | Gas linepack, transient network response | `neqsim-pipeline-and-terminal-networks` | `TransientGasNetwork`, `GasLinepackState` |
 | Terminal tanks, cargo nominations, crude parcels | `neqsim-pipeline-and-terminal-networks` | `OilNetworkSchedule`, `CargoNomination` |
 | Well deliverability, gas-lift allocation, well-test fit | `neqsim-integrated-production-and-lifecycle` | `IntegratedProductionModel`, `GasLiftNetworkOptimizer`, `WellTestMatcher` |
+| Canonical field solve with reservoir state from Eclipse/OPM Flow | `neqsim-integrated-production-and-lifecycle`, `neqsim-pipeline-and-terminal-networks`, `neqsim-vfp-lift-curves` | `ReservoirStateWellBinding`, `WellSystem`, `FieldWellNetworkCoupler`, `ReservoirStateProxy`; `HybridProductionModel` only for reduced-order tree studies |
 | Host ullage and tie-in debottleneck | `neqsim-integrated-production-and-lifecycle` | `TieInCapacityPlanner`, `HostFacility` |
 | Electrification, power-from-shore, drive trains | `neqsim-energy-systems-and-electrification` | `EnergyBus`, `MotorDriveTrain`, `ElectricMotorDriver` |
 | Wind/solar/GT dispatch, degradation, wash planning, CO2 tax | `neqsim-energy-systems-and-electrification` | `TurbineDispatchOptimizer`, `GasTurbineDegradation`, `CO2TaxSchedule` |

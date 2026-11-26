@@ -2,7 +2,7 @@
 name: neqsim-pvt-fluid-study-report
 version: "1.0.0"
 description: "Executes a professional PVT and fluid characterization study report from samples and laboratory analyses to final EOS model, ALL effective parameters and verified E300 file. USE WHEN: a complete PVT report, sample QC, recombination, heavy-end characterization, calibration/hold-out validation, full parameter/BIP documentation, E300 handover or neqsim pvt-study workflow is requested."
-last_verified: "2026-10-25"
+last_verified: "2026-11-24"
 requires:
   python_packages: [python-docx, matplotlib, pyyaml, jpype1]
 ---
@@ -185,3 +185,14 @@ Keep proprietary task output outside the source checkout.
 Related: `neqsim-eos-regression`, `neqsim-phase-envelope`,
 `neqsim-thermodynamic-initialization`, `neqsim-professional-reporting`,
 `neqsim-standards-lookup` and `process-study-report`.
+
+### Independent two-phase reservoir qualification
+
+Use the binary PR reference and frozen scope in
+`src/test/resources/neqsim/pvtsimulation/binary-tank/` with
+`devtools/test_binary_reservoir_java.py` when assessing predicted produced
+composition and surface GOR alongside bounded volume matching. See
+`docs/pvtsimulation/reservoir_phase_production.md` for the complete protocol,
+separate laboratory/reservoir holdouts, units and finite-substep limits.
+Preserve original/tuned checkpoints. Independent synthetic-code agreement is
+not measured accuracy, a continuous-flow limit, or complete #4740 acceptance.

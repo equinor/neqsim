@@ -1,7 +1,7 @@
 ---
 name: neqsim-integrated-production-and-lifecycle
 description: "Guides integrated production and lifecycle studies using IntegratedProductionModel, WellDeliverabilityCurve, TieInCapacityPlanner, FieldLifecycleEvaluator, CashFlowEngine, and ReservoirCouplingExporter. USE WHEN: a user asks to couple well deliverability with a gathering network, match well tests, allocate limited gas lift, compare host tie-in capacity, screen lifecycle modifications or product specifications, connect reservoir production to fiscal cash flow, or export well VFP tables."
-last_verified: "2026-10-03"
+last_verified: "2026-11-24"
 ---
 
 # Integrated Production and Lifecycle
@@ -33,6 +33,7 @@ For concept screening, CAPEX/SURF cost, decline fitting, general tax/economics, 
 | `ConceptToProcessLinker` | `process.fielddevelopment.facility` | Generates a screening-to-FEED-fidelity `ProcessSystem` from a concept. | `generateProcessSystem(FieldConcept, FidelityLevel)` |
 | `WellDeliverabilityCurve`, `WellTestMatcher`, `WellBranch`, `FlowlineBranch`, `NetworkNewtonSolver` | `process.fielddevelopment.integrated` | Well back-pressure curves, test fits, branch pressure-flow equations and network balance. | `fromArrays`, `fromVogel`, `fromWellSystem`, `addTestPoint`, `fitVogel`, `fitProductivityIndex`, `solve` |
 | `IntegratedProductionModel`, `IntegratedSolveResult`, `ReservoirDrive`, `MaterialBalanceGasDrive`, `OilTankDrive` | `process.fielddevelopment.integrated` | Couples per-well curves and simple pressure-depletion drives to an export sink. | `addWell`, `setExportPressure`, `solve`, `runProfile`, `getFieldRate`, `getWellRates`, `getNodePressures` |
+| `ReservoirStateWellBinding`, `ReservoirStateProxy`, `ScenarioReservoirState`, `HybridProductionModel`, `HybridWell`, `GatheringNetwork`, `VfpTableLookup`, `CorrectedVlpProvider`, `FacilityConstraints`, `MolarFeedAdapter`, `HybridStepResult` | `process.fielddevelopment.hybrid` | Applies simulator-derived state to the canonical `WellSystem`/field-network path; also provides a reduced-order tree compatibility model for fast production-profile studies. | `ReservoirStateWellBinding.apply`, `ReservoirStateProxy.fromCsv`, `addScenario`, `VfpTableLookup.fromFile`, `onOilBasis`, `connectWell`, `addBranch`, `setReferenceModel`, `solve`, `step`, `setMode`, `setTimeIntegration`, `setFacilityConstraints`, `setInjectionRate`, `refreshState`, `commingledFeed` |
 | `GasLiftNetworkOptimizer`, `GasLiftPerformanceCurve`, `ChokeAndGasLiftAllocationOptimizer` | `process.fielddevelopment.integrated` | Allocates gas lift from supplied response curves, optionally with choke decisions. | `addWell`, `allocate`, `setOilPrice`, `optimize` |
 | `TiebackAnalyzer`, `HostFacility`, `TiebackOption`, `TiebackReport` | `process.fielddevelopment.tieback` | Screens candidate tieback configurations against a host and supplied fluid. | `HostFacility.builder`, `TiebackAnalyzer.analyze` |
 | `TieInCapacityPlanner`, `HostTieInPoint`, `ProductionProfileSeries`, `ProductionLoad`, `TieInCapacityResult`, `DebottleneckDecision` | `process.fielddevelopment.tieback.capacity` | Compares host nameplate and optionally live process constraints over time. | `setHostProductionProfile`, `setSatelliteProductionProfile`, `setTieInPoint`, `setAllocationPolicy`, `run`, `getPeriodResults` |
@@ -52,6 +53,7 @@ For concept screening, CAPEX/SURF cost, decline fitting, general tax/economics, 
 | Which development concept, fluid assumptions and screening stage? | `FieldConcept`, `ConceptEvaluator`, `BatchConceptRunner` | `neqsim-field-development` |
 | Which process blocks should represent the concept? | `FacilityBuilder.autoGenerate`, `ConceptToProcessLinker.generateProcessSystem` | `neqsim-field-development`, `neqsim-process-modeling` |
 | How do well rates respond to wellhead pressure and network backpressure? | `WellDeliverabilityCurve`, `IntegratedProductionModel.solve` | `neqsim-production-optimization`, `neqsim-process-modeling` |
+| What happens on the canonical production/injection topology when reservoir state comes from Eclipse/OPM Flow? | `ReservoirStateWellBinding` + `WellSystem` + `FieldWellNetworkCoupler`; use `HybridProductionModel` only for reduced-order tree studies | `neqsim-pipeline-and-terminal-networks`, `neqsim-vfp-lift-curves`, community `neqsim-simulator-state-proxy` |
 | Can observed well tests reproduce a deliverability curve? | `WellTestMatcher.fitVogel` or `fitProductivityIndex` | `neqsim-production-optimization` |
 | How should a fixed lift-gas budget be shared? | `GasLiftNetworkOptimizer.allocate` | `neqsim-production-optimization` |
 | Which host admits the satellite profile and how much is held back? | `TieInCapacityPlanner.run`, `HostFacility` | `neqsim-subsea-and-wells`, `neqsim-field-development` |
@@ -159,12 +161,37 @@ Build the capacity curve from repeated process-model throughput sweeps at severa
 - Lifecycle modification plans identify candidate scope; they do not size or cost a real equipment modification. Rebuild/rerun the facility and add verified modification CAPEX before claiming production or NPV improvement.
 - Concept-generated fluids, equipment sizing and product limits are only as strong as the supplied inputs and chosen model. `CashFlowEngine` fiscal behavior is selected/configured; do not treat built-in defaults as current tax advice or infer a jurisdiction's rates from this guide.
 - `ReservoirCouplingExporter` emits coupling tables/keywords; it does not run ECLIPSE, INTERSECT, OPM Flow or a full reservoir simulator.
+- `HybridProductionModel` (guide `docs/fielddevelopment/HYBRID_RESERVOIR_NETWORK_MODEL.md`) takes reservoir behaviour from
+  simulator runs as tables against cumulative production. Measured 2026-11 against OPM Flow on a synthetic four-well
+  field, 8 years, mean well-oil-rate error (cumulative oil error): base run reproduced 0.03 %; choke swap from one run
+  0.7 % (-0.06 %); separator pressure +10 bar from one run 17 % (-9.3 %), from two runs blended on `ELAPSED_TIME` 1.5 %
+  (-0.6 %); late water injection from three scenarios 3.6 % (-0.6 %). A profile replay was 1.8 to 34 % off in the same
+  cases. So: one run is enough for a change that moves production between wells for a limited time; a lasting change
+  of depletion rate (back-pressure, injection) needs at least two runs that bracket it, three when gas rates matter.
+  With one run the model overstated the loss from a back-pressure rise by 58 to 73 % of the effect.
+- For the canonical field graph, call `ReservoirStateWellBinding.apply()` before
+  `FieldWellNetworkCoupler.run()`. It updates the existing `WellSystem` boundary and does not create topology,
+  hydraulics or a scheduler. Advance cumulative production/injection/time explicitly and reject results outside
+  `ReservoirStateModel.isOutsideValidity()`. `GatheringNetwork` remains reduced-order tree compatibility only.
+- To reproduce a simulator run with `HybridProductionModel`: the simulator must balance its network in every Newton
+  iteration (`NETBALAN` with a negative interval), read all summary time steps (not report steps), use
+  `TimeIntegration.IMPLICIT_EULER` on the simulator's steps, and first check that `VfpTableLookup` at the simulator's
+  rates returns its `WBHP` and `GPR` (0.08 and 0.05 bar in the test above).
+- `GatheringNetwork` is a tree; `HybridWell` solves on oil rate; `ScenarioReservoirState` blends on one extra
+  coordinate, and only a coordinate the strategy drives (cumulative injection, elapsed time), never one the proxy
+  predicts. Steps beyond a table end hold the last value and set `HybridStepResult.isOutsideProxyValidity()`.
+- A lift table made non-decreasing in rate for the simulator can overstate back-pressure at low rates (riser in the
+  test above: up to 4.1 bar, 17 % on field oil rate). Attach the live model with `GatheringNetwork.setReferenceModel`
+  and use `Mode.HYBRID`: within 1.2 % of `FULL_NETWORK` with 60 instead of about 1400 reference evaluations.
 
 ## Validation / benchmarks
 
 - `IntegratedProductionTest` covers curve monotonicity/interpolation, single-well solve, reservoir-drive depletion, gas-lift budget, PI/Vogel test matching, field solve, declining profile and capacity-limited optimization. Reuse its deterministic `fromVogel`/`fromArrays` fixtures for a quick model check.
 - `TieInCapacityPlannerTest` covers base-first and pro-rata policy, deferred backlog, process-capacity injection, multi-area qualified tie-ins and restoration of the operating point.
 - `NorwegianOilFieldLifecycleTest` is tagged slow and covers lifecycle economics, product specs, facility capacity, host tieback, modification candidates and multi-area process linking.
+- `HybridProductionModelTest`, `ReservoirStateProxyTest` and `ReservoirStateWellBindingTest` cover the reduced-order
+  solve, proxy interpolation and the canonical `WellSystem`/`FieldWellNetworkCoupler` bridge. These are internal
+  implementation and conservation tests, not independent reservoir or hydraulic qualification.
 - A valid network result must converge, keep rates nonnegative, and satisfy rate consistency: field rate is the sum of per-well rates. For a profile, compare recorded rates and time-step integration separately; do not accept cumulative production solely because the run returned.
 - Independent reservoir/well or fiscal benchmark data is still required for calibration. Do not call a model validated because its internal unit tests pass.
 

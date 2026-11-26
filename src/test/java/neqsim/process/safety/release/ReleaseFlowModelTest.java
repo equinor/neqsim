@@ -7,6 +7,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import org.junit.jupiter.api.Test;
 import neqsim.process.safety.release.ReleaseFlowResult.Station;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -106,7 +107,7 @@ class ReleaseFlowModelTest extends neqsim.NeqSimTest {
     liquid.setMixingRule("classic");
     ReleaseFlowResult flashing = calculate(liquid, 3e5);
     usable(flashing);
-    assertEquals("1.2.4", flashing.getModelVersion());
+    assertEquals("1.2.6", flashing.getModelVersion());
     assertTrue(flashing.getStations().get(Station.AMBIENT_EXPANDED).getGasMassFraction() > 0.0);
   }
 
@@ -130,6 +131,32 @@ class ReleaseFlowModelTest extends neqsim.NeqSimTest {
       ReleaseFlowResult restored = (ReleaseFlowResult) in.readObject();
       assertEquals(result.getMassFlowRateKgS(), restored.getMassFlowRateKgS());
     }
+  }
+
+  @Test
+  void selectedPhaseRequestIsDefensiveExplicitAndFailClosed() {
+    SystemInterface liquid = new SystemSrkEos(300.0, 20.0);
+    liquid.addComponent("propane", 0.8);
+    liquid.addComponent("n-butane", 0.2);
+    liquid.setMixingRule("classic");
+    new ThermodynamicOperations(liquid).TPflash();
+    liquid.init(3);
+    PhaseType liquidType = liquid.hasPhaseType(PhaseType.OIL) ? PhaseType.OIL : PhaseType.LIQUID;
+    ReleaseFlowRequest request = ReleaseFlowRequest.forSelectedPhase(liquid, liquidType, 0.01, 0.62, 3e5);
+    assertEquals(ReleaseFlowRequest.UpstreamPreparation.PRESERVE_SELECTED_PHASE, request.getUpstreamPreparation());
+    assertEquals(liquidType, request.getSelectedUpstreamPhase());
+    assertEquals(1, request.getFluid().getNumberOfPhases());
+    assertEquals(liquidType, request.getFluid().getPhase(0).getType());
+    liquid.setTemperature(350.0);
+    assertEquals(300.0, request.getFluid().getTemperature(), 0.0);
+    usable(new HomogeneousEquilibriumReleaseModel().calculate(request));
+
+    assertThrows(IllegalArgumentException.class,
+        () -> ReleaseFlowRequest.forSelectedPhase(liquid, PhaseType.GAS, 0.01, 0.62, 3e5));
+    assertThrows(IllegalArgumentException.class,
+        () -> ReleaseFlowRequest.forSelectedPhase(liquid, PhaseType.SOLID, 0.01, 0.62, 3e5));
+    assertThrows(IllegalStateException.class,
+        () -> new ReleaseFlowRequest(liquid, 0.01, 0.62, 3e5).getSelectedUpstreamPhase());
   }
 
   @Test

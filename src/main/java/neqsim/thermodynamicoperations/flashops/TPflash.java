@@ -1282,9 +1282,9 @@ public class TPflash extends Flash {
         rescueSinglePhaseMultiphaseEndpoint();
         rejectInvalidAqueousSeedAfterStableSinglePhase();
 
-        // TPmultiflash owns the coupled phase/reaction solve for multiphase chemical systems.
-        // Solve chemistry here only when no multiphase calculation was requested.
-        if (system.isChemicalSystem() && (!system.doMultiPhaseCheck() || !system.getHydrateCheck())) {
+        // A coupled multiphase solve already finalized the aqueous reaction inventory.
+        if (system.isChemicalSystem() && (!system.doMultiPhaseCheck() || !system.getHydrateCheck())
+            && !(system.getNumberOfPhases() > 1 && TPmultiflash.supportsCoupledCarbonateFlash(system))) {
           for (int phaseNum = 0; phaseNum < system.getNumberOfPhases(); phaseNum++) {
             String phaseType = system.getPhase(phaseNum).getPhaseTypeName();
             if ("aqueous".equalsIgnoreCase(phaseType) || "liquid".equalsIgnoreCase(phaseType)) {
@@ -1463,9 +1463,11 @@ public class TPflash extends Flash {
       throw new IllegalStateException("Direct EOS-GE TPflash did not produce an acceptable state: "
           + gammaPhiModel.getGammaPhiFlashDiagnostics(deviation, phaseFractionMinimumLimit));
     }
-    if (system.doMultiPhaseCheck()) {
+    boolean coupledCarbonate = TPmultiflash.supportsCoupledCarbonateFlash(system);
+    if (system.doMultiPhaseCheck() || coupledCarbonate) {
       BalancedTwoPhaseState balancedReference = balancedReferenceBeforeMultiphaseCheck();
       TPmultiflash operation = new TPmultiflash(system, system.doSolidPhaseCheck());
+      operation.doStabilityAnalysis = system.doMultiPhaseCheck();
       operation.run();
       restoreBalancedAqueousReferenceAfterInvalidPhaseRemoval(balancedReference);
       restoreLowerGibbsReferenceAfterSinglePhaseCollapse(balancedReference);
@@ -1557,9 +1559,10 @@ public class TPflash extends Flash {
     refineIonicGasAqueousEndpoint();
     rescueWaterRichMissingAqueousPhase();
 
-    // TPmultiflash already finalized coupled chemistry on a multiphase configuration. For an
-    // ordinary single-topology calculation, solve chemistry after all phase reordering here.
-    if (system.isChemicalSystem() && (!system.doMultiPhaseCheck() || !system.getHydrateCheck())) {
+    // Preserve the coupled inventory for reactive hydrate and carbonate multiphase endpoints.
+    // Other endpoints retain the existing post-reordering chemical solve.
+    if (system.isChemicalSystem() && (!system.doMultiPhaseCheck() || !system.getHydrateCheck())
+        && !(system.getNumberOfPhases() > 1 && coupledCarbonate)) {
       for (int phaseNum = 0; phaseNum < system.getNumberOfPhases(); phaseNum++) {
         String phaseType = system.getPhase(phaseNum).getPhaseTypeName();
         if ("aqueous".equalsIgnoreCase(phaseType) || "liquid".equalsIgnoreCase(phaseType)) {

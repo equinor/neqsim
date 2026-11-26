@@ -1,0 +1,44 @@
+{
+  "base_revision": "32ee38fd5dc070bfa765d996027cdb0fa30e1e12",
+  "checks": [
+    {
+      "command": "./mvnw -B -ntp -DskipTests compile org.apache.maven.plugins:maven-dependency-plugin:3.8.1:build-classpath -Dmdep.outputFile=target/neqsim-dev-classpath.txt",
+      "exit": 0,
+      "seconds": 51.699,
+      "maven_helper_evaluated": true
+    },
+    {
+      "command": "devtools/.venv/bin/python -m pytest -q devtools/test_reservoir_history_intake.py devtools/test_reservoir_component_intake.py devtools/test_reservoir_component_selection.py devtools/test_reservoir_history_bridge.py",
+      "exit": 0,
+      "passed": 72,
+      "baseline": true
+    },
+    {
+      "command": "devtools/.venv/bin/python -O -m unittest discover -s src/test/resources/neqsim/pvtsimulation/binary-tank -p test_*.py -v",
+      "exit": 0,
+      "passed": 10
+    },
+    {
+      "command": "NEQSIM_TEST_RESERVOIR_JAVA=1 PYTHONFAULTHANDLER=1 devtools/.venv/bin/python -m pytest -q -s devtools/test_binary_reservoir_java.py",
+      "exit": 0,
+      "passed": 5,
+      "seconds": 19.49
+    },
+    {
+      "command": "./mvnw -B -ntp -Dtest=PhaseWithdrawalReservoirHistoryTest,PvtSeparatorPathTest,CompositionalReservoirHistoryTest test",
+      "exit": 0,
+      "passed": 23,
+      "skipped": 0,
+      "seconds": 57.32
+    },
+    {
+      "command": "devtools/.venv/bin/python -m pytest -q devtools/test_reservoir_history_intake.py devtools/test_reservoir_component_intake.py devtools/test_reservoir_component_selection.py devtools/test_reservoir_history_bridge.py devtools/test_pvt_study.py devtools/test_pvt_report.py devtools/test_pvt_proxy.py devtools/test_discovery_registry.py devtools/test_verify_agent_skill_refs.py",
+      "exit": 0,
+      "passed": 189,
+      "skipped": 3,
+      "subtests": 7,
+      "seconds": 20.26
+    }
+  ],
+  "scope": "Independent synthetic finite-protocol qualification only; no measured-data or whole-issue acceptance."
+}

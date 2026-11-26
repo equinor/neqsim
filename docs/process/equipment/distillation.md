@@ -353,9 +353,9 @@ top reflux-ratio specification.
 | `WEGSTEIN` | Accelerated successive substitution after warm-up. | Well-conditioned fixed-point problems. |
 | `SUM_RATES` | Flow-corrected tearing method. Native for columns without a condenser; condenser configurations remain guarded to damped substitution. | Absorbers, reboiler-only strippers, and flow-sensitive columns. |
 | `NEWTON` | Tray-temperature Newton accelerator. | Difficult temperature convergence. It is not full simultaneous MESH Newton. |
-| `NAPHTALI_SANDHOLM` | Guarded simultaneous correction of MESH blocks after inside-out warm start, with early return to coordinated fallback after repeated non-descent steps. | Residual-driven hydrocarbon fractionators. |
+| `NAPHTALI_SANDHOLM` | Simultaneous Newton correction of all MESH equations with an analytic Jacobian, a scaled step and a line search. Returns to the coordinated sequential fallback when it stops making progress. | Columns with a condenser, a reboiler and a reflux or boilup ratio, where it is the fastest solver when it converges. |
 | `MESH_RESIDUAL` | Inside-out initialization plus full residual auditing. | Material, equilibrium, summation, energy, product-draw, and spec residual checks. |
-| `AUTO` | Runs a feasibility pre-screen and copy-based candidate probes. Fixed-specification reboiler-only strippers try native `SUM_RATES` first; other configurations retain the relaxed damped base and guarded fallback ladder. | Agent workflows and uncertain cases where robust automatic selection and diagnostics are useful. |
+| `AUTO` | Runs a feasibility pre-screen and copy-based candidate probes. Fixed-specification reboiler-only strippers try native `SUM_RATES` first. Ideal-stage columns with condenser and reboiler try `NAPHTALI_SANDHOLM` and then `MESH_RESIDUAL`, and accept only a rigorously converged result. Everything else, and every rejected probe, goes to the relaxed damped base and guarded fallback ladder. | Columns with a condenser, a reboiler and a reflux ratio (see "Choosing a solver"), and uncertain cases where automatic selection and diagnostics are useful. |
 
 ### Choosing a solver
 
@@ -378,7 +378,8 @@ temperature, pressure, reboiler temperature and composition. Times are single-th
 | `SUM_RATES` | 6 | 2 | 25 s |
 | `AUTO` | 6 | 2 | 49 s |
 
-Recommended set-up for scripted and agent-driven work:
+Recommended set-up for scripted and agent-driven work on columns without a condenser, and on
+columns specified by two terminal temperatures:
 
 ```java
 column.setSolverType(DistillationColumn.SolverType.NEWTON);
@@ -400,12 +401,13 @@ DistillationColumn.SolverType used = column.getLastSolverTypeUsed();
   5-tray deethanizer its products then closed the feed to 0.014 %. Rerun with `MESH_RESIDUAL` when
   the status is not `RIGOROUS_CONVERGED` and the result feeds a material balance.
 - `MESH_RESIDUAL` never returned a non-rigorous status: it either passes its residual gates or
-  fails. That makes it the verification solver. It was also the fastest solver on the two columns
-  with a condenser and a reflux specification (0.03 s and 0.14 s).
+  fails. That makes it the verification solver.
 - The sequential solvers are the fastest choice for reboiled columns of ten trays or fewer
   (0.2 s and 0.7 s on the 5- and 10-tray deethanizers), and two to three times slower than
   `NEWTON` on the 20-tray column. None of them converged the nominal stabiliser.
-- `NAPHTALI_SANDHOLM` was two to three times slower than `NEWTON` on columns of ten trays or more.
+- `NAPHTALI_SANDHOLM` was two to three times slower than `NEWTON` on reboiler-only columns of ten
+  trays or more, where it ends in its sequential fallback. This still holds after the changes of
+  2026-11-25 (20-tray deethanizer: 7.4 s against 3.1 s).
 - `AUTO` failed the nominal stabiliser after 14 s, where `NEWTON` converged in 2.4 s.
 - Product rates from different solver families agree to about 0.1-0.3 % at default tolerances,
   not better. Sequential substitution stops on the size of the sweep step, which is smaller than
@@ -414,6 +416,103 @@ DistillationColumn.SolverType used = column.getLastSolverTypeUsed();
 
 The measurements do not cover CPA or other associating fluids, absorbers without a reboiler, side
 draws or pumparounds.
+
+#### Columns with condenser, reboiler and reflux ratio
+
+Use `AUTO` for an ideal-stage column with a condenser, a reboiler and a reflux or boilup ratio:
+
+```java
+column.setSolverType(DistillationColumn.SolverType.AUTO);
+column.run();
+if (!column.solved()) {
+  throw new IllegalStateException(column.getConvergenceDiagnostics());
+}
+DistillationColumn.SolveStatus status = column.getLastSolveStatus();
+DistillationColumn.SolverType used = column.getLastSolverTypeUsed();
+String tried = column.getLastAutoSolverSummary();
+```
+
+Measured on 2026-11-25 on 108 SRK columns: three feeds (C3/nC4/nC5 at 10 bara, nC4/nC5/nC6 at
+6 bara, an eight-component C1-C6 mixture at 25 bara), 6, 12, 20 and 30 trays, condenser reflux
+ratio 0.8, 1.8 and 4.0, and the reboiler temperature at its base value and 8 K either side. Each
+column was solved cold, once, single-threaded on a shared 2-core machine. "Before" is the code
+without the analytic Jacobian, the new step control and the new `AUTO` route.
+
+| Solver | Converged before | Converged now | Total time before | Total time now |
+|--------|------------------|---------------|-------------------|----------------|
+| `AUTO` | 103 | 108 | 1414 s | 115 s |
+| `MESH_RESIDUAL` | 105 | 108 | 361 s | 285 s |
+| `NAPHTALI_SANDHOLM` | 42 | 63 | 527 s | 375 s |
+
+- `AUTO` now tries `NAPHTALI_SANDHOLM` and then `MESH_RESIDUAL` on copies and accepts only a
+  `RIGOROUS_CONVERGED` result. It selected `NAPHTALI_SANDHOLM` in 57 cases and `MESH_RESIDUAL` in
+  51; the slowest case took 10 s. Two of the five "before" failures were runs that ended
+  without reporting a solver type, which is fixed.
+- `NAPHTALI_SANDHOLM` selected directly takes 0.02 to 1.0 s when it converges (63 cases, 5.6 s in
+  total, against 175 s for `MESH_RESIDUAL` on the same cases). When it does not converge it runs
+  its sequential fallback, about 8 s per case, and the fallback did not recover any of the 45
+  cases. Select it directly only when a failure is acceptable; otherwise use `AUTO`, which
+  abandons the attempt after about 0.3 s.
+- Top product rates from `NAPHTALI_SANDHOLM` and `MESH_RESIDUAL` agreed within 0.12 % on every
+  case both converged.
+- `AUTO` uses this route only when a reflux or boilup ratio is active and the column has no side
+  draw, pumparound, reaction, product-purity specification or Murphree efficiency below one. With
+  two terminal temperatures and no ratio the two solver families settled on different condenser
+  states in one of 36 further cases (top product 99.5 against 89.1 kg/hr on a 6-tray column), so
+  those columns keep the previous `AUTO` ladder.
+
+### Simultaneous correction: analytic Jacobian and step control
+
+`NAPHTALI_SANDHOLM` solves the material, equilibrium-summation and energy (or terminal
+specification) equations of all stages together. The stage variables are the liquid component
+flows, the temperature and the total vapor flow.
+
+The Jacobian is built from analytic thermodynamic derivatives. The stage K-values are defined by
+$\ln K_i = \ln \phi^L_i(T, x) - \ln \phi^V_i(T, y)$ with $y_i = K_i x_i / \sum_k K_k x_k$.
+Differentiating this fixed point gives one linear system per stage,
+
+$$
+\left(I + A^V \operatorname{diag}(y)\right) d\ln K
+  = \left(B^L - B^V\right) dT
+  + \left(A^L - A^V \operatorname{diag}(K / s)\right) \frac{dl}{L},
+$$
+
+where $A = \partial \ln \phi_i / \partial n_k$ and $B = \partial \ln \phi_i / \partial T$ come
+from the equation of state, $l$ are the liquid component flows, $L = \sum l$ and $s = \sum K x$.
+Enthalpy derivatives use the heat capacity and the partial molar enthalpies
+$\bar h_i = h_i^{ig} - R T^2 \, \partial \ln \phi_i / \partial T$. A Jacobian costs two phase
+evaluations per stage instead of the $C + 2$ perturbed stage evaluations of the former
+finite-difference build, and it is the exact derivative of the residual that the line search
+measures, including the state-dependent scale of the energy equation.
+
+Finite differences are still used for stages with a Murphree efficiency below one and for a
+thermodynamic model whose derivatives fail the built-in checks (composition derivatives homogeneous
+of degree zero, partial molar enthalpies summing to the phase enthalpy).
+
+```java
+column.setSolverType(DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
+column.run();
+int analyticColumns = column.getLastNaphtaliAnalyticJacobianColumns();
+int finiteDifferenceColumns = column.getLastNaphtaliFiniteDifferenceJacobianColumns();
+double jacobianSeconds = column.getLastNaphtaliJacobianBuildTimeSeconds();
+```
+
+Each Newton step is scaled as a whole, so the direction and the closure of the linear material
+balances are kept. The limits per stage are 10 K on temperature, half the vapor flow plus 5 % of the
+flow scale, and for each liquid component flow half that flow plus 5 % of the stage liquid flow.
+The last limit was previously 0.1 % of the flow scale, which let one trace component throttle the
+whole step. A component flow that a step would still make negative is damped exponentially for that
+variable only, as proposed by Naphtali and Sandholm (1971).
+
+On a 20-tray depropanizer with a reflux ratio of 1.8 the direct solve went from a failure after
+4.9 s to convergence in 0.07 s (2026-11-25, same machine and method as in "Choosing a solver").
+Reboiler-only strippers are not improved: Newton steps there are still rejected near the pinch
+zone and the solver ends in its sequential fallback.
+
+The Sum-Rates initialization phase is skipped when a condenser reflux ratio or reboiler boilup
+ratio is active. Its sweeps use terminal energy equations and diverged on those columns, after
+which the bubble-point state was restored. It still runs for columns specified by terminal
+temperatures.
 
 ### Anderson mixing in the sequential solvers
 
@@ -841,8 +940,9 @@ solvers.
    stream.
 2. Initialize with `ShortcutDistillationColumn` or `initializeFromShortcut` when light and heavy
    keys are known.
-3. Run `NEWTON` first and fall back to `MESH_RESIDUAL` (see "Choosing a solver"); use
-   `MESH_RESIDUAL` or `NAPHTALI_SANDHOLM` for residual audit.
+3. Use `AUTO` for columns with condenser, reboiler and reflux ratio; otherwise run `NEWTON` first
+   and fall back to `MESH_RESIDUAL` (see "Choosing a solver"). Use `MESH_RESIDUAL` for residual
+   audit.
 4. Add product purity or component recovery specs.
 5. Rate internals and enable hydraulic pressure-drop coupling only after a stable base case exists.
 

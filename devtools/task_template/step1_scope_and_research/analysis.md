@@ -114,3 +114,14 @@ They drive the analysis beyond "what is the number" to "what does it mean."
 5. ?
 
 <!-- Add more questions as needed. Aim for 5-10 questions. -->
+
+## 7. Overpressure / relief tasks only: existing wells, blocked outlet, scenario register and valve Cv
+
+<!-- Delete this section unless the task sizes or verifies pressure protection for a new source on a separator/header that already has producers. -->
+
+- [ ] Compare the new source with existing/previous wells and inputs to the receiving separator/header: riser/inlet pressure, SIWHP, rates, choke dP, what the PSV/relief basis was sized for, ratio new versus historical, effect on the failed-open / choke-collapse relief load.
+- [ ] Check blocked outlet as a function of current inflow (not design inflow); state explicitly whether it governs (lower production reduces blocked outlet but not IVO+CC).
+- [ ] Record both in results.json key existing_wells_comparison and in two report sections (see the neqsim-hp-lp-interface-overpressure skill, section 2b).
+- [ ] Open the relief chapter with a scenario register: one row per scenario (failed-open / IVO with and without choke collapse, choke collapse alone, blocked outlet per separator/header, gas blow-by, PSV failure, fire, hydrate plug, cold JT) with study status (calculated / simple estimate / qualitative), valve states (open, closed, failed), limiting mechanism, relief rate and governing yes/no (results.json key scenario_register).
+- [ ] Add an installed-Cv input table: every flow-limiting valve (subsea and topside chokes intact and collapsed, riser EV, PV and its maximum opening, crossover valves, PSV orifice and set pressure, stroke times, volumes) with value, unit, source (document, revision, page, or ASSUMED) and quality grade (results.json key valve_cv_inputs). Fetch real Cv read-only from datasheets and sizing calculations; list exact blockers.
+- [ ] Run a Cv sensitivity for failed-open AND blocked outlet (script, executed notebook, figure, table; results.json key cv_sensitivity) and state what the relief rate depends on (installed choke Cv, actual dP, stored inventory) and what it does not. Add a short "what the report can and cannot be used for" statement (section 2c of the skill).

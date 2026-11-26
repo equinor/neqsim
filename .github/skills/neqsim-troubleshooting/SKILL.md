@@ -570,6 +570,20 @@ else:
     bub_T = np.array(envelope.getBubblePointTemperatures())
 ```
 
+## Gas-condensate PVT pitfalls (found while building a CVD/CCE depletion model)
+
+- `fluid.setMolarComposition(moles)` **normalises** to a one-mole system; phase moles, volumes and flows are then per mole of the
+  new composition. In a hand-written CVD loop scale extensive values by the total moles you track, otherwise the material balance goes
+  negative after a few steps ("Mole fractions must sum to a positive value").
+- Take phase volume as `moles * molarMass / density` for every phase consistently (do not mix `getVolume("m3")` with density-based volumes).
+- Identify the gas-like phase by density, not by `getPhase("gas")`; a dense single phase can be labelled `oil`.
+- `TPflash` can return one phase 5-50 bar below the dew point of a lumped-C7+ PR/SRK fluid while `dewPointPressureFlash` finds the dew point
+  (NIP-01); use a CCE loop with an explicit dew-point reference and treat the first 50 bar of retrograde liquid as under-predicted.
+- `ConstantMassExpansion.getLiquidRelativeVolume()` may return NaN and its saturation pressure may differ from `dewPointPressureFlash`; verify
+  before trusting it for rich gas condensate.
+- `from module import *` does not import names starting with an underscore; import helpers like `_comp_names` explicitly.
+- Hydrate flash: group lumped pseudo-components into n-heptane before building an SRK system with water; pseudo-component names are not in the database.
+
 ## When All Else Fails
 
 1. **Simplify radically** — reduce to 2-3 components, remove equipment, test one unit at a time

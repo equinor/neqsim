@@ -168,7 +168,7 @@ class SevereSluggingExperimentalBenchmarkTest {
         () -> assertEquals(0, sustained.transientCoupledRejectedSubsteps),
         () -> assertTrue(sustained.completedLiquidCycleCount >= 2,
             "completed liquid-production cycles=" + sustained.completedLiquidCycleCount),
-        () -> assertExperimentalAgreement(sustained.peakToPeakPressurePa, sustained.liquidCyclePeriodSeconds),
+        () -> assertExperimentalAgreement(sustained.peakToPeakPressurePa, sustained.pressureCyclePeriodSeconds),
         () -> assertEquals(FLOWLINE_HOLDUP_TARGET, sustained.steadyFlowlineLiquidHoldup,
             FLOWLINE_HOLDUP_TARGET * FLOWLINE_HOLDUP_RELATIVE_TOLERANCE, "steady flowline liquid hold-up"),
         () -> assertTrue(sustained.maximumLiquidOutletKgPerSecond > 1.25 * LIQUID_FEED_KG_PER_S),
@@ -185,16 +185,16 @@ class SevereSluggingExperimentalBenchmarkTest {
    * Checks the public amplitude and period targets without running the slow trajectory.
    *
    * @param pressureAmplitudePa settled pressure amplitude in Pa
-   * @param liquidCyclePeriodSeconds liquid-production cycle period in seconds
+   * @param pressureCyclePeriodSeconds inlet-pressure cycle period in seconds
    */
-  static void assertExperimentalAgreement(double pressureAmplitudePa, double liquidCyclePeriodSeconds) {
+  static void assertExperimentalAgreement(double pressureAmplitudePa, double pressureCyclePeriodSeconds) {
     // Experimental error is relative to the measured target. The symmetric mesh-comparison
     // metric divides by the larger value and would admit up to 42.9% overprediction here.
     assertAll("Public Tengesdal experimental agreement",
         () -> assertEquals(EXPERIMENTAL_PRESSURE_AMPLITUDE_PA, pressureAmplitudePa,
             EXPERIMENTAL_PRESSURE_AMPLITUDE_PA * EXPERIMENTAL_RELATIVE_TOLERANCE, "600 s pressure amplitude (Pa)"),
-        () -> assertEquals(EXPERIMENTAL_CYCLE_PERIOD_S, liquidCyclePeriodSeconds,
-            EXPERIMENTAL_CYCLE_PERIOD_S * EXPERIMENTAL_RELATIVE_TOLERANCE, "600 s liquid-production cycle period (s)"));
+        () -> assertEquals(EXPERIMENTAL_CYCLE_PERIOD_S, pressureCyclePeriodSeconds,
+            EXPERIMENTAL_CYCLE_PERIOD_S * EXPERIMENTAL_RELATIVE_TOLERANCE, "600 s inlet-pressure cycle period (s)"));
   }
 
   /**

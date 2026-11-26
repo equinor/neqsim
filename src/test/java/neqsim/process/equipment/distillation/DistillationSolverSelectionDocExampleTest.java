@@ -11,8 +11,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Verifies the solver set-up snippets in docs/process/equipment/distillation.md ("Choosing a solver" and "Anderson
- * mixing in the sequential solvers"), the neqsim-distillation-design skill and the process-model agent.
+ * Verifies the solver set-up snippets in docs/process/equipment/distillation.md ("Choosing a solver", "Simultaneous
+ * correction: analytic Jacobian and step control" and "Anderson mixing in the sequential solvers"), the
+ * neqsim-distillation-design skill and the process-model agent.
  */
 public class DistillationSolverSelectionDocExampleTest {
   /**
@@ -111,5 +112,70 @@ public class DistillationSolverSelectionDocExampleTest {
     assertEquals(0, rejectedPhases);
     assertEquals(0, plain.getLastAndersonAccelerationCount());
     assertTrue(mixed.getLastIterationCount() < plain.getLastIterationCount());
+  }
+
+  /**
+   * Build the 20-tray depropanizer with condenser, reboiler and reflux ratio used by the documented measurements.
+   *
+   * @return configured column without a solver selection
+   */
+  private static DistillationColumn createDepropanizer() {
+    SystemInterface fluid = new SystemSrkEos(333.15, 10.0);
+    fluid.addComponent("propane", 0.35);
+    fluid.addComponent("n-butane", 0.45);
+    fluid.addComponent("n-pentane", 0.20);
+    fluid.setMixingRule("classic");
+    Stream feed = new Stream("doc depropanizer feed", fluid);
+    feed.setFlowRate(250.0, "kg/hr");
+    feed.run();
+
+    DistillationColumn column = new DistillationColumn("doc depropanizer", 20, true, true);
+    column.addFeedStream(feed, 10);
+    column.setTopPressure(10.0);
+    column.setBottomPressure(10.2);
+    column.getCondenser().setOutletTemperature(300.15);
+    column.getReboiler().setOutletTemperature(370.15);
+    column.setCondenserRefluxRatio(1.8);
+    return column;
+  }
+
+  /** The documented set-up for a column with condenser, reboiler and reflux ratio converges rigorously. */
+  @Test
+  @Timeout(value = 120, unit = TimeUnit.SECONDS)
+  public void condenserColumnSetUpConvergesRigorously() {
+    DistillationColumn column = createDepropanizer();
+
+    column.setSolverType(DistillationColumn.SolverType.AUTO);
+    column.run();
+    if (!column.solved()) {
+      throw new IllegalStateException(column.getConvergenceDiagnostics());
+    }
+    DistillationColumn.SolveStatus status = column.getLastSolveStatus();
+    DistillationColumn.SolverType used = column.getLastSolverTypeUsed();
+    String tried = column.getLastAutoSolverSummary();
+
+    assertEquals(DistillationColumn.SolveStatus.RIGOROUS_CONVERGED, status);
+    assertEquals(DistillationColumn.SolverType.NAPHTALI_SANDHOLM, used);
+    assertTrue(tried.contains("NAPHTALI_SANDHOLM"), tried);
+    double products = column.getGasOutStream().getFlowRate("kg/hr") + column.getLiquidOutStream().getFlowRate("kg/hr");
+    assertEquals(250.0, products, 1.0e-6);
+  }
+
+  /** The documented Jacobian counters report an analytic build for ideal stages. */
+  @Test
+  @Timeout(value = 120, unit = TimeUnit.SECONDS)
+  public void simultaneousCorrectionJacobianCounters() {
+    DistillationColumn column = createDepropanizer();
+
+    column.setSolverType(DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
+    column.run();
+    int analyticColumns = column.getLastNaphtaliAnalyticJacobianColumns();
+    int finiteDifferenceColumns = column.getLastNaphtaliFiniteDifferenceJacobianColumns();
+    double jacobianSeconds = column.getLastNaphtaliJacobianBuildTimeSeconds();
+
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    assertTrue(analyticColumns > 0);
+    assertEquals(0, finiteDifferenceColumns);
+    assertTrue(jacobianSeconds >= 0.0 && jacobianSeconds < column.getLastSolveTimeSeconds() + 1.0);
   }
 }

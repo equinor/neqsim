@@ -1,8 +1,8 @@
 ---
 name: neqsim-process-safety
-version: "1.5.0"
+version: "1.7.0"
 description: "Process safety methodology - barriers, PSFs/SCEs, HAZOP, LOPA, SIL per IEC 61511, integrated safety response, change revalidation, bow-tie, risk matrix, TR3001 overpressure studies, trapped-liquid rupture. USE WHEN: a task needs barrier registers, hazard identification, LOPA, SIF SIL assignment, ESD/blowdown/relief/flare evidence, safety revalidation, overpressure governing cases, PFP demand or risk evaluation. Anchors on neqsim.process.safety.barrier, .risk, .overpressure, .rupture."
-last_verified: "2026-11-22"
+last_verified: "2026-11-25"
 requires:
   java_packages: [neqsim.process.safety.barrier, neqsim.process.safety.risk, neqsim.process.safety.overpressure, neqsim.process.safety.rupture, neqsim.process.safety.risk.sis.nog070, neqsim.process.safety.esd, neqsim.process.safety.api14c, neqsim.process.safety.compliance]
 ---
@@ -23,6 +23,7 @@ sizing (`neqsim-relief-flare-network`).
 - Closed-loop SIF execution from live process signal through MooN voting and final element
 - Bow-tie analysis (top event with threats + barriers + consequences)
 - ALARP / risk-matrix scoring (5×5)
+- High-pressure well or flowline produced against a low-pressure system (PAHH/HIPPS credit, IVO+CC transient, STS0131 LOPA): load `neqsim-hp-lp-interface-overpressure`
 - Trapped-liquid fire rupture screening for blocked-in liquid-filled segments,
   including PFP demand and source-term handoff
 - Overpressure-protection study for a protected item — enumerate credible relief
@@ -42,7 +43,12 @@ PSV sizing, or an adequate screen as API tank-vent sizing or conformity.
 
 For a well-to-platform case, use the [executable pressure-protection study](../../../examples/production-decision/tieback-protection.md).
 Record each zone's pressure datum and allowable transient pressure, valve feedback, actual boundary transfers and refinement sensitivity.
-Carry the numerical and drawing HOLD into the study. Evaluate channel independence and reliability with project data.
+Use the verifier's adjacent 60→120 and 120→240 cell comparisons for the synthetic case. Carry
+the resulting numerical verdict and the drawing findings into the study. Compare the two end
+stations and the fixed riser-base station, retaining the zone substep maxima and the pressure
+front, trip and seat times. Use `--benchmark` for a synchronized independent reference from the
+same fixture. Carry a HOLD when a matched reference is missing. Evaluate channel independence
+and reliability with project data.
 
 A `TwoFluidPipe` blocked-outlet or HIPPS run must enable `setEnableCoupledPressureMomentum(true)` and
 `setEnableInterfacialPressure(true)`. Without them the pressure behind a `CLOSED` boundary stays flat while mass
@@ -565,6 +571,26 @@ disposal.getGoverningContributor();
 - Hand the disposal load off to `neqsim-relief-flare-network` for flare-tip and
   header hydraulics. Verified by `OverpressureProtectionStudyTest` +
   `OverpressureExtensionsTest`.
+- **Mandatory when a new well, tie-in or source feeds a separator or header that already has
+  producers:** (1) *compare against existing/previous wells and inputs to the receiving
+  separator/header* — riser/inlet pressure, SIWHP, rates, choke dP, what the PSV/relief
+  basis was sized for, the ratio new versus historical, and the effect on the failed-open /
+  choke-collapse relief load; (2) *check blocked outlet as a function of current inflow, not
+  design inflow*, and state explicitly whether it governs. Today's lower production reduces
+  blocked outlet but not IVO+CC, so failed-open or choke-collapse is usually the governing PSV
+  case when the new source pressure exceeds earlier wells. Method, caveats and the
+  `existing_wells_comparison` results key are in `neqsim-hp-lp-interface-overpressure` (section 2b);
+  `devtools/validate_task_results.py` warns when the block is missing.
+- **Mandatory for every failed-open / overpressure report (scenario register and valve Cv):**
+  open the relief chapter with a scenario table (study status calculated / simple estimate /
+  qualitative, valve states, limiting mechanism, relief rate, governing or not), add an
+  installed-Cv input table (subsea and topside chokes intact and collapsed, riser EV, PV and its
+  maximum opening, PSV orifice and set pressure, stroke times, volumes) with source (document,
+  revision, page, or ASSUMED) and quality grade, and show a Cv sensitivity for failed-open AND
+  blocked outlet. Relief rates depend on the installed choke Cv, the actual dP and the stored
+  inventory; say what they depend on and what they do not. Method and results keys
+  (`scenario_register`, `valve_cv_inputs`, `cv_sensitivity`) are in
+  `neqsim-hp-lp-interface-overpressure` (section 2c); the validator warns when they are missing.
 
 ## Common Mistakes
 
@@ -586,6 +612,8 @@ disposal.getGoverningContributor();
 - [ ] SIL claimed ≤ SIL achieved by PFD_avg
 - [ ] Spurious-trip rate documented (production impact)
 - [ ] Results saved to `results.json` with `safety_analysis` section + JSON from `LOPAResult.toJson()` / `SILVerificationResult.toJson()`
+- [ ] Overpressure study for a new source on an existing header: `existing_wells_comparison` present (existing-input table, relief basis, ratio new/historical, IVO+CC effect, blocked outlet vs current inflow with a stated verdict)
+- [ ] Overpressure / failed-open report: `scenario_register` (status, valve states, limiting mechanism, governing), `valve_cv_inputs` (installed Cv with source and grade) and `cv_sensitivity` (failed-open and blocked outlet) present
 
 ## Verification Tests
 
@@ -596,6 +624,7 @@ disposal.getGoverningContributor();
 ## Related Skills
 
 - [`neqsim-relief-flare-network`](../neqsim-relief-flare-network/SKILL.md) — when LOPA shows PSV is the IPL of last resort
+- [`neqsim-hp-lp-interface-overpressure`](../neqsim-hp-lp-interface-overpressure/SKILL.md) — HP source against an LP system: IVO+CC, PAHH credit, comparison with existing wells, blocked outlet against current inflow, scenario register, valve-Cv inputs and Cv sensitivity
 - [`neqsim-firewater-deluge-design`](../neqsim-firewater-deluge-design/SKILL.md) — sizing and adjudicating the active fire-protection barrier (deluge coverage, nozzle net, monitors, active-vs-passive substitution rules)
 - [`neqsim-trapped-liquid-fire-rupture`](../neqsim-trapped-liquid-fire-rupture/SKILL.md) — blocked-in liquid fire rupture, PFP demand, and source-term handoff
 - [`neqsim-self-heating-ignition`](../neqsim-self-heating-ignition/SKILL.md) — spontaneous ignition of combustible liquid absorbed into porous insulation (lagging fires); use for any fire with no identified ignition source

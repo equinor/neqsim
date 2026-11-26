@@ -1,7 +1,7 @@
 ---
 name: neqsim-vfp-lift-curves
 description: "Generate deliverable VFPPROD and VFPINJ lift curve tables (vertical lift performance, tubing performance, THP and BHP tables) for Eclipse and OPM Flow from calibrated well, flowline and topside models with NeqSim VfpTableBuilder, TubingVlpProvider, ForwardVlpProvider and EclipseVFPExporter. USE WHEN: a simulator needs lift curves, a VFP table is built from tubing, flowline or full-system models and validated by IPR x VFP, or an existing deck shows U-shaped BHP, extrapolation or a dry-gas jump."
-last_verified: "2026-10-22"
+last_verified: "2026-11-24"
 ---
 
 # VFP lift curves (VFPPROD / VFPINJ) for Eclipse and OPM Flow
@@ -186,6 +186,16 @@ exporter uses a placeholder correlation and logs a warning. The JSON face is `ne
   `ForwardVlpProvider.setCollapsedProfileDrop(dropBar)`: a collapsed point becomes `min(p - drop, target - 1)`, so the solve moves up and never accepts it as a root
   (`getCollapsedEvaluations()` counts them; report the count). A constant or NaN floor sent the bisection to the upper bound and filled 40 % of a table with the no-flow value.
   Gas rates above the line's erosional capacity legitimately end as no-flow cells; list them as the line capacity, do not interpolate across them.
+- **Forward model that jumps across the target** (flow-regime switch or a riser going from liquid-loaded to flowing): no inlet pressure gives the target outlet pressure, and
+  the secant and bisection used to end in NaN ("Infeasible VFP coordinate"; a 1050-point riser table failed after 51 minutes). `ForwardVlpProvider` now stops when the bracket
+  is narrower than `setBracketTolerance(bar)` (default 0.001 bar) and returns its midpoint; `getDiscontinuousRoots()` counts those points. Report the count with the table.
+- **Monotonicity repairs change the physics at low rates.** For a 3.1 km riser with 100 m rise, `RateMonotoneMode.FULL` raised 253 of 1050 points (largest 4.5 bar) and the
+  outlet-pressure repair another 97 (largest 10.7 bar). The table then overstated the riser inlet pressure by up to 4.1 bar against the live `PipeBeggsAndBrills` model at
+  late-life rates, worth 17 % on field oil rate in a coupled well-network solution (measured 2026-11). The simulator needs the monotone table; report the repair count and
+  size, and outside the simulator read the table with `VfpTableLookup` and correct it against the live model (`CorrectedVlpProvider`, `HybridProductionModel` in
+  `Mode.HYBRID`, live branch models through `FlowlineVlpProvider`).
+- **Using a table as a lift model.** `VfpTableLookup.fromFile(path)` reads a `VFPPROD` include file and implements `VlpProvider` (OIL, LIQ or GAS rate basis; `onOilBasis()`
+  converts; linear extrapolation outside the axes, as the simulators do). At the simulator's own rates and THP it returned the simulator's BHP within 0.08 bar over 396 points.
 - **Coarse GOR/WCT axes near a capacity cliff**: a 5 x 5 x 4 x 5 oil-well table interpolated 11-12 bar from a direct solve at mid-range points and more than 100 bar next to the no-flow
   region. A 7 x 5 x 6 x 6 table (about 1 300 evaluations, 22-25 min for Beggs-Brill/Gray on a 5 km survey with three jobs in parallel) cut this to 2-4 bar, with 22 bar left next to the no-flow
   region; the flowline table (6 x 3 x 4 x 6) was within 1-6 bar. Always run check 3 above before delivery and report the deviation; the 0.3 bar criterion is only realistic for gas wells.
@@ -194,7 +204,8 @@ exporter uses a placeholder correlation and logs a warning. The JSON face is `ne
 
 ## Related
 
-- `neqsim-integrated-production-and-lifecycle`, `neqsim-subsea-and-wells` (VLP/IPR chain), `neqsim-production-optimization`
+- `neqsim-integrated-production-and-lifecycle` (also `HybridProductionModel`: profiles and network what-ifs from simulator runs, guide
+  `docs/fielddevelopment/HYBRID_RESERVOIR_NETWORK_MODEL.md`), `neqsim-subsea-and-wells` (VLP/IPR chain), `neqsim-production-optimization`
   (network and gas lift), `neqsim-capacity-and-utilization-analysis`, `neqsim-rotating-equipment-design` (compressor
   charts and capacity), `neqsim-near-well-and-injectivity` (community: inflow from rock, deck side, Flow runs),
   `neqsim-model-calibration-and-data-reconciliation`.

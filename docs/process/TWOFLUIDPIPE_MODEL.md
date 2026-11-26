@@ -41,7 +41,16 @@ transient initialization are now enabled by default; those changes do not qualif
 the severe-slugging benchmark or replace its required opt-in settings.
 
 The separate `setConservativeSlugForceIntegrationEnabled(true)` option remains
-experimental and off by default. Its 65.163 kPa inlet-pressure amplitude is below
+experimental and off by default. When it is paired with explicit
+`CONSERVATIVE_LAGRANGIAN` tracking, the unsplit route now keeps ordinary cell friction on
+untracked cells and applies reconstructed body/film friction once to accepted tracked cells.
+Rejected attempts cannot advance marker state or publish a source impulse. Keep
+`setUnsplitPressureInterpolationEnabled(false)` when using reconstructed slug faces. The 0.1 s
+Tengesdal startup probe uses this configuration at 16 cells with 0.1 and 0.05 s steps and at
+24 cells with a 0.05 s step. It checks numerical conservation across these discretizations.
+The tracking-enabled five-second and 600 s publication gates remain open.
+
+The earlier 65.163 kPa inlet-pressure amplitude is below
 the unchanged 68.6 kPa lower bound; the unchanged liquid-trough detector finds no
 completed cycle intervals, and pressure limits still activate. Do not use these
 results as qualification of slug loads or extreme pressure transients.
@@ -2943,6 +2952,18 @@ configuration is not mutated. Long signed face, source, cell and momentum ledger
 summation; failed full-interval checks still reject the complete candidate instead of publishing
 a converged prefix.
 
+The bounded unsplit route also accepts explicitly selected
+`SlugTrackingMode.CONSERVATIVE_LAGRANGIAN` geometry. Each nonlinear attempt sees the last accepted
+marker reconstruction. Only a substep that passes the nonlinear and independent phase-conservation
+checks advances the cloned tracker, and the complete interval publishes that tracker atomically;
+retries and failed intervals cannot age or move the live marker. A closed, seeded three-phase case
+checks exact gas/oil/water inventory closure, rollback, four/eight-cell refinement and 0.01/0.005 s
+nominal steps over 0.01 s. Adjacent time grids agree within 0.02 m and the four/eight-cell endpoints
+within 0.04 m (less than one percent of the smallest 5 m cell). This is a short seeded-marker
+geometry/face-flux regression. The route still rejects conservative subcell slug-force integration,
+energy, phase change and changing composition; it does not qualify spontaneous slug initiation,
+settled severe-slugging cycles, restart or pigging.
+
 The public nitrogen/Crystex historical-grid execution now publishes the complete
 backward-Euler/pressure-interpolated interval with signed donor transport enabled:
 
@@ -2991,11 +3012,40 @@ but the published trajectory was a near-exact fixed point:
 
 Disabling the legacy steady-consistency correction after initialization on head
 `a4fe09de6929a6acd78b0f654f212eb53fbf03f2` reproduced every value above exactly, so that
-correction is not the owner of the flat unsplit response. The unsplit adapter deliberately rejects
-tracked-slug geometry and conservative slug-force integration; adding and qualifying conservative
-moving slug/film coupling is the demonstrated next physical dependency. The executable gate remains
-opt-in while it is known to fail. No threshold, nonlinear tolerance, inventory floor or accepted
-transport is changed to hide this negative evidence.
+correction is not the owner of the flat unsplit response. The unsplit adapter now accepts the bounded
+transactional conservative marker-geometry contract above, but deliberately rejects conservative
+subcell slug-force integration. The public gate also still disables tracking, so this increment does
+not alter its flat result. Enabling and qualifying the full marker/force combination is the
+demonstrated next physical dependency. The executable gate remains opt-in while it is known to fail.
+No threshold, nonlinear tolerance, inventory floor or accepted transport is changed to hide this
+negative evidence.
+
+#### Settled-cycle and refinement contract (24 November 2026)
+
+The opt-in 600 s experimental gate now evaluates only the final 300 s and cannot pass on a startup
+extremum. It reports the median peak-to-peak amplitude and period of complete inlet-pressure cycles,
+requires at least two complete pressure and liquid-production cycles, limits complete-cycle amplitude
+and period range to 20% of their medians for both signals, requires their median periods to agree
+within 10%, and requires a one-to-one, repeatable pressure/liquid median-upcrossing phase relation.
+The published 38 s target is compared with the inlet-pressure period documented by
+the source, not with a separately measured liquid-production interval.
+
+The same invocation executes the complete `16 cells / 0.1 s`, `16 / 0.05 s` and `24 / 0.05 s`
+matrix before evaluating any assertion. Pressure amplitude and period must agree with the reference
+within 15%, initial flowline hold-up within 2%, and mean liquid feed is matched exactly. A non-finite
+metric is an explicit failed gate rather than an analysis exception.
+
+On current master base `15b5ab9f226c585aeeaa97e315685b21b74e43a2`, all three trajectories reached
+600 s and retained finite, non-negative phase inventories with relative phase/total closure below
+`1e-9`, but the settled window contained no complete pressure cycle and no complete liquid-production
+cycle on any discretization. Both 16-cell realizations remained at the same flat outlet rate around
+`1.95257848 kg/s` and initial flowline hold-up `0.328538684`; the 24-cell realization remained flat
+around the same matched mean production with hold-up `0.331462090` and recorded two rejected
+nonlinear attempts. Experimental amplitude, pressure period, phase lock and amplitude/period
+refinement are therefore unresolved.
+
+The gate is deliberately negative evidence. Conservative moving slug/film coupling remains the next
+physical dependency and is independently high risk; it is not bundled into this measurement repair.
 
 The gas execution fixture uses methane/ethane `0.8/0.2` mole fractions, SRK/classic mixing,
 300 K, a 60 bara inlet, `0.1 kg/s`, and a horizontal 40 m by 0.20 m line. Four cells with

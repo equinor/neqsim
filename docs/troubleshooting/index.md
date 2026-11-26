@@ -11,8 +11,9 @@ pressure in bara, and the complete exception.
 ## Start from a known-good diagnostic case
 
 This complete Python example verifies the gateway, composition, flash, and
-physical-property initialization:
+physical-property initialization. The documentation contract parses the literal source of all four marked Python examples on this page, while `TroubleshootingDocumentationTest` executes the equivalent Java API workflows:
 
+<!-- troubleshooting-example: diagnostic-fluid -->
 ```python
 from neqsim import jneqsim
 
@@ -113,6 +114,7 @@ retain the full traceback and the minimal input case.
 Create all connections, add every unit to one `ProcessSystem`, run the system,
 and only then read results:
 
+<!-- troubleshooting-example: process-equipment -->
 ```python
 from neqsim import jneqsim
 
@@ -163,6 +165,7 @@ and mechanical-design basis for equipment conclusions.
 Use the current `Recycle` API. `setMaximumIterations(...)` and
 `setDampingFactor(...)` are not `Recycle` methods:
 
+<!-- troubleshooting-example: recycle-configuration -->
 ```python
 from neqsim import jneqsim
 
@@ -196,6 +199,7 @@ supported direct-substitution, Wegstein, and Broyden options.
 Start with a multicomponent hydrocarbon fluid, a cubic equation of state, and a
 positive composition:
 
+<!-- troubleshooting-example: phase-envelope -->
 ```python
 from neqsim import jneqsim
 

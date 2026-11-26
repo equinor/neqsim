@@ -8,6 +8,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.apache.commons.lang3.SerializationUtils;
+import neqsim.process.equipment.pipeline.twophasepipe.LagrangianSlugTracker;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.TwoFluidUnsplitModelAdapter.PhaseDensityModel;
@@ -35,6 +38,7 @@ public final class TwoFluidUnsplitIntegrator {
   private final UnsplitTransientSolver solver;
   private final int maximumHalvings;
   private final int maximumSubsteps;
+  private final LagrangianSlugTracker conservativeSlugTracker;
   private boolean pressureInterpolationEnabled;
 
   /**
@@ -60,15 +64,44 @@ public final class TwoFluidUnsplitIntegrator {
    */
   public TwoFluidUnsplitIntegrator(TwoFluidConservationEquations equations, PhaseDensityModel densityModel,
       UnsplitTransientSolver solver, int maximumHalvings, int maximumSubsteps) {
+    this(equations, densityModel, solver, maximumHalvings, maximumSubsteps, null);
+  }
+
+  /**
+   * Create an interval preparer with an optional transactional conservative slug tracker.
+   *
+   * <p>
+   * The tracker is cloned at construction and again for every prepared interval. Its geometry is exposed to the
+   * finite-volume face operator for each attempted substep, but it advances only after that substep has passed the
+   * nonlinear and independent conservation checks. Rejected attempts therefore leave marker position, age, statistics
+   * and probes unchanged. The returned interval owns a defensive copy of the accepted tracker endpoint.
+   * </p>
+   *
+   * @param equations isothermal finite-volume operator
+   * @param densityModel side-effect-free pressure-dependent phase density closure
+   * @param solver configured nonlinear solver
+   * @param maximumHalvings maximum bisection depth for an attempted interval; zero disables retries
+   * @param maximumSubsteps maximum locally accepted substeps in one prepared interval
+   * @param conservativeSlugTracker conservative Lagrangian marker state, or null for cell-average transport
+   */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The established integrator contract shares one transactional operator and configured solver; only the newly introduced marker state is cloned")
+  public TwoFluidUnsplitIntegrator(TwoFluidConservationEquations equations, PhaseDensityModel densityModel,
+      UnsplitTransientSolver solver, int maximumHalvings, int maximumSubsteps,
+      LagrangianSlugTracker conservativeSlugTracker) {
     if (equations == null || densityModel == null || solver == null || maximumHalvings < 0 || maximumHalvings > 30
         || maximumSubsteps < 1) {
       throw new IllegalArgumentException("Interval preparation requires equations, densities, solver and valid limits");
+    }
+    if (equations.isConservativeSlugForceIntegrationEnabled() && conservativeSlugTracker == null) {
+      throw new IllegalArgumentException("Tracked subcell forces require a conservative Lagrangian marker owner");
     }
     this.equations = equations;
     this.densityModel = densityModel;
     this.solver = solver;
     this.maximumHalvings = maximumHalvings;
     this.maximumSubsteps = maximumSubsteps;
+    this.conservativeSlugTracker = conservativeSlugTracker == null ? null
+        : SerializationUtils.clone(conservativeSlugTracker);
   }
 
   /**
@@ -149,6 +182,9 @@ public final class TwoFluidUnsplitIntegrator {
     if (!Double.isFinite(nominalCount) || nominalCount > maximumSubsteps) {
       throw new IllegalArgumentException("Nominal time steps exceed the configured accepted-substep budget");
     }
+    LagrangianSlugTracker localSlugTracker = conservativeSlugTracker == null ? null
+        : SerializationUtils.clone(conservativeSlugTracker);
+    synchronizeSlugGeometry(localSlugTracker);
     TwoFluidUnsplitModelAdapter first = new TwoFluidUnsplitModelAdapter(equations, acceptedSections, spatialStep,
         densityModel);
     first.validatePreparedOperator();
@@ -178,8 +214,10 @@ public final class TwoFluidUnsplitIntegrator {
       double timeWeight = solver
           .getTimeIntegrationMethod() == UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER ? 1.0 : 0.5;
       double interpolationTimeScale = pressureInterpolationEnabled ? timeWeight * dt : 0.0;
+      synchronizeSlugGeometry(localSlugTracker);
       TwoFluidUnsplitModelAdapter adapter = new TwoFluidUnsplitModelAdapter(equations, local, spatialStep, densityModel,
-          interpolationTimeScale, !pressureInterpolationEnabled);
+          interpolationTimeScale,
+          !pressureInterpolationEnabled && !equations.isConservativeSlugForceIntegrationEnabled());
       double[][] state = new double[local.length][];
       double[] pressure = new double[local.length];
       double[] area = new double[local.length];
@@ -208,9 +246,19 @@ public final class TwoFluidUnsplitIntegrator {
       PreparedStep step = adapter.prepareStep(candidate, dt, time, outletPressure, outletPressureFixed, localTolerance);
       prepared.add(step);
       local = step.getEndpointSections();
+      if (localSlugTracker != null) {
+        localSlugTracker.advanceTimeStep(local, dt);
+        synchronizeSlugGeometry(localSlugTracker);
+      }
       time = attempt.endTime;
     }
-    return new PreparedInterval(prepared, initial, startTime, endTime, rejected, evaluations, relativeTolerance);
+    return new PreparedInterval(prepared, initial, startTime, endTime, rejected, evaluations, relativeTolerance,
+        localSlugTracker);
+  }
+
+  /** Install the current accepted marker geometry without advancing it. */
+  private void synchronizeSlugGeometry(LagrangianSlugTracker tracker) {
+    equations.setConservativeSlugs(tracker == null ? null : tracker.getSlugs());
   }
 
   private static final class Attempt {
@@ -318,14 +366,17 @@ public final class TwoFluidUnsplitIntegrator {
     private final double[][] conservativeFrictionImpulsePerLength;
     private final double[] massResidualKg;
     private final double maximumScaledResidual;
+    private final LagrangianSlugTracker acceptedSlugTracker;
 
     private PreparedInterval(List<PreparedStep> steps, TwoFluidSection[] initial, double startTime, double endTime,
-        int rejectedAttempts, long modelEvaluations, double relativeTolerance) {
+        int rejectedAttempts, long modelEvaluations, double relativeTolerance,
+        LagrangianSlugTracker acceptedSlugTracker) {
       this.substeps = Collections.unmodifiableList(new ArrayList<>(steps));
       this.startTime = startTime;
       this.endTime = endTime;
       this.rejectedAttempts = rejectedAttempts;
       this.modelEvaluations = modelEvaluations;
+      this.acceptedSlugTracker = acceptedSlugTracker == null ? null : SerializationUtils.clone(acceptedSlugTracker);
       TwoFluidSection[] endpoint = steps.get(steps.size() - 1).getEndpointSections();
       phaseMassFaceTransferKg = new double[endpoint.length + 1][3];
       phaseMassSourceTransferKg = new double[endpoint.length][3];
@@ -477,6 +528,15 @@ public final class TwoFluidUnsplitIntegrator {
     /** @return gas/oil/water inventory residuals in kg against the exact accepted face and source transfers */
     public double[] getMassResidualKg() {
       return massResidualKg.clone();
+    }
+
+    /**
+     * Return the accepted conservative marker endpoint.
+     *
+     * @return defensive tracker copy, or null when the interval used cell-average transport
+     */
+    public LagrangianSlugTracker getAcceptedSlugTracker() {
+      return acceptedSlugTracker == null ? null : SerializationUtils.clone(acceptedSlugTracker);
     }
   }
 

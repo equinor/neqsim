@@ -10,7 +10,7 @@ required_skills:
 - neqsim-professional-reporting
 - neqsim-pvt-fluid-study-report
 argument-hint: Describe the PVT experiment — e.g., "CME test at 100°C with pressures from 400 to 50 bara", "CVD for reservoir fluid with C7+ characterization", or "fit EOS to match experimental saturation pressure of 250 bara".
-last_verified: "2026-11-22"
+last_verified: "2026-11-24"
 ---
 Loaded skills: neqsim-phase-envelope, neqsim-api-patterns, neqsim-eos-regression, neqsim-input-validation, neqsim-notebook-patterns, neqsim-professional-reporting, neqsim-pvt-fluid-study-report
 
@@ -277,6 +277,18 @@ component gates; between-endpoint dry oil appearance/disappearance is permitted.
 gas-only pressure-grid limit and every separator inventory. This is independent
 numerical consistency, not measured calibration, reservoir prediction or Tran RCVD.
 Read `docs/pvtsimulation/depletion_pvt_generation.md#dry-phase-changing-fixed-cell-experiment`.
+
+### Independent binary two-phase numerical benchmark
+
+For independently predicted two-phase surface GOR, produced composition and
+bounded pore-volume matching, use `devtools/test_binary_reservoir_java.py` and
+`src/test/resources/neqsim/pvtsimulation/binary-tank/SCOPE.md` through
+`docs/pvtsimulation/reservoir_phase_production.md`. The binary PR oracle and
+native comparison freeze separate laboratory calibration/whole-CCE holdout and
+reservoir calibration/holdout roles. Its 1/2/4/8/16-substep checks compare the
+same finite extraction protocol; they do not establish a continuous limit.
+This is independent-code synthetic qualification, not measured field accuracy,
+wet/critical-path support, uncertainty or whole-issue #4740 completion.
 
 ### Independent gas-only laboratory-to-tank benchmark
 

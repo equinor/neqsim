@@ -650,6 +650,10 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
   }
 
   private ReleaseFlowRequest request(SystemInterface fluid, int phaseIndex) {
+    if (phaseSelective) {
+      return ReleaseFlowRequest.forSelectedPhase(fluid, withdrawalPhasePlan.get(phaseIndex), diameterM,
+          dischargeCoefficient, backPressurePa, flowPathLengthM, darcyFrictionFactor);
+    }
     return new ReleaseFlowRequest(selectedPhase(fluid, phaseIndex), diameterM, dischargeCoefficient, backPressurePa,
         flowPathLengthM, darcyFrictionFactor);
   }

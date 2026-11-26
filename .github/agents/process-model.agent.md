@@ -212,22 +212,21 @@ column.getCondenser().setRefluxRatio(1.5);
 column.setTopPressure(25.0);
 column.setBottomPressure(26.0);
 
-// Solver selection — NEWTON is the measured default (no failures, fastest of the robust
-// solvers); fall back to MESH_RESIDUAL and always check the result. Details and evidence:
-// neqsim-distillation-design skill, "Default set-up for agent work".
-column.setSolverType(DistillationColumn.SolverType.NEWTON);
+// Solver selection — this column has condenser, reboiler and a reflux ratio, so AUTO is the
+// measured choice (108 of 108 cases, 2026-11-25): it tries NAPHTALI_SANDHOLM, then
+// MESH_RESIDUAL, and accepts only a rigorously converged result. For columns without a
+// condenser reflux ratio use NEWTON and fall back to MESH_RESIDUAL instead. Details and
+// evidence: neqsim-distillation-design skill, "Default set-up for agent work".
+column.setSolverType(DistillationColumn.SolverType.AUTO);
 column.run();
-if (!column.solved()) {
-  column.setSolverType(DistillationColumn.SolverType.MESH_RESIDUAL);
-  column.run();
-}
 if (!column.solved()) {
   throw new IllegalStateException(column.getConvergenceDiagnostics());
 }
 ```
 
 Report `column.getLastSolveStatus()` and `column.getLastSolverTypeUsed()` with every column result.
-Do not use `SolverType.AUTO` as the default.
+Do not use `SolverType.AUTO` on reboiler-only strippers, absorbers or columns with side draws or
+pumparounds; start those with `NEWTON`.
 
 ## Power Generation Equipment
 For gas turbines, steam turbines, HRSG, and combined cycles:

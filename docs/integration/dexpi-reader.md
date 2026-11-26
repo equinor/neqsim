@@ -26,6 +26,7 @@ NeqSim provides a complete [DEXPI](https://dexpi.org/) integration that supports
 | `DexpiLayoutConfig` | Configurable layout parameters (spacing, fonts, colors, feature toggles) |
 | `DexpiMetadata` | Shared constants for `GenericAttribute` names used by both reader and writer |
 | `DexpiSimulationBuilder` | High-level builder: DEXPI XML to runnable `ProcessSystem` |
+| `PidDrawingRecordsDexpiWriter` | Drawing records extracted from a P&ID sheet to Proteus DEXPI with the drawing geometry |
 | `Dexpi201DynamicBindingReader` | Fail-closed native DEXPI 2.0.1 identity check and executable binding restore |
 | `DexpiTopologyResolver` | Nozzle/connection graph, topological sort, cycle detection |
 | `DexpiEquipmentFactory` | Converts DEXPI placeholders to real NeqSim equipment with sizing |
@@ -68,6 +69,67 @@ P&ID/SCD evidence once a document reader, OCR step, DEXPI converter, or STID con
 the relevant structure. This keeps engineering evidence traceable: unreviewed metadata can seed a
 model scaffold, while controlled drawing content is required before line routing, interlocks,
 setpoints, or safeguard credit are used in a calculation.
+
+#### From a vector PDF P&ID to DEXPI
+
+A CAD-exported (vector) PDF P&ID, for example a drawing downloaded from STID, can be turned into
+DEXPI in two steps:
+
+1. The community skill `neqsim-pid-pdf-to-dexpi` (Python, PyMuPDF) reads the sheet into
+   `neqsim_pid_drawing_records.v1` records. These hold:
+   - equipment outlines and tags, and nozzles with process roles;
+   - off-page connectors with FROM/TO direction, both pentagons and drain/flare boxes;
+   - traced pipe runs with their drawn centre lines, and pipe tees;
+   - inline valves with their normal position and locking, flanges, reducers and blinds;
+   - instrument bubbles and the operating data block printed on the sheet.
+
+   It stitches several sheets through matching connectors and reads scanned sheets best-effort
+   with OCR. It also writes a review overlay and checklist; a named reviewer approves the records
+   through a corrections file.
+2. `PidDrawingRecordsDexpiWriter` writes the records as a Proteus-profile DEXPI file. The file keeps
+   the drawing geometry, so `DexpiXmlSvgRenderer` regenerates a P&ID that follows the source sheet.
+   Valves, flanges, reducers and blinds become `PipingComponent` elements with `NormalPosition` and
+   `LockingStatus`. The reviewer and review date are kept on the drawing. `DexpiSimulationBuilder`
+   builds the file into a runnable flowsheet:
+   - pipe runs to drains, flare, chemicals or sampling carry `NormalFlow=false` and are left out of
+     the steady-state flowsheet, and so are runs through a normally closed valve;
+   - a blind marked `NormalPosition=Open` passes flow;
+   - an off-page connector linked on both sides (two stitched sheets) passes flow;
+   - side streams entering through other connectors get their own feed with `addBoundaryFeed`.
+
+```java
+PidDrawingRecordsDexpiWriter.Result result =
+    PidDrawingRecordsDexpiWriter.write(new File("drawing_records.json"), new File("sheet.dexpi.xml"));
+ProcessSystem process = new DexpiSimulationBuilder(new File("sheet.dexpi.xml")).setFluidTemplate(fluid)
+    .setFeedPressure(16.0, "barg").setFeedTemperature(55.0, "C").setFeedFlowRate(200000.0, "kg/hr")
+    .addBoundaryFeed("CONDENSATE RETURN", null, 5000.0, "kg/hr", 16.0, "barg", 55.0, "C").build();
+process.run();
+String svg = DexpiXmlSvgRenderer.render(new File("sheet.dexpi.xml"));
+```
+
+`addBoundaryFeed` finds the connector by DEXPI id, then by label, continuation sheet or connector
+reference (exact match first, then a unique substring). A `null` fluid uses the builder template.
+When boundary feeds are set, the other inbound connectors carry the builder feed. The first one
+gets it unchanged, and each further one gets a copy with a `DEXPI_BUILD_ADDITIONAL_FEED` warning.
+
+The fluid and feed rates are not on a P&ID and must be supplied. The extracted topology is a draft
+until a named reviewer approves it against the controlled drawing revision. Scanned sheets are read
+with lower recall than vector PDFs. `PidDrawingRecordsDexpiWriterTest` covers this API, including
+boundary feeds, inline fittings and normally closed valves.
+
+The same records also feed instrumentation and safety studies; see `safety.py` in the community
+skill. It builds a safeguard register from the drawing: trip initiators, shutdown valves along each
+line, relief valves named on connectors, and flare and drain connections. The register is then tested
+with the existing NeqSim safety models:
+- `Detector` and `SafetyInstrumentedFunction` with voting, `ESDLogic` and `ESDValve` on a transient
+  `ThreePhaseSeparator`, for blocked-outlet and loss-of-inlet trips;
+- `DepressurizationSimulator` for blowdown, flare load and the minimum temperature against the design
+  minimum on the sheet.
+
+It also drafts a HAZOP preparation worksheet. Trip set points and cause-and-effect links are not on a
+P&ID and are supplied from the C&E chart, or recorded as assumptions. For evidence-grade ESD tests
+built from a C&E row, use [ESD dynamic testing](../safety/esd_testing_workflow.md).
+Reviewer corrections are drawn on the regenerated P&ID as revision clouds with a revision table.
 
 For SCD-like workflows, model the control content as live simulation objects rather than as a drawing
 file: transmitters, controller devices, signal connections, alarm/trip schedules, and operational
@@ -950,7 +1012,12 @@ The builder performs these steps internally:
    including valves that sit inside a `PipingNetworkSegment` and are connected through their own
    nozzles. Tees, reducers, strainers and isolation valves without an operating pressure are
    collapsed as pass-through items. Branches through pressure-safety devices, rupture disks and
-   blinds are excluded, because they carry no flow at normal operation.
+   blinds are excluded, because they carry no flow at normal operation. Piping segments with the
+   generic attribute `NormalFlow=false` (drains, flare, chemicals, sampling, as written by
+   `PidDrawingRecordsDexpiWriter`) are excluded for the same reason, as are piping components with
+   `NormalPosition=Closed`. A blind with `NormalPosition=Open` passes flow. A `PipeOffPageConnector`
+   with connections on both sides passes flow (stitched sheets). A connector with only one side ends
+   the connection, unless it is a boundary feed.
 4. **Equipment mapping** — `DexpiMappingLoader` reads `dexpi_equipment_mapping.properties` and
    `dexpi_piping_component_mapping.properties` from the classpath to translate DEXPI ComponentClass
    strings (e.g. `CentrifugalCompressor`) into `EquipmentEnum` values.
@@ -992,12 +1059,14 @@ a severity, a stable code, the DEXPI element id, and a message:
 | Code | Severity | Meaning |
 | --- | --- | --- |
 | `DEXPI_BUILD_SPECIFICATION_MISSING` | WARNING | A compressor, pump, valve, heater or cooler has no operating outlet value; set it before `run()` |
-| `DEXPI_BUILD_ADDITIONAL_FEED` | WARNING | A unit without an upstream connection received its own copy of the builder feed |
+| `DEXPI_BUILD_ADDITIONAL_FEED` | WARNING | A unit without an upstream connection, or an inbound connector without a boundary feed, received its own copy of the builder feed |
+| `DEXPI_BUILD_BOUNDARY_FEED` | INFO | An off-page connector became a feed stream (its own boundary feed, or the builder feed) |
+| `DEXPI_BUILD_BOUNDARY_FEED_UNRESOLVED` | WARNING | An `addBoundaryFeed` reference matched no connector, or several |
 | `DEXPI_BUILD_SPLIT_FACTORS_ASSUMED` | WARNING | Branch flows were not available, so an equal split was assumed |
 | `DEXPI_BUILD_RECYCLE_TEAR` | INFO | A loop was torn at the named connection and closed with a `Recycle` |
 | `DEXPI_BUILD_INLET_MIXER` | INFO | Several connections enter a non-mixer unit and were combined |
 | `DEXPI_BUILD_PASS_THROUGH` | INFO | A piping item or unsupported unit was collapsed |
-| `DEXPI_BUILD_NO_FLOW_BRANCH_EXCLUDED` | INFO | A safety-device or blind branch was excluded from the steady-state flowsheet |
+| `DEXPI_BUILD_NO_FLOW_BRANCH_EXCLUDED` | INFO | A safety-device, blind or `NormalFlow=false` branch was excluded from the steady-state flowsheet |
 | `DEXPI_BUILD_CONNECTION_UNRESOLVED` | INFO | A connection ends off-page or at an unknown item |
 
 A model exported with `DexpiXmlWriter.write(...)` and rebuilt with the same fluid template and

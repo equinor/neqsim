@@ -1,0 +1,117 @@
+{
+  "base": "5a09e550141d99da1dd2854070c6688d754fb678",
+  "source_sha256": {
+    "src/main/java/neqsim/thermo/component/ComponentGENRTLmodifiedHV.java": "73696ebe0d1a069b621b47c0ab51d3aa88ab0322b18b913e80da03c74caf8638",
+    "src/test/java/neqsim/thermo/component/HuronVidalPhasePureRequestTest.java": "41f9f46133aee23d26e16f0e4d3c9e2bbca07484f9f0166b44884b244da32eba"
+  },
+  "runtime": {
+    "java17": "openjdk version \"17.0.21\" 2026-10-20\nOpenJDK Runtime Environment Temurin-17.0.21+9 (build 17.0.21+9)\nOpenJDK 64-Bit Server VM Temurin-17.0.21+9 (build 17.0.21+9, mixed mode, sharing)\n",
+    "java8": "openjdk version \"1.8.0_512\"\nOpenJDK Runtime Environment (Temurin)(build 1.8.0_512-b09)\nOpenJDK 64-Bit Server VM (Temurin)(build 25.512-b09, mixed mode)\n"
+  },
+  "native": {
+    "baseline_full": {
+      "tests": 147,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "log": "baseline-full.log"
+    },
+    "final_candidate_java17": {
+      "tests": 150,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "log": "candidate-final-full.log"
+    },
+    "candidate_java8": {
+      "tests": 150,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "log": "candidate-java8-resume.log",
+      "initial_interrupted_log": "candidate-java8.log",
+      "note": "Initial Java8 clean compile succeeded; initial test invocation was interrupted with no final result. Complete suite was rerun via surefire:test on the same native8-compiled classes."
+    }
+  },
+  "coverage": {
+    "baseline": {
+      "counters": {
+        "INSTRUCTION": {
+          "missed": 0,
+          "covered": 2857
+        },
+        "BRANCH": {
+          "missed": 0,
+          "covered": 76
+        },
+        "LINE": {
+          "missed": 0,
+          "covered": 302
+        },
+        "COMPLEXITY": {
+          "missed": 0,
+          "covered": 44
+        },
+        "METHOD": {
+          "missed": 0,
+          "covered": 6
+        },
+        "CLASS": {
+          "missed": 0,
+          "covered": 1
+        }
+      }
+    },
+    "candidate-final": {
+      "counters": {
+        "INSTRUCTION": {
+          "missed": 0,
+          "covered": 2929
+        },
+        "BRANCH": {
+          "missed": 0,
+          "covered": 92
+        },
+        "LINE": {
+          "missed": 0,
+          "covered": 310
+        },
+        "COMPLEXITY": {
+          "missed": 0,
+          "covered": 52
+        },
+        "METHOD": {
+          "missed": 0,
+          "covered": 6
+        },
+        "CLASS": {
+          "missed": 0,
+          "covered": 1
+        }
+      }
+    }
+  },
+  "binary": {
+    "neqsim/thermo/component/ComponentGENRTLmodifiedHV.class": {
+      "base": "130579d8ca652cb29a1e0729095b6832284974f4197b06e08040feccb429fdfb",
+      "candidate": "c43e22f6958113c2a885fe30835e3190691719b45ea31e5f85e2ec07784aee41"
+    },
+    "neqsim/thermo/phase/PhaseGENRTLmodifiedHV.class": {
+      "base": "17a45123c6de7dc1731761fc808bce119a805209af9b425fe60af6ef5a967b57",
+      "candidate": "17a45123c6de7dc1731761fc808bce119a805209af9b425fe60af6ef5a967b57"
+    },
+    "trusted_baseline": "5a09e550141d99da1dd2854070c6688d754fb678"
+  },
+  "physical_output_parity": {
+    "PR-folas-2007.csv": "f3b8c2270e05d440537f3f9e9526c7ba149af10bd6c980af38885f212a1fcd94",
+    "PR-mixture.csv": "0df3df3f11cbd0ba0f63f7883787dac32983e71a6fc4806f20e82ae37efd1226",
+    "PR-pure.csv": "8d559104a6e47fb09ce20f727c86a68c9ac2bf5f35eaf9b7a5d6ff33dd5ba802",
+    "SRK-folas-2007.csv": "b59c44871d129bee3699bd99404dbfd7f3f5dd18472defd5ea0c32aa4f13e154",
+    "SRK-mixture.csv": "a92e7bf42cce64753765b56438697f2dc255bfce1ffba0bd8278399b1af8d863",
+    "SRK-pure.csv": "9eacca747733091b48756a301796ccc78613d20183f71fb7d183bd7746b63ca7"
+  },
+  "review": {
+    "reviewer": "Independent read-only code-review agent",
+    "result": "No finding on matrix overwrite, reduction clearing, standalone/custom dispatch, ownership, clone or serialization. Guarded clearing separately inspected. No self-approval or CI readiness inferred."
+  }
+}

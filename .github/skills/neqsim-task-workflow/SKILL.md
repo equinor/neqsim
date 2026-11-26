@@ -1,7 +1,7 @@
 ---
 name: neqsim-task-workflow
 description: "The full NeqSim engineering task workflow that @solve-task orchestrates. USE WHEN: executing any Standard or Comprehensive task end to end - setup and scale classification, scope and research, deep analysis, notebooks with benchmark validation and uncertainty/risk, quality gates, report and work record, knowledge capture, task-type guidance, delegation, NeqSim Improvement Proposals and lessons learned. Load one phase section at a time."
-last_verified: "2026-09-18"
+last_verified: "2026-11-25"
 ---
 
 # NeqSim Task Workflow
@@ -196,7 +196,7 @@ checks before writing Step 1 content:
    | Live instrument data / operating point (P, T, flow, speed, valve %, current recycle) | `@plant-data` / `plant-data-agent` + `neqsim-plant-data` (tagreader PI/IP.21) or `@seeq.connect` / `enterprise-seeq-connect` | Resolve historian tag from STID tag; prefer `/PRIM` channel; check units |
    | Measured production volumes (well/field) | `rigga-production-agent` + `enterprise-rigga-production` | Measured production as feed / validation basis |
    | Equipment / maintenance / failure history | `@maintenance` / `maintenance-agent` + `enterprise-maintenance-api` | Read-only work orders, notifications |
-   | Picture of real equipment: location, layout, access, a vessel with its valves and instruments, a proposed modification against the As-Built model | `enterprise-stid-agent` (tags, valves, instruments, nozzle schedule, GA drawing) **together with** `enterprise-echo-3d-agent` + `enterprise-echo-3d` (Equinor Echo digital twin, via `prd-ai-skills` echo-toolkit) | Write `step1_scope_and_research/echo_plan.json`, run `echo-3d task --task <task>`; the user names the Echo 3D project(s); "not modelled" is not "not installed"; indicative, not a measurement |
+   | Picture of real equipment: location, layout, access, a vessel with its valves and instruments, a proposed modification against the As-Built model | `enterprise-stid-agent` (tags, valves, instruments, nozzle schedule, GA drawing) **together with** `enterprise-echo-3d-agent` + `enterprise-echo-3d` (Equinor Echo digital twin, via `prd-ai-skills` echo-toolkit) | Write `step1_scope_and_research/echo_plan.json`, run `echo-3d task --task <task>`; use the Echo 3D project the user names, else default to `As-Built` and disclose it as an assumption (do not stop to ask); always done for a study at a named installation (also build the STID plant-grid scene with `enterprise-asset-visualisation-agent`); "not modelled" is not "not installed"; indicative, not a measurement |
    | Fluid composition / gas-sample molweight | STID/lab report via `@stid.reader`; else record as an explicit gap | A wrong MW mis-places compressor maps — always try to obtain it |
    | Public literature / standards | `@literature-scout` | See step 6 |
 
@@ -877,6 +877,9 @@ progress.set_next_action("Create analysis artifact: 01_XXXX.ipynb or run_XXXX.py
      project root cannot be found
    - Follow the notebook structure from the `@solve-process` agent when creating
      notebooks.
+   - Author notebooks as percent-format `.py` files (`# %%` / `# %% [markdown]`) and convert them with
+     `devtools/py_to_notebook.py` (or build `.ipynb` with nbformat and submit to `neqsim_runner.AgentBridge`);
+     keep results in JSON files that the final assemble script reads, so rerunning the notebooks refreshes the report
    - Include clear markdown cells explaining each step in notebooks; for runner
      scripts, include concise printed output and comments only where they clarify
      non-obvious engineering logic.
@@ -1906,6 +1909,17 @@ Document the independent check in `step2_analysis/notes.md` under a
 - **HTML report is especially valuable** for Type G — it provides a navigable,
   multi-section document linking all sub-analyses
 - Consider creating a summary notebook that imports results from all sub-analyses
+
+### Safety and overpressure tasks (PSV, relief, HIPPS, a new source on an existing separator or header)
+
+Checklist item for every task that sizes or verifies pressure protection for a new well, tie-in or higher source pressure on a receiving separator/header that already has producers (load `neqsim-hp-lp-interface-overpressure`, section 2b, and `neqsim-process-safety` Method 9):
+
+- [ ] **Compare against existing/previous wells and inputs** to the receiving separator/header: riser/inlet pressure, SIWHP, rates, choke dP, what the PSV/relief basis was sized for, ratio new versus historical, effect on the failed-open / choke-collapse relief load.
+- [ ] **Blocked outlet as a function of current inflow (not design inflow)** with an explicit statement whether it governs; carry the caveats (lower production today reduces blocked outlet but not IVO+CC; failed-open/choke-collapse usually governs when the new source pressure exceeds earlier wells; stationary estimate; PSV set-pressure changes invalidate the margin).
+- [ ] `results.json` key `existing_wells_comparison` (`existing_inputs`, `relief_basis`, `ratios`, `relief_effect`, `blocked_outlet` with `governs` / `statement` / `inflow_cases`, `findings`, `sources`, `blockers`). `devtools/validate_task_results.py` warns when an overpressure study lacks it; use `{"not_applicable": "<reason>"}` only when the receiving system has no existing inputs.
+- [ ] Two report sections with the names "Sammenligning med eksisterende brønner mot [separator]" / "Comparison with existing wells to [separator]" and "Blokkert utløp som dimensjonerende case" / "Blocked outlet as design case", each with a table and one figure (text at least 7 pt at report width); register the sources and any unreachable source as a blocker (never open a new interactive sign-in to fetch it).
+- [ ] Update the management summary and conclusions only where the comparison changes them, and say so when prior conclusions are unchanged. Site-specific source locations: enterprise skill `enterprise-relief-device-register` (section "Receiving-system history").
+- [ ] **Scenario register and valve-Cv inputs (section 2c; open the relief chapter with them):** a scenario table (study status calculated / simple estimate / qualitative; valve states; limiting mechanism: stored inventory, source deliverability, valve Cv at actual dP, PSV capacity; relief rate; governing or not), an installed-Cv input table (subsea and topside chokes intact and collapsed, riser EV, PV and its maximum opening, PSV orifice and set pressure, stroke times, volumes) with document, revision, page or ASSUMED and a quality grade, and a Cv sensitivity (script, executed notebook, figure, table) for failed-open AND blocked outlet. Rates depend on installed choke Cv, the actual dP and stored inventory: state what they depend on and what they do not. Add a "what the report can and cannot be used for" statement. `results.json` keys `scenario_register`, `valve_cv_inputs`, `cv_sensitivity`; the validator warns when they are missing.
 
 ### Economics & NPV Calculations (applies to Type G and any task with economics)
 

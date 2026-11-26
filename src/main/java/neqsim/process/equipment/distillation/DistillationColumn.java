@@ -1488,9 +1488,33 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Check whether side draws, pumparounds, or hydraulics add outer tear variables.
+   * Check whether AUTO should first try the simultaneous-correction solver on this column.
    *
-   * @return {@code true} when an outer tear-variable solve is required
+   * <p>
+   * The direct Naphtali-Sandholm solve is the fastest route for a column with both a condenser and a reboiler and ideal
+   * stages. Columns with an outer tear loop, side draws, a reactive section or Murphree efficiencies below one keep the
+   * sequential candidate ladder: the simultaneous solver represents Murphree efficiency with a different model, and the
+   * tear loops call the inner solver from a state the sequential solvers reuse.
+   * </p>
+   *
+   * <p>
+   * A condenser reflux ratio or a reboiler boilup ratio must be active. With two terminal temperatures and no ratio the
+   * simultaneous solver and the sequential solvers can settle on different condenser states, so those columns stay on
+   * the ladder.
+   * </p>
+   *
+   * @return {@code true} when the direct simultaneous-correction probe applies
+   */
+  boolean isPreferredSimultaneousCorrectionCandidate() {
+    return hasReboiler && hasCondenser && numberOfTrays > 1
+        && (hasCondenserRatioControl() || getReboiler().isRefluxSet()) && !isReactive()
+        && !hasActiveColumnTearVariables() && !hasActiveSideDrawFractions() && !hasNonidealMurphreeStages();
+  }
+
+  /**
+   * Check whether an outer column tear loop is configured.
+   *
+   * @return {@code true} when side-draw specifications, pumparounds or hydraulic pressure-drop coupling are active
    */
   private boolean hasActiveColumnTearVariables() {
     return !sideDrawSpecifications.isEmpty() || !pumparounds.isEmpty() || hydraulicPressureDropCouplingEnabled;
@@ -4386,16 +4410,33 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     this.lastNaphtaliSandholmWarmStateReused = false;
     this.solverTypeExplicitlySet = candidate.solverTypeExplicitlySet;
     this.fullFractionatorFastPathEnabled = candidate.fullFractionatorFastPathEnabled;
-    this.lastSolverTypeUsed = candidate.lastSolverTypeUsed;
-    this.lastSolveStatus = candidate.lastSolveStatus;
-    this.lastSolveStatusReason = candidate.lastSolveStatusReason;
+    // A candidate is a serialized copy, so its transient reporting fields are null unless the candidate solve set
+    // them. Keep the live values in that case instead of publishing a solved column without a solver or report.
+    if (candidate.lastSolverTypeUsed != null) {
+      this.lastSolverTypeUsed = candidate.lastSolverTypeUsed;
+    }
+    if (candidate.lastSolveStatus != null) {
+      this.lastSolveStatus = candidate.lastSolveStatus;
+    }
+    if (candidate.lastSolveStatusReason != null) {
+      this.lastSolveStatusReason = candidate.lastSolveStatusReason;
+    }
     this.lastFullFractionatorFastPathApplied = candidate.lastFullFractionatorFastPathApplied;
-    this.lastFullFractionatorFastPathReason = candidate.lastFullFractionatorFastPathReason;
-    this.lastAutoSolverSummary = candidate.lastAutoSolverSummary;
-    this.lastAutoFeasibilityReport = candidate.lastAutoFeasibilityReport;
-    this.lastInitializationReport = candidate.lastInitializationReport;
-    this.lastAutoSolverHistory = candidate.lastAutoSolverHistory == null ? new ArrayList<String>()
-        : new ArrayList<String>(candidate.lastAutoSolverHistory);
+    if (candidate.lastFullFractionatorFastPathReason != null) {
+      this.lastFullFractionatorFastPathReason = candidate.lastFullFractionatorFastPathReason;
+    }
+    if (candidate.lastAutoSolverSummary != null) {
+      this.lastAutoSolverSummary = candidate.lastAutoSolverSummary;
+    }
+    if (candidate.lastAutoFeasibilityReport != null) {
+      this.lastAutoFeasibilityReport = candidate.lastAutoFeasibilityReport;
+    }
+    if (candidate.lastInitializationReport != null) {
+      this.lastInitializationReport = candidate.lastInitializationReport;
+    }
+    if (candidate.lastAutoSolverHistory != null) {
+      this.lastAutoSolverHistory = new ArrayList<String>(candidate.lastAutoSolverHistory);
+    }
     this.specificationHomotopySteps = candidate.specificationHomotopySteps;
     this.lastSpecificationHomotopyStepCount = candidate.lastSpecificationHomotopyStepCount;
   }
@@ -4436,7 +4477,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   void acceptAutoSolverCandidate(DistillationColumn candidate, SolverType selectedSolver) {
     acceptSolvedStateCandidate(candidate);
-    lastSolverTypeUsed = selectedSolver;
+    if (selectedSolver != null) {
+      lastSolverTypeUsed = selectedSolver;
+    }
     // Remember the concrete solver AUTO selected so warm re-solves can reuse it directly.
     if (selectedSolver != null && selectedSolver != SolverType.AUTO) {
       autoWarmStartSolver = selectedSolver;

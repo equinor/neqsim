@@ -92,6 +92,59 @@ class HuronVidalPhasePureRequestTest {
     }
   }
 
+  /** Checks scratch independence across lower initialization levels and changed directed inputs. */
+  @Test
+  void scratchDoesNotRetainValuesAcrossInitializationOrParameterChanges() {
+    for (boolean pr : new boolean[] {false, true}) {
+      String[] names = {"water", "CO2", "methane", "methanol", "MEG"};
+      int n = names.length;
+      SystemInterface fluid = pr ? new SystemPrEos(350.0, 10.0) : new SystemSrkEos(350.0, 10.0);
+      ComponentGENRTLmodifiedHV[] activities = new ComponentGENRTLmodifiedHV[n];
+      String[][] rules = new String[n][n];
+      for (int i = 0; i < n; i++) {
+        fluid.addComponent(names[i], 1.0 / n);
+        activities[i] = new ComponentGENRTLmodifiedHV(names[i], 1.0 / n, 1.0 / n, i);
+        Arrays.fill(rules[i], "Classic");
+      }
+      fluid.setMixingRule(2);
+      fluid.setForceSinglePhase(PhaseType.GAS);
+      fluid.init(3);
+      PhaseInterface phase = fluid.getPhase(0);
+      double[][] alpha = new double[n][n];
+      double[][] energies = new double[n][n];
+      double[][] offsets = new double[n][n];
+      double[][] kij = new double[n][n];
+      alpha[0][1] = 0.15;
+      alpha[1][0] = 0.15;
+      energies[0][1] = -1500.0;
+      energies[1][0] = 4050.0;
+      offsets[0][1] = 11.0;
+      offsets[1][0] = -5.2;
+      rules[0][1] = "HV";
+      rules[1][0] = "HV";
+      int step = 0;
+      for (int type : new int[] {3, 1, 3, 2, 3}) {
+        double temperature = 350.0 + 0.25 * step;
+        fluid.setTemperature(temperature);
+        phase.setInitType(type);
+        offsets[0][1] += 0.125;
+        double[][] expected = new double[n][];
+        double sum = 0.0;
+        for (int i = 0; i < n; i++) {
+          sum += phase.getComponent(i).getx() * Math.log(
+              activities[i].getGamma(phase, n, temperature, 10.0, PhaseType.GAS, alpha, energies, offsets, kij, rules));
+          expected[i] = values(activities[i], n);
+        }
+        assertEquals(sum, ComponentGENRTLmodifiedHV.excessGibbsSum(phase, activities, n, temperature, 10.0,
+            PhaseType.GAS, alpha, energies, offsets, kij, rules), 0.0);
+        for (int i = 0; i < n; i++) {
+          assertArrayEquals(expected[i], values(activities[i], n), 0.0);
+        }
+        step++;
+      }
+    }
+  }
+
   /** Checks that custom activity subclasses retain their original virtual entry point. */
   @Test
   void customActivityUsesOriginalEntryPoint() {

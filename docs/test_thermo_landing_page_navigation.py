@@ -17,6 +17,12 @@ REQUIRED_GUIDES = {
     "empirical_solid_fugacity.md",
 }
 MARKDOWN_LINK = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
+SCOPE_NAVIGATION_PAGES = (
+    THERMO / "README.md",
+    DOCS / "physical_properties" / "README.md",
+    DOCS / "physical_properties" / "index.md",
+    DOCS / "thermodynamicoperations" / "README.md",
+)
 
 
 class ThermoLandingPageNavigationTest(unittest.TestCase):
@@ -47,6 +53,32 @@ class ThermoLandingPageNavigationTest(unittest.TestCase):
         for guide in REQUIRED_GUIDES:
             with self.subTest(guide=guide):
                 self.assertIn(f"(thermo/{guide})", self.reference)
+
+    def test_scope_navigation_uses_extensionless_published_routes(self):
+        for page in SCOPE_NAVIGATION_PAGES:
+            source = page.read_text(encoding="utf-8")
+            for raw_target in MARKDOWN_LINK.findall(source):
+                target = raw_target.split("#", 1)[0]
+                if (
+                    not target
+                    or "://" in target
+                    or target.startswith(("mailto:", "/"))
+                    or target.endswith("/")
+                ):
+                    continue
+                suffix = Path(target).suffix
+                with self.subTest(page=page, target=target):
+                    self.assertNotEqual(
+                        suffix,
+                        ".md",
+                        msg=f"Published link retains .md suffix in {page}: {raw_target}",
+                    )
+                    if not suffix:
+                        linked_source = (page.parent / (target + ".md")).resolve()
+                        self.assertTrue(
+                            linked_source.is_file(),
+                            msg=f"Missing Markdown source from {page}: {target}",
+                        )
 
     def test_every_local_landing_page_target_exists(self):
         for target in self.targets:
