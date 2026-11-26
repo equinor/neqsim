@@ -110,22 +110,11 @@ public class PsvValveModel implements Serializable {
    * @param heatCapacityRatio isentropic exponent (gamma = Cp/Cv); must be greater than one
    * @param compressibility compressibility factor Z; must be positive
    * @return relieving mass flow in kg/s (zero when closed)
-   * @throws IllegalArgumentException if any argument is invalid
+   * @throws IllegalArgumentException if any gas property is non-finite or outside its valid range
    */
   public double massFlowKgPerS(double upstreamPressurePa, double upstreamTempK, double molarMassKgPerMol,
       double heatCapacityRatio, double compressibility) {
-    if (upstreamPressurePa <= 0.0 || upstreamTempK <= 0.0) {
-      throw new IllegalArgumentException("upstreamPressurePa and upstreamTempK must be positive");
-    }
-    if (molarMassKgPerMol <= 0.0) {
-      throw new IllegalArgumentException("molarMassKgPerMol must be positive");
-    }
-    if (heatCapacityRatio <= 1.0) {
-      throw new IllegalArgumentException("heatCapacityRatio must be greater than one");
-    }
-    if (compressibility <= 0.0) {
-      throw new IllegalArgumentException("compressibility must be positive");
-    }
+    validateFlowInputs(upstreamPressurePa, upstreamTempK, molarMassKgPerMol, heatCapacityRatio, compressibility);
     if (!open) {
       return 0.0;
     }
@@ -147,22 +136,11 @@ public class PsvValveModel implements Serializable {
    * @param heatCapacityRatio isentropic exponent (gamma = Cp/Cv); must be greater than one
    * @param compressibility compressibility factor Z; must be positive
    * @return full-lift relieving mass flow in kg/s
-   * @throws IllegalArgumentException if any argument is invalid
+   * @throws IllegalArgumentException if any gas property is non-finite or outside its valid range
    */
   public double fullOpenMassFlowKgPerS(double upstreamPressurePa, double upstreamTempK, double molarMassKgPerMol,
       double heatCapacityRatio, double compressibility) {
-    if (upstreamPressurePa <= 0.0 || upstreamTempK <= 0.0) {
-      throw new IllegalArgumentException("upstreamPressurePa and upstreamTempK must be positive");
-    }
-    if (molarMassKgPerMol <= 0.0) {
-      throw new IllegalArgumentException("molarMassKgPerMol must be positive");
-    }
-    if (heatCapacityRatio <= 1.0) {
-      throw new IllegalArgumentException("heatCapacityRatio must be greater than one");
-    }
-    if (compressibility <= 0.0) {
-      throw new IllegalArgumentException("compressibility must be positive");
-    }
+    validateFlowInputs(upstreamPressurePa, upstreamTempK, molarMassKgPerMol, heatCapacityRatio, compressibility);
     return orificeMassFlow(upstreamPressurePa, upstreamTempK, molarMassKgPerMol, heatCapacityRatio, compressibility);
   }
 
@@ -179,18 +157,51 @@ public class PsvValveModel implements Serializable {
    * @param molarMassKgPerMol fluid molar mass in kg/mol; must be positive
    * @param heatCapacityRatio isentropic exponent (gamma = Cp/Cv); must be greater than one
    * @param compressibility compressibility factor Z; must be positive
-   * @param liftFraction fraction of full lift, from 0 (closed) to 1 (fully open)
+   * @param liftFraction finite fraction of full lift, clamped to 0 (closed) through 1 (fully open)
    * @return relieving mass flow in kg/s
-   * @throws IllegalArgumentException if any argument other than the lift fraction is invalid
+   * @throws IllegalArgumentException if any argument is non-finite or a gas property is outside its valid range
    */
   public double massFlowKgPerS(double upstreamPressurePa, double upstreamTempK, double molarMassKgPerMol,
       double heatCapacityRatio, double compressibility, double liftFraction) {
+    if (!Double.isFinite(liftFraction)) {
+      throw new IllegalArgumentException("liftFraction must be finite");
+    }
     double lift = Math.max(0.0, Math.min(1.0, liftFraction));
     if (lift == 0.0) {
+      validateFlowInputs(upstreamPressurePa, upstreamTempK, molarMassKgPerMol, heatCapacityRatio, compressibility);
       return 0.0;
     }
     return lift * fullOpenMassFlowKgPerS(upstreamPressurePa, upstreamTempK, molarMassKgPerMol, heatCapacityRatio,
         compressibility);
+  }
+
+  /**
+   * Checks the gas state before reporting a capacity, including zero flow at closed lift.
+   *
+   * @param upstreamPressurePa upstream pressure in Pa absolute
+   * @param upstreamTempK upstream temperature in K
+   * @param molarMassKgPerMol fluid molar mass in kg/mol
+   * @param heatCapacityRatio isentropic exponent
+   * @param compressibility compressibility factor
+   * @throws IllegalArgumentException if an input is non-finite or outside its valid range
+   */
+  private static void validateFlowInputs(double upstreamPressurePa, double upstreamTempK, double molarMassKgPerMol,
+      double heatCapacityRatio, double compressibility) {
+    if (!Double.isFinite(upstreamPressurePa) || upstreamPressurePa <= 0.0) {
+      throw new IllegalArgumentException("upstreamPressurePa must be finite and positive");
+    }
+    if (!Double.isFinite(upstreamTempK) || upstreamTempK <= 0.0) {
+      throw new IllegalArgumentException("upstreamTempK must be finite and positive");
+    }
+    if (!Double.isFinite(molarMassKgPerMol) || molarMassKgPerMol <= 0.0) {
+      throw new IllegalArgumentException("molarMassKgPerMol must be finite and positive");
+    }
+    if (!Double.isFinite(heatCapacityRatio) || heatCapacityRatio <= 1.0) {
+      throw new IllegalArgumentException("heatCapacityRatio must be finite and greater than one");
+    }
+    if (!Double.isFinite(compressibility) || compressibility <= 0.0) {
+      throw new IllegalArgumentException("compressibility must be finite and positive");
+    }
   }
 
   /**

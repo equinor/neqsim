@@ -139,6 +139,11 @@ double dynamicArea = cmp.dynamicRequiredAreaM2;
 double peakP = cmp.peakDynamicPressurePa;
 ```
 
+The underlying `PsvValveModel` requires finite gas properties at every lift, including zero.
+Pressure (Pa absolute), temperature (K), molar mass (kg/mol) and compressibility must be
+positive, and the heat-capacity ratio must exceed one. The stateless partial-lift method
+clamps finite lift commands to [0, 1]. Invalid inputs raise `IllegalArgumentException`.
+
 Both calculations apply the overpressure fraction to gauge set pressure relative to 1.01325 bara.
 At 50 bara set pressure, 21% gives an absolute limit of 60.2872175 bara.
 
