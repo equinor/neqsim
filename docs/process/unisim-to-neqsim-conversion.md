@@ -129,7 +129,7 @@ models = reader.read_multiple([
 reader.close()
 ```
 
-The reader never attaches to or quits a UniSim that is already running: it refuses to start instead. It dismisses modal pop-ups (OK/Close/Cancel/No, never Yes), ends its own process when a read exceeds `time_limit_s` (default 1800 s), and records in `model.session_report` the source SHA-256, variables UniSim flags as inconsistent, streams without values and the pop-ups it dismissed. The shared helper is `devtools/unisim_session.py`.
+The reader never attaches to or quits a UniSim that is already running: it refuses to start instead. It dismisses modal pop-ups (OK/Close/Cancel/No, never Yes), ends its own process when a read exceeds `time_limit_s` (default 1800 s), and records in `model.session_report` the source SHA-256, variables UniSim flags as inconsistent and the pop-ups it dismissed. The shared helper is `devtools/unisim_session.py`.
 
 **Extracted data includes:**
 
@@ -413,7 +413,7 @@ writer.close()
 
 ### Using a Template File
 
-A template is optional. Without one the writer builds in a new blank case after a write probe; if UniSim refuses writes (`E_ACCESSDENIED`, seen while the licence server was unreachable) it raises an error that says so. A template is opened as a temporary copy and never modified:
+A template is optional. Without one the writer builds in a new blank case; if UniSim refuses to add operations (`E_ACCESSDENIED`, seen while the licence server was unreachable) it raises an error that says so. A template is opened as a temporary copy and never modified:
 
 ```python
 writer = UniSimWriter(visible=True, template_path=r"C:\Templates\blank.usc")
@@ -425,8 +425,8 @@ writer.close()
 
 - **Own process only**: like the reader, the writer starts its own UniSim, dismisses pop-ups (each becomes a build warning) and ends its own process after `time_limit_s`.
 - **Compressor specified by outlet temperature**: a JSON compressor with `outTemperature` gets UniSim's default efficiencies erased before the product temperature is set, so UniSim calculates the efficiency. A compressor with neither efficiency nor outlet temperature gets a warning that UniSim's default 75 % adiabatic efficiency applies.
-- **Renamed operations**: if UniSim creates an operation under a default name (`K-100`), the writer renames it or warns with the real name.
-- **Solve status**: after the solve, variables flagged inconsistent and streams without values are listed in `get_build_report()`.
+- **Renamed operations**: if UniSim creates an operation under a default name (`K-100`), the writer warns with the real name.
+- **Solve status**: after the solve, variables UniSim flags as inconsistent are listed in `get_build_report()`.
 
 ### Reverse Mapping Tables
 
@@ -852,7 +852,7 @@ with UniSimSession(visible=True) as session:  # own process, ended on exit
     op = fs.Operations.Item(0)
     print(f"Type: {op.TypeName}, Name: {op.name}")
 
-    print(session.solve_status(case))  # inconsistent variables, streams without values
+    print(session.solve_status(case))  # still solving? inconsistent variables
     session.close_case(case)           # Close(False) + source hash check
 ```
 

@@ -16,9 +16,9 @@ Known Limitations (UniSim COM):
       the licence server was reachable; ``SimulationCases.Open`` failed with
       E_ACCESSDENIED (0x80070005) only while it was not. Earlier, a .usc saved
       from a blank case refused ``Operations.Add`` and ``variable.SetValue``.
-      The writer therefore probes write access before building and raises a
-      clear error instead of producing an empty case; ``template_path`` stays
-      available (it is opened as a copy and never modified).
+      The writer raises a clear error when ``Operations.Add`` is refused with
+      E_ACCESSDENIED instead of producing an empty case; ``template_path``
+      stays available (it is opened as a copy and never modified).
     - Solver pause (solver.CanSolve = False) is unreliable on blank cases.
     - Components can only be added to a fluid package while the solver is
       paused; on a live case ``Components.Add`` returns E_ACCESSDENIED.
@@ -28,7 +28,8 @@ Known Limitations (UniSim COM):
     - Separator Feeds.Add() may fail while the solver is active; connections
       are attempted with retries.
     - ``Operations.Add`` can return an operation with a default name
-      (``K-100``) instead of the requested one; the writer renames it or warns.
+      (``K-100``) instead of the requested one; the writer warns with the real
+      name.
     - A new compressor carries a default 75 % adiabatic efficiency. A
       compressor given an outlet temperature has both default efficiencies
       erased first, otherwise the case is over-specified and does not solve.
@@ -474,8 +475,7 @@ class UniSimWriter:
     def __init__(self, visible: bool = True,
                  template_path: Optional[str] = None,
                  clear_template: bool = False,
-                 time_limit_s: Optional[float] = 1800.0,
-                 solve_cap_s: float = 600.0):
+                 time_limit_s: Optional[float] = 1800.0):
         """Initialize the writer.
 
         Args:
@@ -484,17 +484,12 @@ class UniSimWriter:
             template_path: Optional .usc to start from. It is opened as a
                            temporary copy, so the file itself is never
                            modified. If None, a new blank case is created.
-                           Either way the writer probes write access before
-                           building and raises if UniSim refuses writes
-                           (E_ACCESSDENIED: licence server unreachable, or a
-                           write-restricted case).
             clear_template: If True, delete all existing operations and
                             streams from the template before building.
-            time_limit_s: Wall-clock limit for one build. When reached, the
-                          writer's own UniSim process is ended and
-                          ``UniSimTimeout`` is raised. ``None`` disables it.
-            solve_cap_s: Seconds to wait for each solve before reporting it
-                         as unfinished.
+            time_limit_s: Wall-clock limit for one build, solves included.
+                          When reached, the writer's own UniSim process is
+                          ended and ``UniSimTimeout`` is raised. ``None``
+                          disables it.
         """
         self._app = None
         self._case = None
@@ -503,7 +498,6 @@ class UniSimWriter:
         self._template_path = template_path
         self._clear_template = clear_template
         self.time_limit_s = time_limit_s
-        self.solve_cap_s = solve_cap_s
         self._warnings: List[str] = []
         # Track created COM objects by name for wiring
         self._stream_objects: Dict[str, Any] = {}
@@ -522,20 +516,17 @@ class UniSimWriter:
         prevent stale early-bound wrappers from causing E_ACCESSDENIED.
         A UniSim that is already running is never attached to or quit.
         """
-        if self._session is None or not self._session.usable:
+        if self._session is None:
+            self._session = _session_module().UniSimSession(
+                visible=self._visible)
+        if self._session.app is None:
             # Clear gencache to avoid stale type-library wrappers
             self._clear_gencache()
             logger.info("Starting own UniSim Design process via COM...")
-            if self._session is None:
-                self._session = _session_module().UniSimSession(
-                    visible=self._visible)
-            if self._session.app is None:
-                self._session.start()
-            else:
-                self._session.restart()  # a time limit ended the last build
-            self._app = self._session.app
+            self._session.start()
             time.sleep(self.COM_DELAY_LONG)
             logger.info("UniSim started (PID %s).", self._session.pid)
+        self._app = self._session.app
 
     @staticmethod
     def _clear_gencache():
@@ -831,15 +822,18 @@ class UniSimWriter:
         if self._session is None:
             self._session = _session_module().UniSimSession(
                 visible=self._visible)
-        popup_mark = len(self._session.popups)
+        session = self._session
+        popup_mark = len(session.popups)
         try:
             # Startup (Visible, first COM calls) counts against the limit too.
-            with self._session.limit(self.time_limit_s,
-                                     "building the UniSim case"):
+            with session.limit(self.time_limit_s, "building the UniSim case"):
                 self._ensure_app()
                 self._build(systems, save_path)
+        except _session_module().UniSimTimeout:
+            self.close(error=True)  # finished; the next build starts a new one
+            raise
         finally:
-            for popup in self._session.popups[popup_mark:]:
+            for popup in session.popups[popup_mark:]:
                 self._warnings.append(
                     f"UniSim pop-up dismissed ({popup.get('action')}): "
                     f"{popup.get('title')}: {popup.get('text')}")
@@ -881,7 +875,6 @@ class UniSimWriter:
             # package, then add sub-flowsheets for each area
             # UniSim requires a fluid package on the main flowsheet first
             self._setup_fluid_package(systems[0].fluid, self._case.BasisManager)
-            self._check_write_access(self._case.Flowsheet)
             for ps in systems:
                 self._build_area_as_subflowsheet(ps)
 
@@ -942,25 +935,16 @@ class UniSimWriter:
                 self._warnings.append(f"Could not save: {e}")
 
     def _solve(self, what: str) -> None:
-        """Run the solver through the session (time-capped) and warn if it
-        does not finish."""
-        timeout_type = _session_module().UniSimTimeout
+        """Run the solver and wait until it is idle (the build time limit
+        ends a solve that never finishes)."""
         try:
-            _, finished = self._session.solve(self._case,
-                                              cap_s=self.solve_cap_s)
-        except timeout_type:
-            raise
+            self._session.solve(self._case)
         except Exception as e:  # noqa: BLE001 - COM raises com_error
             self._warnings.append(f"Could not run the solver ({what}): {e}")
-            return
-        if not finished:
-            self._warnings.append(
-                f"UniSim was still solving after {self.solve_cap_s:g} s "
-                f"({what})")
 
     def _check_solve_status(self) -> None:
-        """Turn UniSim's inconsistent variables and unsolved streams into
-        warnings that name the object."""
+        """Turn UniSim's inconsistent variables into warnings that name the
+        object."""
         try:
             status = self._session.solve_status(self._case)
         except Exception as e:  # noqa: BLE001
@@ -970,72 +954,6 @@ class UniSimWriter:
             self._warnings.append(
                 f"UniSim flags {item['object']} {item['variable']} as "
                 f"inconsistent (two specifications fight)")
-        empty = status['empty_streams']
-        if empty:
-            self._warnings.append(
-                f"{len(empty)} stream(s) without flow, pressure or "
-                f"temperature after the solve (unsolved): "
-                f"{', '.join(empty[:10])}{' …' if len(empty) > 10 else ''}")
-
-    def _check_write_access(self, flowsheet) -> None:
-        """Fail fast when UniSim refuses variable writes in this case.
-
-        A write-restricted case (licence server unreachable, or a case saved
-        from a restricted session) accepts ``MaterialStreams.Add`` but refuses
-        ``SetValue`` with E_ACCESSDENIED, which would otherwise end as a case
-        with zero operations and a page of warnings. The probe stream is
-        removed again.
-
-        Raises:
-            RuntimeError: When the probe write is refused with E_ACCESSDENIED.
-        """
-        session_mod = _session_module()
-        existing = set()
-        try:
-            streams = flowsheet.MaterialStreams
-            existing = {str(streams.Item(i).name) for i in range(streams.Count)}
-        except Exception:  # noqa: BLE001
-            pass
-        probe_name = 'neqsim_write_probe'
-        while probe_name in existing:
-            probe_name += '_'
-        created = None
-        try:
-            probe = flowsheet.MaterialStreams.Add(probe_name)
-            created = str(probe.name)  # UniSim may rename it
-            time.sleep(self.COM_DELAY_SHORT)
-            probe.Temperature.SetValue(25.0, 'C')
-            refused = None
-        except Exception as e:  # noqa: BLE001 - COM raises com_error
-            refused = e
-        finally:
-            if created is not None and created not in existing:
-                self._remove_stream(flowsheet, created)
-        if refused is None:
-            logger.info("Write probe passed: the case accepts SetValue")
-            return
-        if session_mod.is_access_denied(refused):
-            source = ('the template' if self._template_path
-                      else 'the new blank case')
-            raise RuntimeError(
-                f"UniSim refuses writes in {source} (E_ACCESSDENIED). Check "
-                f"that the UniSim licence server is reachable, then retry; if "
-                f"it is, pass template_path= a case saved from a normal "
-                f"licensed UniSim session. COM error: {refused}") from refused
-        self._warnings.append(f"Write probe failed (not access denied): "
-                              f"{refused}")
-
-    @staticmethod
-    def _remove_stream(flowsheet, name: str) -> None:
-        """Remove a material stream by name (collections use Remove(i))."""
-        try:
-            streams = flowsheet.MaterialStreams
-            for i in range(streams.Count - 1, -1, -1):
-                if str(streams.Item(i).name) == name:
-                    streams.Remove(i)
-                    return
-        except Exception:  # noqa: BLE001
-            pass
 
     def build_from_process_system(self, process_system,
                                   save_path: Optional[str] = None) -> Any:
@@ -1074,7 +992,6 @@ class UniSimWriter:
         """Build an entire process system into a UniSim flowsheet."""
         # 1. Fluid package
         self._setup_fluid_package(ps.fluid, basis_manager)
-        self._check_write_access(flowsheet)
 
         # 2. Feed streams
         for feed in ps.feed_streams:
@@ -1388,12 +1305,28 @@ class UniSimWriter:
             op = flowsheet.Operations.Add(unit.name, unisim_type)
             time.sleep(self.COM_DELAY_SHORT)
         except Exception as e:
+            if _session_module().is_access_denied(e):
+                source = ('the template' if self._template_path
+                          else 'the new blank case')
+                raise RuntimeError(
+                    f"UniSim refuses to add operations to {source} "
+                    f"(E_ACCESSDENIED). Check that the UniSim licence server "
+                    f"is reachable, then retry; if it is, pass template_path= "
+                    f"a case saved from a normal licensed UniSim session. "
+                    f"COM error: {e}") from e
             self._warnings.append(
                 f"Could not create operation '{unit.name}' "
                 f"(type={unisim_type}): {e}")
             return
 
-        self._ensure_operation_name(op, unit.name)
+        try:
+            actual = str(op.name)
+        except Exception:  # noqa: BLE001
+            actual = unit.name
+        if actual != unit.name:
+            self._warnings.append(
+                f"UniSim created operation '{unit.name}' as '{actual}'; look "
+                f"it up as '{actual}' in the saved case")
         self._operation_objects[unit.name] = op
 
         # Wire feeds
@@ -1410,30 +1343,6 @@ class UniSimWriter:
 
         logger.info(
             f"Created operation: {unit.name} ({unit.type_name} -> {unisim_type})")
-
-    def _ensure_operation_name(self, op, requested: str) -> None:
-        """Rename an operation that UniSim created under a default name.
-
-        ``Operations.Add`` can return an operation named ``K-100`` instead of
-        the requested name without raising, and later lookups by name in the
-        saved case then fail.
-        """
-        try:
-            actual = str(op.name)
-        except Exception:  # noqa: BLE001
-            return
-        if actual == requested:
-            return
-        try:
-            op.name = requested
-            actual = str(op.name)
-        except Exception:  # noqa: BLE001
-            pass
-        if actual != requested:
-            self._warnings.append(
-                f"UniSim created operation '{requested}' as '{actual}' and "
-                f"refused the rename; look it up as '{actual}' in the saved "
-                f"case")
 
     def _wire_feeds(self, flowsheet, op, unit: ParsedUnit):
         """Connect feed streams to an operation."""
@@ -1866,8 +1775,7 @@ def main():
         help='Only validate JSON — do not create UniSim file')
     arg_parser.add_argument(
         '--template', default=None,
-        help='Path to a .usc to start from (opened as a copy; optional — '
-             'the writer probes write access on a blank case)')
+        help='Path to a .usc to start from (opened as a copy; optional)')
     arg_parser.add_argument(
         '--hidden', action='store_true',
         help='Run UniSim without its window and end it after the build')

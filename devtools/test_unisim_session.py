@@ -13,7 +13,7 @@ import pytest
 sys.path.insert(0, os.path.dirname(__file__))
 
 from unisim_session import (  # noqa: E402
-    UniSimSession, UniSimSessionError, UniSimTimeout, inconsistent_scan, empty_streams)
+    UniSimSession, UniSimSessionError, UniSimTimeout, inconsistent_scan)
 from unisim_writer import ParsedUnit, UniSimWriter  # noqa: E402
 
 DENIED = Exception("(-2147024891, 'Access is denied.', None, None)")
@@ -21,13 +21,11 @@ DENIED = Exception("(-2147024891, 'Access is denied.', None, None)")
 
 # ------------------------------------------------------------------ fake COM
 class Var:
-    def __init__(self, value=1.0, inconsistent=False, refuse=None):
-        self.Value, self.IsInconsistent, self.refuse = value, inconsistent, refuse
+    def __init__(self, inconsistent=False):
+        self.IsInconsistent = inconsistent
         self.erased, self.set_to = False, None
 
     def SetValue(self, value, unit=None):
-        if self.refuse:
-            raise self.refuse
         self.set_to = (value, unit)
 
     def Erase(self):
@@ -35,11 +33,10 @@ class Var:
 
 
 class Stream:
-    def __init__(self, name, empty=(), inconsistent=(), refuse=None):
+    def __init__(self, name, inconsistent=()):
         self.name = name
         for attr in ("MassFlow", "Pressure", "Temperature"):
-            setattr(self, attr, Var(-32767.0 if attr in empty else 1.0,
-                                    attr in inconsistent, refuse))
+            setattr(self, attr, Var(attr in inconsistent))
 
 
 class Coll:
@@ -144,10 +141,9 @@ def test_copy_is_opened_closed_without_saving_and_only_own_pid_ended(tmp_path):
     source = tmp_path / "plant.usc"
     source.write_bytes(b"case")
     os.chmod(source, stat.S_IREAD)
-    session, app, killed = make_session([set(), {42}], pid_file=str(tmp_path / "pid"))
+    session, app, killed = make_session([set(), {42}])
     try:
         with session:
-            assert (tmp_path / "pid").read_text() == "42"
             case = session.open_copy(source)
             copy = case.path
             assert copy != str(source.resolve())
@@ -157,7 +153,6 @@ def test_copy_is_opened_closed_without_saving_and_only_own_pid_ended(tmp_path):
     finally:
         os.chmod(source, stat.S_IWRITE | stat.S_IREAD)
     assert app.quit and killed == [42]
-    assert not (tmp_path / "pid").exists()
     assert session.report["sources_unchanged"] is True
     assert session.report["popups"][0]["text"] == "Efficiency above 100 %"
     assert not os.path.exists(copy)
@@ -174,19 +169,17 @@ def test_changed_source_is_reported(tmp_path):
             session.close_case(case)
 
 
-def test_limit_ends_own_process_raises_once_and_session_restarts():
+def test_limit_ends_own_process_and_raises_once():
     session, _, killed = make_session([set(), {42}])
     session.start()
     with pytest.raises(UniSimTimeout, match="slow step exceeded"):
         with session.limit(0.05, "slow step"):
             time.sleep(0.3)
-    assert killed == [42] and not session.usable
-    with session.limit(0.05, "slow step"):  # a fresh, fast block is not a timeout
-        pass
+    assert killed[0] == 42
     session.close()  # the timeout was already raised once
 
 
-def test_reader_does_not_retry_open_after_its_limit_ended_unisim(tmp_path):
+def test_reader_closes_its_session_after_a_timeout(tmp_path):
     from unisim_reader import UniSimReader
     source = tmp_path / "plant.usc"
     source.write_bytes(b"case")
@@ -202,22 +195,21 @@ def test_reader_does_not_retry_open_after_its_limit_ended_unisim(tmp_path):
     reader._session = session.start()
     with pytest.raises(UniSimTimeout, match="reading plant.usc exceeded"):
         reader.read(str(source), export_e300=False)
-    assert len(opens) == 1
-    reader.close(error=True)
+    assert len(opens) == 1 and reader._session is None
 
 
-def test_solve_status_names_inconsistent_and_empty_objects():
+def test_inconsistent_scan_names_streams_and_tee_splits():
     tee = type("Tee", (), {"name": "TEE-1", "TypeName": "teeop",
                            "Splits": Var(inconsistent=(False, True))})()
     other_tee = type("Tee", (), {"name": "TEE-2", "TypeName": "teeop",
                                  "Splits": Var(inconsistent=(False, False))})()
-    sub = Flowsheet(streams=[Stream("s3", empty=("Pressure",))])
+    sub = Flowsheet(streams=[Stream("s3", inconsistent=("Pressure",))])
     sub.name = "TPL1"
     fs = Flowsheet(streams=[Stream("s1", inconsistent=("Temperature",)), Stream("s2")],
                    ops=[tee, other_tee], subs=[sub])
     assert inconsistent_scan(fs) == [{"object": "Main/s1", "variable": "Temperature"},
-                                     {"object": "Main/TEE-1", "variable": "Splits"}]
-    assert empty_streams(fs) == ["Main/TPL1/s3"]
+                                     {"object": "Main/TEE-1", "variable": "Splits"},
+                                     {"object": "Main/TPL1/s3", "variable": "Pressure"}]
 
 
 # ------------------------------------------------------------------ writer
@@ -254,29 +246,15 @@ def test_compressor_without_efficiency_warns_about_unisim_default():
     assert any("default 75 %" in w for w in writer.warnings)
 
 
-def test_renamed_operation_is_renamed_back_or_reported():
-    writer = UniSimWriter()
-    op = Compressor("K-100")
-    writer._ensure_operation_name(op, "compressor")
-    assert op.name == "compressor" and writer.warnings == []
-
-    class Stubborn(Compressor):
-        def __setattr__(self, key, value):
-            if key == "name" and "name" in self.__dict__:
-                return
-            super().__setattr__(key, value)
-    writer._ensure_operation_name(Stubborn("K-101"), "compressor2")
-    assert "as 'K-101'" in writer.warnings[0]
-
-
-def test_write_probe_raises_on_access_denied_and_keeps_existing_streams():
+def test_renamed_operation_is_reported_and_denied_add_raises():
     writer = UniSimWriter()
     fs = Flowsheet()
-    fs.MaterialStreams.make = lambda name: Stream(name, refuse=DENIED)
-    with pytest.raises(RuntimeError, match="licence server"):
-        writer._check_write_access(fs)
-    assert fs.MaterialStreams.Count == 0
+    fs.Operations.make = lambda name, kind: type("Op", (), {"name": "VLV-100"})()
+    writer._create_operation(fs, ParsedUnit("valve1", "ThrottlingValve"), None)
+    assert "as 'VLV-100'" in writer.warnings[0]
 
-    writable = Flowsheet(streams=[Stream("neqsim_write_probe")])
-    writer._check_write_access(writable)
-    assert [s.name for s in writable.MaterialStreams.items] == ["neqsim_write_probe"]
+    def refuse(name, kind):
+        raise DENIED
+    fs.Operations.make = refuse
+    with pytest.raises(RuntimeError, match="licence server"):
+        writer._create_operation(fs, ParsedUnit("valve2", "ThrottlingValve"), None)

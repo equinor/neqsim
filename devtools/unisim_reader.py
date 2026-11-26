@@ -861,8 +861,7 @@ class UniSimReader:
     CASE_OPEN_TIMEOUT_S = 300.0
 
     def __init__(self, visible: bool = False,
-                 time_limit_s: Optional[float] = 1800.0,
-                 pid_file: Optional[str] = None):
+                 time_limit_s: Optional[float] = 1800.0):
         """Initialize but don't start UniSim yet.
 
         Args:
@@ -871,13 +870,10 @@ class UniSimReader:
                 reader's own UniSim process is ended and ``UniSimTimeout`` is
                 raised instead of hanging (for example on a modal dialog the
                 watchdog cannot dismiss). ``None`` disables the limit.
-            pid_file: Optional file the own UniSim PID is written to, so a
-                parent process can end exactly that UniSim.
         """
         self._app = None
         self._session = None
         self._visible = visible
-        self._pid_file = pid_file
         self.time_limit_s = time_limit_s
         #: Report of the last closed session (PIDs, sources, pop-ups).
         self.session_report: Dict[str, Any] = {}
@@ -921,19 +917,14 @@ class UniSimReader:
         """
         if self._session is None:
             self._session = _session_module().UniSimSession(
-                visible=self._visible, pid_file=self._pid_file)
-        if self._session.usable:
-            self._app = self._session.app
-            return
-        logger.info("Starting own UniSim Design process via COM...")
+                visible=self._visible)
         if self._session.app is None:
+            logger.info("Starting own UniSim Design process via COM...")
             self._session.start()
-        else:
-            self._session.restart()  # a time limit ended the previous process
+            self._wait_ready(lambda: self._session.app.SimulationCases.Count,
+                             self.APP_START_TIMEOUT_S, 'UniSim to start')
+            logger.info("UniSim started (PID %s).", self._session.pid)
         self._app = self._session.app
-        self._wait_ready(lambda: self._app.SimulationCases.Count,
-                         self.APP_START_TIMEOUT_S, 'UniSim to start')
-        logger.info("UniSim started (PID %s).", self._session.pid)
 
     def close(self, error: bool = False):
         """Close the cases, quit and end the reader's own UniSim process.
@@ -997,13 +988,17 @@ class UniSimReader:
 
         if self._session is None:
             self._session = _session_module().UniSimSession(
-                visible=self._visible, pid_file=self._pid_file)
+                visible=self._visible)
         # Startup (Visible, readiness) counts against the read limit as well.
-        with self._session.limit(self.time_limit_s,
-                                 f"reading {os.path.basename(usc_path)}"):
-            self._ensure_app()
-            return self._read_case(usc_path, extract_streams, export_e300,
-                                   e300_output_dir)
+        try:
+            with self._session.limit(self.time_limit_s,
+                                     f"reading {os.path.basename(usc_path)}"):
+                self._ensure_app()
+                return self._read_case(usc_path, extract_streams, export_e300,
+                                       e300_output_dir)
+        except _session_module().UniSimTimeout:
+            self.close(error=True)  # finished; the next read starts a new one
+            raise
 
     def _read_case(self, usc_path: str, extract_streams: bool,
                    export_e300: bool, e300_output_dir: Optional[str]
@@ -1087,11 +1082,11 @@ class UniSimReader:
         return model
 
     def _solve_status_report(self, case) -> Dict[str, Any]:
-        """Record which objects of the stored case are unsolved or inconsistent.
+        """Record whether the stored case is still solving or inconsistent.
 
         An unsolved case is otherwise only visible as ``-32767`` values. The
-        report names the streams and variables so a caller can tell a missing
-        specification from a NeqSim conversion problem.
+        report names the variables so a caller can tell a fight between
+        specifications from a NeqSim conversion problem.
         """
         source = next((s for s in reversed(self._session.report['sources'])),
                       {})
@@ -1105,21 +1100,15 @@ class UniSimReader:
             logger.warning("UniSim flags %d inconsistent variable(s): %s",
                            len(status['inconsistent']),
                            status['inconsistent'][:10])
-        if status['empty_streams']:
-            logger.warning("%d stream(s) have no flow, pressure or "
-                           "temperature (unsolved): %s",
-                           len(status['empty_streams']),
-                           status['empty_streams'][:10])
         return report
 
     def _open_case(self, usc_path: str):
-        """Open a copy of a case, retrying once in a fresh own UniSim process.
+        """Open a copy of a case in the reader's own UniSim process.
 
         ``SimulationCases.Open`` raises a bare ``com_error`` that says nothing
-        about the cause. A wedged UniSim process is recoverable by a restart.
-        ``E_ACCESSDENIED`` has been seen both for cases that need a UniSim
-        extension or licensed module that is not installed and while the
-        licence server was unreachable, so the final error names both.
+        about the cause. ``E_ACCESSDENIED`` has been seen both for cases that
+        need a UniSim extension or licensed module that is not installed and
+        while the licence server was unreachable, so the error names both.
 
         Args:
             usc_path: Absolute path to the .usc case.
@@ -1132,26 +1121,15 @@ class UniSimReader:
         """
         try:
             return self._session.open_copy(usc_path)
-        except Exception as first_error:  # noqa: BLE001 - COM raises com_error
-            if self._session.ended_by_limit:
-                raise  # the read limit ended UniSim; read() raises UniSimTimeout
-            logger.warning("Open failed (%s); retrying in a fresh UniSim "
-                           "process", first_error)
-            self._session.restart()
-            self._app = self._session.app
-            try:
-                return self._session.open_copy(usc_path)
-            except Exception as retry_error:  # noqa: BLE001
-                if self._session.ended_by_limit:
-                    raise
-                raise RuntimeError(
-                    f"UniSim refused to open '{os.path.basename(usc_path)}'. "
-                    f"This usually means the case needs a UniSim extension or "
-                    f"licensed module that is not installed (for example the "
-                    f"CCC controls or equation-oriented electrical packages), "
-                    f"the licence server is unreachable, or the file is "
-                    f"corrupt. COM error: {retry_error}"
-                ) from retry_error
+        except Exception as error:  # noqa: BLE001 - COM raises com_error
+            raise RuntimeError(
+                f"UniSim refused to open '{os.path.basename(usc_path)}'. "
+                f"This usually means the case needs a UniSim extension or "
+                f"licensed module that is not installed (for example the "
+                f"CCC controls or equation-oriented electrical packages), "
+                f"the licence server is unreachable, or the file is "
+                f"corrupt. COM error: {error}"
+            ) from error
 
     @staticmethod
     def _get_reference_composition(model: UniSimModel,

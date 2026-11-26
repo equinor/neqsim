@@ -237,53 +237,40 @@ with UniSimSession(visible=True) as session:        # own UniSim process, ended 
 
 ### Own the UniSim process (`devtools/unisim_session.py`)
 
-COM attaches to a UniSim that is already running instead of starting a
-private one, and a modal dialog blocks every COM call. Before the session
-helper, the reader and writer used `dynamic.Dispatch(...)` and finished with
-`app.Quit()`: a user's open UniSim was driven and then closed, an unattended
-run could hang (one solve in another UniSim tool sat for more than 12 h on an
-"efficiency above 100 %" message), the reader opened the user's `.usc` itself,
-and an unsolved case was visible only as `-32767` values.
-
-`UniSimReader` and `UniSimWriter` now run everything through `UniSimSession`;
-add-on skills should import it rather than write their own:
+COM attaches to a UniSim that is already running, and a modal dialog blocks
+every COM call (one unattended solve sat for more than 12 h on an "efficiency
+above 100 %" message). `UniSimReader` and `UniSimWriter` therefore run through
+`UniSimSession`; add-on skills should import it rather than write their own:
 
 | Guard | What the session does |
 |---|---|
-| Own process only | While any `UniSimDesign.exe` runs, nothing is dispatched (COM would attach to it): wait up to 60 s for it to close, otherwise raise `UniSimSessionError`. Then start UniSim late-bound with `CoCreateInstanceEx` and require exactly one UniSim process afterwards; if another started at the same moment, raise without driving or quitting either. On close: `Close(False)` and `Quit()` with a 120 s deadline, then end only the own PID if it is still alive. `pid_file=` publishes the own PID for a parent process. |
-| Pop-up watchdog | Background thread (win32gui, no COM) records and dismisses dialogs of the own PID: OK / Close / Cancel / No, never Yes. Events are in `session.popups`; the writer turns each into a warning and the reader logs them and stores them in `model.session_report["popups"]`. |
-| Wall-clock limits | `session.limit(seconds, what)` and `session.solve(case, cap_s)` end the own process at the limit and raise `UniSimTimeout` once; `session.usable` is then False and reader/writer restart a fresh process on their next call. Reader and writer default to `time_limit_s=1800` per read/build (`--time-limit-s` on both CLIs, 0 disables). |
-| Work on a copy | `session.open_copy(path)` copies to a temp folder, clears the read-only flag `shutil.copy2` keeps, opens the copy, closes it with `Close(False)` and compares the source SHA-256 before and after (`UniSimSessionError` if it changed). |
-| Solve status | `session.solve_status(case)` returns `is_solving`, stream `MassFlow`/`Pressure`/`Temperature` and tee `Splits` flagged `IsInconsistent`, and streams whose values are empty, with flowsheet paths. |
+| Own process only | While any `UniSimDesign.exe` runs, nothing is dispatched: wait up to 60 s for it to close, otherwise raise `UniSimSessionError`. After a late-bound `CoCreateInstanceEx`, exactly one UniSim must exist, otherwise raise. On close: `Close(False)` and `Quit()` with a 120 s deadline, then end only the own PID. |
+| Pop-up watchdog | Records and dismisses dialogs of the own PID (OK / Close / Cancel / No, never Yes). The writer lists them as warnings; the reader stores them in `model.session_report["popups"]`. |
+| Wall-clock limit | `session.limit(seconds, what)` ends the own process and raises `UniSimTimeout` once. The session is then finished; reader and writer close it, and their next call starts a new one. Default `time_limit_s=1800` per read/build (`--time-limit-s` on both CLIs, 0 disables). |
+| Work on a copy | `session.open_copy(path)` opens a writable temp copy, closes it with `Close(False)` and raises `UniSimSessionError` if the source SHA-256 changed. |
+| Solve status | `session.solve_status(case)` returns `is_solving` and the stream `MassFlow`/`Pressure`/`Temperature` and tee `Splits` flagged `IsInconsistent`, with flowsheet paths. |
 
 ```python
-from unisim_session import UniSimSession, UniSimTimeout
+from unisim_session import UniSimSession
 
 with UniSimSession() as session:
-    case = session.open_copy(r"C:\models\plant.usc")
-    seconds, finished = session.solve(case, cap_s=600)   # UniSimTimeout at cap + 30 s
-    status = session.solve_status(case)                  # {"is_solving", "inconsistent", "empty_streams"}
-    session.close_case(case)
-print(session.report)   # pids, sources + hashes, popups, solves, timeouts
+    with session.limit(1800, "study"):                 # UniSimTimeout instead of a hang
+        case = session.open_copy(r"C:\models\plant.usc")
+        session.solve(case)                            # CanSolve = True, wait until idle
+        status = session.solve_status(case)            # {"is_solving", "inconsistent"}
+        session.close_case(case)
+print(session.report)   # pids, sources + hashes, popups, timeouts
 ```
 
-Rules that still hold:
-
-- Verified on R510 (2026-11-26): a second session started while the first
-  ran refused without dispatching and left the first process running and
-  usable; a TUTOR1 read through the reader took about 10 s and left no UniSim
-  process and an unchanged source hash.
-- **One UniSim at a time on a machine.** A second session refuses to start
-  while another UniSim stays open; close it (or end the orphan) first. Batch
-  runs stay sequential, one subprocess per case: `unisim_batch_check.py`
-  gives each child's reader a limit below `--timeout`, and if a child is
-  killed anyway it ends only the UniSim PID that child reported, so one hung
-  case cannot block the rest. `UniSimNeqSimBridge` closes its reader before
-  starting its writer and vice versa.
-- Known gap: a hang inside COM activation itself (before UniSim has a PID)
-  is not covered by the time limit; it has not been seen.
-- `pywin32` is imported only when a session starts, so the module, the reader
-  and the writer import (and their tests run) without Windows.
+- **One UniSim at a time on a machine.** Close any other UniSim (or end the
+  orphan) before a run. `unisim_batch_check.py` gives each child's reader a
+  limit below `--timeout` and closes UniSim right after the read; if a child
+  is killed anyway, later cases stop with "UniSim is already running".
+  `UniSimNeqSimBridge` holds either its reader or its writer, never both.
+- Not covered: a hang inside COM activation, before UniSim has a PID (not seen).
+- Verified on R510 (2026-11-26): a second session refused while the first ran
+  and left it usable; a TUTOR1 read left no UniSim process and the source
+  unchanged.
 
 ### Prefer readiness polling over fixed sleeps
 
@@ -301,8 +288,7 @@ TUTOR1 read from 18.3 s to 6.8 s and the 66-case corpus from 816 s to 656 s.
 R510 `CCC Series 5\*` controls cases and the EO electrical case). The files are
 not read-only — verified. The same error came from `Open` while the licence
 server was unreachable and disappeared once it was reachable (issue #5271).
-`UniSimReader._open_case()` retries once in a fresh own UniSim process and then
-raises a `RuntimeError` naming both causes.
+`UniSimReader._open_case()` raises a `RuntimeError` naming both causes.
 
 ### 1.1 Extracting Binary Interaction Parameters (BIPs / kij)
 
@@ -1745,8 +1731,8 @@ script doing `SimulationCases.Item(i)` gets `IndexError`. Every script must
 open the case itself. Use `UniSimSession.open_copy(path)` for every run: each
 run gets a fresh copy of the source, so repeated runs cannot stack duplicate
 feeds onto the same mixer, and the source file is checked unchanged on close.
-Wrap each step in `session.limit(...)` or use `session.solve(case, cap_s)` so a
-pop-up the watchdog cannot dismiss ends the run with `UniSimTimeout`.
+Wrap each step in `session.limit(...)` so a pop-up the watchdog cannot
+dismiss ends the run with `UniSimTimeout`.
 
 ### Interpreting a tie-in result
 
@@ -1770,7 +1756,7 @@ pop-up the watchdog cannot dismiss ends the run with `UniSimTimeout`.
 | Issue | Cause | Fix |
 |-------|-------|-----|
 | `pywintypes.com_error` | UniSim not installed or wrong version | Verify UniSim installation |
-| Empty stream values | Stream not solved in UniSim | Check `model.session_report["empty_streams"]` and `["inconsistent"]`; open the file in UniSim GUI and run the solver first |
+| Empty stream values | Stream not solved in UniSim | Check `model.session_report["inconsistent"]`; open the file in UniSim GUI and run the solver first |
 | `-32767` values | UniSim empty marker | Filter with `val > -30000` check |
 | COM timeout | Large model loading | Increase `CASE_OPEN_TIMEOUT_S` (readiness polling) |
 | `UniSimSessionError: no dedicated UniSim process started` | Another UniSim (a user's session or an orphan) is running | Close it or end the orphan, then rerun; the session never drives or quits it |
@@ -1930,7 +1916,7 @@ from unisim_writer import UniSimWriter   # toolkit module; in a checkout put dev
 
 with UniSimWriter(visible=True) as writer:   # own UniSim process; template optional
     writer.build_from_json(json_str, save_path="gas_compression.usc")
-    print(writer.get_build_report())         # pop-ups, unsolved streams, renames end up here
+    print(writer.get_build_report())         # pop-ups, inconsistent variables, renames end up here
 ```
 
 `template_path="case.usc"` (with `clear_template=True` to empty it) still
@@ -1939,23 +1925,18 @@ works; the template is opened as a temporary copy and never modified, and
 
 ### Verified COM rules (UniSim Design R510)
 
-1. **A blank case is writable when the licence server is reachable; the writer
-   probes before building.** Building a compressor loop (mixer, heater,
-   separator, compressor, cooler, tee, valve, recycle; SRK, 11 library
-   components) in `SimulationCases.Add()` worked end to end: basis change, 11
-   streams, 9 operations, a solve and `SaveAs`; the saved file, reopened in a
-   new session, accepted `SetValue`, `MaterialStreams.Add`, `Operations.Add`
-   and `Solver.CanSolve` toggling (issue #5271). The only `E_ACCESSDENIED`
+1. **A blank case is writable when the licence server is reachable; no
+   template needed.** Building a compressor loop (mixer, heater, separator,
+   compressor, cooler, tee, valve, recycle; SRK, 11 library components) in
+   `SimulationCases.Add()` worked end to end, and the saved file, reopened,
+   accepted `SetValue`, `MaterialStreams.Add`, `Operations.Add` and
+   `Solver.CanSolve` toggling (issue #5271). The only `E_ACCESSDENIED`
    (`-2147024891`) came from `SimulationCases.Open` while the licence server
-   was unreachable. The rule this replaces came from a run where a `.usc`
-   saved from a blank case refused every `Operations.Add` and
-   `variable.SetValue` ("Operations created: 0" with 10+ access-denied
-   warnings); that is consistent with a licence-state effect but was not
-   re-tested. The writer therefore adds a
-   probe stream, calls `Temperature.SetValue`, removes it, and on
-   `E_ACCESSDENIED` raises `RuntimeError` naming the licence server and
-   `template_path` instead of building an empty case. Re-checked 2026-11-25:
-   the probe passed on a blank R510 case and the case was built and saved.
+   was unreachable. An older run saw a `.usc` saved from a blank case refuse
+   every `Operations.Add` ("Operations created: 0"), likely the same licence
+   effect. The writer therefore raises `RuntimeError` naming the licence
+   server and `template_path` when `Operations.Add` is refused with
+   `E_ACCESSDENIED`, instead of saving an empty case.
 2. **Fluid-package edits require a basis change.** Wrap component add/remove in
    `BasisManager.StartBasisChange()` … `EndBasisChange()` (or the
    `…Invisibly` variants). Outside a basis change, `Components.Add` returns
@@ -1990,16 +1971,14 @@ works; the template is opened as a temporary copy and never modified, and
    efficiency.
 8. **`Operations.Add` can rename silently.** `Operations.Add("Compressor",
    "compressor")` returned an operation named `K-100` without an error. The
-   writer compares `op.name` with the requested name, sets it back, and warns
-   if UniSim refuses the rename (setting `name` through COM is not yet
-   verified on R510; the warning names the real object).
+   writer compares `op.name` with the requested name and warns with the real
+   name.
 9. **A zero-flow recycle loop solves.** A tee product at zero mass flow, a
    valve and a recycle back to a mixer solved without special handling, so a
    loop can be written closed and opened later in UniSim.
-10. **Report what did not solve.** After the solve the writer reads
-    `solve_status`: every variable flagged `IsInconsistent` and every stream
-    without flow, pressure or temperature becomes a named warning, and every
-    dismissed pop-up is listed in the build report.
+10. **Report what did not solve.** After the solve every variable UniSim
+    flags `IsInconsistent` and every dismissed pop-up becomes a named warning
+    in the build report.
 
 Discover member names for an unfamiliar operation with early binding
 (`win32com.client.gencache.EnsureDispatch`) in a throwaway process, then keep

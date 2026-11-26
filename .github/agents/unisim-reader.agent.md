@@ -544,7 +544,7 @@ Two hard rules:
 | `UniSimTimeout` | A pop-up the watchdog could not dismiss, or a read/solve over the limit | Report the pop-ups in `model.session_report["popups"]`; raise `time_limit_s` only for a genuinely large case |
 | "no result file" across a batch | `unisim_reader.py` was edited while the batch ran | Re-run the batch after the edit; never edit mid-run |
 | File won't open | Corrupted/wrong version | Try with `visible=True` to see error |
-| Empty compositions | Stream not solved | Check `model.session_report["empty_streams"]`; open in UniSim GUI, run solver first |
+| Empty compositions | Stream not solved | Check `model.session_report["inconsistent"]`; open in UniSim GUI, run solver first |
 | `NullPointerException ... is null` on run | Equipment built with a None inlet | Converter must synthesise a boundary feed |
 | `Feed tray index must be between 0 and N-1` | Column/absorber fed outside 0..n-1 | NeqSim trays run bottom=0 to top=n-1 |
 | Run TIMEOUT on a column case | Converted column iterating without converging | Hard iteration cap on the column |

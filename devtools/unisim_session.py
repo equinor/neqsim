@@ -7,17 +7,18 @@ call, so an unattended run can hang for hours. ``UniSimSession`` is the shared
 frame that ``unisim_reader`` and ``unisim_writer`` use and that add-on skills
 can import instead of writing their own:
 
-1. **Own process only.** ``DispatchEx`` plus a before/after process-list diff.
-   If no new UniSim process appears, COM attached to a running UniSim: wait for
-   a closing one, otherwise refuse. On close, quit and end only the own PID.
+1. **Own process only.** Nothing is dispatched while any UniSim runs; after
+   the dispatch exactly one UniSim must exist. On close, quit and end only the
+   own PID.
 2. **Pop-up watchdog.** A thread records and dismisses modal dialogs of the own
    process (OK / Close / Cancel / No, never Yes).
-3. **Wall-clock limits.** ``limit(seconds)`` and ``solve(case, cap_s)`` end the
-   own process at the limit, so the caller gets ``UniSimTimeout``, not a hang.
+3. **Wall-clock limit.** ``limit(seconds)`` ends the own process at the limit,
+   so the caller gets ``UniSimTimeout``, not a hang. The session is finished
+   after a timeout: close it and start a new one.
 4. **Work on a copy.** ``open_copy`` opens a writable temporary copy, closes it
    with ``Close(False)`` and checks the SHA-256 of the source before and after.
-5. **Solve status.** ``solve_status`` reports ``IsSolving``, variables flagged
-   ``IsInconsistent`` and streams whose values are UniSim's empty marker.
+5. **Solve status.** ``solve_status`` reports ``IsSolving`` and the variables
+   UniSim flags ``IsInconsistent``.
 
 Usage::
 
@@ -26,10 +27,10 @@ Usage::
     with UniSimSession(visible=False) as session:
         with session.limit(1800, "study"):
             case = session.open_copy(r"C:\\models\\plant.usc")
-            seconds, finished = session.solve(case, cap_s=600)
+            session.solve(case)
             status = session.solve_status(case)
             session.close_case(case)
-    session.report   # pid, sources and hashes, popups, solves, timeouts
+    session.report   # pid, sources and hashes, popups, timeouts
 
 Windows only at run time (pywin32); importing the module needs nothing extra.
 """
@@ -54,11 +55,9 @@ PROG_ID = "UnisimDesign.Application"
 IMAGE = "UniSimDesign.exe"
 #: HRESULT of E_ACCESSDENIED as pywin32 prints it.
 ACCESS_DENIED = -2147024891
-#: UniSim writes -32767 for an empty value; anything below this is empty.
-EMPTY_BELOW = -30000.0
 #: Dialog buttons the watchdog may press, in order of preference.
 SAFE_BUTTONS = ("ok", "close", "cancel", "no")
-#: Stream variables scanned for IsInconsistent and empty values.
+#: Stream variables scanned for IsInconsistent.
 STREAM_FLAGS = ("MassFlow", "Pressure", "Temperature")
 
 
@@ -257,16 +256,6 @@ def _name(obj) -> str:
     return str(_safe(lambda: obj.name) or "").strip()
 
 
-def _value(variable_owner, attr: str) -> Optional[float]:
-    """Number of a stream variable, or None when empty or unreadable."""
-    for read in (lambda: getattr(variable_owner, attr + "Value"),
-                 lambda: getattr(variable_owner, attr).Value):
-        number = _safe(lambda: float(read()))
-        if number is not None:
-            return None if number < EMPTY_BELOW else number
-    return None
-
-
 def is_solving(case) -> bool:
     """``case.Solver.IsSolving``; False when the property is missing."""
     return bool(_safe(lambda: case.Solver.IsSolving))
@@ -288,15 +277,6 @@ def inconsistent_scan(flowsheet, path: str = "Main") -> List[Dict[str, str]]:
     return out
 
 
-def empty_streams(flowsheet, path: str = "Main") -> List[str]:
-    """Streams where MassFlow, Pressure or Temperature holds no value."""
-    out = [f"{path}/{_name(s)}" for s in _items(_safe(lambda: flowsheet.MaterialStreams))
-           if any(_value(s, attr) is None for attr in STREAM_FLAGS)]
-    for sub in _items(_safe(lambda: flowsheet.Flowsheets)):
-        out += empty_streams(sub, f"{path}/{_name(sub)}")
-    return out
-
-
 # ---------------------------------------------------------------------------
 # The session
 # ---------------------------------------------------------------------------
@@ -309,8 +289,7 @@ class UniSimSession:
 
     def __init__(self, visible: bool = False, work_dir: Optional[str] = None,
                  watch_popups: bool = True, wait_closing_s: float = 60.0,
-                 poll_closing_s: float = 2.0, pid_file: Optional[str] = None,
-                 shutdown_limit_s: float = 120.0,
+                 poll_closing_s: float = 2.0, shutdown_limit_s: float = 120.0,
                  _dispatch: Optional[Callable[[], Any]] = None,
                  _pids: Optional[Callable[[], Iterable[int]]] = None,
                  _watchdog: Optional[Callable[[Set[int]], Any]] = None,
@@ -318,9 +297,6 @@ class UniSimSession:
                  _sleep: Optional[Callable[[float], None]] = None):
         self.visible, self.watch_popups = visible, watch_popups
         self.wait_closing_s, self.poll_closing_s = wait_closing_s, poll_closing_s
-        #: The own PID is written here once started, so a parent that kills
-        #: this script can end exactly that UniSim (``unisim_batch_check``).
-        self.pid_file = pid_file
         #: Close(False) and Quit() get this long before the own PID is ended.
         self.shutdown_limit_s = shutdown_limit_s
         self._dispatch = _dispatch or _dispatch_ex
@@ -337,15 +313,7 @@ class UniSimSession:
         self.watchdog = None
         #: Label of a limit that fired and has not been raised yet.
         self.timed_out: Optional[str] = None
-        #: True after a limit ended the process; ``restart()`` clears it.
-        self.ended_by_limit = False
-        self.report: Dict[str, Any] = {"pids": [], "sources": [], "popups": [], "solves": [],
-                                       "timeouts": []}
-
-    @property
-    def usable(self) -> bool:
-        """True while the own process runs and no limit has ended it."""
-        return self.app is not None and not self.ended_by_limit
+        self.report: Dict[str, Any] = {"pids": [], "sources": [], "popups": [], "timeouts": []}
 
     # -- lifetime -------------------------------------------------------------
 
@@ -362,12 +330,9 @@ class UniSimSession:
             return self
         self.app, self.pid, waited = start_owned_unisim(
             self._dispatch, self._pids, self.wait_closing_s, self.poll_closing_s, self._sleep)
-        self.ended_by_limit = False
         self.report["pids"].append(self.pid)
         if waited:
             self.report["waited_for_closing_unisim"] = waited
-        if self.pid_file:
-            Path(self.pid_file).write_text(str(self.pid), encoding="ascii")
         try:
             if self.watch_popups:
                 self.watchdog = self._watchdog({self.pid})
@@ -377,11 +342,6 @@ class UniSimSession:
             raise
         logger.info("Started own UniSim process %s", self.pid)
         return self
-
-    def restart(self) -> "UniSimSession":
-        """End the own process (closing its cases) and start a fresh one."""
-        self._end_process()
-        return self.start()
 
     def close(self, error: bool = False) -> None:
         """Close every open case, quit and end the own process, check sources.
@@ -431,8 +391,6 @@ class UniSimSession:
             if self.pid in set(_safe(self._pids) or ()):
                 self._kill(self.pid)  # no orphan when Quit did not end it; only ever the own PID
             self.pid = None
-            if self.pid_file:
-                _safe(lambda: os.remove(self.pid_file))
 
     # -- limits ---------------------------------------------------------------
 
@@ -441,7 +399,6 @@ class UniSimSession:
             if self.pid is None:
                 return
             self.timed_out = what
-            self.ended_by_limit = True
             self.report["timeouts"].append({"what": what, "pid": self.pid})
             logger.error("%s: ending own UniSim process %s", what, self.pid)
             self._kill(self.pid)
@@ -458,7 +415,7 @@ class UniSimSession:
         """End the own process when the block takes longer than ``seconds``.
 
         ``None`` or 0 disables the limit. Raises ``UniSimTimeout`` once when it
-        fires; ``usable`` is then False until ``restart()``.
+        fires; the session is then finished and must be closed.
         """
         if not seconds:
             yield
@@ -541,30 +498,22 @@ class UniSimSession:
 
     # -- solving --------------------------------------------------------------
 
-    def solve(self, case, cap_s: float = 600.0, poll_s: float = 0.5,
-              grace_s: float = 30.0) -> Tuple[float, bool]:
-        """Switch the solver on and wait until it is idle or ``cap_s`` passes.
+    def solve(self, case, poll_s: float = 0.5) -> float:
+        """Switch the solver on and wait until it is idle; returns seconds.
 
-        ``CanSolve = True`` can block until the solve ends, so the own process is
-        ended ``grace_s`` after the cap and ``UniSimTimeout`` is raised. Returns
-        ``(seconds, finished)``.
+        Run it inside ``limit()``: ``CanSolve = True`` can block until the
+        solve ends, and only the limit ends a solve that never does.
         """
         start = time.monotonic()
-        with self.limit(cap_s + grace_s, f"solve (cap {cap_s:g} s)"):
-            case.Solver.CanSolve = True
-            while is_solving(case) and time.monotonic() - start < cap_s:
-                self._sleep(poll_s)
-            finished = not is_solving(case)
-        seconds = round(time.monotonic() - start, 1)
-        self.report["solves"].append({"seconds": seconds, "finished": finished, "cap_s": cap_s})
-        return seconds, finished
+        case.Solver.CanSolve = True
+        while is_solving(case):
+            self._sleep(poll_s)
+        return round(time.monotonic() - start, 1)
 
     def solve_status(self, case) -> Dict[str, Any]:
-        """Solver state, inconsistent variables and streams without values."""
-        flowsheet = case.Flowsheet
+        """Solver state and the variables UniSim flags as inconsistent."""
         return {"is_solving": is_solving(case),
-                "inconsistent": inconsistent_scan(flowsheet),
-                "empty_streams": empty_streams(flowsheet)}
+                "inconsistent": inconsistent_scan(case.Flowsheet)}
 
     @property
     def popups(self) -> List[Dict[str, Any]]:

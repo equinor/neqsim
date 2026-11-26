@@ -26,19 +26,6 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 if HERE not in sys.path:
     sys.path.insert(0, HERE)
 
-from unisim_session import kill_pid, pids_of  # noqa: E402
-
-
-def _end_child_unisim(pid_file: str) -> None:
-    """End the UniSim a killed child reported in ``pid_file``, if it still runs."""
-    try:
-        with open(pid_file, encoding='ascii') as handle:
-            pid = int(handle.read().strip())
-    except (OSError, ValueError):
-        return
-    if pid in pids_of():
-        kill_pid(pid)
-
 
 def _undefined_names(source: str) -> List[str]:
     """Return names loaded in a generated module that are never bound in it.
@@ -90,8 +77,7 @@ def _undefined_names(source: str) -> List[str]:
 
 
 def convert_one(usc_path: str, work_dir: str, run_model: bool = False,
-                time_limit_s: Optional[float] = None,
-                pid_file: Optional[str] = None) -> Dict[str, Any]:
+                time_limit_s: Optional[float] = None) -> Dict[str, Any]:
     """Read one UniSim case and grade the NeqSim conversion.
 
     Args:
@@ -120,12 +106,12 @@ def convert_one(usc_path: str, work_dir: str, run_model: bool = False,
         'ok': False,
     }
 
-    reader = UniSimReader(visible=False, time_limit_s=time_limit_s,
-                          pid_file=pid_file)
+    reader = UniSimReader(visible=False, time_limit_s=time_limit_s)
     try:
         t0 = time.time()
         model = reader.read(local_copy, extract_streams=True,
                             export_e300=True, e300_output_dir=work_dir)
+        reader.close()  # UniSim is not needed for the conversion
         record['read_s'] = round(time.time() - t0, 1)
         record['stage'] = 'read'
 
@@ -219,14 +205,12 @@ def main() -> int:
     parser.add_argument('--timeout', type=int, default=900)
     parser.add_argument('--time-limit-s', type=float, default=None,
                         help=argparse.SUPPRESS)
-    parser.add_argument('--unisim-pid-file', default=None,
-                        help=argparse.SUPPRESS)
     parser.add_argument('--run-model', action='store_true')
     args = parser.parse_args()
 
     if args.single:
         record = convert_one(args.single, args.work_dir, args.run_model,
-                             args.time_limit_s, args.unisim_pid_file)
+                             args.time_limit_s)
         with open(args.out, 'w', encoding='utf-8') as handle:
             json.dump(record, handle, indent=2)
         return 0 if record.get('ok') else 1
@@ -250,11 +234,9 @@ def main() -> int:
     for index, case in enumerate(cases, start=1):
         out_path = os.path.join(args.work_dir, f'_case_{index}.json')
         os.makedirs(args.work_dir, exist_ok=True)
-        pid_file = os.path.join(args.work_dir, f'_case_{index}.unisim_pid')
         cmd = [sys.executable, os.path.abspath(__file__),
                '--single', case, '--out', out_path,
                '--work-dir', os.path.join(args.work_dir, f'case_{index}'),
-               '--unisim-pid-file', pid_file,
                # the reader ends its own UniSim before the subprocess is killed
                '--time-limit-s', str(max(args.timeout * 0.8, args.timeout - 60))]
         if args.run_model:
@@ -263,10 +245,6 @@ def main() -> int:
         try:
             subprocess.run(cmd, timeout=args.timeout, capture_output=True)
         except subprocess.TimeoutExpired:
-            # Killing the Python child leaves the UniSim it started running,
-            # and every later case would refuse to start beside it. End only
-            # the UniSim the child reported as its own.
-            _end_child_unisim(pid_file)
             results.append({'case': os.path.basename(case), 'source': case,
                             'ok': False, 'error': 'TIMEOUT',
                             'elapsed_s': round(time.time() - started, 1)})
