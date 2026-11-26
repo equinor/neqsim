@@ -44,36 +44,19 @@ class AdsorptionCookbookDocumentationTest {
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertTrue(compiler != null, "A JDK is required for the literal documentation examples");
     StringWriter diagnostics = new StringWriter();
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
       assertTrue(
-          compiler
-              .getTask(
-                  diagnostics,
-                  manager,
-                  null,
-                  Arrays.asList(
-                      "-source",
-                      "8",
-                      "-target",
-                      "8",
-                      "-classpath",
-                      System.getProperty("java.class.path"),
-                      "-d",
-                      directory.toString()),
-                  null,
-                  manager.getJavaFileObjects(file.toFile()))
-              .call(),
+          compiler.getTask(diagnostics, manager, null,
+              Arrays.asList("-source", "8", "-target", "8", "-classpath", System.getProperty("java.class.path"), "-d",
+                  directory.toString()),
+              null, manager.getJavaFileObjects(file.toFile())).call(),
           diagnostics.toString());
     }
 
-    try (URLClassLoader loader =
-        new URLClassLoader(new URL[] {directory.toUri().toURL()}, getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {directory.toUri().toURL()},
+        getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
-      loader
-          .loadClass(className)
-          .getMethod("main", String[].class)
-          .invoke(null, (Object) new String[0]);
+      loader.loadClass(className).getMethod("main", String[].class).invoke(null, (Object) new String[0]);
     }
   }
 
@@ -82,16 +65,14 @@ class AdsorptionCookbookDocumentationTest {
     String guide = guide();
     assertFalse(Pattern.compile("(?m)^#\\s+").matcher(guide).find());
     assertEquals(3, guide.split("```java", -1).length - 1);
-    assertTrue(
-        guide.contains(
-            "[`AdsorptionCookbookDocumentationTest`](../../src/test/java/neqsim/documentation/AdsorptionCookbookDocumentationTest.java)"));
+    assertTrue(guide.contains(
+        "[`AdsorptionCookbookDocumentationTest`](../../src/test/java/neqsim/documentation/AdsorptionCookbookDocumentationTest.java)"));
     assertTrue(guide.contains("./mvnw -Dtest=AdsorptionCookbookDocumentationTest test"));
   }
 
   @Test
   void competitiveEquilibriumProgramCompilesAndRuns() throws Exception {
-    compileAndRun(
-        "<!-- adsorption-example: competitive-equilibrium -->", "CompetitiveAdsorptionScreen");
+    compileAndRun("<!-- adsorption-example: competitive-equilibrium -->", "CompetitiveAdsorptionScreen");
   }
 
   @Test
