@@ -238,26 +238,6 @@ public final class SlugFilmCoupling {
   }
 
   /**
-   * Reconstruct while retaining an accepted active-set choice for Newton trial states.
-   *
-   * <p>
-   * When contrast is disabled, the geometric overlap is retained but every returned face and subcell state is the
-   * unchanged mean cell. This lets one nonlinear solve keep the accepted reconstruction branch even when a finite
-   * difference probe would otherwise cross the admissibility threshold.
-   * </p>
-   *
-   * @param section cell with seven conservative variables
-   * @param slugs accepted tracked geometry
-   * @param contrastEnabled whether body/film contrast may be represented in this solve
-   * @return immutable reconstruction with the exact geometric body fraction
-   */
-  static Reconstruction reconstruct(TwoFluidSection section, List<SlugBubbleUnit> slugs, boolean contrastEnabled) {
-    Reconstruction reconstruction = reconstruct(section, slugs);
-    return contrastEnabled || !reconstruction.isActive() ? reconstruction
-        : unchanged(section, reconstruction.getBodyFraction());
-  }
-
-  /**
    * Return clones of the original state when no admissible reconstruction is needed.
    *
    * @param section original cell

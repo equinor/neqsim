@@ -83,8 +83,6 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
 
   private final TwoFluidConservationEquations equations;
   private final TwoFluidSection[] acceptedTemplates;
-  private boolean[] linearizationSlugReconstructionActivity;
-  private double latestEvaluationTime = Double.NaN;
   private final double spatialStep;
   private final PhaseDensityModel densityModel;
   private final ActiveSetController activeSetController;
@@ -222,20 +220,12 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
   @Override
   public synchronized void beginLinearization(double[][] state, double[] pressure) {
     validateShape(state, pressure, "linearization");
-    if (Double.isFinite(latestEvaluationTime)) {
-      linearizationSlugReconstructionActivity = equations
-          .classifyConservativeSlugReconstructionActivity(createTrialSections(state, pressure, latestEvaluationTime));
-    }
     activeSetController.beginLinearization(copyMatrixArray(state), pressure.clone());
   }
 
   @Override
   public synchronized void endLinearization() {
-    try {
-      activeSetController.endLinearization();
-    } finally {
-      linearizationSlugReconstructionActivity = null;
-    }
+    activeSetController.endLinearization();
   }
 
   @Override
@@ -256,7 +246,6 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     if (outletPressureFixed && (!(outletPressure > 0.0) || !Double.isFinite(outletPressure))) {
       throw new IllegalArgumentException("A fixed outlet pressure must be positive and finite");
     }
-    latestEvaluationTime = time;
 
     TwoFluidSection[] trialSections = createTrialSections(state, pressure, time);
 
@@ -273,18 +262,15 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
       double savedOutletPressure = equations.getOutletBoundaryPressure();
       double savedInterpolationTimeScale = equations.getPressureInterpolationTimeScale();
       boolean savedConservativeFriction = equations.isConservativeFrictionEnabled();
-      boolean[] savedReconstructionActivity = equations.getFrozenConservativeSlugReconstructionActivity();
       try {
         equations.setOutletBoundaryPressure(outletPressureFixed ? outletPressure : Double.NaN);
         equations.setPressureInterpolationTimeScale(pressureInterpolationTimeScale);
         equations.setConservativeFrictionEnabled(conservativeFrictionSplitEnabled);
-        equations.setFrozenConservativeSlugReconstructionActivity(linearizationSlugReconstructionActivity);
         transport = equations.evaluateTransactional(trialSections, spatialStep);
       } finally {
         equations.setOutletBoundaryPressure(savedOutletPressure);
         equations.setPressureInterpolationTimeScale(savedInterpolationTimeScale);
         equations.setConservativeFrictionEnabled(savedConservativeFriction);
-        equations.setFrozenConservativeSlugReconstructionActivity(savedReconstructionActivity);
       }
     }
     double[] cellLengthsM = new double[trialSections.length];
@@ -371,18 +357,15 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
       double savedOutletPressure = equations.getOutletBoundaryPressure();
       double savedInterpolationTimeScale = equations.getPressureInterpolationTimeScale();
       boolean savedConservativeFriction = equations.isConservativeFrictionEnabled();
-      boolean[] savedReconstructionActivity = equations.getFrozenConservativeSlugReconstructionActivity();
       try {
         equations.setOutletBoundaryPressure(outletPressureFixed ? outletPressure : Double.NaN);
         equations.setPressureInterpolationTimeScale(pressureInterpolationTimeScale);
         equations.setConservativeFrictionEnabled(conservativeFrictionSplitEnabled);
-        equations.setFrozenConservativeSlugReconstructionActivity(linearizationSlugReconstructionActivity);
         evaluation = equations.evaluateTransactional(midpoint, spatialStep);
       } finally {
         equations.setOutletBoundaryPressure(savedOutletPressure);
         equations.setPressureInterpolationTimeScale(savedInterpolationTimeScale);
         equations.setConservativeFrictionEnabled(savedConservativeFriction);
-        equations.setFrozenConservativeSlugReconstructionActivity(savedReconstructionActivity);
       }
     }
     double[][] rates = evaluation.getRates();

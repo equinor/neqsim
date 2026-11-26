@@ -46,11 +46,7 @@ experimental and off by default. When it is paired with explicit
 untracked cells and applies reconstructed body/film friction once to accepted tracked cells.
 A first geometric overlap owns that implicit source even before an admissible body/film contrast
 can be reconstructed; that threshold cell uses its unchanged mean-cell friction closure. This keeps
-the friction owner independent of Newton's trial state while a marker enters a new cell. The unsplit
-transport adapter classifies body/film contrast at the base state of each nonlinear iteration and
-freezes that choice for the repeated base residual, every finite-difference column and the ensuing
-line search. The choice is refreshed after an accepted Newton update, so a probe cannot activate a
-different reconstruction branch inside one iteration.
+the friction owner independent of Newton's trial state while a marker enters a new cell.
 Rejected attempts cannot advance marker state or publish a source impulse. Keep
 `setUnsplitPressureInterpolationEnabled(false)` when using reconstructed slug faces. The 0.1 s
 Tengesdal startup probe uses this configuration at 16 cells with 0.1 and 0.05 s steps and at
