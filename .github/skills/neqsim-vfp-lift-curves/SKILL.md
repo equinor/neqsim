@@ -1,7 +1,7 @@
 ---
 name: neqsim-vfp-lift-curves
 description: "Generate deliverable VFPPROD and VFPINJ lift curve tables (vertical lift performance, tubing performance, THP and BHP tables) for Eclipse and OPM Flow from calibrated well, flowline and topside models with NeqSim VfpTableBuilder, TubingVlpProvider, ForwardVlpProvider and EclipseVFPExporter. USE WHEN: a simulator needs lift curves, a VFP table is built from tubing, flowline or full-system models and validated by IPR x VFP, or an existing deck shows U-shaped BHP, extrapolation or a dry-gas jump."
-last_verified: "2026-11-24"
+last_verified: "2026-11-26"
 ---
 
 # VFP lift curves (VFPPROD / VFPINJ) for Eclipse and OPM Flow
@@ -187,8 +187,8 @@ exporter uses a placeholder correlation and logs a warning. The JSON face is `ne
   (`getCollapsedEvaluations()` counts them; report the count). A constant or NaN floor sent the bisection to the upper bound and filled 40 % of a table with the no-flow value.
   Gas rates above the line's erosional capacity legitimately end as no-flow cells; list them as the line capacity, do not interpolate across them.
 - **Forward model that jumps across the target** (flow-regime switch or a riser going from liquid-loaded to flowing): no inlet pressure gives the target outlet pressure, and
-  the secant and bisection used to end in NaN ("Infeasible VFP coordinate"; a 1050-point riser table failed after 51 minutes). `ForwardVlpProvider` now stops when the bracket
-  is narrower than `setBracketTolerance(bar)` (default 0.001 bar) and returns its midpoint; `getDiscontinuousRoots()` counts those points. Report the count with the table.
+  the secant and bisection used to end in NaN ("Infeasible VFP coordinate"; a 1050-point riser table failed after 51 minutes). `ForwardVlpProvider` returns the bracket midpoint only when finite forward evaluations straddle the target
+  and the inlet interval is narrower than `setBracketTolerance(bar)` (default 0.001 bar). A collapsed evaluation guides the search only. If the target remains below the feasible outlets, the provider returns `NaN`. Report `getDiscontinuousRoots()` with the table.
 - **Monotonicity repairs change the physics at low rates.** For a 3.1 km riser with 100 m rise, `RateMonotoneMode.FULL` raised 253 of 1050 points (largest 4.5 bar) and the
   outlet-pressure repair another 97 (largest 10.7 bar). The table then overstated the riser inlet pressure by up to 4.1 bar against the live `PipeBeggsAndBrills` model at
   late-life rates, worth 17 % on field oil rate in a coupled well-network solution (measured 2026-11). The simulator needs the monotone table; report the repair count and

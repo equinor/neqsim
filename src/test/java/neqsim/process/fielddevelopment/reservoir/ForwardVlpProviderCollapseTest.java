@@ -42,6 +42,50 @@ class ForwardVlpProviderCollapseTest {
     assertTrue(provider.getCollapsedEvaluations() >= 1);
   }
 
+  /** A collapse-to-flow transition cannot locate an outlet pressure below the first feasible value. */
+  @Test
+  void collapseBoundaryDoesNotSupplyADiscontinuousRoot() {
+    ForwardVlpProvider provider = new ForwardVlpProvider(FAILS_BELOW_THRESHOLD).setCollapsedProfileDrop(30.0);
+    double inlet = provider.bottomHolePressure(1000.0, 4.0, 0.0, 0.0, 0.0);
+    assertTrue(Double.isNaN(inlet), "The lowest feasible outlet is 4.5 bara; returned inlet " + inlet);
+    assertTrue(provider.getCollapsedEvaluations() > 0);
+    assertEquals(0, provider.getDiscontinuousRoots());
+  }
+
+  /** A wide bracket tolerance must allow the search to continue past a synthetic lower endpoint to a real root. */
+  @Test
+  void wideBracketWithACollapsedEndpointStillFindsAReachableTarget() {
+    ForwardVlpProvider.ForwardPressureModel model = (rate, inlet, wr, gr, alq) -> {
+      if (inlet < 17.0) {
+        return Double.NaN;
+      }
+      return inlet < 18.0 ? 5.0 : inlet - 12.0;
+    };
+    ForwardVlpProvider provider = new ForwardVlpProvider(model).setCollapsedProfileDrop(30.0).setBracketTolerance(25.0);
+    double inlet = provider.bottomHolePressure(1000.0, 5.0, 0.0, 0.0, 0.0);
+    assertEquals(5.0, model.outletPressure(1000.0, inlet, 0.0, 0.0, 0.0), 0.02);
+    assertEquals(0, provider.getDiscontinuousRoots());
+  }
+
+  /** Even a large pressure tolerance cannot accept a failed model evaluation as a normal root. */
+  @Test
+  void syntheticResidualInsideToleranceIsNeverAccepted() {
+    ForwardVlpProvider provider = new ForwardVlpProvider(FAILS_BELOW_THRESHOLD).setCollapsedProfileDrop(1.0)
+        .setTolerance(2.0);
+    double inlet = provider.bottomHolePressure(1000.0, 4.0, 0.0, 0.0, 0.0);
+    assertTrue(inlet >= 16.5 && Math.abs((inlet - 12.0) - 4.0) < 2.0, "Returned inlet " + inlet);
+    assertEquals(0, provider.getDiscontinuousRoots());
+  }
+
+  /** Numerical overflow in the forward model cannot supply the upper endpoint of a discontinuity. */
+  @Test
+  void infiniteOutletCannotEstablishAJump() {
+    ForwardVlpProvider provider = new ForwardVlpProvider(
+        (rate, inlet, wr, gr, alq) -> inlet < 30.0 ? inlet - 5.0 : Double.POSITIVE_INFINITY);
+    assertTrue(Double.isNaN(provider.bottomHolePressure(1000.0, 26.0, 0.0, 0.0, 0.0)));
+    assertEquals(0, provider.getDiscontinuousRoots());
+  }
+
   @Test
   void aRealNoFlowRegionStillEndsAsNaN() {
     ForwardVlpProvider provider = new ForwardVlpProvider(new ForwardVlpProvider.ForwardPressureModel() {
