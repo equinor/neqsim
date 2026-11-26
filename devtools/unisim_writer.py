@@ -822,18 +822,21 @@ class UniSimWriter:
 
         if not systems:
             raise ValueError("No process systems found in JSON")
-        if save_path and self._template_path and os.path.normcase(
-                os.path.abspath(save_path)) == os.path.normcase(
-                    os.path.abspath(self._template_path)):
+        if save_path and self._template_path and self._same_file(
+                save_path, self._template_path):
             raise ValueError(
                 "save_path is the template file; save the built case to a "
                 "new path (the template is only ever read as a copy)")
 
-        self._ensure_app()
+        if self._session is None:
+            self._session = _session_module().UniSimSession(
+                visible=self._visible)
         popup_mark = len(self._session.popups)
         try:
+            # Startup (Visible, first COM calls) counts against the limit too.
             with self._session.limit(self.time_limit_s,
                                      "building the UniSim case"):
+                self._ensure_app()
                 self._build(systems, save_path)
         finally:
             for popup in self._session.popups[popup_mark:]:
@@ -842,9 +845,24 @@ class UniSimWriter:
                     f"{popup.get('title')}: {popup.get('text')}")
         return self._case
 
+    @staticmethod
+    def _same_file(path_a: str, path_b: str) -> bool:
+        """True when both paths name one file, including through junctions,
+        symlinks and hard links."""
+        try:
+            return os.path.samefile(path_a, path_b)
+        except OSError:  # save_path does not exist yet
+            return os.path.normcase(os.path.realpath(path_a)) == \
+                os.path.normcase(os.path.realpath(path_b))
+
     def _build(self, systems: List['ParsedProcessSystem'],
                save_path: Optional[str]) -> None:
         """Body of ``build_from_json`` once the own UniSim process runs."""
+        # COM objects of an earlier build belong to another case (or a
+        # UniSim process a time limit ended); never wire against them.
+        self._stream_objects.clear()
+        self._operation_objects.clear()
+        self._fp_component_names = []
         # Create or open a simulation case
         self._case = self._open_or_create_case()
 
@@ -972,16 +990,27 @@ class UniSimWriter:
             RuntimeError: When the probe write is refused with E_ACCESSDENIED.
         """
         session_mod = _session_module()
+        existing = set()
+        try:
+            streams = flowsheet.MaterialStreams
+            existing = {str(streams.Item(i).name) for i in range(streams.Count)}
+        except Exception:  # noqa: BLE001
+            pass
         probe_name = 'neqsim_write_probe'
+        while probe_name in existing:
+            probe_name += '_'
+        created = None
         try:
             probe = flowsheet.MaterialStreams.Add(probe_name)
+            created = str(probe.name)  # UniSim may rename it
             time.sleep(self.COM_DELAY_SHORT)
             probe.Temperature.SetValue(25.0, 'C')
             refused = None
         except Exception as e:  # noqa: BLE001 - COM raises com_error
             refused = e
         finally:
-            self._remove_stream(flowsheet, probe_name)
+            if created is not None and created not in existing:
+                self._remove_stream(flowsheet, created)
         if refused is None:
             logger.info("Write probe passed: the case accepts SetValue")
             return

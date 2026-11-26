@@ -861,7 +861,8 @@ class UniSimReader:
     CASE_OPEN_TIMEOUT_S = 300.0
 
     def __init__(self, visible: bool = False,
-                 time_limit_s: Optional[float] = 1800.0):
+                 time_limit_s: Optional[float] = 1800.0,
+                 pid_file: Optional[str] = None):
         """Initialize but don't start UniSim yet.
 
         Args:
@@ -870,10 +871,13 @@ class UniSimReader:
                 reader's own UniSim process is ended and ``UniSimTimeout`` is
                 raised instead of hanging (for example on a modal dialog the
                 watchdog cannot dismiss). ``None`` disables the limit.
+            pid_file: Optional file the own UniSim PID is written to, so a
+                parent process can end exactly that UniSim.
         """
         self._app = None
         self._session = None
         self._visible = visible
+        self._pid_file = pid_file
         self.time_limit_s = time_limit_s
         #: Report of the last closed session (PIDs, sources, pop-ups).
         self.session_report: Dict[str, Any] = {}
@@ -916,7 +920,8 @@ class UniSimReader:
         never attached to or quit; see ``unisim_session``.
         """
         if self._session is None:
-            self._session = _session_module().UniSimSession(visible=self._visible)
+            self._session = _session_module().UniSimSession(
+                visible=self._visible, pid_file=self._pid_file)
         if self._session.usable:
             self._app = self._session.app
             return
@@ -990,9 +995,13 @@ class UniSimReader:
         if not os.path.exists(usc_path):
             raise FileNotFoundError(f"UniSim file not found: {usc_path}")
 
-        self._ensure_app()
+        if self._session is None:
+            self._session = _session_module().UniSimSession(
+                visible=self._visible, pid_file=self._pid_file)
+        # Startup (Visible, readiness) counts against the read limit as well.
         with self._session.limit(self.time_limit_s,
                                  f"reading {os.path.basename(usc_path)}"):
+            self._ensure_app()
             return self._read_case(usc_path, extract_streams, export_e300,
                                    e300_output_dir)
 

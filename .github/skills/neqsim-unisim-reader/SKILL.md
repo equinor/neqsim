@@ -250,7 +250,7 @@ add-on skills should import it rather than write their own:
 
 | Guard | What the session does |
 |---|---|
-| Own process only | Starts UniSim late-bound with `CoCreateInstanceEx`, diffs the `UniSimDesign.exe` process list, waits up to 60 s for a UniSim that is closing, otherwise raises `UniSimSessionError`. A running UniSim is never driven or quit. On close: `Quit()`, then end only the own PID if it is still alive. |
+| Own process only | While any `UniSimDesign.exe` runs, nothing is dispatched (COM would attach to it): wait up to 60 s for it to close, otherwise raise `UniSimSessionError`. Then start UniSim late-bound with `CoCreateInstanceEx` and require exactly one UniSim process afterwards; if another started at the same moment, raise without driving or quitting either. On close: `Close(False)` and `Quit()` with a 120 s deadline, then end only the own PID if it is still alive. `pid_file=` publishes the own PID for a parent process. |
 | Pop-up watchdog | Background thread (win32gui, no COM) records and dismisses dialogs of the own PID: OK / Close / Cancel / No, never Yes. Events are in `session.popups`; the writer turns each into a warning and the reader logs them and stores them in `model.session_report["popups"]`. |
 | Wall-clock limits | `session.limit(seconds, what)` and `session.solve(case, cap_s)` end the own process at the limit and raise `UniSimTimeout` once; `session.usable` is then False and reader/writer restart a fresh process on their next call. Reader and writer default to `time_limit_s=1800` per read/build (`--time-limit-s` on both CLIs, 0 disables). |
 | Work on a copy | `session.open_copy(path)` copies to a temp folder, clears the read-only flag `shutil.copy2` keeps, opens the copy, closes it with `Close(False)` and compares the source SHA-256 before and after (`UniSimSessionError` if it changed). |
@@ -269,17 +269,19 @@ print(session.report)   # pids, sources + hashes, popups, solves, timeouts
 
 Rules that still hold:
 
-- Verified on R510 (2026-11-25): a second session started while the first
-  ran attached to the first UniSim, refused after its wait, and left the first
-  process running and usable; a TUTOR1 read through the reader took 9.1 s and
-  left no UniSim process and an unchanged source hash.
+- Verified on R510 (2026-11-26): a second session started while the first
+  ran refused without dispatching and left the first process running and
+  usable; a TUTOR1 read through the reader took about 10 s and left no UniSim
+  process and an unchanged source hash.
 - **One UniSim at a time on a machine.** A second session refuses to start
   while another UniSim stays open; close it (or end the orphan) first. Batch
   runs stay sequential, one subprocess per case: `unisim_batch_check.py`
   gives each child's reader a limit below `--timeout`, and if a child is
-  killed anyway it ends the UniSim processes that appeared during that case,
-  so one hung case cannot block the rest. `UniSimNeqSimBridge` closes its
-  reader before starting its writer and vice versa.
+  killed anyway it ends only the UniSim PID that child reported, so one hung
+  case cannot block the rest. `UniSimNeqSimBridge` closes its reader before
+  starting its writer and vice versa.
+- Known gap: a hang inside COM activation itself (before UniSim has a PID)
+  is not covered by the time limit; it has not been seen.
 - `pywin32` is imported only when a session starts, so the module, the reader
   and the writer import (and their tests run) without Windows.
 

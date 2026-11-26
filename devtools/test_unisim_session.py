@@ -126,9 +126,16 @@ def make_session(pid_sets, **kw):
 
 
 # ------------------------------------------------------------------ session
-def test_running_unisim_is_refused_and_never_quit():
+def test_running_unisim_is_refused_without_being_dispatched():
     session, app, killed = make_session([{11}], wait_closing_s=0.1, poll_closing_s=0.05)
     with pytest.raises(UniSimSessionError, match="already running"):
+        session.start()
+    assert app.Visible is None and not app.quit and killed == []
+
+
+def test_unclear_ownership_after_dispatch_is_refused():
+    session, app, killed = make_session([set(), {42, 43}])
+    with pytest.raises(UniSimSessionError, match="expected one UniSim"):
         session.start()
     assert not app.quit and killed == []
 
@@ -137,9 +144,10 @@ def test_copy_is_opened_closed_without_saving_and_only_own_pid_ended(tmp_path):
     source = tmp_path / "plant.usc"
     source.write_bytes(b"case")
     os.chmod(source, stat.S_IREAD)
-    session, app, killed = make_session([{11}, {11, 42}])
+    session, app, killed = make_session([set(), {42}], pid_file=str(tmp_path / "pid"))
     try:
         with session:
+            assert (tmp_path / "pid").read_text() == "42"
             case = session.open_copy(source)
             copy = case.path
             assert copy != str(source.resolve())
@@ -149,6 +157,7 @@ def test_copy_is_opened_closed_without_saving_and_only_own_pid_ended(tmp_path):
     finally:
         os.chmod(source, stat.S_IWRITE | stat.S_IREAD)
     assert app.quit and killed == [42]
+    assert not (tmp_path / "pid").exists()
     assert session.report["sources_unchanged"] is True
     assert session.report["popups"][0]["text"] == "Efficiency above 100 %"
     assert not os.path.exists(copy)
@@ -260,7 +269,7 @@ def test_renamed_operation_is_renamed_back_or_reported():
     assert "as 'K-101'" in writer.warnings[0]
 
 
-def test_write_probe_raises_on_access_denied_and_removes_probe_stream():
+def test_write_probe_raises_on_access_denied_and_keeps_existing_streams():
     writer = UniSimWriter()
     fs = Flowsheet()
     fs.MaterialStreams.make = lambda name: Stream(name, refuse=DENIED)
@@ -268,6 +277,6 @@ def test_write_probe_raises_on_access_denied_and_removes_probe_stream():
         writer._check_write_access(fs)
     assert fs.MaterialStreams.Count == 0
 
-    writable = Flowsheet()
+    writable = Flowsheet(streams=[Stream("neqsim_write_probe")])
     writer._check_write_access(writable)
-    assert writable.MaterialStreams.Count == 0
+    assert [s.name for s in writable.MaterialStreams.items] == ["neqsim_write_probe"]

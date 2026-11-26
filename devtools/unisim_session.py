@@ -112,35 +112,36 @@ def start_owned_unisim(dispatch: Callable[[], Any], pids: Callable[[], Iterable[
                        ) -> Tuple[Any, int, Optional[Dict[str, Any]]]:
     """Start a UniSim process that this script owns.
 
-    Returns ``(app, pid, waited)``. ``waited`` is None, or a record of the wait
-    for a UniSim that was still closing (a previous script's process). A UniSim
-    that stays open is never driven or quit: ``UniSimSessionError`` is raised.
+    COM attaches to a running UniSim, so nothing is dispatched while any
+    UniSim runs: wait up to ``wait_closing_s`` for it to close, otherwise raise.
+    After the dispatch exactly one UniSim must exist; if another one started
+    at the same moment, ownership is unclear and ``UniSimSessionError`` is
+    raised without driving or quitting either.
+
+    Returns ``(app, pid, waited)``; ``waited`` records a wait for a closing UniSim.
     """
-    before = set(pids())
-    app = dispatch()
-    new = set(pids()) - before
-    if len(new) == 1:
-        return app, next(iter(new)), None
-    del app  # attached to someone else's UniSim: release it, never quit it
+    running = set(pids())
     polls = int(wait_closing_s / poll_closing_s) if poll_closing_s > 0 else 0
-    left = set(before)
+    first = sorted(running)
     for i in range(polls):
+        if not running:
+            break
         sleep(poll_closing_s)
-        left = set(pids())
-        if left:
-            continue
-        app = dispatch()
-        new = set(pids())
-        if len(new) == 1:
-            return app, next(iter(new)), {"pids": sorted(before), "polls": i + 1,
-                                          "seconds": round((i + 1) * poll_closing_s, 1)}
+        running = set(pids())
+    if running:
+        raise UniSimSessionError(
+            f"UniSim is already running (PIDs {sorted(running)}); waited {wait_closing_s:.0f} s "
+            "for it to close. Close it or end the orphan process: a running UniSim is never "
+            "driven or quit.")
+    waited = ({"pids": first, "seconds": round(i * poll_closing_s, 1)} if first else None)
+    app = dispatch()
+    running = set(pids())
+    if len(running) != 1:
         del app
-        left = new
-        break
-    raise UniSimSessionError(
-        f"no dedicated UniSim process started (already running: {sorted(left or before)}); "
-        f"waited {wait_closing_s:.0f} s for it to close. Close the other UniSim or end the "
-        "orphan process: a running UniSim is never driven or quit.")
+        raise UniSimSessionError(
+            f"expected one UniSim process after start, found {sorted(running)} (another "
+            "UniSim started at the same time); none of them is driven or quit.")
+    return app, next(iter(running)), waited
 
 
 # ---------------------------------------------------------------------------
@@ -308,7 +309,8 @@ class UniSimSession:
 
     def __init__(self, visible: bool = False, work_dir: Optional[str] = None,
                  watch_popups: bool = True, wait_closing_s: float = 60.0,
-                 poll_closing_s: float = 2.0,
+                 poll_closing_s: float = 2.0, pid_file: Optional[str] = None,
+                 shutdown_limit_s: float = 120.0,
                  _dispatch: Optional[Callable[[], Any]] = None,
                  _pids: Optional[Callable[[], Iterable[int]]] = None,
                  _watchdog: Optional[Callable[[Set[int]], Any]] = None,
@@ -316,6 +318,11 @@ class UniSimSession:
                  _sleep: Optional[Callable[[float], None]] = None):
         self.visible, self.watch_popups = visible, watch_popups
         self.wait_closing_s, self.poll_closing_s = wait_closing_s, poll_closing_s
+        #: The own PID is written here once started, so a parent that kills
+        #: this script can end exactly that UniSim (``unisim_batch_check``).
+        self.pid_file = pid_file
+        #: Close(False) and Quit() get this long before the own PID is ended.
+        self.shutdown_limit_s = shutdown_limit_s
         self._dispatch = _dispatch or _dispatch_ex
         self._pids = _pids or pids_of
         self._watchdog = _watchdog or (lambda pids: PopupWatchdog(pids).start())
@@ -359,6 +366,8 @@ class UniSimSession:
         self.report["pids"].append(self.pid)
         if waited:
             self.report["waited_for_closing_unisim"] = waited
+        if self.pid_file:
+            Path(self.pid_file).write_text(str(self.pid), encoding="ascii")
         try:
             if self.watch_popups:
                 self.watchdog = self._watchdog({self.pid})
@@ -399,10 +408,20 @@ class UniSimSession:
             raise UniSimSessionError(f"source model changed while its copy was open: {unreported}")
 
     def _end_process(self) -> None:
-        for record in list(self._open):
-            self._close_record(record)
-        if self.app is not None:
-            _safe(self.app.Quit)
+        # Close(False) or Quit() can block on a dialog; end the own PID at a deadline.
+        deadline = None
+        if self.pid is not None and self.shutdown_limit_s:
+            deadline = threading.Timer(self.shutdown_limit_s, self._kill, args=(self.pid,))
+            deadline.daemon = True
+            deadline.start()
+        try:
+            for record in list(self._open):
+                self._close_record(record)
+            if self.app is not None:
+                _safe(self.app.Quit)
+        finally:
+            if deadline is not None:
+                deadline.cancel()
         self.app = None
         if self.watchdog is not None:
             _safe(self.watchdog.stop)
@@ -412,6 +431,8 @@ class UniSimSession:
             if self.pid in set(_safe(self._pids) or ()):
                 self._kill(self.pid)  # no orphan when Quit did not end it; only ever the own PID
             self.pid = None
+            if self.pid_file:
+                _safe(lambda: os.remove(self.pid_file))
 
     # -- limits ---------------------------------------------------------------
 
