@@ -1,6 +1,7 @@
 package neqsim.pvtsimulation.util;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -36,6 +37,94 @@ public final class CompositionalReservoirHistory implements Serializable {
   private final double pressureBara;
   private final double[] fractions;
   private final Step[] steps;
+
+  /**
+   * Initializes a history with the accepted laboratory sample's bulk composition.
+   *
+   * <p>
+   * Restores and flashes an independently owned tuned sample at the supplied reservoir conditions, then derives
+   * gas/oil/aqueous fractions from its EOS phase volumes. These are the same volume convention used by
+   * {@link SimpleReservoir#setReservoirFluid(SystemInterface, double, double, double)}. Every phase therefore receives
+   * the same mole scaling for a trial volume, preserving the sample's overall composition. Mole fractions and
+   * density-corrected volumes are not substitutes for these fractions. No EOS parameter is fitted or changed.
+   * </p>
+   *
+   * <p>
+   * Use the existing constructor when independently specified geological phase volumes intentionally imply a different
+   * bulk composition. This factory assumes a representative homogeneous equilibrium sample; it does not reconstruct
+   * spatially segregated contacts. Caller-accepted EOS/multiphase settings and flash failures remain authoritative.
+   * Missing phases have zero volume; unsupported or duplicate phase types fail explicitly.
+   * </p>
+   *
+   * @param model immutable original/tuned laboratory model bundle
+   * @param historyReference measured history and composition/basis provenance
+   * @param components complete named EOS basis, in the desired history-array order
+   * @param temperatureK fixed reservoir temperature in K
+   * @param pressureBara initial reservoir pressure in bara
+   * @param steps complete measured intervals in time order
+   * @return immutable replay definition preserving the accepted sample composition at initialization
+   * @throws IllegalArgumentException for invalid inputs
+   * @throws IllegalStateException for unsupported, duplicate or invalid-volume equilibrium phases
+   */
+  public static CompositionalReservoirHistory fromSampleComposition(CalibratedPvtModel model, String historyReference,
+      String[] components, double temperatureK, double pressureBara, Step[] steps) {
+    if (model == null) {
+      throw new IllegalArgumentException("Accepted laboratory model required");
+    }
+    requirePositive(temperatureK, "Reservoir temperature");
+    requirePositive(pressureBara, "Initial pressure");
+    SystemInterface sample = model.getTunedFluid();
+    sample.setTemperature(temperatureK);
+    sample.setPressure(pressureBara);
+    new ThermodynamicOperations(sample).TPflash();
+    sample.init(1);
+    return new CompositionalReservoirHistory(model, historyReference, components, temperatureK, pressureBara,
+        samplePhaseVolumeFractions(sample), steps);
+  }
+
+  /**
+   * Validates and converts flashed EOS phase volumes on SimpleReservoir's initialization basis.
+   *
+   * @param sample independently owned, flashed and initialized equilibrium sample
+   * @return gas/oil/aqueous volume fractions, with exact zero for absent phases
+   * @throws IllegalStateException for unsupported, duplicate or invalid-volume phases
+   */
+  static double[] samplePhaseVolumeFractions(SystemInterface sample) {
+    String[] names = {"gas", "oil", "aqueous"};
+    double[] volumes = new double[3];
+    double total = 0.0;
+    for (int phase = 0; phase < sample.getNumberOfPhases(); phase++) {
+      PhaseInterface current = sample.getPhase(phase);
+      String name = current.getPhaseTypeName();
+      int index = -1;
+      for (int i = 0; i < names.length; i++) {
+        if (names[i].equals(name)) {
+          index = i;
+          break;
+        }
+      }
+      if (index < 0 || volumes[index] != 0.0) {
+        throw new IllegalStateException("Unsupported or duplicate initial phase: " + name);
+      }
+      double volume = current.getVolume("m3");
+      if (!Double.isFinite(volume) || volume <= 0.0) {
+        throw new IllegalStateException("Initial EOS phase volume must be finite and positive: " + name);
+      }
+      volumes[index] = volume;
+      total += volume;
+    }
+    if (!Double.isFinite(total) || total <= 0.0) {
+      throw new IllegalStateException("Initial EOS sample volume must be finite and positive");
+    }
+    for (int i = 0; i < volumes.length; i++) {
+      double fraction = volumes[i] / total;
+      if (volumes[i] > 0.0 && fraction == 0.0) {
+        throw new IllegalStateException("Initial EOS phase-volume fraction underflows: " + names[i]);
+      }
+      volumes[i] = fraction;
+    }
+    return volumes;
+  }
 
   /** Immutable measured amounts and optional end-of-interval pressure observation. */
   public static final class Step implements Serializable {
@@ -559,6 +648,34 @@ public final class CompositionalReservoirHistory implements Serializable {
   }
 
   /**
+   * Rejects an interval whose prescribed phase totals cannot leave a positive EOS inventory.
+   *
+   * <p>
+   * This necessary whole-interval mole balance is checked before the first TV flash. Per-substep phase availability
+   * still governs the withdrawal-before-injection protocol; passing this test does not guarantee feasibility.
+   * </p>
+   *
+   * Exact sums of the supplied binary floating-point amounts avoid rejecting positive residual inventories through
+   * cancellation or intermediate overflow. This admission check does not replace the floating-point EOS ledgers.
+   *
+   * @param initialMoles accepted start-of-interval tank inventory in mol
+   * @param step phase-selective interval on the complete named component basis
+   * @throws IllegalStateException if the interval necessarily exhausts total inventory
+   */
+  static void requireFeasiblePhaseInterval(double initialMoles, Step step) {
+    BigDecimal remaining = new BigDecimal(initialMoles);
+    for (double amount : step.injected) {
+      remaining = remaining.add(new BigDecimal(amount));
+    }
+    for (double amount : step.phaseProduced) {
+      remaining = remaining.subtract(new BigDecimal(amount));
+    }
+    if (remaining.signum() <= 0) {
+      throw new IllegalStateException("Phase interval cannot retain a positive finite total component inventory");
+    }
+  }
+
+  /**
    * Returns measured history provenance and basis-conversion reference.
    *
    * @return measured history provenance and basis-conversion reference
@@ -683,6 +800,9 @@ public final class CompositionalReservoirHistory implements Serializable {
       Step step = steps[row];
       int substep = 0;
       try {
+        if (step.isPhaseWithdrawal()) {
+          requireFeasiblePhaseInterval(tank.getReservoirFluid().getTotalNumberOfMoles(), step);
+        }
         int subdivisions = step.getSubsteps();
         for (; substep < subdivisions; substep++) {
           double[] produced = step.isPhaseWithdrawal()

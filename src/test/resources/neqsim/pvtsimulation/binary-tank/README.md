@@ -63,3 +63,32 @@ No oil/water mixing, aqueous phase, well inflow, relative permeability, Bayesian
 posterior, multi-tank transport or Tran RCVD is qualified here. Synthetic
 independent-code agreement is not measured laboratory or field accuracy. Fitted
 pore volume is an in-place quantity, not recoverable reserves.
+
+## Composition-identical sample extension
+
+The separate [same-sample scope](SAME_SAMPLE_SCOPE.md) retains the laboratory
+0.8/0.2 bulk mixture at initial reservoir T/P. `same_sample.py` scales its
+independent lever-rule molar volume to100m3 and derives the corresponding EOS
+phase-volume fractions; the old0.7/0.3 case above remains unchanged.
+[same-sample-reference.json](same-sample-reference.json) contains the full
+laboratory calibration/holdouts and independent reservoir predictions.
+The entire323.15K closed-mass CCE at80/70/60/50bara is withheld from kij fitting,
+as is the original650K CCE. The native test executes
+`ConstantMassExpansion.runNativeExpansion`, preserving every component and phase.
+`test_same_sample.py` adds composition/volume/closed-cell controls and runs the
+independent all-root Gibbs checker on22tank, surface and laboratory states.
+
+`CompositionalReservoirHistory.fromSampleComposition` uses these EOS phase-volume
+fractions, scaling all phase amounts by the same factor at each trial volume.
+The native matrix checks80/100/120m3 initial compositions and inventory scaling,
+matched finite extraction protocols1/2/4/8/16, predicted pressure/composition/GOR,
+pressure-only volume matching and separately withheld outputs. Receipts
+[same-sample-stability.json](same-sample-stability.json),
+[same-sample-native.json](same-sample-native.json) and
+[same-sample-validation.json](same-sample-validation.json) record executed evidence.
+The self-contained [independent review receipt](same-sample-review.json) pins
+reviewed sources and embeds numerical results; its raw diagnostic log names
+identify local intermediate logs, not additional published fixtures.
+The wet/single-phase Java initialization tests qualify composition retention for
+their stated sample settings; the independent binary chain has no water and does
+not independently qualify wet production or a general near-critical solver.

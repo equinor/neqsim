@@ -1,0 +1,177 @@
+{
+  "schema": "binary_pr_same_sample_stability.v1",
+  "states": [
+    {
+      "temperature_k": 323.15,
+      "pressure_bara": 80.0,
+      "liquid_methane_fraction": 0.3164055391309787,
+      "vapor_methane_fraction": 0.9880963452860764,
+      "minimum_gibbs_gap": -5.5594417958104714e-14
+    },
+    {
+      "temperature_k": 323.15,
+      "pressure_bara": 79.5176101113866,
+      "liquid_methane_fraction": 0.31478842583514144,
+      "vapor_methane_fraction": 0.9881358399292148,
+      "minimum_gibbs_gap": -5.601075159233915e-14
+    },
+    {
+      "temperature_k": 323.15,
+      "pressure_bara": 79.0351984040065,
+      "liquid_methane_fraction": 0.3131682773455912,
+      "vapor_methane_fraction": 0.9881748257026371,
+      "minimum_gibbs_gap": -5.268008251846368e-14
+    },
+    {
+      "temperature_k": 323.15,
+      "pressure_bara": 78.55276214722767,
+      "liquid_methane_fraction": 0.3115450732499653,
+      "vapor_methane_fraction": 0.9882133013580768,
+      "minimum_gibbs_gap": -4.9904524956900786e-14
+    },
+    {
+      "temperature_k": 323.15,
+      "pressure_bara": 78.07029861325637,
+      "liquid_methane_fraction": 0.30991879306013753,
+      "vapor_methane_fraction": 0.9882512655442159,
+      "minimum_gibbs_gap": -4.7378767575878555e-14
+    },
+    {
+      "temperature_k": 323.15,
+      "pressure_bara": 77.58780507720286,
+      "liquid_methane_fraction": 0.3082894162117596,
+      "vapor_methane_fraction": 0.9882887168041029,
+      "minimum_gibbs_gap": -4.6351811278100286e-14
+    },
+    {
+      "temperature_k": 323.15,
+      "pressure_bara": 77.10527881708634,
+      "liquid_methane_fraction": 0.3066569220636079,
+      "vapor_methane_fraction": 0.9883256535724669,
+      "minimum_gibbs_gap": -4.621303340002214e-14
+    },
+    {
+      "temperature_k": 323.15,
+      "pressure_bara": 76.62271711388007,
+      "liquid_methane_fraction": 0.30502128989704624,
+      "vapor_methane_fraction": 0.9883620741729165,
+      "minimum_gibbs_gap": -4.3826053897078054e-14
+    },
+    {
+      "temperature_k": 323.15,
+      "pressure_bara": 76.14011725159077,
+      "liquid_methane_fraction": 0.30338249891563074,
+      "vapor_methane_fraction": 0.9883979768150156,
+      "minimum_gibbs_gap": -4.216071936014032e-14
+    },
+    {
+      "temperature_k": 323.15,
+      "pressure_bara": 75.65747651725547,
+      "liquid_methane_fraction": 0.3017405282444114,
+      "vapor_methane_fraction": 0.9884333595912445,
+      "minimum_gibbs_gap": -3.927413949611491e-14
+    },
+    {
+      "temperature_k": 323.15,
+      "pressure_bara": 75.17479220102894,
+      "liquid_methane_fraction": 0.3000953569295586,
+      "vapor_methane_fraction": 0.9884682204738237,
+      "minimum_gibbs_gap": -3.8191672047105385e-14
+    },
+    {
+      "temperature_k": 323.15,
+      "pressure_bara": 74.69206159621234,
+      "liquid_methane_fraction": 0.29844696393777986,
+      "vapor_methane_fraction": 0.9885025573114069,
+      "minimum_gibbs_gap": -3.758104938356155e-14
+    },
+    {
+      "temperature_k": 323.15,
+      "pressure_bara": 74.20928199931353,
+      "liquid_methane_fraction": 0.29679532815585075,
+      "vapor_methane_fraction": 0.9885363678256329,
+      "minimum_gibbs_gap": -3.652633751016765e-14
+    },
+    {
+      "temperature_k": 323.15,
+      "pressure_bara": 73.72645071010487,
+      "liquid_methane_fraction": 0.29514042839013643,
+      "vapor_methane_fraction": 0.9885696496075264,
+      "minimum_gibbs_gap": -3.391731340229853e-14
+    },
+    {
+      "temperature_k": 323.15,
+      "pressure_bara": 73.24356503166003,
+      "liquid_methane_fraction": 0.2934822433660395,
+      "vapor_methane_fraction": 0.9886024001137494,
+      "minimum_gibbs_gap": -3.236300116782331e-14
+    },
+    {
+      "temperature_k": 323.15,
+      "pressure_bara": 72.7606222704414,
+      "liquid_methane_fraction": 0.2918207517276279,
+      "vapor_methane_fraction": 0.9886346166626855,
+      "minimum_gibbs_gap": -3.114175584073564e-14
+    },
+    {
+      "temperature_k": 323.15,
+      "pressure_bara": 72.2776197363476,
+      "liquid_methane_fraction": 0.29015593203711676,
+      "vapor_methane_fraction": 0.988666296430358,
+      "minimum_gibbs_gap": -2.8949065367100957e-14
+    },
+    {
+      "temperature_k": 288.15,
+      "pressure_bara": 1.01325,
+      "liquid_methane_fraction": 0.00553207127662555,
+      "vapor_methane_fraction": 0.9615358504142516,
+      "minimum_gibbs_gap": 0.0
+    },
+    {
+      "temperature_k": 323.15,
+      "pressure_bara": 80.0,
+      "liquid_methane_fraction": 0.3164055391309787,
+      "vapor_methane_fraction": 0.9880963452860764,
+      "minimum_gibbs_gap": -5.5594417958104714e-14
+    },
+    {
+      "temperature_k": 323.15,
+      "pressure_bara": 70.0,
+      "liquid_methane_fraction": 0.282262986864474,
+      "vapor_methane_fraction": 0.9888083033472302,
+      "minimum_gibbs_gap": -2.6145752229922437e-14
+    },
+    {
+      "temperature_k": 323.15,
+      "pressure_bara": 60.0,
+      "liquid_methane_fraction": 0.24675444850970002,
+      "vapor_methane_fraction": 0.9892779583877221,
+      "minimum_gibbs_gap": -1.2850831510036187e-14
+    },
+    {
+      "temperature_k": 323.15,
+      "pressure_bara": 50.0,
+      "liquid_methane_fraction": 0.20977918377645005,
+      "vapor_methane_fraction": 0.9894510713687351,
+      "minimum_gibbs_gap": -8.854028621385623e-15
+    }
+  ],
+  "state_count": 22,
+  "physical_root_checks": 23534,
+  "minimum_gibbs_gap": -5.601075159233915e-14,
+  "maximum_normalized_cubic_residual": 4.419144000621377e-12,
+  "maximum_phase_pressure_relative_residual": 1.9118040484045196e-12,
+  "maximum_log_fugacity_residual": 5.440980999082967e-12,
+  "maximum_fixed_volume_relative_residual": 3.9968028886505635e-14,
+  "maximum_lever_rule_relative_residual": 1.5680356293603113e-16,
+  "maximum_global_component_balance_mol": 1.1641532182693481e-10,
+  "source_sha256": "f7cbf982ccc303439d22aaa1ca9cb7b5d313da34e903bbb9c7a1faece8d0625b",
+  "review_source_sha256": "d9ea44fa7d0381f268e17d3c43f05964cc4ffebcd7ccf702c7f6ec5d6c4a4749",
+  "limits": "Sampled frozen path only; no general global-stability or critical-domain proof",
+  "initial_component_moles": [
+    324383.11378630355,
+    81095.77844657589
+  ],
+  "same_sample_source_sha256": "96fe29ddbac39afcde64ff954be159a0953497f2a8442a77169ef935c4ec0a8d",
+  "same_sample_test_sha256": "708b2804ae63ea8b77609b04b72a00fc1f0a994a7d20ae010ddbe8b1861796d4"
+}

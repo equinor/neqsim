@@ -1,0 +1,265 @@
+{
+  "schema": "binary_pr_same_sample_validation.v1",
+  "date": "2026-11-25",
+  "base_revision": "99fa305f69dac3dc82f237aa41389774f68fadc1",
+  "source_identification": "Exact source hashes below plus final draft-PR head recorded in #4740 ledger; receipt does not embed its own commit hash.",
+  "analysis_runtime": "Temurin17.0.21+9",
+  "java8": "No dependencies/POMs changed; new Java uses Java8 syntax/APIs. Actual Java8 runtime qualification is pending exact-head hosted checks, not claimed locally.",
+  "checks": [
+    {
+      "command": "Maven helper; ./mvnw -B -ntp -Dtest=CompositionalReservoirHistoryTest,PhaseWithdrawalReservoirHistoryTest,PvtSeparatorPathTest test org.apache.maven.plugins:maven-dependency-plugin:3.8.1:build-classpath -Dmdep.outputFile=target/neqsim-dev-classpath.txt",
+      "source": "unmodified master99fa305f69dac3dc82f237aa41389774f68fadc1",
+      "exit": 0,
+      "result": "23 tests, no failures/errors/skips; 2min38s"
+    },
+    {
+      "command": "./mvnw -B -ntp -Dtest=SampleCompositionReservoirHistoryTest,CompositionalReservoirHistoryTest,PhaseWithdrawalReservoirHistoryTest,PvtSeparatorPathTest,CompositionalReservoirAquiferTest,CompositionalReservoirAquiferRefinementTest,ReservoirHistoryEnsembleTest,IndependentGasLabTankTest,ReservoirHistoryParameterQuantilesTest test",
+      "exit": 0,
+      "result": "55 tests, no failures/errors/skips; 3min44s; eight new JUnit cases"
+    },
+    {
+      "command": "NEQSIM_TEST_RESERVOIR_JAVA=1 PYTHONFAULTHANDLER=1 devtools/.venv/bin/python -m pytest -q -s devtools/test_binary_reservoir_java.py",
+      "exit": 0,
+      "result": "7 passed in226.24s; complete process exit0"
+    },
+    {
+      "command": "devtools/.venv/bin/python -m unittest discover -s src/test/resources/neqsim/pvtsimulation/binary-tank -p test_*.py -v",
+      "exit": 0,
+      "result": "15 passed; also15 under-O; independent reviewer optimized replay15 passed4.286s"
+    },
+    {
+      "command": "devtools/.venv/bin/python -m pytest -q devtools/test_reservoir_history_intake.py devtools/test_reservoir_history_bridge.py devtools/test_reservoir_component_intake.py devtools/test_reservoir_component_selection.py devtools/test_pvt_study.py devtools/test_pvt_report.py devtools/test_pvt_proxy.py devtools/test_capability_search.py devtools/test_verify_skills_agents.py devtools/test_verify_agent_skill_refs.py devtools/test_verify_skill_api_refs.py",
+      "exit": 0,
+      "result": "220 passed,3 existing skips,26 subtests,1 existing fitz deprecation warning;73.90s"
+    },
+    {
+      "command": "./mvnw -B -ntp -DskipTests javadoc:javadoc",
+      "exit": 0,
+      "result": "1min23s; new factory included in generated API HTML"
+    },
+    {
+      "command": "devtools/.venv/bin/python devtools/run_spotless.py apply",
+      "exit": 0,
+      "result": "direct formatter repeated to stable output after final Java edit"
+    },
+    {
+      "command": "devtools/.venv/bin/python devtools/build_engineering_coverage.py",
+      "exit": 0,
+      "result": "generated current source/agent/skill capability inventory"
+    },
+    {
+      "command": "devtools/.venv/bin/python devtools/code_health.py --baseline <reviewed-master-baseline> --output <source-report>",
+      "exit": 0,
+      "result": "0 new source finding groups; existing selected source findings1026"
+    },
+    {
+      "command": "./mvnw -B -ntp -Pcode-health -DskipTests clean compile pmd:pmd",
+      "exit": 0,
+      "result": "PMD7.17.0; canonical input subsequently prepared"
+    },
+    {
+      "command": "./mvnw -B -ntp -Pcode-health spotbugs:spotbugs",
+      "exit": 0,
+      "result": "SpotBugs4.10.5.0; installed NeqSim state rules"
+    },
+    {
+      "command": "devtools/.venv/bin/python devtools/code_health.py --tools pmd,spotbugs --pmd target/pmd.xml --spotbugs target/spotbugsXml.xml --baseline <reviewed-master-baseline> --rules-baseline <reviewed-master-rules-baseline> --output target/code-health-static.json",
+      "exit": 0,
+      "result": "see static report summary"
+    },
+    {
+      "command": "devtools/.venv/bin/python devtools/run_spotless.py check",
+      "exit": 0,
+      "result": "direct check"
+    },
+    {
+      "command": "uv tool run pre-commit run --all-files --hook-stage pre-commit",
+      "exit": 0,
+      "result": "repository fix stage"
+    },
+    {
+      "command": "uv tool run pre-commit run --all-files --hook-stage pre-push",
+      "exit": 0,
+      "result": "repository check stage"
+    },
+    {
+      "command": "./mvnw -B -ntp checkstyle:check",
+      "exit": 0,
+      "result": "repository policy includes existing util/test exclusions",
+      "runtime": "Checkstyle on DebianOpenJDK21.0.13.1; static code-health comparisons remain pinnedTemurin17.0.21+9"
+    },
+    {
+      "command": "devtools/.venv/bin/python devtools/check_documentation_search.py",
+      "exit": 0,
+      "result": "865Markdown pages and1 standaloneHTML"
+    }
+  ],
+  "coverage": {
+    "fromSampleComposition": [
+      {
+        "type": "INSTRUCTION",
+        "missed": "0",
+        "covered": "42"
+      },
+      {
+        "type": "BRANCH",
+        "missed": "0",
+        "covered": "2"
+      },
+      {
+        "type": "LINE",
+        "missed": "0",
+        "covered": "11"
+      },
+      {
+        "type": "COMPLEXITY",
+        "missed": "0",
+        "covered": "2"
+      },
+      {
+        "type": "METHOD",
+        "missed": "0",
+        "covered": "1"
+      }
+    ],
+    "samplePhaseVolumeFractions": [
+      {
+        "type": "INSTRUCTION",
+        "missed": "0",
+        "covered": "143"
+      },
+      {
+        "type": "BRANCH",
+        "missed": "0",
+        "covered": "24"
+      },
+      {
+        "type": "LINE",
+        "missed": "0",
+        "covered": "26"
+      },
+      {
+        "type": "COMPLEXITY",
+        "missed": "0",
+        "covered": "13"
+      },
+      {
+        "type": "METHOD",
+        "missed": "0",
+        "covered": "1"
+      }
+    ],
+    "requireFeasiblePhaseInterval": [
+      {
+        "type": "INSTRUCTION",
+        "missed": "0",
+        "covered": "62"
+      },
+      {
+        "type": "BRANCH",
+        "missed": "0",
+        "covered": "6"
+      },
+      {
+        "type": "LINE",
+        "missed": "0",
+        "covered": "8"
+      },
+      {
+        "type": "COMPLEXITY",
+        "missed": "0",
+        "covered": "4"
+      },
+      {
+        "type": "METHOD",
+        "missed": "0",
+        "covered": "1"
+      }
+    ]
+  },
+  "admission_runtime": {
+    "iterations": 5000,
+    "warmup_iterations": 100,
+    "elapsed_seconds": 0.058550380999804474,
+    "seconds_per_invocation": 1.1710076199960895e-05,
+    "class_source": "verified workspace target/classes",
+    "interpretation": "Upper-bound observed admission cost including Python/JNI/reflection; no wall-clock acceptance threshold or speedup claim"
+  },
+  "independent_review": "same-sample-review.json; separate agent, no repository edits, source identity pinned",
+  "earlier_failed_attempts": [
+    {
+      "result": "native setup error before qualification",
+      "detail": "Premature root native launch while workspace compilation was incomplete:3 nonfinite controls passed,4 setup errors(class not found). Superseded by full7-pass final run."
+    },
+    {
+      "result": "pytest exit4, no tests collected",
+      "detail": "An initial surrounding-suite command referenced nonexistent test_reservoir_history_sources.py; replaced by the actual eleven suites listed above."
+    },
+    {
+      "result": "first SpotBugs attempt exit137",
+      "detail": "Analyzer process killed while compilation/native work overlapped; no completed report or pass claimed for that attempt. Final serialized analyzer run recorded separately."
+    },
+    {
+      "result": "independent reviewer setup failure and150s timeout124",
+      "detail": "Classpath was removed during a clean build; later150s diagnostic bound expired inside the two valid volume fits. Complete360s-bounded replay passed in181.74s; no hang or exhaustion-speedup claim."
+    }
+  ],
+  "documentation_impact": "Updated factory/helper Javadocs, phase-production guide with independent output table and limits, benchmark scope/README, owning PVT/field agents and EOS/study skills with current last_verified, capability registry and generated engineering inventory. Existing constructor and serialization layout remain compatible; no notebook.",
+  "completed_scope": "Same-sample initialization and independent closed-mass CCE/tank numerical chain, exact necessary interval admission, named conservation, bounded pressure-only match, separately held-out pressure/composition/GOR, immutable checkpoints and restart.",
+  "remaining_issue_acceptance": "Independent primary measured laboratory/field chain; remaining original/tuned protocol/phase domains; full finite-support/joint discrete-uncertainty audit; subsequent multi-tank transmissibility matching; full Tran2025 equations/data/benchmark; final merged-default-branch audit.",
+  "research_source_blocker": {
+    "doi": "10.1016/j.jgsce.2025.205551",
+    "publisher": "https://www.sciencedirect.com/science/article/pii/S2949908925000159",
+    "publisher_direct_result": "403; indexed preview only",
+    "preprint": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4932591",
+    "preprint_result": "not accessible through research retrieval tool",
+    "missing": "Full RCVD/FPM/density equations and conventions; EOS/fluid/relative-permeability inputs; grid/boundary/variable-BHP schedules; independent numerical benchmark outputs. No abstract-derived method implemented.",
+    "supplementary_searches": "SciSpace pdf:true search returned no matching target paper; Elicit API access denied by connected account plan. These are access/search limitations, not evidence that no legal full text exists."
+  },
+  "limits": "Synthetic independent-code numerical qualification only; not measured accuracy, general global stability/critical-path qualification, wet production accuracy, continuous-flow limit or recoverable reserves.",
+  "source_sha256": {
+    "devtools/test_binary_reservoir_java.py": "a48bbf74bc021acb1675831bb4a5403296de975d5b8b67dece5b7f48a465d370",
+    "src/main/java/neqsim/pvtsimulation/util/CompositionalReservoirHistory.java": "abe0aec6aa2f762c0d04216914b8a24a0593e95e784921d1a8a1845d3e5d3c44",
+    "src/test/java/neqsim/pvtsimulation/util/SampleCompositionReservoirHistoryTest.java": "466dcdfb97c37a4b0208cc3bee676055d6750a3ceda279ec5b3fec31348f80c1",
+    "src/test/resources/neqsim/pvtsimulation/binary-tank/SAME_SAMPLE_SCOPE.md": "2e9e1ea0280fe7a69f9afb2378bf31c220f4091fcee3b1d676e636ee42c492fd",
+    "src/test/resources/neqsim/pvtsimulation/binary-tank/reference.py": "f7cbf982ccc303439d22aaa1ca9cb7b5d313da34e903bbb9c7a1faece8d0625b",
+    "src/test/resources/neqsim/pvtsimulation/binary-tank/same-sample-native.json": "6fae1eebc09f659eaf73ec57cdbd97ec029cb2094f05c85ccce12b0a47cc4d08",
+    "src/test/resources/neqsim/pvtsimulation/binary-tank/same-sample-reference.json": "f568bd9669d18fb73602674c9dd98bf9cc89f8aaab8b3baa03d2e5bae88cb5ab",
+    "src/test/resources/neqsim/pvtsimulation/binary-tank/same-sample-review.json": "6da217033414621728ccad13fe361ea9d40dd05c9193d6ffa4744d5dff83741f",
+    "src/test/resources/neqsim/pvtsimulation/binary-tank/same-sample-stability.json": "5696a5a4bc04645bbb250ed800f332a7789c7497299439d606867d55fb96bbc2",
+    "src/test/resources/neqsim/pvtsimulation/binary-tank/same_sample.py": "96fe29ddbac39afcde64ff954be159a0953497f2a8442a77169ef935c4ec0a8d",
+    "src/test/resources/neqsim/pvtsimulation/binary-tank/test_same_sample.py": "708b2804ae63ea8b77609b04b72a00fc1f0a994a7d20ae010ddbe8b1861796d4",
+    "src/test/resources/neqsim/pvtsimulation/binary-tank/test_stability.py": "d9ea44fa7d0381f268e17d3c43f05964cc4ffebcd7ccf702c7f6ec5d6c4a4749"
+  },
+  "static_report": {
+    "status": "passed",
+    "tools": [
+      "pmd",
+      "spotbugs"
+    ],
+    "analyzers": {
+      "pmd": "7.17.0",
+      "spotbugs": "4.10.5"
+    },
+    "analysis_runtime": {
+      "java_version": "17.0.21",
+      "vm_version": "17.0.21+9"
+    },
+    "findings_by_tool": {
+      "pmd": 8,
+      "spotbugs": 10964
+    },
+    "neqsim_rules": {
+      "NEQSIM_CALORIC_WITHOUT_INIT": 194,
+      "NEQSIM_MISSING_MIXING_RULE": 1,
+      "NEQSIM_PHYSICAL_WITHOUT_INIT": 165,
+      "NEQSIM_SHARED_FLUID_MUTATION": 4,
+      "NEQSIM_STALE_PROPERTY_READ": 1
+    },
+    "new_finding_groups": 0
+  },
+  "reviewed_baseline_sha256": {
+    "code-health-baseline.json": "d8ba181fe643a6eaea1e78e77678dcaaac17dadf799b73118a8379e3ad60eeea",
+    "neqsim-rules-baseline.json": "b09de0a9537331aee3fa4fd844c4c7a1102846f71dac8e15d0515d9650e76452"
+  }
+}
