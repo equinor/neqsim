@@ -77,6 +77,21 @@ class NaphtaliSandholmAnalyticJacobianTest extends neqsim.NeqSimTest {
     assertEquals(250.0, products, 1.0e-6);
   }
 
+  /** A fluid without composition derivatives must use the numerical Jacobian even on ideal stages. */
+  @Test
+  @Timeout(value = 60, unit = TimeUnit.SECONDS)
+  void missingCompositionDerivativesSelectFiniteDifferences() {
+    DistillationColumn column = createDepropanizer(SolverType.NAPHTALI_SANDHOLM);
+    column.getFeedStreams(10).get(0).getThermoSystem().setImplementedCompositionDeriativesofFugacity(false);
+    column.run();
+
+    assertEquals(0, column.getLastNaphtaliAnalyticJacobianColumns());
+    assertTrue(column.getLastNaphtaliFiniteDifferenceJacobianColumns() > 0, column.getConvergenceDiagnostics());
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    double products = column.getGasOutStream().getFlowRate("kg/hr") + column.getLiquidOutStream().getFlowRate("kg/hr");
+    assertEquals(250.0, products, 1.0e-6);
+  }
+
   /**
    * AUTO must select the direct simultaneous solve for a condenser and reboiler column and report the same products.
    */

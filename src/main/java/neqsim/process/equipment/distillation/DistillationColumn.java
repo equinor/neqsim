@@ -10834,8 +10834,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Retrieve latest Naphtali-Sandholm analytically differentiated Jacobian columns.
    *
    * <p>
-   * This is zero for the current finite-difference implementation. The getter is retained for compatibility and for a
-   * future mixed analytic/numerical Jacobian.
+   * Each analytic Jacobian build contributes one column per stage variable. Finite-difference builds are counted by
+   * {@link #getLastNaphtaliFiniteDifferenceJacobianColumns()}.
    * </p>
    *
    * @return analytically differentiated Jacobian column count

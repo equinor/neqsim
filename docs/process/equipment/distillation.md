@@ -444,8 +444,9 @@ without the analytic Jacobian, the new step control and the new `AUTO` route.
 | `MESH_RESIDUAL` | 105 | 108 | 361 s | 285 s |
 | `NAPHTALI_SANDHOLM` | 42 | 63 | 527 s | 375 s |
 
-- `AUTO` now tries `NAPHTALI_SANDHOLM` and then `MESH_RESIDUAL` on copies and accepts only a
-  `RIGOROUS_CONVERGED` result. It selected `NAPHTALI_SANDHOLM` in 57 cases and `MESH_RESIDUAL` in
+- `AUTO` now tries `NAPHTALI_SANDHOLM` and then `MESH_RESIDUAL` on copies. Both probes require
+  `RIGOROUS_CONVERGED`. If both fail, the usual AUTO ladder runs with its own acceptance criteria.
+  In this benchmark AUTO selected `NAPHTALI_SANDHOLM` in 57 cases and `MESH_RESIDUAL` in
   51; the slowest case took 10 s. Two of the five "before" failures were runs that ended
   without reporting a solver type, which is fixed.
 - `NAPHTALI_SANDHOLM` selected directly takes 0.02 to 1.0 s when it converges (63 cases, 5.6 s in
@@ -485,8 +486,9 @@ evaluations per stage instead of the $C + 2$ perturbed stage evaluations of the 
 finite-difference build, and it is the exact derivative of the residual that the line search
 measures, including the state-dependent scale of the energy equation.
 
-Finite differences are still used for stages with a Murphree efficiency below one and for a
-thermodynamic model whose derivatives fail the built-in checks (composition derivatives homogeneous
+The solver builds the whole Jacobian by finite differences if any stage has a Murphree efficiency
+below one, the fluid model does not supply composition or temperature derivatives of fugacity,
+or a stage fails the consistency checks (composition derivatives homogeneous
 of degree zero, partial molar enthalpies summing to the phase enthalpy).
 
 ```java

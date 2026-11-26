@@ -397,8 +397,8 @@ public class NaphtaliSandholmSolver {
    * Get the number of analytically differentiated Jacobian columns used by the latest solve.
    *
    * <p>
-   * The current block-tridiagonal implementation evaluates every derivative column by finite difference, so this
-   * counter is zero. The getter is retained for compatibility and for a future mixed analytic/numerical assembly.
+   * Each successful analytic build adds one column per stage variable. A finite-difference build increments the
+   * separate finite-difference counter.
    * </p>
    *
    * @return number of analytically differentiated Jacobian columns
@@ -3403,8 +3403,7 @@ public class NaphtaliSandholmSolver {
       sys.setNumberOfPhases(1);
       sys.setPhaseType(0, isVapor ? PhaseType.GAS : PhaseType.LIQUID);
       sys.setForcePhaseTypes(true);
-      sys.init(3);
-      return derivatives.loadPhase(sys.getPhase(0), isVapor);
+      return derivatives.loadPhase(sys, isVapor);
     } catch (RuntimeException exception) {
       logger.debug("Phase derivative evaluation failed for {} phase at T={}K P={}bar", isVapor ? "vapor" : "liquid",
           Double.valueOf(tempK), Double.valueOf(pressBar));

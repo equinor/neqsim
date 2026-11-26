@@ -4,6 +4,7 @@ import org.ejml.simple.SimpleMatrix;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.system.SystemInterface;
 
 /**
  * Analytic derivatives of the equilibrium-stage quantities used by the simultaneous-correction column solver.
@@ -114,18 +115,24 @@ final class MeshStageDerivatives {
    * Read the fugacity and enthalpy derivatives of one phase.
    *
    * <p>
-   * The phase must hold one mole at the stage temperature, pressure and composition and must have been initialized with
-   * composition derivatives (initialization level 3). The method rejects the phase when the derivatives are not finite,
-   * when the composition derivatives are not homogeneous of degree zero, or when the mole-fraction weighted partial
-   * molar enthalpies do not reproduce the phase enthalpy. A rejected phase means the thermodynamic model does not
-   * supply the derivatives this class needs, and the caller must use finite differences.
+   * The work system holds one mole at the stage temperature, pressure and composition. Initialize it at level 3 after
+   * checking the model supplies both required fugacity derivatives. Reject the phase when the derivatives are not
+   * finite, when the composition derivatives are not homogeneous of degree zero, or when the mole-fraction weighted
+   * partial molar enthalpies do not reproduce the phase enthalpy. A rejected phase means the thermodynamic model does
+   * not supply the derivatives this class needs, and the caller must use finite differences.
    * </p>
    *
-   * @param phase one-mole phase initialized with composition derivatives
+   * @param system one-mole work system configured with the forced phase root
    * @param vapor true to store the values as the vapor phase, false for the liquid phase
    * @return true when the derivatives are finite and consistent
    */
-  boolean loadPhase(PhaseInterface phase, boolean vapor) {
+  boolean loadPhase(SystemInterface system, boolean vapor) {
+    if (!system.isImplementedCompositionDeriativesofFugacity() || !system.isImplementedTemperatureDeriativesofFugacity()
+        || !Double.isFinite(system.getTemperature())) {
+      return false;
+    }
+    system.init(3);
+    PhaseInterface phase = system.getPhase(0);
     double[][] compositionDerivatives = vapor ? vaporCompositionDerivatives : liquidCompositionDerivatives;
     double[] temperatureDerivatives = vapor ? vaporTemperatureDerivatives : liquidTemperatureDerivatives;
     double[] partialMolarEnthalpies = vapor ? vaporPartialMolarEnthalpies : liquidPartialMolarEnthalpies;

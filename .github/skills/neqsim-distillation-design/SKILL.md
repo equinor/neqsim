@@ -1,7 +1,7 @@
 ---
 name: neqsim-distillation-design
 description: "Distillation column design rules for NeqSim. USE WHEN: setting up distillation columns, troubleshooting convergence, selecting internals (trays/packing), sizing columns, or analyzing column performance. Covers DistillationColumn setup, solver selection, feed tray optimization, reflux ratio, and internals selection per industry standards."
-last_verified: "2026-11-25"
+last_verified: "2026-11-26"
 ---
 
 # Distillation Design Rules
@@ -111,7 +111,8 @@ Naphtali-Sandholm Jacobian and the new `AUTO` route):
 | `NAPHTALI_SANDHOLM` | 42 | 63 | 527 s | 375 s |
 
 - `AUTO` probes `NAPHTALI_SANDHOLM` (0.02-1.0 s when it converges, abandoned after about 0.3 s
-  when not), then `MESH_RESIDUAL`, and accepts only `RIGOROUS_CONVERGED`.
+  when not), then `MESH_RESIDUAL`. Both probes require `RIGOROUS_CONVERGED`. If both fail,
+  the usual AUTO ladder runs. Check the final status before using the products.
 - Do not select `NAPHTALI_SANDHOLM` directly unless a failure is acceptable: it converged 63 of
   108 cases, and each failure cost about 8 s in its sequential fallback without recovering.
 - The two solvers agreed within 0.12 % on top product rate wherever both converged.

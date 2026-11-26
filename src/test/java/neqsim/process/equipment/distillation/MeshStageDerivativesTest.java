@@ -1,6 +1,7 @@
 package neqsim.process.equipment.distillation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -94,7 +95,7 @@ class MeshStageDerivativesTest extends neqsim.NeqSimTest {
    * @param composition normalized composition
    * @param temperature temperature in K
    * @param vapor true for the gas root
-   * @param level thermodynamic initialization level
+   * @param level thermodynamic initialization level, or zero to leave derivative initialization to the caller
    * @return evaluated one-phase system
    */
   private SystemInterface evaluatePhase(double[] composition, double temperature, boolean vapor, int level) {
@@ -107,7 +108,9 @@ class MeshStageDerivativesTest extends neqsim.NeqSimTest {
     system.setNumberOfPhases(1);
     system.setPhaseType(0, vapor ? PhaseType.GAS : PhaseType.LIQUID);
     system.setForcePhaseTypes(true);
-    system.init(level);
+    if (level > 0) {
+      system.init(level);
+    }
     return system;
   }
 
@@ -228,8 +231,8 @@ class MeshStageDerivativesTest extends neqsim.NeqSimTest {
     }
 
     MeshStageDerivatives derivatives = new MeshStageDerivatives(componentCount);
-    assertTrue(derivatives.loadPhase(evaluatePhase(x, stageTemperature, false, 3).getPhase(0), false));
-    assertTrue(derivatives.loadPhase(evaluatePhase(y, stageTemperature, true, 3).getPhase(0), true));
+    assertTrue(derivatives.loadPhase(evaluatePhase(x, stageTemperature, false, 0), false));
+    assertTrue(derivatives.loadPhase(evaluatePhase(y, stageTemperature, true, 0), true));
     assertTrue(derivatives.compute(liquidFlows, VAPOR_FLOW, base.kValues));
 
     for (int variable = 0; variable < componentCount + 2; variable++) {
@@ -258,16 +261,20 @@ class MeshStageDerivativesTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * A phase initialized without composition derivatives must be rejected so the caller uses finite differences.
+   * A model missing either derivative and a non-finite stage temperature must trigger finite differences.
    */
   @Test
-  void phaseWithoutCompositionDerivativesIsRejected() {
+  void unavailableDerivativesAndInvalidTemperatureAreRejected() {
     double[] composition = {0.3, 0.4, 0.3};
     MeshStageDerivatives derivatives = new MeshStageDerivatives(componentCount);
-    assertTrue(derivatives.loadPhase(evaluatePhase(composition, stageTemperature, false, 3).getPhase(0), false),
-        "A fully initialized phase must be accepted");
-    SystemInterface empty = evaluatePhase(composition, stageTemperature, false, 3);
-    empty.getPhase(0).setTemperature(Double.NaN);
-    assertTrue(!derivatives.loadPhase(empty.getPhase(0), false), "A non-finite phase state must be rejected");
+    SystemInterface system = evaluatePhase(composition, stageTemperature, false, 0);
+    system.setImplementedCompositionDeriativesofFugacity(false);
+    assertFalse(derivatives.loadPhase(system, false));
+    system.setImplementedCompositionDeriativesofFugacity(true);
+    system.setImplementedTemperatureDeriativesofFugacity(false);
+    assertFalse(derivatives.loadPhase(system, false));
+    system.setImplementedTemperatureDeriativesofFugacity(true);
+    system.setTemperature(Double.NaN);
+    assertFalse(derivatives.loadPhase(system, false));
   }
 }

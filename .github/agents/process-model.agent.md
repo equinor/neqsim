@@ -214,8 +214,8 @@ column.setBottomPressure(26.0);
 
 // Solver selection — this column has condenser, reboiler and a reflux ratio, so AUTO is the
 // measured choice (108 of 108 cases, 2026-11-25): it tries NAPHTALI_SANDHOLM, then
-// MESH_RESIDUAL, and accepts only a rigorously converged result. For columns without a
-// condenser reflux ratio use NEWTON and fall back to MESH_RESIDUAL instead. Details and
+// MESH_RESIDUAL. If neither converges rigorously, AUTO continues with its usual fallback.
+// For columns without a condenser reflux ratio use NEWTON and fall back to MESH_RESIDUAL. Details and
 // evidence: neqsim-distillation-design skill, "Default set-up for agent work".
 column.setSolverType(DistillationColumn.SolverType.AUTO);
 column.run();
