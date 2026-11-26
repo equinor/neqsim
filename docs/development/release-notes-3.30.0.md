@@ -49,6 +49,25 @@ placeholder connection string.
 See the [API lifecycle guidance](api-lifecycle.md#legacy-aspen-ip21-historian-integration)
 and [measurement devices](../process/equipment/measurement_devices.md#historian-measurements).
 
+### Legacy CPA phase entry points and severe-slugging subclasses
+
+- `PhaseElectrolyteCPAOld` and the legacy methods `initCPAMatrixOld`, `initOld2`,
+  `molarVolumeOld`, `solveX2Old` and `solveXOld` on `PhaseSrkCPA` and
+  `PhaseUMRCPA` were removed
+  ([#4995](https://github.com/equinor/neqsim/pull/4995)). Migrate direct callers
+  to the appropriate current CPA fluid system and its initialization and flash
+  APIs. Recreate archived models containing the removed phase class from their
+  model inputs and compare the results.
+- `FluidSevereSlug`, `Pipe` and `SevereSlugAnalyser` in
+  `neqsim.process.measurementdevice.simpleflowregime` are now final
+  ([#5218](https://github.com/equinor/neqsim/pull/5218)). Replace custom subclasses
+  with composition and recompile against the candidate.
+
+The candidate's public Java binary comparison against the published 3.29.0
+artifact identified these changes in addition to the historian removal.
+Resolve their compatibility disposition under the
+[API lifecycle policy](api-lifecycle.md) before publication.
+
 ## Review before upgrading
 
 ### `TwoFluidPipe`: annular wall friction and the feed split with a prescribed outlet pressure
