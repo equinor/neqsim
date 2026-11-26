@@ -29,6 +29,7 @@ when selecting a runtime.
 
 ## Step 2: First Flash Calculation (2 minutes)
 
+<!-- python-quickstart-example: flash -->
 ```python
 # Import NeqSim - Direct Java Access via jneqsim gateway
 from neqsim import jneqsim
@@ -64,6 +65,7 @@ fluid.prettyPrint()
 
 ## Step 3: First Process Simulation (2 minutes)
 
+<!-- python-quickstart-example: process -->
 ```python
 from neqsim import jneqsim
 
@@ -113,6 +115,18 @@ print("\n=== COMPRESSOR ===")
 print(f"Power: {compressor.getPower('kW'):.1f} kW")
 print(f"Outlet T: {compressor.getOutletStream().getTemperature() - 273.15:.1f} °C")
 ```
+
+The two complete Python programs above are owned by
+[`EntryPointExamplesDocumentationTest`](../../src/test/java/neqsim/documentation/EntryPointExamplesDocumentationTest.java).
+Run the focused documentation regression with:
+
+```bash
+./mvnw -Dtest=EntryPointExamplesDocumentationTest test
+```
+
+The regression extracts both marked Python fences, checks their current gateway and
+API calls, and executes equivalent Java runtime paths with physical and flow-balance
+assertions.
 
 ## Common Import Patterns
 
