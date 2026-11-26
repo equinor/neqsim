@@ -2,10 +2,13 @@ package neqsim.process.lng;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.expander.Expander;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.LNGHeatExchanger;
+import neqsim.process.equipment.refrigeration.RefrigerationLevel;
+import neqsim.process.equipment.refrigeration.RefrigerationSystem;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -27,9 +30,9 @@ import neqsim.thermo.system.SystemSrkEos;
  *
  * <p>
  * The templates are intended for thermodynamic screening, teaching, optimization, and regression testing. C3MR uses a
- * single equivalent propane evaporation level; detailed baseload design should replace it with three or four propane
- * pressure levels, phase separators, pumps, and project-specific compressor maps. Likewise, vendor guarantees require
- * calibrated exchanger geometry and refrigerant inventory.
+ * single equivalent propane evaporation level by default. Use {@link #setPropanePrecoolingLevels(int)} for staged
+ * cooling of both the feed and the mixed refrigerant. Likewise, vendor guarantees require calibrated exchanger geometry
+ * and refrigerant inventory.
  * </p>
  *
  * @author NeqSim contributors
@@ -41,6 +44,9 @@ public class LNGProcessBuilder {
 
   /** Selected process cycle. */
   private LNGProcessCycle cycle = LNGProcessCycle.SMR;
+
+  /** Number of propane evaporation levels in the C3MR route. */
+  private int propanePrecoolingLevels = 1;
 
   /** Optional caller-supplied pretreated feed fluid. */
   private SystemInterface feedFluid;
@@ -127,6 +133,21 @@ public class LNGProcessBuilder {
       throw new IllegalArgumentException("cycle cannot be null");
     }
     this.cycle = cycle;
+    return this;
+  }
+
+  /**
+   * Selects the number of propane precooling levels in C3MR. One selects the original explicit propane loop. Two to
+   * four use an economized propane system with both the feed and MR bound to every level.
+   *
+   * @param levels propane evaporation levels, from one to four
+   * @return this builder
+   */
+  public LNGProcessBuilder setPropanePrecoolingLevels(int levels) {
+    if (levels < 1 || levels > 4) {
+      throw new IllegalArgumentException("propane precooling requires 1 to 4 levels");
+    }
+    propanePrecoolingLevels = levels;
     return this;
   }
 
@@ -430,6 +451,9 @@ public class LNGProcessBuilder {
    * @return runnable LNG process model
    */
   public LNGProcessModel build() {
+    if (propanePrecoolingLevels > 1 && cycle != LNGProcessCycle.C3MR) {
+      throw new IllegalStateException("Multi-level propane precooling requires C3MR");
+    }
     switch (cycle) {
     case SMR:
       return buildSMR();
@@ -500,17 +524,24 @@ public class LNGProcessBuilder {
     // the SMR route. Graph scheduling would otherwise evaluate the JT valve first.
     context.process.setUseOptimizedExecution(false);
 
-    // At 1.5 bara the -35 C pure-propane suction is liquid, so the suction scrubber
-    // produces an empty gas stream. A slightly lower pressure supplies vapor to the
-    // compressors, while the larger circulation rate covers both precooler hot streams.
-    Stream propaneSuction = createPureRefrigerant(name + " propane suction", "propane", -35.0, 1.2,
-        context.feedFlowKgPerHour * 2.5);
-    context.process.add(propaneSuction);
-    CompressionTrain propaneTrain = addTwoStageCompression(context, name + " propane", propaneSuction, 15.0, 0.80);
+    // Keep the original execution order for the single-level template.
+    Stream propaneSuction = null;
+    ThrottlingValve propaneValve = null;
+    if (propanePrecoolingLevels == 1) {
+      // At 1.5 bara the -35 C pure-propane suction is liquid, so the suction scrubber
+      // produces an empty gas stream. A slightly lower pressure supplies vapor to the
+      // compressors, while the larger circulation rate covers both precooler hot streams.
+      propaneSuction = createPureRefrigerant(name + " propane suction", "propane", -35.0, 1.2,
+          context.feedFlowKgPerHour * 2.5);
+      context.process.add(propaneSuction);
+      CompressionTrain propaneTrain = addTwoStageCompression(context, name + " propane", propaneSuction, 15.0, 0.80);
 
-    ThrottlingValve propaneValve = new ThrottlingValve(name + " propane JT valve", propaneTrain.outlet);
-    propaneValve.setOutletPressure(1.2, "bara");
-    context.process.add(propaneValve);
+      propaneValve = new ThrottlingValve(name + " propane JT valve", propaneTrain.outlet);
+      propaneValve.setOutletPressure(1.2, "bara");
+      context.process.add(propaneValve);
+
+      context.propaneCompressors.addAll(context.compressors);
+    }
 
     // Keep the cold MR return vapor at the suction scrubber. At the former 4 bara
     // setting it partially condensed during recycle convergence, silently removing
@@ -521,18 +552,44 @@ public class LNGProcessBuilder {
     context.process.add(mrSuction);
     CompressionTrain mrTrain = addTwoStageCompression(context, name + " MR", mrSuction, 45.0, compressorEfficiency);
 
-    LNGHeatExchanger precooler = createExchanger(name + " propane precooler");
-    precooler.addInStreamMSHE(context.feed, "hot", -32.0);
-    precooler.addInStreamMSHE(mrTrain.outlet, "hot", -32.0);
-    precooler.addInStreamMSHE(propaneValve.getOutletStream(), "cold", null);
-    context.exchangers.add(precooler);
-    context.process.add(precooler);
-    addRecycle(context, name + " propane recycle", precooler.getOutStream(2), propaneSuction);
+    StreamInterface cooledFeed;
+    StreamInterface cooledMr;
+    if (propanePrecoolingLevels == 1) {
+      LNGHeatExchanger precooler = createExchanger(name + " propane precooler");
+      precooler.addInStreamMSHE(context.feed, "hot", -32.0);
+      precooler.addInStreamMSHE(mrTrain.outlet, "hot", -32.0);
+      precooler.addInStreamMSHE(propaneValve.getOutletStream(), "cold", null);
+      context.exchangers.add(precooler);
+      context.process.add(precooler);
+      addRecycle(context, name + " propane recycle", precooler.getOutStream(2), propaneSuction);
+
+      cooledFeed = precooler.getOutStream(0);
+      cooledMr = precooler.getOutStream(1);
+    } else {
+      RefrigerationSystem propane = new RefrigerationSystem(name + " propane refrigeration");
+      propane.setRefrigerant("propane");
+      double condensingK = propane.getRefrigerant().getSaturationTemperature(15.0);
+      propane.setCondensingTemperature(condensingK, "K");
+      propane.setSubcooling(condensingK - (refrigerantCoolingTemperatureC + 273.15));
+      propane.setMinimumApproach(minimumApproachC);
+      propane.setIsentropicEfficiency(0.80);
+      cooledFeed = context.feed;
+      cooledMr = mrTrain.outlet;
+      for (int i = 0; i < propanePrecoolingLevels; i++) {
+        double targetC = -32.0 * i / (propanePrecoolingLevels - 1);
+        String levelName = "C3 level " + (i + 1);
+        RefrigerationLevel level = propane.addLevel(levelName, targetC - minimumApproachC, "C");
+        cooledFeed = addPrecoolingLoad(context, level, "feed", cooledFeed, targetC);
+        cooledMr = addPrecoolingLoad(context, level, "MR", cooledMr, targetC);
+      }
+      context.propaneSystem = propane;
+      context.process.add(propane);
+    }
 
     double mrExpansionInletSeedTemperatureC = targetLiquefactionTemperatureC - 5.0;
     LNGHeatExchanger mche = createExchanger(name + " main cryogenic exchanger");
-    mche.addInStreamMSHE(precooler.getOutStream(0), "hot", targetLiquefactionTemperatureC);
-    mche.addInStreamMSHE(precooler.getOutStream(1), "hot", null);
+    mche.addInStreamMSHE(cooledFeed, "hot", targetLiquefactionTemperatureC);
+    mche.addInStreamMSHE(cooledMr, "hot", null);
 
     ThrottlingValve mrValve = new ThrottlingValve(name + " MR JT valve", mche.getOutStream(1));
     mrValve.setOutletPressure(0.75, "bara");
@@ -548,6 +605,55 @@ public class LNGProcessBuilder {
 
     ProductSection product = addProductSection(context, mche.getOutStream(0));
     return context.toModel(cycle, product);
+  }
+
+  /**
+   * Adds a chiller that bypasses a stream already colder than this level's process outlet target.
+   *
+   * @param context flowsheet under construction
+   * @param level propane evaporation level
+   * @param service hot-stream service
+   * @param inlet live stream to cool
+   * @param targetC maximum process outlet temperature in Celsius
+   * @return connected outlet stream
+   */
+  private StreamInterface addPrecoolingLoad(BuildContext context, RefrigerationLevel level, String service,
+      StreamInterface inlet, double targetC) {
+    Cooler cooler = new PrecoolingChiller(name + " " + level.getName() + " " + service, inlet, targetC);
+    context.process.add(cooler);
+    level.addCooler(cooler);
+    return cooler.getOutletStream();
+  }
+
+  /** Temperature-limited cooler for feeds that can already be colder than a precooling level. */
+  private static final class PrecoolingChiller extends Cooler {
+    private static final long serialVersionUID = 1L;
+    private final double targetC;
+
+    /**
+     * Constructs a chiller with automatic cold-feed bypass.
+     *
+     * @param name unit name
+     * @param inlet hot stream
+     * @param targetC highest outlet temperature in Celsius
+     */
+    private PrecoolingChiller(String name, StreamInterface inlet, double targetC) {
+      super(name, inlet);
+      this.targetC = targetC;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void run(UUID id) {
+      setOutletTemperature(Math.min(targetC, getInletStream().getTemperature("C")), "C");
+      super.run(id);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    protected void runAtDynamicOutlet(UUID id) {
+      super.run(id);
+    }
   }
 
   /**
@@ -986,6 +1092,8 @@ public class LNGProcessBuilder {
     private final StreamInterface feed;
     private final double feedFlowKgPerHour;
     private final List<Compressor> compressors = new ArrayList<Compressor>();
+    private RefrigerationSystem propaneSystem;
+    private final List<Compressor> propaneCompressors = new ArrayList<Compressor>();
     private final List<Expander> expanders = new ArrayList<Expander>();
     private final List<LNGHeatExchanger> exchangers = new ArrayList<LNGHeatExchanger>();
 
@@ -1011,7 +1119,7 @@ public class LNGProcessBuilder {
      */
     private LNGProcessModel toModel(LNGProcessCycle builtCycle, ProductSection product) {
       return new LNGProcessModel(name, builtCycle, process, feed, product.lng, product.flashGas, compressors, expanders,
-          exchangers);
+          exchangers, propaneSystem, propaneCompressors);
     }
   }
 }

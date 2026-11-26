@@ -218,6 +218,21 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
   }
 
   /**
+   * Returns the equipment whose results this unit reads outside the stream and energy topology.
+   *
+   * <p>
+   * A unit that reads another unit's result directly, for example a refrigeration system reading the duty of the
+   * coolers it serves, overrides this so that graph-based execution solves the sources first. The returned equipment
+   * must be part of the same process system to take effect.
+   * </p>
+   *
+   * @return list of source equipment (empty by default)
+   */
+  public default List<ProcessEquipmentInterface> getSignalSources() {
+    return Collections.emptyList();
+  }
+
+  /**
    * Returns the named energy ports exposed by this equipment.
    *
    * <p>

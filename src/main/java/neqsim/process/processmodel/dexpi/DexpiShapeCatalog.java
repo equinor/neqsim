@@ -108,6 +108,19 @@ final class DexpiShapeCatalog {
     appendCoolerShape(document, catalogue);
     appendHeaterShape(document, catalogue);
     appendHeatExchangerShape(document, catalogue);
+    Element exchanger = createShapeElement(document, "Equipment", "TaggedPlantItemShape-GeneralHX",
+        "GENERAL_HEAT_EXCHANGER_SHAPE", "");
+    appendPolyLine(document, exchanger, new double[][] {{-12, 6}, {12, 6}, {12, -6}, {-12, -6}, {-12, 6}});
+    appendPolyLine(document, exchanger, new double[][] {{-12, -6}, {12, 6}});
+    catalogue.appendChild(exchanger);
+    Element compressor = createShapeElement(document, "Equipment", "TaggedPlantItemShape-GeneralCompressor",
+        "GENERAL_COMPRESSOR_SHAPE", "");
+    appendPolyLine(document, compressor, new double[][] {{-10, 8}, {10, 4}, {10, -4}, {-10, -8}, {-10, 8}});
+    catalogue.appendChild(compressor);
+    Element valve = createShapeElement(document, "PipingComponent", "PipingComponentShape-GeneralValve",
+        "GENERAL_VALVE_SHAPE", "");
+    appendPolyLine(document, valve, new double[][] {{-5, 2.5}, {5, -2.5}, {5, 2.5}, {-5, -2.5}, {-5, 2.5}});
+    catalogue.appendChild(valve);
     appendTankShape(document, catalogue);
     appendFilterShape(document, catalogue);
     appendGlobeValveShape(document, catalogue);
@@ -145,6 +158,8 @@ final class DexpiShapeCatalog {
       return SEPARATOR_SHAPE;
     case "ThreePhaseSeparator":
       return THREE_PHASE_SEPARATOR_SHAPE;
+    case "Compressor":
+      return "GENERAL_COMPRESSOR_SHAPE";
     case "CentrifugalCompressor":
       return COMPRESSOR_SHAPE;
     case "CentrifugalPump":
@@ -153,12 +168,16 @@ final class DexpiShapeCatalog {
       return COOLER_SHAPE;
     case "FiredHeater":
       return HEATER_SHAPE;
+    case "HeatExchanger":
+      return "GENERAL_HEAT_EXCHANGER_SHAPE";
     case "ShellAndTubeHeatExchanger":
       return HEAT_EXCHANGER_SHAPE;
     case "Tank":
       return TANK_SHAPE;
     case "Filter":
       return FILTER_SHAPE;
+    case "OperatedValve":
+      return "GENERAL_VALVE_SHAPE";
     case "GlobeValve":
       return GLOBE_VALVE_SHAPE;
     case "GateValve":

@@ -8,7 +8,7 @@ non-abstract class that implements `ProcessEquipmentInterface`, directly or thro
 base class. Helper classes, result records, strategies, enums, and interfaces are intentionally
 excluded from the equipment count.
 
-**Current source inventory:** 244 concrete equipment classes in 33 packages.
+**Current source inventory:** 245 concrete equipment classes in 34 packages.
 
 Regenerate this page after adding or removing equipment:
 
@@ -43,6 +43,7 @@ uv run --project devtools --locked devtools/generate_equipment_documentation_cat
 | `powergeneration` | [Power generation](power_generation)<br>Turbines, fuel cells, renewables, and combined-cycle systems | `CombinedCycleSystem`, `FuelCell`, `GasTurbine`, `GasTurbineUnit`, `GasTurbineVendorPerformance`, `HRSG`, `OffshoreEnergySystem`, `PlatformPowerSystemUnit`, `SolarPanel`, `SteamTurbine`, `WindFarm`, `WindTurbine` |
 | `pump` | [Pumps](pumps)<br>Centrifugal, ESP, jet, and sucker-rod pumps | `ESPPump`, `JetPump`, `Pump`, `SuckerRodPump` |
 | `reactor` | [Reactors](reactors) and [multi-burner hot-oil heater](multi_burner_fired_heater)<br>Chemical reactors and optional finite-rate gas-fired hot-oil equipment | `AmmoniaSynthesisReactor`, `AnaerobicDigester`, `AutothermalReformer`, `BiomassGasifier`, `CO2ImpurityKineticReactor`, `CatalyticTubeReformer`, `ClausCatalyticConverter`, `ClausReactionFurnace`, `EnzymeTreatment`, `FermentationReactor`, `Fermenter`, `FiniteRateCombustionReactor`, `FurnaceBurner`, `GibbsReactor`, `GibbsReactorCO2`, `IronSulfideOxidationSource`, `MultiBurnerFiredHeater`, `PartialOxidationReactor`, `PlugFlowReactor`, `PyrolysisReactor`, `QualifiedCO2ImpurityKineticReactor`, `QuenchSection`, `ReactiveWasteHeatBoiler`, `ReformerFurnace`, `StirredTankReactor`, `SubDewPointSulfurReactor`, `SulfurCondenser`, `SulfurDepositionAnalyser`, `SulfurOxidationReactor`, `SulfurRecoveryUnit`, `SyngasBurnerZone`, `TailGasTreatmentUnit`, `ThermalIncinerator`, `WaterGasShiftReactor` |
+| `refrigeration` | [Refrigeration systems](refrigeration)<br>Multi-level vapour-compression refrigeration plants | `RefrigerationSystem` |
 | `reservoir` | [Reservoirs and wells](reservoirs)<br>Reservoir, inflow, surveillance, and well-system equipment | `AnnularLeakagePath`, `CementDegradationModel`, `InjectionConformanceMonitor`, `MultiCompartmentReservoir`, `ReservoirCVDsim`, `ReservoirDiffLibsim`, `ReservoirTPsim`, `SimpleReservoir`, `TubingPerformance`, `WellFlow`, `WellSystem` |
 | `separator` | [Separators](separators)<br>Phase, solids, cryogenic, and extraction separators | `CryogenicSeparator`, `Crystallizer`, `EndFlash`, `GasScrubber`, `GasScrubberSimple`, `Hydrocyclone`, `LiquidLiquidExtractor`, `NeqGasScrubber`, `PressureFilter`, `RotaryVacuumFilter`, `ScrewPress`, `Separator`, `SolidsCentrifuge`, `SolidsSeparator`, `ThreePhaseGasScrubber`, `ThreePhaseSeparator`, `TwoPhaseSeparator` |
 | `solidhandling` | [Solid handling](solid_handling)<br>Biological feedstock preparation and solids handling | `BioFeedstockPreparation` |

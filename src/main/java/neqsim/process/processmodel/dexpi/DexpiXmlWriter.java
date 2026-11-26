@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -49,7 +50,9 @@ import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.expander.Expander;
 import neqsim.process.equipment.filter.Filter;
+import neqsim.process.equipment.heatexchanger.AirCooler;
 import neqsim.process.equipment.heatexchanger.Cooler;
+import neqsim.process.equipment.heatexchanger.MultiStreamHeatExchangerInterface;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.mixer.Mixer;
@@ -556,6 +559,9 @@ public final class DexpiXmlWriter {
     Objects.requireNonNull(processSystem, "processSystem");
     Objects.requireNonNull(outputStream, "outputStream");
 
+    ProcessSystem projected = RefrigerationPlantProjection.of(processSystem);
+    boolean expandedRefrigeration = projected != processSystem;
+    processSystem = projected;
     Document document = createDocument();
     Element root = document.createElement("PlantModel");
     if (!Boolean.TRUE.equals(OMIT_DEFAULT_NAMESPACE.get())) {
@@ -579,6 +585,10 @@ public final class DexpiXmlWriter {
 
     // Track equipment IDs -> outlet nozzle IDs for connection wiring
     Map<String, String> equipmentInletNozzle = new LinkedHashMap<>();
+    Map<String, List<String>> equipmentInlets = new LinkedHashMap<>();
+    Map<StreamInterface, StreamInterface> aliases = expandedRefrigeration
+        ? Dexpi20XmlWriter.numericalAliases(processSystem)
+        : Collections.emptyMap();
     // Preserve registration order so product boundary connectors serialize deterministically.
     Map<Integer, String> outletStreamToNozzle = new LinkedHashMap<>();
     // Pre-built PipingComponent elements for valves, keyed by inlet nozzle ID
@@ -601,20 +611,7 @@ public final class DexpiXmlWriter {
           systemKey = "Segment";
         }
         segmentsBySystem.computeIfAbsent(systemKey, key -> new ArrayList<>()).add(stream);
-      } else if (unit instanceof DexpiProcessUnit) {
-        String inNozzle = "Nozzle-" + nozzleCounter++;
-        List<String> outNozzles = new ArrayList<>();
-        for (int outlet = 0; outlet < outletNozzleCount(unit); outlet++) {
-          outNozzles.add("Nozzle-" + nozzleCounter++);
-        }
-        registerPortRoles(unit, inNozzle, outNozzles, portRoles);
-        registerNozzlePositions(layoutPositions.get(unit.getName()), inNozzle, outNozzles, nozzlePositions);
-        registerNozzleOwners(unit, inNozzle, outNozzles, nozzleOwners);
-        appendProcessUnit(document, root, (DexpiProcessUnit) unit, usedIds, inNozzle, outNozzles,
-            layoutPositions.get(unit.getName()), labelCounter++, nozzlePositions);
-        equipmentInletNozzle.put(unit.getName(), inNozzle);
-        registerOutletNozzles(unit, outNozzles, outletStreamToNozzle);
-      } else if (!(unit instanceof Stream)) {
+      } else if (!(unit instanceof Stream) && !(expandedRefrigeration && Dexpi20XmlWriter.isNumericalHelper(unit))) {
         // Native NeqSim equipment — use reverse mapping
         String inNozzle = "Nozzle-" + nozzleCounter++;
         List<String> outNozzles = new ArrayList<>();
@@ -624,15 +621,50 @@ public final class DexpiXmlWriter {
         registerPortRoles(unit, inNozzle, outNozzles, portRoles);
         registerNozzlePositions(layoutPositions.get(unit.getName()), inNozzle, outNozzles, nozzlePositions);
         registerNozzleOwners(unit, inNozzle, outNozzles, nozzleOwners);
+        List<String> inletIds = new ArrayList<>();
+        inletIds.add(inNozzle);
+        int inletCount = unit instanceof RefrigerationPlantProjection.Item
+            || unit instanceof MultiStreamHeatExchangerInterface ? unit.getInletStreams().size() : 1;
+        DexpiLayoutEngine.EquipmentPosition position = layoutPositions.get(unit.getName());
+        for (int inlet = 1; inlet < inletCount; inlet++) {
+          String id = "Nozzle-" + nozzleCounter++;
+          inletIds.add(id);
+          nozzleOwners.put(id, unit);
+          portRoles.put(id, new String[] {DexpiFlowsheetGraph.ROLE_INLET, Integer.toString(inlet)});
+        }
+        if (inletCount > 1 && position != null) {
+          for (int inlet = 0; inlet < inletCount; inlet++) {
+            nozzlePositions.put(inletIds.get(inlet),
+                new double[] {position.x - 18.0, position.y + 8.0 - 16.0 * inlet / (inletCount - 1)});
+          }
+        }
+        if (unit instanceof RefrigerationPlantProjection.Item || unit instanceof MultiStreamHeatExchangerInterface) {
+          RefrigerationPipeRouting.placePorts(reverseMapComponentClass(unit), position, inletIds, outNozzles,
+              nozzlePositions);
+        }
+        equipmentInlets.put(unit.getName(), inletIds);
         if (isValveType(unit)) {
           // Valves are PipingComponents in DEXPI — embed in PipingNetworkSegment, not
           // top-level
           Element valveElement = buildValvePipingComponent(document, unit, usedIds, inNozzle, outNozzles,
               layoutPositions.get(unit.getName()), labelCounter++, nozzlePositions);
           valvePipingComponents.put(inNozzle, valveElement);
+        } else if (unit instanceof RefrigerationPlantProjection.Item
+            && ((RefrigerationPlantProjection.Item) unit).getSource() != null) {
+          appendNativeEquipment(document, root, unit, usedIds, inNozzle, outNozzles, position, labelCounter++,
+              nozzlePositions);
+        } else if (unit instanceof DexpiProcessUnit) {
+          appendProcessUnit(document, root, (DexpiProcessUnit) unit, usedIds, inNozzle, outNozzles, position,
+              labelCounter++, nozzlePositions);
         } else {
           appendNativeEquipment(document, root, unit, usedIds, inNozzle, outNozzles,
               layoutPositions.get(unit.getName()), labelCounter++, nozzlePositions);
+        }
+        if (inletIds.size() > 1) {
+          Element owner = isValveType(unit) ? valvePipingComponents.get(inNozzle) : (Element) root.getLastChild();
+          for (int index = 1; index < inletIds.size(); index++) {
+            appendNozzle(document, owner, inletIds.get(index), usedIds, nozzlePositions);
+          }
         }
         equipmentInletNozzle.put(unit.getName(), inNozzle);
         registerOutletNozzles(unit, outNozzles, outletStreamToNozzle);
@@ -645,20 +677,30 @@ public final class DexpiXmlWriter {
     registerPassThroughStreams(processSystem, outletStreamToNozzle);
 
     // Build connections from process wiring using stream identity matching
-    buildConnections(processSystem, outletStreamToNozzle, equipmentInletNozzle, nozzleOwners, connections);
+    for (StreamInterface alias : aliases.keySet()) {
+      String nozzle = outletStreamToNozzle.get(System.identityHashCode(Dexpi20XmlWriter.resolveAlias(alias, aliases)));
+      if (nozzle != null) {
+        outletStreamToNozzle.put(System.identityHashCode(alias), nozzle);
+      }
+    }
+    buildConnections(processSystem, outletStreamToNozzle, equipmentInlets, nozzleOwners, connections);
 
     for (Map.Entry<String, List<DexpiStream>> entry : segmentsBySystem.entrySet()) {
       appendPipingNetworkSystem(document, root, entry.getKey(), entry.getValue(), usedIds);
     }
 
     // Write Connection elements and valve PipingComponents in a PipingNetworkSystem
+    List<double[]> drawingExtents = new ArrayList<>();
     if (!connections.isEmpty() || !valvePipingComponents.isEmpty()) {
-      appendConnectionSystem(document, root, connections, usedIds, valvePipingComponents, nozzlePositions);
+      RefrigerationPipeRouting routing = expandedRefrigeration
+          ? new RefrigerationPipeRouting(nozzlePositions, drawingExtents)
+          : null;
+      appendConnectionSystem(document, root, connections, usedIds, valvePipingComponents, nozzlePositions, routing);
     }
 
     // Off-page connectors (ISO 10628): mark battery-limit feeds and products that are not wired to
     // another unit on this sheet, so the reader knows the line continues off the diagram.
-    appendBoundaryConnectors(document, root, connections, equipmentInletNozzle, outletStreamToNozzle, nozzlePositions);
+    appendBoundaryConnectors(document, root, connections, equipmentInlets, outletStreamToNozzle, nozzlePositions);
 
     // Auto-collect instruments from ProcessSystem if not explicitly provided
     Map<String, MeasurementDeviceInterface> effectiveTransmitters = transmitters;
@@ -716,13 +758,14 @@ public final class DexpiXmlWriter {
     DexpiShapeCatalog.appendShapeCatalogue(document, root);
 
     // Append Drawing with professional border, zone markers, and title block
-    double[] sheetSize = DexpiLayoutEngine.computeSheetSize(layoutPositions, instrumentPositions);
+    drawingExtents.addAll(instrumentPositions);
+    double[] sheetSize = DexpiLayoutEngine.computeSheetSize(layoutPositions, drawingExtents);
     String drawingName = processSystem.getName();
     String today = LocalDate.now().toString();
     DexpiLayoutEngine.appendDrawing(document, root, drawingName, "PID-001", "0", today, sheetSize[0], sheetSize[1]);
 
     // Battery limit boundary (NORSOK Z-003)
-    DexpiLayoutEngine.appendBatteryLimitBoundary(document, root, layoutPositions, instrumentPositions, drawingName);
+    DexpiLayoutEngine.appendBatteryLimitBoundary(document, root, layoutPositions, drawingExtents, drawingName);
 
     // Symbol legend (ISO 10628)
     List<String[]> legendEntries = new ArrayList<>();
@@ -855,6 +898,9 @@ public final class DexpiXmlWriter {
       Set<String> usedIds, String inletNozzleId, List<String> outletNozzleIds,
       DexpiLayoutEngine.EquipmentPosition position, int labelIndex, Map<String, double[]> nozzlePositions) {
     String componentClass = reverseMapComponentClass(unit);
+    if (unit instanceof RefrigerationPlantProjection.Item) {
+      unit = ((RefrigerationPlantProjection.Item) unit).getSource();
+    }
     String elementName = "Equipment";
     Element element = document.createElement(elementName);
 
@@ -1293,6 +1339,13 @@ public final class DexpiXmlWriter {
    * @return the DEXPI ComponentClass name
    */
   private static String reverseMapComponentClass(ProcessEquipmentInterface unit) {
+    if (unit instanceof RefrigerationPlantProjection.Item) {
+      return ((RefrigerationPlantProjection.Item) unit).getDexpiClass();
+    }
+    if (unit instanceof MultiStreamHeatExchangerInterface || Boolean.TRUE.equals(OMIT_DEFAULT_NAMESPACE.get())
+        && unit instanceof Cooler && !(unit instanceof AirCooler)) {
+      return "HeatExchanger";
+    }
     if (unit instanceof ThreePhaseSeparator) {
       return "ThreePhaseSeparator";
     }
@@ -1347,7 +1400,8 @@ public final class DexpiXmlWriter {
    * @return true if the unit should be rendered as a PipingComponent
    */
   private static boolean isValveType(ProcessEquipmentInterface unit) {
-    return unit instanceof ThrottlingValve;
+    return unit instanceof ThrottlingValve
+        || unit instanceof RefrigerationPlantProjection.Item && ((RefrigerationPlantProjection.Item) unit).isValve();
   }
 
   /**
@@ -1499,6 +1553,13 @@ public final class DexpiXmlWriter {
    */
   private static void registerOutletNozzles(ProcessEquipmentInterface unit, List<String> outNozzles,
       Map<Integer, String> outletStreamToNozzle) {
+    if (unit instanceof RefrigerationPlantProjection.Item || unit instanceof MultiStreamHeatExchangerInterface) {
+      List<StreamInterface> outlets = unit.getOutletStreams();
+      for (int index = 0; index < outlets.size(); index++) {
+        outletStreamToNozzle.put(System.identityHashCode(outlets.get(index)), outNozzles.get(index));
+      }
+      return;
+    }
     if (unit instanceof Splitter) {
       Splitter splitter = (Splitter) unit;
       for (int i = 0; i < outNozzles.size(); i++) {
@@ -1586,7 +1647,8 @@ public final class DexpiXmlWriter {
    * @return outlet nozzle count, at least one
    */
   private static int outletNozzleCount(ProcessEquipmentInterface unit) {
-    if (unit instanceof Splitter) {
+    if (unit instanceof Splitter || unit instanceof RefrigerationPlantProjection.Item
+        || unit instanceof MultiStreamHeatExchangerInterface) {
       List<StreamInterface> outlets = unit.getOutletStreams();
       return Math.max(1, outlets == null ? 1 : outlets.size());
     }
@@ -1718,16 +1780,21 @@ public final class DexpiXmlWriter {
    * @param connections list to populate with connections
    */
   private static void buildConnections(ProcessSystem processSystem, Map<Integer, String> outletStreamToNozzle,
-      Map<String, String> inletNozzles, Map<String, ProcessEquipmentInterface> nozzleOwners,
+      Map<String, List<String>> inletNozzles, Map<String, ProcessEquipmentInterface> nozzleOwners,
       List<NozzleConnection> connections) {
     for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
       if (unit instanceof Stream || unit instanceof DexpiStream) {
         continue;
       }
       List<StreamInterface> inStreams = DexpiLayoutEngine.resolveInletStreams(unit);
-      for (StreamInterface inletStream : inStreams) {
+      if (!inletNozzles.containsKey(unit.getName())) {
+        continue;
+      }
+      for (int index = 0; index < inStreams.size(); index++) {
+        StreamInterface inletStream = inStreams.get(index);
         String fromNozzle = outletStreamToNozzle.get(System.identityHashCode(inletStream));
-        String toNozzle = inletNozzles.get(unit.getName());
+        List<String> ports = inletNozzles.get(unit.getName());
+        String toNozzle = ports.get(ports.size() == 1 ? 0 : index);
         if (fromNozzle != null && toNozzle != null) {
           connections.add(new NozzleConnection(fromNozzle, toNozzle, inletStream, nozzleOwners.get(fromNozzle), unit));
         }
@@ -1742,11 +1809,13 @@ public final class DexpiXmlWriter {
    * @param parent the root element
    * @param connections the list of connections
    * @param usedIds set of used IDs
+   * @param routing optional routing of refrigerant circuits around equipment
    * @param valvePipingComponents pre-built PipingComponent elements for valves, keyed by inlet nozzle ID
    * @param nozzlePositions map of nozzle ID to {x, y} coordinates for line geometry
    */
   private static void appendConnectionSystem(Document document, Element parent, List<NozzleConnection> connections,
-      Set<String> usedIds, Map<String, Element> valvePipingComponents, Map<String, double[]> nozzlePositions) {
+      Set<String> usedIds, Map<String, Element> valvePipingComponents, Map<String, double[]> nozzlePositions,
+      RefrigerationPipeRouting routing) {
     Element systemElement = document.createElement("PipingNetworkSystem");
     systemElement.setAttribute("ComponentClass", "PipingNetworkSystem");
     systemElement.setAttribute("ID", uniqueIdentifier("PipingNetworkSystem", "Connections", usedIds));
@@ -1770,8 +1839,21 @@ public final class DexpiXmlWriter {
       DexpiServiceClassifier.ServiceType service = DexpiServiceClassifier.classify(conn.stream, 0.0);
       LineMetadata lineMetadata = resolveLineMetadata(conn, service, streamCounter);
       if (fromPos != null && toPos != null) {
-        DexpiLayoutEngine.appendServiceConnectionLine(document, segmentElement, fromPos[0], fromPos[1], toPos[0],
-            toPos[1], service);
+        double[][] route = routing == null
+            ? DexpiLayoutEngine.routeConnection(fromPos[0], fromPos[1], toPos[0], toPos[1])
+            : routing.route(fromPos, toPos);
+        if (route.length == 6) {
+          DexpiLayoutEngine.appendServiceRoute(document, segmentElement, route, service);
+        } else {
+          DexpiLayoutEngine.appendServiceConnectionLine(document, segmentElement, fromPos[0], fromPos[1], toPos[0],
+              toPos[1], service);
+        }
+        collectRouteSegments(route, horizontalSegments, verticalSegments);
+        if (route.length == 6) {
+          // Place both the direction arrow and the line identifier on the overhead run.
+          fromPos = route[2];
+          toPos = route[3];
+        }
         // Add flow direction arrow at midpoint of connection line
         DexpiLayoutEngine.appendFlowArrow(document, segmentElement, fromPos[0], fromPos[1], toPos[0], toPos[1]);
         // Add stream number label above line midpoint
@@ -1782,8 +1864,6 @@ public final class DexpiXmlWriter {
         DexpiLayoutEngine.appendLineIdLabel(document, segmentElement, lineMetadata.lineLabel(), fromPos[0], fromPos[1],
             toPos[0], toPos[1]);
         appendLinePropertyChangeArtifacts(document, segmentElement, lineMetadata, usedIds, fromPos, toPos);
-        // Record the routed sub-segments for the crossing-hop post-pass.
-        collectRouteSegments(fromPos[0], fromPos[1], toPos[0], toPos[1], horizontalSegments, verticalSegments);
       }
 
       // Attach operating line data (service, P, T, flow) as DEXPI generic attributes.
@@ -1847,16 +1927,12 @@ public final class DexpiXmlWriter {
    * Splits an orthogonal connection route into its horizontal and vertical sub-segments and records them for the later
    * line-crossing-hop pass.
    *
-   * @param fromX source X coordinate
-   * @param fromY source Y coordinate
-   * @param toX target X coordinate
-   * @param toY target Y coordinate
+   * @param points routed polyline coordinates
    * @param horizontalSegments collector of {x1, x2, y} horizontal sub-segments
    * @param verticalSegments collector of {x, y1, y2} vertical sub-segments
    */
-  private static void collectRouteSegments(double fromX, double fromY, double toX, double toY,
-      List<double[]> horizontalSegments, List<double[]> verticalSegments) {
-    double[][] points = DexpiLayoutEngine.routeConnection(fromX, fromY, toX, toY);
+  private static void collectRouteSegments(double[][] points, List<double[]> horizontalSegments,
+      List<double[]> verticalSegments) {
     for (int i = 0; i + 1 < points.length; i++) {
       double x1 = points[i][0];
       double y1 = points[i][1];
@@ -1896,12 +1972,12 @@ public final class DexpiXmlWriter {
    * @param document the XML document
    * @param parent the root PlantModel element
    * @param connections the internal nozzle-to-nozzle connections
-   * @param equipmentInletNozzle map of unit name to its inlet nozzle ID
+   * @param equipmentInlets map of unit name to its inlet nozzle IDs
    * @param outletStreamToNozzle map of outlet stream identity hash to its nozzle ID
    * @param nozzlePositions map of nozzle ID to {x, y} coordinates
    */
   private static void appendBoundaryConnectors(Document document, Element parent, List<NozzleConnection> connections,
-      Map<String, String> equipmentInletNozzle, Map<Integer, String> outletStreamToNozzle,
+      Map<String, List<String>> equipmentInlets, Map<Integer, String> outletStreamToNozzle,
       Map<String, double[]> nozzlePositions) {
     Set<String> wiredToNozzles = new HashSet<>();
     Set<String> wiredFromNozzles = new HashSet<>();
@@ -1911,21 +1987,18 @@ public final class DexpiXmlWriter {
     }
 
     // Feed connectors: an inlet nozzle that nothing on this sheet feeds.
-    for (Map.Entry<String, String> entry : equipmentInletNozzle.entrySet()) {
-      String inNozzle = entry.getValue();
-      if (wiredToNozzles.contains(inNozzle)) {
-        continue;
+    for (Map.Entry<String, List<String>> entry : equipmentInlets.entrySet()) {
+      for (String nozzle : entry.getValue()) {
+        double[] pos = nozzlePositions.get(nozzle);
+        if (!wiredToNozzles.contains(nozzle) && pos != null) {
+          DexpiLayoutEngine.appendOffPageConnector(document, parent, pos[0] - 18.0, pos[1], "FEED " + entry.getKey(),
+              true);
+        }
       }
-      double[] pos = nozzlePositions.get(inNozzle);
-      if (pos == null) {
-        continue;
-      }
-      String reference = "FEED " + entry.getKey();
-      DexpiLayoutEngine.appendOffPageConnector(document, parent, pos[0] - 18.0, pos[1], reference, true);
     }
 
     // Product connectors: an outlet nozzle that feeds nothing on this sheet.
-    for (String outNozzle : outletStreamToNozzle.values()) {
+    for (String outNozzle : new LinkedHashSet<>(outletStreamToNozzle.values())) {
       if (wiredFromNozzles.contains(outNozzle)) {
         continue;
       }
@@ -2841,7 +2914,8 @@ public final class DexpiXmlWriter {
           String ft = "FT-" + (base + 4);
           transmitters.put(ft, new VolumeFlowTransmitter(ft, in));
         }
-      } else if (unit instanceof Heater) {
+      } else if (unit instanceof Heater || unit instanceof RefrigerationPlantProjection.Item
+          && ((RefrigerationPlantProjection.Item) unit).getSource() instanceof Heater) {
         // Cooler and HeatExchanger both extend Heater, so a single instanceof Heater check
         // covers every cooling/heating service (a Cooler is not an instanceof HeatExchanger).
         StreamInterface out = firstOutlet(unit);

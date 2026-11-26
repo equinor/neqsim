@@ -1,7 +1,7 @@
 ---
 name: neqsim-process-extraction
 description: "Extracts process simulation data from unstructured sources (text, tables, PFDs, data sheets, STID/E3D line lists) and converts it to NeqSim JSON builder format or PipingRouteBuilder route models. USE WHEN: a user provides a process description, PFD, operating data, line-list table, or design document and wants a running NeqSim simulation. Covers equipment mapping, stream wiring, route hydraulics, unit conversion, composition normalization, and confidence scoring."
-last_verified: "2026-07-04"
+last_verified: "2026-11-26"
 ---
 
 # NeqSim Process Extraction Skill
@@ -1362,7 +1362,7 @@ from individual equipment.
 | `CO2RemovalModule` | CO2 absorption/stripping | `"streamToAbsorber"` | `"streamFromAbsorber"` |
 | `AdsorptionDehydrationlModule` | Adsorption dehydration with multiple beds | `"gasStreamToAdsorber"` | `"gasStreamFromAdsorber"` |
 | `DPCUModule` | Dew Point Control Unit (expander + column) | `"feed stream"` | `"gas exit stream"`, `"oil exit stream"` |
-| `PropaneCoolingModule` | Propane refrigeration cycle | `"refrigerant"` | `"refrigerant"` |
+| `PropaneCoolingModule` | Single-stage propane refrigeration loop (legacy; for a multi-level plant bound to the chillers use the `RefrigerationSystem` equipment, `neqsim-utility-design`) | `"refrigerant"` | `"refrigerant"` |
 | `MEGReclaimerModule` | MEG reclamation | `"streamToReclaimer"` | `"streamToWaterRemoval"` |
 | `MixerGasProcessingModule` | Gas processing with glycol injection | `"feed stream"`, `"glycol feed stream"` | `"gas exit stream"`, `"oil exit stream"` |
 | `WellFluidModule` | Well fluid characterization & separation | `"feed stream"` | single outlet |
