@@ -5955,9 +5955,8 @@ public class TwoFluidPipe extends Pipeline {
       }
       trialEquations.setInletPhaseFlowBoundaryState(inletFace);
     }
-    TwoFluidUnsplitIntegrator integrator =
-        new TwoFluidUnsplitIntegrator(trialEquations, densityModel, solver, unsplitMaximumNonlinearHalvings,
-            getMaximumTransientSubsteps(), trialSlugTracker);
+    TwoFluidUnsplitIntegrator integrator = new TwoFluidUnsplitIntegrator(trialEquations, densityModel, solver,
+        unsplitMaximumNonlinearHalvings, getMaximumTransientSubsteps(), trialSlugTracker);
     integrator.setPressureInterpolationEnabled(unsplitPressureInterpolationEnabled);
     PreparedInterval interval = integrator.prepareInterval(snapshot, dx, dt, simulationTime, outletPressure,
         outletBCType == BoundaryCondition.CONSTANT_PRESSURE, 1.0e-8, maximumTimeStep);
@@ -6410,8 +6409,8 @@ public class TwoFluidPipe extends Pipeline {
    * Set the bounded nonlinear subdivision depth for each attempted unsplit step.
    *
    * <p>
-   * The default remains eight halvings. Raising the value permits a smaller local step only after a nonlinear rejection;
-   * it does not change the nominal time-step bound, solver tolerance or independent conservation checks.
+   * The default remains eight halvings. Raising the value permits a smaller local step only after a nonlinear
+   * rejection; it does not change the nominal time-step bound, solver tolerance or independent conservation checks.
    * </p>
    *
    * @param maximumHalvings subdivision depth from zero through 30
