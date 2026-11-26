@@ -1,7 +1,7 @@
 ---
 name: neqsim-jurisdiction-regulatory-basis
 calculation_basis: "advisory"
-version: "0.2.0"
+version: "1.0.0"
 description: "Identifies the country and regulatory regime of the evaluated asset and records authorities, governing laws, regulation families, recognised standards and fiscal basis, with NO, GB, US, BR, AO, CA and EU profiles and a per-topic well and SURF register. USE WHEN: any study, design, safety, emissions, layout, well-planning, SURF or economics task evaluates an asset in a specific country, or the country is not stated and must be asked or declared as an assumption."
 last_verified: "2026-11-08"
 requires:

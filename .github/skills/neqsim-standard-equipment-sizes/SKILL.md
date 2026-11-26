@@ -1,7 +1,7 @@
 ---
 name: neqsim-standard-equipment-sizes
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Rounds calculated equipment sizes up to standard industry sizes - pipe NPS/DN, API 526 relief-valve orifices, ASME B16.5 flange classes, typical IEC motor ratings, exchanger tube lengths, vessel diameter steps - and defines the size-source precedence of project/company datasheet, vendor, then public standard. USE WHEN: a design or study produces a calculated diameter, area, power or rating that must be reported as a buildable standard size, or a report quotes an equipment size."
 last_verified: "2026-11-07"
 requires:
