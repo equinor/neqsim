@@ -1,7 +1,7 @@
 ---
 name: neqsim-troubleshooting
 description: "Troubleshoot oil and gas process operating problems and NeqSim simulation failures. Route measured plant disturbances to the root-cause agent. USE WHEN: a simulation fails to converge, produces unexpected results, throws exceptions, or gives zero/NaN values. Covers flash non-convergence, recycle divergence, equipment errors, phase identification issues, and numerical problems."
-last_verified: "2026-11-21"
+last_verified: "2026-11-26"
 ---
 
 # NeqSim Troubleshooting Playbook
@@ -572,9 +572,10 @@ else:
 
 ## Gas-condensate PVT pitfalls (found while building a CVD/CCE depletion model)
 
-- `fluid.setMolarComposition(moles)` **normalises** to a one-mole system; phase moles, volumes and flows are then per mole of the
-  new composition. In a hand-written CVD loop scale extensive values by the total moles you track, otherwise the material balance goes
-  negative after a few steps ("Mole fractions must sum to a positive value").
+- `setMolarComposition` normalises the component proportions and preserves the fluid's existing total moles.
+  After a withdrawal, set the remaining composition and explicitly set the total to the sum of the remaining component
+  moles before flashing. Phase amounts and volumes then represent the cell inventory directly. If you explicitly
+  flash a one-mole sample instead, multiply its phase amounts and volumes by the remaining cell moles once.
 - Take phase volume as `moles * molarMass / density` for every phase consistently (do not mix `getVolume("m3")` with density-based volumes).
 - Identify the gas-like phase by density, not by `getPhase("gas")`; a dense single phase can be labelled `oil`.
 - `TPflash` can return one phase 5-50 bar below the dew point of a lumped-C7+ PR/SRK fluid while `dewPointPressureFlash` finds the dew point
