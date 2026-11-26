@@ -1365,3 +1365,60 @@ same-source dense states are holdouts. Table A.24, Dholabhai/Burgass hydrate,
 NaCl/CaCl2/MgCl2, Archer water activity, Yasunishi-Yoshida and pure-water
 controls remain frozen. No production parameter, equation, tolerance, hydrate
 model or empirical temperature offset changes in this diagnostic.
+
+
+## Smooth residual-law candidate and frozen high-temperature disposition (2026-11-26)
+
+The next dependency gate fits the **source-minus-current-model** KCl response rather than
+reusing a total source activity coefficient.  On the He-Morse molality convention, define
+
+$$
+q(T) = \frac{298.15\ \mathrm{K}}{T} - 1
+$$
+
+and the dimensionless residual log-activity candidate
+
+$$
+g(T,m_{\mathrm{KCl}}) =
+\left(\lambda_{\mathrm{ref}} + \lambda_{1/T} q(T)\right)m_{\mathrm{KCl}}
++ \zeta_{1/T}q(T)m_{\mathrm{KCl}}^2.
+$$
+
+This form is a diagnostic candidate, not an active production term.  It is fitted to the
+26 He-Morse states after evaluating a matched current-model pure-water state at each
+temperature and CO2 partial pressure.  The retained three-parameter fit is full rank,
+has condition number 31.7646, calibration log-RMSE 0.0212144 and AICc -193.269.  Its
+coefficients (estimate +/- one standard error) are:
+
+| coefficient | estimate | standard error |
+|---|---:|---:|
+| $\lambda_{\mathrm{ref}}$ | -0.00975624 | 0.00229335 |
+| $\lambda_{1/T}$ | +0.432860 | 0.0486611 |
+| $\zeta_{1/T}$ | -0.0922848 | 0.0118244 |
+
+The largest absolute parameter correlation is 0.923475.  Adding an independent
+reference-temperature quadratic coefficient produces AICc -193.164 and an unscaled
+condition number 173.112; retaining five temperature-specific linear coefficients
+produces AICc -191.221.  The smaller law therefore preserves the supported temperature
+dependence without the unsupported parameters.  The zero residual curvature at
+298.15 K applies only to the source-minus-model increment; it does not assert zero
+total KCl/CO2 source curvature.
+
+No-refit transfer to the seven bracketed 323.15 K Mousavi-Chapoy-Burgass states
+improves every point: log-RMSE 0.104833 to 0.0501344, bias +0.104176 to
++0.0479878 and maximum absolute residual 0.124556 to 0.0759640.  The six
+373.15 K states are outside the He-Morse calibration range and remain an
+extrapolative holdout.  Aggregate log-RMSE improves from 0.0777317 to 0.0474229,
+but the bias crosses from +0.0721812 to -0.0373790 and only four of six points
+improve.  That local and aggregate over-correction blocks activation.
+
+**Disposition.**  No database parameter, residual-Helmholtz term, hydrate equation,
+solver tolerance or empirical temperature offset changes.  The smallest defensible
+next implementation is an opt-in, zero-default residual-Helmholtz prototype with the
+three coefficients above, complete composition and temperature derivatives, an
+explicit salt-level gauge, and the calibrated validity range 273.15--363.15 K.
+Activation requires derivative/finite-difference closure, a Furst double-counting
+audit, bounded covariance/sensitivity, and independent in-range high-temperature KCl
+data.  Table A.24, Dholabhai/Burgass hydrate families, NaCl/CaCl2/MgCl2, Archer water
+activity, Yasunishi-Yoshida and pure-water controls remain frozen holdouts or adjacent
+controls.
