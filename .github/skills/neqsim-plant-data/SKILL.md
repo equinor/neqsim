@@ -1,7 +1,7 @@
 ---
 name: neqsim-plant-data
 description: "Connecting NeqSim simulations to plant historian data via tagreader. USE WHEN: reading OSIsoft PI or Aspen IP.21 data, building equipment tag maps, comparing simulated vs measured values, running digital-twin loops, or extracting event windows for water-hammer screening. Covers tagreader API, tag mapping, data quality, mock data, model-vs-plant comparison and valve/pump transient snapshots."
-last_verified: "2026-07-04"
+last_verified: "2026-11-26"
 ---
 
 # Plant Data Integration with Tagreader
@@ -917,6 +917,7 @@ folder and anyone can reproduce the analysis.
 | Long read (hundreds of days of hourly data, several tags) returns an empty frame or `n=0` for some tags | The request timed out silently. Read in 60-90 day chunks per tag group, concat, and assert per-tag `n > 0` before using the column; do not treat `n=0` as "no data" |
 | A tag looks valid but never moves (`series.nunique() == 1`, e.g. a pressure stuck at one value) | Exclude constant tags from the basis and say so in the assumptions; a frozen instrument gives a false process "constant" |
 | Historian flow tag disagrees with the allocated/fiscal rate by a constant factor (e.g. 1/3.6) | Unit/basis difference (Sm3/h vs m3/h, per-train, uncorrected). Use the tag only for shares/ratios and take absolute rates from allocation (PDM); record the factor as a data gap |
+| A tag number looks like a process temperature but the value does not match the process (e.g. TT-592A/B/C read as heating-medium supply, actually motor winding temperature) | Read what the tag measures from the instrument documents first (SAS signal list or instrument index, package P&ID); never infer meaning from a value range or a tag-number pattern. Check any old P&ID design table against the current datasheet and the historian (a 60/70 C hot-side table was from the replaced R22 plant; the loop is at 30-40 C) and close a model-vs-plant comparison on at least two independent sides before calling the mapping verified |
 
 ## Root Cause Analysis Integration
 
