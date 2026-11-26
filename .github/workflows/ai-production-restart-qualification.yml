@@ -42,6 +42,14 @@ jobs:
           -DexcludedTestGroups=
           -Dneqsim.unsplit.tengesdal.tracked-force-qualification=true
           test
+      - name: Qualify tracked-force 180 second gas-flow reversal
+        run: >-
+          ./mvnw -B -ntp
+          -Dtest=TwoFluidUnsplitTengesdalPreparationTest#trackedSubcellForceLongIntervalMustCompleteConservatively
+          -Dgroups=slow
+          -DexcludedTestGroups=
+          -Dneqsim.unsplit.tengesdal.tracked-force-long-qualification=true
+          test
       - name: Exercise the installed restart, instrument holdouts and blind decisions
         run: |
           export NEQSIM_CLASSPATH="$PWD/target/classes:$(cat target/restart-classpath.txt)"

@@ -72,6 +72,14 @@ class TwoFluidUnsplitTengesdalPreparationTest {
     verifyTrackedSubcellForces(cells, maximumStep, 5.0);
   }
 
+  /** Require the tracked-force 180 s interval to complete conservatively across the gas-flow reversal. */
+  @Tag("slow")
+  @EnabledIfSystemProperty(named = "neqsim.unsplit.tengesdal.tracked-force-long-qualification", matches = "true")
+  @Test
+  void trackedSubcellForceLongIntervalMustCompleteConservatively() {
+    verifyTrackedSubcellForces(16, 0.1, 180.0);
+  }
+
   @Tag("slow")
   @EnabledIfSystemProperty(named = "neqsim.unsplit.tengesdal.qualification", matches = "true")
   @ParameterizedTest
