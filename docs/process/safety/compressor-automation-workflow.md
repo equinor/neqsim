@@ -18,6 +18,14 @@ actions supply the P&ID objects and automation registers. A calculated margin is
 physical transmitter. Documentary machinery-protection requirements remain unresolved requirements
 until actual hardware, native behavior and accountable engineering evidence are supplied.
 
+When embedding the train in a larger flowsheet, its scrubber drains are limited to the available
+liquid moles over the step. A dry vessel supplies zero liquid even if the level controller still
+requests opening. Embedded runs can disable per-step compressor snapshots through the process's
+measurement history setting. Live controls, safety logic and the latest physical boundary remain
+available. Scenario qualification enables history on its isolated case copy for trajectory metrics.
+The [well-to-export example](../../simulation/dynamic_simulation_guide.md#well-to-export-control-and-shutdown)
+connects multiple packages to one production separator and checks local versus plant-wide trips.
+
 ## Agent invocation
 
 Build the current source and its runtime classpath, then invoke the main class. The example assumes

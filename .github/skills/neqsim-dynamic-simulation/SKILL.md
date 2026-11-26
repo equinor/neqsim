@@ -8,6 +8,12 @@ last_verified: "2026-11-25"
 
 Guide for transient/dynamic process simulation in NeqSim.
 
+For a synthetic producing field with parallel gas trains, oil export, anti-surge, process control and
+shutdown, use `WellToExportDynamics(wellCount, trainCount)` and advance the assembled plant with
+`runTransient(dt)`. Use the live area and train accessors for disturbances and observations.
+The [qualification case](../../../docs/simulation/dynamic_simulation_guide.md#well-to-export-control-and-shutdown)
+covers 12 wells and two packages with quasi-steady gathering and fixed disposal pressure.
+
 For the canonical synthetic wellhead-choke, two-fluid riser and three-phase
 inlet-separator control replay, call `runPipeline` with analysis
 `wellToTopsideSlugControl`. Preserve the exact fixed outlet-pressure boundary;

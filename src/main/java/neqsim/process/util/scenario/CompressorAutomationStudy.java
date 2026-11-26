@@ -272,6 +272,7 @@ public final class CompressorAutomationStudy {
           .triggerTimeSeconds(definition.eventSeconds).eventExactTiming(true)
           .configureCase("CompressorAutomationStudy.configure.v1." + definition.profile, process -> {
             Train train = fromProcess(process);
+            train.process.setMeasurementHistoryRecordingEnabled(true);
             train.applyFaultOverrides(definition);
           })
           .initiatingEvent("CompressorAutomationStudy.event.v1." + definition.profile,
@@ -1825,6 +1826,34 @@ public final class CompressorAutomationStudy {
     }
 
     /**
+     * Limits the pressure-driven drain to the beginning-of-step liquid inventory. A dry vessel can retain a liquid-port
+     * composition for restart. That intensive state cannot supply a liquid withdrawal.
+     *
+     * @param vessel finite source inventory
+     * @param drain level-controlled outlet
+     * @param dt physical step in seconds
+     * @param id physical-step identifier
+     */
+    private void advanceDrain(Separator vessel, ThrottlingValve drain, double dt, UUID id) {
+      SystemInterface inventory = vessel.getThermoSystem();
+      double liquidMoles = 0.0;
+      if (inventory.hasPhaseType("oil")) {
+        liquidMoles += inventory.getPhase("oil").getNumberOfMolesInPhase();
+      }
+      if (inventory.hasPhaseType("aqueous")) {
+        liquidMoles += inventory.getPhase("aqueous").getNumberOfMolesInPhase();
+      }
+      StreamInterface port = vessel.getLiquidOutStream();
+      if (liquidMoles > 0.0 && port.getMolarRate() == 0.0) {
+        port.setThermoSystemFromPhase(inventory, "liquid");
+      }
+      drain.runTransient(dt, id);
+      double acceptedMolesPerSecond = Math.min(drain.getOutletStream().getMolarRate(), liquidMoles / dt);
+      port.getFluid().setTotalNumberOfMoles(acceptedMolesPerSecond);
+      drain.getOutletStream().getFluid().setTotalNumberOfMoles(acceptedMolesPerSecond);
+    }
+
+    /**
      * Advances one explicitly ordered native fixed step and retains the consumed boundary before inventory changes.
      *
      * @param dt physical timestep in seconds
@@ -1862,14 +1891,8 @@ public final class CompressorAutomationStudy {
       inletValve.runTransient(dt, id);
       antiSurgeValve.runTransient(dt, id);
       exportValve.runTransient(dt, id);
-      suctionDrain.runTransient(dt, id);
-      dischargeDrain.runTransient(dt, id);
-      // Vessel material integration consumes its own source terminals. Publish the actual
-      // downstream drain withdrawals there, including exact zero for a gas-only vessel.
-      suctionScrubber.getLiquidOutStream().getFluid()
-          .setTotalNumberOfMoles(suctionDrain.getOutletStream().getFluid().getTotalNumberOfMoles());
-      dischargeScrubber.getLiquidOutStream().getFluid()
-          .setTotalNumberOfMoles(dischargeDrain.getOutletStream().getFluid().getTotalNumberOfMoles());
+      advanceDrain(suctionScrubber, suctionDrain, dt, id);
+      advanceDrain(dischargeScrubber, dischargeDrain, dt, id);
       dischargeTee.getInletStream().getFluid().initProperties();
       for (int i = 0; i < 2; i++) {
         StreamInterface branch = dischargeTee.getSplitStream(i);
@@ -1918,7 +1941,9 @@ public final class CompressorAutomationStudy {
       solveCompressor(id);
       lastStepId = id;
       process.setCalculationIdentifier(id);
-      samples.add(Collections.unmodifiableMap(snapshot()));
+      if (process.isMeasurementHistoryRecordingEnabled()) {
+        samples.add(Collections.unmodifiableMap(snapshot()));
+      }
     }
 
     /**

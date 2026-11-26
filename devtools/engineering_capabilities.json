@@ -391,6 +391,32 @@
       "limitations": "Java/JPype object APIs and synthetic ProcessSystem verification; discovery/inspectApi only, no new curated runDynamic JSON execution option. Initial canonical support is an exact native CONVENTIONAL SafetyReliefValve, LINEAR trim and actual two-outlet Splitter relief branch with explicit protected-vessel and downstream-boundary identity. Low-order pressure/hysteresis, lag, dwell and lift-rate response uses native Cv hydraulics, not vendor-certified orifice capacity or mechanical/acoustic chatter dynamics. Configuration, current fault overrides, ordered pop/reseat/flow observations, sampled pressure envelopes and per-vessel consumed-boundary closure remain separate checks. Existing energy FAIL/HOLD cannot be erased by response PASS. Absolute bara native configuration and Pa absolute sizing helpers have distinct unit contracts. No automatic accumulation allowance, SIF/SIL/IPL credit, receiving-tool qualification, ISO/API conformity or construction approval. Native DEXPI gauge set pressure requires an explicit governed atmospheric reference; absolute settings remain in the sidecar if it is absent. Snapshot evidence is limited to covered branch subgraphs while the study's original SetPoint helpers leave whole-train adaptive rollback unsupported. Credited dynamic PSV execution requires finite native transient mode and gas choked-flow capacity limiting enabled; a source proposal or no-demand trace alone cannot prove relief response."
     },
     {
+      "id": "well-to-export-dynamics",
+      "title": "Well-to-export dynamic simulation with parallel compressor control and shutdown",
+      "domain": "process",
+      "tool": "inspectApi",
+      "apis": [
+        "neqsim.process.util.scenario.WellToExportDynamics",
+        "neqsim.process.equipment.reservoir.WellFlow",
+        "neqsim.process.util.scenario.CompressorAutomationStudy"
+      ],
+      "skills": [
+        "neqsim-dynamic-simulation",
+        "neqsim-compressor-antisurge-recycle",
+        "neqsim-process-safety"
+      ],
+      "agents": [
+        "process-model",
+        "dynamic-equipment",
+        "control-system"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/process/util/scenario/WellToExportDynamicsTest.java",
+        "src/test/java/neqsim/process/equipment/reservoir/WellFlowTest.java"
+      ],
+      "limitations": "Fixed-step Java/JPype field reference. Synthetic hydrocarbon fluid, quasi-steady wells and gathering hydraulics, fixed export and flare battery limits. Short-duration tests cover local and plant shutdown, actual anti-surge recycle and component inventories."
+    },
+    {
       "id": "instrumented-compressor-automation-study",
       "title": "Integrated compressor control, shutdown, relief/disposal and native P&ID workflow",
       "domain": "engineering-design",
