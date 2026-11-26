@@ -20,7 +20,7 @@ import subprocess
 import sys
 import time
 import traceback
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 if HERE not in sys.path:
@@ -76,14 +76,16 @@ def _undefined_names(source: str) -> List[str]:
     return sorted(loaded - bound)
 
 
-def convert_one(usc_path: str, work_dir: str, run_model: bool = False
-                ) -> Dict[str, Any]:
+def convert_one(usc_path: str, work_dir: str, run_model: bool = False,
+                time_limit_s: Optional[float] = None) -> Dict[str, Any]:
     """Read one UniSim case and grade the NeqSim conversion.
 
     Args:
         usc_path: Path to the .usc case.
         work_dir: Scratch directory for the working copy and E300 exports.
         run_model: If True, also execute the generated NeqSim model.
+        time_limit_s: Reader wall-clock limit; the batch sets it below the
+            subprocess timeout so the reader ends its own UniSim first.
 
     Returns:
         Result record for the case.
@@ -104,11 +106,12 @@ def convert_one(usc_path: str, work_dir: str, run_model: bool = False
         'ok': False,
     }
 
-    reader = UniSimReader(visible=False)
+    reader = UniSimReader(visible=False, time_limit_s=time_limit_s)
     try:
         t0 = time.time()
         model = reader.read(local_copy, extract_streams=True,
                             export_e300=True, e300_output_dir=work_dir)
+        reader.close()  # UniSim is not needed for the conversion
         record['read_s'] = round(time.time() - t0, 1)
         record['stage'] = 'read'
 
@@ -200,11 +203,14 @@ def main() -> int:
     parser.add_argument('--max-mb', type=float, default=100.0)
     parser.add_argument('--limit', type=int, default=0)
     parser.add_argument('--timeout', type=int, default=900)
+    parser.add_argument('--time-limit-s', type=float, default=None,
+                        help=argparse.SUPPRESS)
     parser.add_argument('--run-model', action='store_true')
     args = parser.parse_args()
 
     if args.single:
-        record = convert_one(args.single, args.work_dir, args.run_model)
+        record = convert_one(args.single, args.work_dir, args.run_model,
+                             args.time_limit_s)
         with open(args.out, 'w', encoding='utf-8') as handle:
             json.dump(record, handle, indent=2)
         return 0 if record.get('ok') else 1
@@ -230,7 +236,9 @@ def main() -> int:
         os.makedirs(args.work_dir, exist_ok=True)
         cmd = [sys.executable, os.path.abspath(__file__),
                '--single', case, '--out', out_path,
-               '--work-dir', os.path.join(args.work_dir, f'case_{index}')]
+               '--work-dir', os.path.join(args.work_dir, f'case_{index}'),
+               # the reader ends its own UniSim before the subprocess is killed
+               '--time-limit-s', str(max(args.timeout * 0.8, args.timeout - 60))]
         if args.run_model:
             cmd.append('--run-model')
         started = time.time()

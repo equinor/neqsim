@@ -157,14 +157,31 @@ class UniSimNeqSimBridge:
                 pass
             self._writer = None
 
+    def _close_one(self, attribute: str) -> None:
+        """Close the reader or writer so the other can own UniSim.
+
+        Each starts its own UniSim process and refuses to start while another
+        UniSim runs, so the bridge holds at most one of them at a time.
+        """
+        component = getattr(self, attribute)
+        if component is not None:
+            setattr(self, attribute, None)
+            try:
+                component.close()
+            except Exception as e:  # noqa: BLE001
+                logger.warning("Closing the UniSim %s failed: %s",
+                               attribute.strip('_'), e)
+
     def _get_reader(self):
         if self._reader is None:
+            self._close_one('_writer')
             from devtools.unisim_reader import UniSimReader
             self._reader = UniSimReader(visible=self._visible)
         return self._reader
 
     def _get_writer(self):
         if self._writer is None:
+            self._close_one('_reader')
             from devtools.unisim_writer import UniSimWriter
             self._writer = UniSimWriter(
                 visible=self._visible,

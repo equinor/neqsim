@@ -11,13 +11,14 @@ Requirements:
     UniSim Design R490+ installed and licensed
 
 Known Limitations (UniSim COM):
-    - New cases created via SimulationCases.Add() have restricted COM write
-      access, and **a .usc saved from such a case inherits that restriction**.
-      ``Operations.Add`` and every ``variable.SetValue`` then fail with
-      E_ACCESSDENIED (0x80070005) even though reads and ``MaterialStreams.Add``
-      succeed.  Always point ``template_path`` at a .usc that was saved from a
-      normal licensed UniSim session; pass ``clear_template=True`` to empty it
-      before building.
+    - On UniSim Design R510, a blank case from ``SimulationCases.Add()`` was
+      fully writable (11 streams, 9 operations, a solve and ``SaveAs``) once
+      the licence server was reachable; ``SimulationCases.Open`` failed with
+      E_ACCESSDENIED (0x80070005) only while it was not. Earlier, a .usc saved
+      from a blank case refused ``Operations.Add`` and ``variable.SetValue``.
+      The writer raises a clear error when ``Operations.Add`` is refused with
+      E_ACCESSDENIED instead of producing an empty case; ``template_path``
+      stays available (it is opened as a copy and never modified).
     - Solver pause (solver.CanSolve = False) is unreliable on blank cases.
     - Components can only be added to a fluid package while the solver is
       paused; on a live case ``Components.Add`` returns E_ACCESSDENIED.
@@ -26,12 +27,23 @@ Known Limitations (UniSim COM):
       kPa for pressure, kg/s for mass flow, °C for temperature).
     - Separator Feeds.Add() may fail while the solver is active; connections
       are attempted with retries.
+    - ``Operations.Add`` can return an operation with a default name
+      (``K-100``) instead of the requested one; the writer warns with the real
+      name.
+    - A new compressor carries a default 75 % adiabatic efficiency. A
+      compressor given an outlet temperature has both default efficiencies
+      erased first, otherwise the case is over-specified and does not solve.
     - Before first use, clear the COM type-library cache if you see
       E_ACCESSDENIED errors::
 
           import shutil, os
           p = os.path.join(os.environ['LOCALAPPDATA'], 'Temp', 'gen_py')
           shutil.rmtree(p, ignore_errors=True)
+
+Process safety (see unisim_session.py): the writer starts its own UniSim
+process, never attaches to or quits a UniSim that is already running,
+dismisses modal pop-ups (never pressing Yes, each one becomes a warning) and
+ends its own process when a build exceeds ``time_limit_s``.
 
 Architecture:
     NeqSimJsonParser  — parses the NeqSim JSON, resolves topology
@@ -70,6 +82,16 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
+
+
+def _session_module():
+    """Return ``unisim_session``, imported flat (toolkit install or ``devtools``
+    on ``sys.path``) or as ``devtools.unisim_session`` from the repo root."""
+    try:
+        import unisim_session
+    except ImportError:
+        from devtools import unisim_session
+    return unisim_session
 
 
 # ---------------------------------------------------------------------------
@@ -431,8 +453,8 @@ class UniSimWriter:
     """Creates a UniSim Design simulation from NeqSim JSON via COM.
 
     The writer:
-    1. Starts (or connects to) UniSim Design
-    2. Creates a new simulation case
+    1. Starts its own UniSim Design process (never a running one)
+    2. Creates a new simulation case (or opens a copy of a template)
     3. Sets up a fluid package with the correct property package and components
     4. Creates material streams with T, P, flow, and composition
     5. Creates operations (equipment) and wires feeds/products
@@ -452,28 +474,30 @@ class UniSimWriter:
 
     def __init__(self, visible: bool = True,
                  template_path: Optional[str] = None,
-                 clear_template: bool = False):
+                 clear_template: bool = False,
+                 time_limit_s: Optional[float] = 1800.0):
         """Initialize the writer.
 
         Args:
             visible: If True, show the UniSim GUI window (recommended for
                      debugging). If False, run headless.
-            template_path: Optional path to a licensed .usc file to use as
-                           a starting template.  The file must have been saved
-                           from a normal licensed UniSim session — a .usc
-                           produced by ``SimulationCases.Add()`` inherits that
-                           case's restricted COM write access and every
-                           ``Operations.Add`` / ``SetValue`` will fail with
-                           E_ACCESSDENIED.  If None, a new blank case is
-                           created (write access may be limited).
+            template_path: Optional .usc to start from. It is opened as a
+                           temporary copy, so the file itself is never
+                           modified. If None, a new blank case is created.
             clear_template: If True, delete all existing operations and
                             streams from the template before building.
+            time_limit_s: Wall-clock limit for one build, solves included.
+                          When reached, the writer's own UniSim process is
+                          ended and ``UniSimTimeout`` is raised. ``None``
+                          disables it.
         """
         self._app = None
         self._case = None
+        self._session = None
         self._visible = visible
         self._template_path = template_path
         self._clear_template = clear_template
+        self.time_limit_s = time_limit_s
         self._warnings: List[str] = []
         # Track created COM objects by name for wiring
         self._stream_objects: Dict[str, Any] = {}
@@ -486,21 +510,23 @@ class UniSimWriter:
         return self._warnings
 
     def _ensure_app(self):
-        """Start UniSim if not already running.
+        """Start the writer's own UniSim process if it is not running.
 
         Also clears the gencache type-library cache for UniSim to
         prevent stale early-bound wrappers from causing E_ACCESSDENIED.
+        A UniSim that is already running is never attached to or quit.
         """
-        if self._app is None:
+        if self._session is None:
+            self._session = _session_module().UniSimSession(
+                visible=self._visible)
+        if self._session.app is None:
             # Clear gencache to avoid stale type-library wrappers
             self._clear_gencache()
-            import win32com.client
-            logger.info("Starting UniSim Design via COM...")
-            self._app = win32com.client.dynamic.Dispatch(
-                'UnisimDesign.Application')
-            self._app.Visible = self._visible
+            logger.info("Starting own UniSim Design process via COM...")
+            self._session.start()
             time.sleep(self.COM_DELAY_LONG)
-            logger.info("UniSim started.")
+            logger.info("UniSim started (PID %s).", self._session.pid)
+        self._app = self._session.app
 
     @staticmethod
     def _clear_gencache():
@@ -517,24 +543,25 @@ class UniSimWriter:
                     logger.debug("Cleared UniSim gencache: %s", item)
 
     def _open_or_create_case(self):
-        """Open a template .usc file or create a new blank case.
+        """Open a copy of the template .usc file or create a new blank case.
 
         Returns:
             COM reference to the simulation case.
         """
         if self._template_path and os.path.isfile(self._template_path):
             abs_tp = os.path.abspath(self._template_path)
-            logger.info("Opening template: %s", abs_tp)
-            case = self._app.SimulationCases.Open(abs_tp)
+            logger.info("Opening a copy of template: %s", abs_tp)
+            case = self._session.open_copy(abs_tp)
             time.sleep(self.COM_DELAY_LONG + 2)
             return case
+        if self._template_path:
+            self._warnings.append(
+                f"Template '{self._template_path}' not found — building in a "
+                f"new blank case")
 
         # Fallback: create a new blank case
         logger.info("Creating new blank case via SimulationCases.Add()…")
-        try:
-            case = self._app.SimulationCases.Add()
-        except Exception:
-            case = self._app.SimulationCases.Add("")
+        case = self._session.new_case()
         time.sleep(self.COM_DELAY_LONG + 2)
         return case
 
@@ -750,20 +777,22 @@ class UniSimWriter:
             mw_mix += frac * mw
         return mw_mix if mw_mix > 0 else None
 
-    def close(self):
-        """Close UniSim application."""
-        if self._app is not None:
-            try:
-                self._app.Quit()
-            except Exception:
-                pass
-            self._app = None
+    def close(self, error: bool = False):
+        """Close the cases, quit and end the writer's own UniSim process.
+
+        Args:
+            error: True when an exception is already being raised; suppresses
+                the session's own timeout and source-changed errors.
+        """
+        session, self._session, self._app = self._session, None, None
+        if session is not None:
+            session.close(error=error)
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
+        self.close(error=exc_type is not None)
 
     def build_from_json(self, json_str: str,
                         save_path: Optional[str] = None) -> Any:
@@ -784,9 +813,50 @@ class UniSimWriter:
 
         if not systems:
             raise ValueError("No process systems found in JSON")
+        if save_path and self._template_path and self._same_file(
+                save_path, self._template_path):
+            raise ValueError(
+                "save_path is the template file; save the built case to a "
+                "new path (the template is only ever read as a copy)")
 
-        self._ensure_app()
+        if self._session is None:
+            self._session = _session_module().UniSimSession(
+                visible=self._visible)
+        session = self._session
+        popup_mark = len(session.popups)
+        try:
+            # Startup (Visible, first COM calls) counts against the limit too.
+            with session.limit(self.time_limit_s, "building the UniSim case"):
+                self._ensure_app()
+                self._build(systems, save_path)
+        except _session_module().UniSimTimeout:
+            self.close(error=True)  # finished; the next build starts a new one
+            raise
+        finally:
+            for popup in session.popups[popup_mark:]:
+                self._warnings.append(
+                    f"UniSim pop-up dismissed ({popup.get('action')}): "
+                    f"{popup.get('title')}: {popup.get('text')}")
+        return self._case
 
+    @staticmethod
+    def _same_file(path_a: str, path_b: str) -> bool:
+        """True when both paths name one file, including through junctions,
+        symlinks and hard links."""
+        try:
+            return os.path.samefile(path_a, path_b)
+        except OSError:  # save_path does not exist yet
+            return os.path.normcase(os.path.realpath(path_a)) == \
+                os.path.normcase(os.path.realpath(path_b))
+
+    def _build(self, systems: List['ParsedProcessSystem'],
+               save_path: Optional[str]) -> None:
+        """Body of ``build_from_json`` once the own UniSim process runs."""
+        # COM objects of an earlier build belong to another case (or a
+        # UniSim process a time limit ended); never wire against them.
+        self._stream_objects.clear()
+        self._operation_objects.clear()
+        self._fp_component_names = []
         # Create or open a simulation case
         self._case = self._open_or_create_case()
 
@@ -814,11 +884,7 @@ class UniSimWriter:
         # After enabling the solver, re-setting the flow allows UniSim to
         # propagate it through the flowsheet.
         if solver is not None:
-            try:
-                solver.CanSolve = True
-                time.sleep(self.COM_DELAY_LONG)
-            except Exception as e:
-                self._warnings.append("Could not re-enable solver: %s" % e)
+            self._solve("first solve")
 
         # Re-set feed stream flow rates via MolarFlow.Calculate.
         # MolarFlow (internal unit: kgmole/s) is the most reliable way
@@ -854,6 +920,11 @@ class UniSimWriter:
                             self._warnings.append(
                                 f"Could not set flow on '{feed.name}'")
 
+        # Wait for the solve the flow changes started, then report objects
+        # UniSim could not solve (otherwise only visible as -32767 values).
+        self._solve("solve after setting feed flows")
+        self._check_solve_status()
+
         # Save if requested
         if save_path:
             abs_path = os.path.abspath(save_path)
@@ -863,7 +934,26 @@ class UniSimWriter:
             except Exception as e:
                 self._warnings.append(f"Could not save: {e}")
 
-        return self._case
+    def _solve(self, what: str) -> None:
+        """Run the solver and wait until it is idle (the build time limit
+        ends a solve that never finishes)."""
+        try:
+            self._session.solve(self._case)
+        except Exception as e:  # noqa: BLE001 - COM raises com_error
+            self._warnings.append(f"Could not run the solver ({what}): {e}")
+
+    def _check_solve_status(self) -> None:
+        """Turn UniSim's inconsistent variables into warnings that name the
+        object."""
+        try:
+            status = self._session.solve_status(self._case)
+        except Exception as e:  # noqa: BLE001
+            self._warnings.append(f"Could not read the solve status: {e}")
+            return
+        for item in status['inconsistent']:
+            self._warnings.append(
+                f"UniSim flags {item['object']} {item['variable']} as "
+                f"inconsistent (two specifications fight)")
 
     def build_from_process_system(self, process_system,
                                   save_path: Optional[str] = None) -> Any:
@@ -1215,11 +1305,28 @@ class UniSimWriter:
             op = flowsheet.Operations.Add(unit.name, unisim_type)
             time.sleep(self.COM_DELAY_SHORT)
         except Exception as e:
+            if _session_module().is_access_denied(e):
+                source = ('the template' if self._template_path
+                          else 'the new blank case')
+                raise RuntimeError(
+                    f"UniSim refuses to add operations to {source} "
+                    f"(E_ACCESSDENIED). Check that the UniSim licence server "
+                    f"is reachable, then retry; if it is, pass template_path= "
+                    f"a case saved from a normal licensed UniSim session. "
+                    f"COM error: {e}") from e
             self._warnings.append(
                 f"Could not create operation '{unit.name}' "
                 f"(type={unisim_type}): {e}")
             return
 
+        try:
+            actual = str(op.name)
+        except Exception:  # noqa: BLE001
+            actual = unit.name
+        if actual != unit.name:
+            self._warnings.append(
+                f"UniSim created operation '{unit.name}' as '{actual}'; look "
+                f"it up as '{actual}' in the saved case")
         self._operation_objects[unit.name] = op
 
         # Wire feeds
@@ -1378,27 +1485,7 @@ class UniSimWriter:
 
         try:
             if type_name == 'Compressor':
-                # Outlet pressure via product stream
-                if 'outletPressure' in props:
-                    self._set_product_pressure(
-                        op, props['outletPressure'], f"{unit.name}.Pout")
-                # Efficiency — UniSim wants percent, NeqSim JSON uses either
-                # a fraction (0.78) or percent (78.0)
-                eff_key = ('polytropicEfficiency'
-                           if 'polytropicEfficiency' in props
-                           else 'isentropicEfficiency')
-                eff, _ = self._value_and_unit(props.get(eff_key), '-')
-                if eff is not None:
-                    if eff <= 1.0:
-                        eff *= 100.0
-                    # UniSim CompressOp names: CompPolytropicEff /
-                    # CompAdiabaticEff (NOT PolytropicEfficiency)
-                    target = ('CompPolytropicEff'
-                              if eff_key == 'polytropicEfficiency'
-                              else 'CompAdiabaticEff')
-                    if not self._set_efficiency(op, target, eff):
-                        self._warnings.append(
-                            f"Could not set {target} on '{unit.name}'")
+                self._set_compressor_properties(op, unit)
 
             elif type_name == 'ThrottlingValve':
                 if 'outletPressure' in props:
@@ -1485,6 +1572,77 @@ class UniSimWriter:
         except Exception as e:
             self._warnings.append(
                 f"Error setting properties on '{unit.name}': {e}")
+
+    #: UniSim compressor efficiency variables (percent), cleared before an
+    #: outlet-temperature specification.
+    COMPRESSOR_EFFICIENCIES = ('CompAdiabaticEff', 'CompPolytropicEff')
+
+    def _set_compressor_properties(self, op, unit: ParsedUnit) -> None:
+        """Specify a compressor by outlet pressure and either an efficiency or
+        an outlet temperature.
+
+        A new UniSim compressor carries a default 75 % adiabatic efficiency.
+        With an outlet temperature (NeqSim ``setOutTemperature``: efficiency
+        calculated) the default must be erased first, otherwise the
+        compressor is over-specified and the case does not solve; UniSim then
+        calculates both efficiencies.
+        """
+        props = unit.properties
+        out_temp = props.get('outTemperature', props.get('outletTemperature'))
+        eff_key = ('polytropicEfficiency' if 'polytropicEfficiency' in props
+                   else 'isentropicEfficiency')
+
+        if out_temp is not None:
+            for attribute in self.COMPRESSOR_EFFICIENCIES:
+                try:
+                    getattr(op, attribute).Erase()
+                except Exception as e:  # noqa: BLE001
+                    self._warnings.append(
+                        f"Could not erase {attribute} on '{unit.name}' — the "
+                        f"outlet temperature may over-specify it: {e}")
+
+        # Outlet pressure via product stream
+        if 'outletPressure' in props:
+            self._set_product_pressure(
+                op, props['outletPressure'], f"{unit.name}.Pout")
+
+        if out_temp is not None:
+            value, unit_str = self._value_and_unit(out_temp, 'K')
+            if value is not None and unit_str.upper() == 'K':
+                value, unit_str = value - 273.15, 'C'
+            product = None
+            try:
+                product = op.ProductStream
+            except Exception:  # noqa: BLE001
+                pass
+            if value is None or product is None or not self._set_variable(
+                    product.Temperature, value, unit_str, f"{unit.name}.Tout"):
+                self._warnings.append(
+                    f"Could not set outlet temperature on '{unit.name}'")
+            if eff_key in props:
+                self._warnings.append(
+                    f"'{unit.name}' has both an outlet temperature and "
+                    f"{eff_key}; the efficiency was not written (UniSim "
+                    f"calculates it from the outlet temperature)")
+            return
+
+        # Efficiency — UniSim wants percent, NeqSim JSON uses either
+        # a fraction (0.78) or percent (78.0)
+        eff, _ = self._value_and_unit(props.get(eff_key), '-')
+        if eff is None:
+            self._warnings.append(
+                f"No efficiency or outlet temperature for compressor "
+                f"'{unit.name}' in the JSON: UniSim's default 75 % adiabatic "
+                f"efficiency applies")
+            return
+        if eff <= 1.0:
+            eff *= 100.0
+        # UniSim CompressOp names: CompPolytropicEff /
+        # CompAdiabaticEff (NOT PolytropicEfficiency)
+        target = ('CompPolytropicEff' if eff_key == 'polytropicEfficiency'
+                  else 'CompAdiabaticEff')
+        if not self._set_efficiency(op, target, eff):
+            self._warnings.append(f"Could not set {target} on '{unit.name}'")
 
     # -----------------------------------------------------------------
     # Convenience: build from file
@@ -1617,8 +1775,14 @@ def main():
         help='Only validate JSON — do not create UniSim file')
     arg_parser.add_argument(
         '--template', default=None,
-        help='Path to a licensed .usc template file (recommended for '
-             'reliable COM access)')
+        help='Path to a .usc to start from (opened as a copy; optional)')
+    arg_parser.add_argument(
+        '--hidden', action='store_true',
+        help='Run UniSim without its window and end it after the build')
+    arg_parser.add_argument(
+        '--time-limit-s', type=float, default=1800.0,
+        help='End the own UniSim process if the build takes longer '
+             '(default 1800; 0 disables)')
     args = arg_parser.parse_args()
 
     logging.basicConfig(level=logging.INFO,
@@ -1639,7 +1803,8 @@ def main():
 
     visible = not args.hidden
 
-    writer = UniSimWriter(visible=visible, template_path=args.template)
+    writer = UniSimWriter(visible=visible, template_path=args.template,
+                          time_limit_s=args.time_limit_s or None)
     try:
         writer.build_from_json(json_str, save_path=output_path)
         print(writer.get_build_report())
