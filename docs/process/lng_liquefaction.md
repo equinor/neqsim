@@ -291,6 +291,14 @@ current operating point. The capacity snapshot is a constraint-utilization
 report; a maximum-throughput study should vary the live feed rate with the
 NeqSim optimization framework until the first hard or design constraint binds.
 
+## P&ID and controls for staged C3MR
+
+The three-pass main exchanger exposes three indexed inlets and three indexed
+outlets to the flowsheet and DEXPI. The staged propane package shares each
+feed and mixed-refrigerant chiller with the process drawing. Use the
+[refrigeration P&ID and controller example](equipment/refrigeration.md#generate-a-pid-and-test-its-temperature-controller)
+to export the train and reproduce a loss-of-cooling test.
+
 ## Literature comparison points
 
 These are comparison points, not universal acceptance limits. Feed

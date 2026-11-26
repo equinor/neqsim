@@ -648,6 +648,12 @@ public class LNGProcessBuilder {
       setOutletTemperature(Math.min(targetC, getInletStream().getTemperature("C")), "C");
       super.run(id);
     }
+
+    /** {@inheritDoc} */
+    @Override
+    protected void runAtDynamicOutlet(UUID id) {
+      super.run(id);
+    }
   }
 
   /**

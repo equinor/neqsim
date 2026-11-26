@@ -83,7 +83,7 @@ public final class Dexpi201XmlWriter {
     Dexpi20XmlWriter.numericalAliases(process);
     List<Map<String, Object>> omitted = new ArrayList<Map<String, Object>>();
     List<Map<String, Object>> physical = new ArrayList<Map<String, Object>>();
-    for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+    for (ProcessEquipmentInterface unit : RefrigerationPlantProjection.of(process).getUnitOperations()) {
       if (unit == null) {
         continue;
       }
@@ -104,6 +104,14 @@ public final class Dexpi201XmlWriter {
         Map<String, Object> item = new LinkedHashMap<String, Object>();
         item.put("sourceTag", unit.getName());
         item.put("sourceJavaType", unit.getClass().getName());
+        if (unit instanceof RefrigerationPlantProjection.Item) {
+          RefrigerationPlantProjection.Item component = (RefrigerationPlantProjection.Item) unit;
+          item.put("refrigerationPackageTag", component.getPackageTag());
+          item.put("sourceJavaType",
+              component.getSource() == null ? neqsim.process.equipment.refrigeration.RefrigerationSystem.class.getName()
+                  : component.getSource().getClass().getName());
+          item.put("projectedComponentClass", component.getDexpiClass());
+        }
         item.put("inletCount", Integer.valueOf(unit.getInletStreams().size()));
         item.put("outletCount", Integer.valueOf(unit.getOutletStreams().size()));
         physical.add(item);

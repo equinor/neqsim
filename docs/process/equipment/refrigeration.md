@@ -11,6 +11,7 @@ refrigerant equation of state; nothing is scaled from a Carnot reference.
 
 ## Contents
 
+- [Generate a P&ID and test its temperature controller](#generate-a-pid-and-test-its-temperature-controller)
 - [Which model to use](#which-model-to-use)
 - [What the cycle contains](#what-the-cycle-contains)
 - [Gas chilling example](#gas-chilling-example)
@@ -371,6 +372,46 @@ plots["plot_exchanger"](main_exchanger).savefig("temperature-duty.svg")
 
 Use [the C3MR comparison](../lng_liquefaction#compare-one-and-three-propane-levels)
 for a complete train example.
+
+## Generate a P&ID and test its temperature controller
+
+Use the existing `ProcessSystem` for both exports. For staged C3MR, get it from
+`model.getProcessSystem()`. For a heat pump, add the configured
+`RefrigerationSystem` to a `ProcessSystem`.
+
+| Deliverable | Entry point | What to inspect |
+| --- | --- | --- |
+| Native DEXPI 2.0.1 Plant XML | `Dexpi201XmlWriter.writeAndAssess(process, file, metadata)` | Check the returned schema and profile assessment, the heat-exchanger nozzles and the directed refrigerant connections. |
+| Graphical P&ID | `DexpiXmlWriter.writeForPyDexpi(process, xmlFile)` followed by `DexpiXmlSvgRenderer.render(xmlFile, svgFile)` | Zoom in on equipment, flow arrows, the sensor and its actuating signal. The SVG is rendered from the Proteus-compatible XML. |
+
+Each package contributes its condenser, compressor stages, expansion valves and
+configured flash drums. A cooler bound with `level.addCooler(cooler)` appears
+once, with its process and refrigerant connections. Two packages linked with
+`RefrigerationLoad.cascadeCondenser(cold)` share the same exchanger. Each fixed
+duty represents one evaporator service. Projected ports show where material
+flows. Header fabrication, actual nozzle counts, installed valve bodies and
+nominal pipe sizes require project data. Retain supplied sizes or complete
+the [engineering sizing and P&ID workflow](../../pid-design-synthesis.md#show-equipment-and-line-sizes-on-a-professional-pid)
+before issuing a drawing.
+
+To test a loop, start from the solved process. Configure the chiller with its
+design mass flow, inlet, outlet and refrigerant temperatures using
+`configureDynamicTemperatureControl`, then call `setCalculateSteadyState(false)`.
+Attach a temperature transmitter to the outlet, set it as the controller's
+transmitter, and attach the controller to the chiller. Register both devices
+with the process so the graphical P&ID includes the closed loop. Step the
+process with `runTransient`. Use `setDynamicCoolingUtilityAvailable(false)`
+for complete utility loss. Use the [governed native instrumentation workflow](../../engineering/dexpi-guide.md)
+to materialize instrument functions and signal lines in native DEXPI.
+
+The [executable C3MR example](https://github.com/equinor/neqsim/blob/master/src/test/java/neqsim/process/processmodel/dexpi/RefrigerationPlantProjectionTest.java)
+isolates the first feed chiller from the solved three-level model. A 10 °C
+increase in inlet temperature raises it to 35 °C. After 180 s the controller
+holds the outlet at 0.32 °C against a 0 °C setpoint, with the cooling valve
+54.69% open. After a further 60 s with cooling unavailable, the outlet reaches
+34.89 °C and the valve reaches 100%. These results exercise the chiller,
+transmitter, controller and valve-response model. The package continues to
+use its steady-state cycle for refrigerant power and duty.
 
 ## Limits
 
