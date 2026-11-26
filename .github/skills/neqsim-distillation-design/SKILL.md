@@ -1,7 +1,7 @@
 ---
 name: neqsim-distillation-design
 description: "Distillation column design rules for NeqSim. USE WHEN: setting up distillation columns, troubleshooting convergence, selecting internals (trays/packing), sizing columns, or analyzing column performance. Covers DistillationColumn setup, solver selection, feed tray optimization, reflux ratio, and internals selection per industry standards."
-last_verified: "2026-11-18"
+last_verified: "2026-11-26"
 ---
 
 # Distillation Design Rules
@@ -48,8 +48,14 @@ column.run();
 
 ### Default set-up for agent work (measured)
 
-Use `NEWTON` as the first solver, check the result, and fall back explicitly. Do not use `AUTO` as
-the default: on the benchmark below it was neither faster nor more robust than a fixed choice.
+Two cases, both measured:
+
+- **Condenser + reboiler + reflux (or boilup) ratio, ideal stages:** use `AUTO`. See "Condenser
+  columns with a reflux ratio" below.
+- **Everything else** (reboiler-only strippers, absorbers, two terminal temperatures without a
+  ratio, side draws, pumparounds, Murphree efficiency below one): use `NEWTON` first, check the
+  result, and fall back explicitly as shown here. `AUTO` was neither faster nor more robust than
+  a fixed choice on these columns.
 
 ```java
 column.setSolverType(DistillationColumn.SolverType.NEWTON);
@@ -76,11 +82,41 @@ case plus 21 perturbed feeds/pressures/duties; see `docs/process/equipment/disti
 | `NEWTON` | 0 | 59 s | **Default.** Fastest of the solvers with no failures |
 | `MATRIX_INSIDE_OUT` | 0 | 66 s | Equivalent alternative |
 | `INSIDE_OUT` | 0 | 134 s | Same answers as `NEWTON`, slower |
-| `MESH_RESIDUAL` | 2 (fails instead of reconciling) | 121 s | Verification; fastest on condenser + reboiler columns with a reflux specification |
-| `NAPHTALI_SANDHOLM` | 1 | 2-3x slower on 10+ trays | Residual-driven cross-check |
+| `MESH_RESIDUAL` | 2 (fails instead of reconciling) | 121 s | Verification |
+| `NAPHTALI_SANDHOLM` | 1 | 2-3x slower on reboiler-only columns of 10+ trays | Not on reboiler-only columns; see below for condenser columns |
 | `DIRECT_SUBSTITUTION`, `DAMPED_SUBSTITUTION`, `WEGSTEIN` | 2 | 42-48 s | Short reboiled columns (10 trays or fewer): fastest there since Anderson mixing |
 | `SUM_RATES` | 2 | 25 s | Reboiler-only strippers and absorbers |
-| `AUTO` | 2 | 49 s | Not as a default; failed the 15-tray stabiliser after 14 s where `NEWTON` solved it in 2.4 s |
+| `AUTO` | 2 | 49 s | Not on these columns; failed the 15-tray stabiliser after 14 s where `NEWTON` solved it in 2.4 s |
+
+#### Condenser columns with a reflux ratio
+
+```java
+column.setSolverType(DistillationColumn.SolverType.AUTO);
+column.run();
+if (!column.solved()) {
+  throw new IllegalStateException(column.getConvergenceDiagnostics());
+}
+DistillationColumn.SolverType used = column.getLastSolverTypeUsed(); // NAPHTALI_SANDHOLM or MESH_RESIDUAL
+String tried = column.getLastAutoSolverSummary();
+```
+
+Evidence (2026-11-25, 108 SRK columns: three light-hydrocarbon feeds, 6/12/20/30 trays, reflux
+ratio 0.8/1.8/4.0, reboiler temperature ±8 K; cold solves, "before" = code without the analytic
+Naphtali-Sandholm Jacobian and the new `AUTO` route):
+
+| Solver | Converged before | Converged now | Total time before | Total time now |
+|--------|------------------|---------------|-------------------|----------------|
+| `AUTO` | 103 | 108 | 1414 s | 115 s |
+| `MESH_RESIDUAL` | 105 | 108 | 361 s | 285 s |
+| `NAPHTALI_SANDHOLM` | 42 | 63 | 527 s | 375 s |
+
+- `AUTO` probes `NAPHTALI_SANDHOLM` (0.02-1.0 s when it converges, abandoned after about 0.3 s
+  when not), then `MESH_RESIDUAL`. Both probes require `RIGOROUS_CONVERGED`. If both fail,
+  the usual AUTO ladder runs. Check the final status before using the products.
+- Do not select `NAPHTALI_SANDHOLM` directly unless a failure is acceptable: it converged 63 of
+  108 cases, and each failure cost about 8 s in its sequential fallback without recovering.
+- The two solvers agreed within 0.12 % on top product rate wherever both converged.
+- Not covered: CPA or other associating fluids, side draws, pumparounds, purity specifications.
 
 Rules that follow from the measurements:
 
@@ -88,8 +124,8 @@ Rules that follow from the measurements:
   closed the feed to 0.014 %, not to machine precision. If the status is not `RIGOROUS_CONVERGED`
   and the result feeds a material balance or a guarantee, rerun with `MESH_RESIDUAL`.
 - **15 trays or more:** never start with `DIRECT_SUBSTITUTION`, `DAMPED_SUBSTITUTION`, `WEGSTEIN`
-  or `NAPHTALI_SANDHOLM`; they were 2-3x slower than `NEWTON` and the sequential ones did not
-  converge the stabiliser.
+  or, on a reboiler-only column, `NAPHTALI_SANDHOLM`; they were 2-3x slower than `NEWTON` and the
+  sequential ones did not converge the stabiliser.
 - **Solvers do not agree to more than about 0.1-0.3 % on product rates at default tolerances.**
   Sequential substitution stops on the sweep step, not on the distance to the solution. Quote the
   solver and `getLastSolveStatus()` with every result, and cross-check a result that feeds a
@@ -216,15 +252,15 @@ duties or a tray profile.
 
 | System Type | Recommended Solver | Notes |
 |------------|-------------------|-------|
-| Any hydrocarbon column, first attempt | `NEWTON` | Measured default, see "Default set-up for agent work" |
+| Hydrocarbon column without a condenser reflux ratio, first attempt | `NEWTON` | Measured default, see "Default set-up for agent work" |
 | Short reboiled HC column (10 trays or fewer), cold solve | `DIRECT_SUBSTITUTION` | Fastest there with Anderson mixing; status may be `RECONCILED_PRODUCTS` |
-| Condenser + reboiler with reflux specification | `MESH_RESIDUAL` | Fastest and residual-verified on the depropanizer/debutanizer cases |
+| Condenser + reboiler with reflux ratio, ideal stages | `AUTO` | 108 of 108 cases in 115 s against 285 s for `MESH_RESIDUAL` (2026-11-25); picks `NAPHTALI_SANDHOLM` or `MESH_RESIDUAL` |
 | Larger HC fractionators | `MATRIX_INSIDE_OUT` or `NEWTON` | Adaptive: small columns bypass matrix overhead; larger columns try the matrix warm start before rigorous inside-out polishing |
 | Non-ideal (alcohols, water) | `DAMPED_SUBSTITUTION` or `DIRECT_SUBSTITUTION` | More conservative for non-ideal K-values |
 | Absorbers (no condenser/reboiler) | `SUM_RATES` or `DIRECT_SUBSTITUTION` | Flow-corrected updates can help absorber/stripper cases |
 | Wide-boiling (C1 to C20+) | `DAMPED_SUBSTITUTION` | Increase iterations and monitor residuals |
 | Cryogenic (< -100°C) | `INSIDE_OUT` with residual diagnostics | Careful with phase identification |
-| Solver audit / residual convergence | `MESH_RESIDUAL` or `NAPHTALI_SANDHOLM` | `MESH_RESIDUAL` records diagnostics and enforces the MESH/product-draw gate by default; `NAPHTALI_SANDHOLM` attempts guarded simultaneous MESH correction |
+| Solver audit / residual convergence | `MESH_RESIDUAL` or `NAPHTALI_SANDHOLM` | `MESH_RESIDUAL` records diagnostics and enforces the MESH/product-draw gate by default; `NAPHTALI_SANDHOLM` solves all MESH equations simultaneously with an analytic Jacobian and reports `getLastNaphtaliAnalyticJacobianColumns()` |
 
 ## Column Specification Combinations
 

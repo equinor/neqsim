@@ -62,6 +62,15 @@ public class NaphtaliSandholmSolver {
   /** Maximum number of non-descent line-search steps allowed before restoring the best state. */
   private static final int MAX_NON_DESCENT_LINE_SEARCH_STEPS = 3;
 
+  /** Largest tray temperature change in K applied by one Newton step. */
+  private static final double MAX_NEWTON_TEMPERATURE_STEP = 10.0;
+
+  /** Fraction of the stage liquid flow by which any liquid component flow may change in one Newton step. */
+  private static final double TRACE_FLOW_STEP_FRACTION = 0.05;
+
+  /** Fraction of a flow below which a decreasing Newton step is damped exponentially. */
+  private static final double LINEAR_FLOW_STEP_FRACTION = 0.25;
+
   /** Maximum forced-root fugacity sweeps for a cold, retained or recovery tray evaluation. */
   private static final int THERMO_K_VALUE_ITERATIONS = 30;
 
@@ -388,8 +397,8 @@ public class NaphtaliSandholmSolver {
    * Get the number of analytically differentiated Jacobian columns used by the latest solve.
    *
    * <p>
-   * The current block-tridiagonal implementation evaluates every derivative column by finite difference, so this
-   * counter is zero. The getter is retained for compatibility and for a future mixed analytic/numerical assembly.
+   * Each successful analytic build adds one column per stage variable. A finite-difference build increments the
+   * separate finite-difference counter.
    * </p>
    *
    * @return number of analytically differentiated Jacobian columns
@@ -795,9 +804,10 @@ public class NaphtaliSandholmSolver {
       }
       // Sum-Rates uses terminal energy equations and cannot preserve active flow-ratio boundaries.
       // Retain the Bubble-Point seed for the simultaneous ratio-constrained Newton equations.
-      if (!warmStartFromColumn
-          && (!terminalRatioNewtonSeed || !hasTerminalRatioControl(0) && !hasTerminalRatioControl(N - 1))
-          && mbErrorBP < 0.005 && energyErrorBP >= 0.01) {
+      // The same holds for a direct solve: with an active ratio the Sum-Rates sweeps diverge and the
+      // Bubble-Point state is restored, so the phase only costs thermodynamic evaluations.
+      if (!warmStartFromColumn && !hasTerminalRatioControl(0) && !hasTerminalRatioControl(N - 1) && mbErrorBP < 0.005
+          && energyErrorBP >= 0.01) {
         // Mass balance OK but energy not — use Sum-Rates method to correct T
         // The BP method determines T from bubble-point (sum Kx = 1), which
         // fails for wide-boiling / absorber columns. SR determines T from
@@ -2991,7 +3001,6 @@ public class NaphtaliSandholmSolver {
         System.arraycopy(lastVaporSystems, 0, bestVaporSystems, 0, N);
       }
 
-      // Convergence: T stable and mass balance acceptable
       if (maxDeltaT < 0.05 && mbErr < 0.01) {
         logger.info("SR converged at iter {}: mbErr={}% energy={}%", iter, String.format("%.4f", mbErr * 100),
             String.format("%.2f", eErr * 100));
@@ -3338,6 +3347,209 @@ public class NaphtaliSandholmSolver {
    */
   private double[][] computeJacobian(double[] F0) {
     long jacobianStart = System.nanoTime();
+    double[][] analytic = computeAnalyticJacobian(F0);
+    if (analytic != null) {
+      lastAnalyticJacobianColumns += totalVars;
+      if (logger.isTraceEnabled()) {
+        logger.trace("NS analytic Jacobian: largest deviation from finite differences = {}",
+            Double.valueOf(maxJacobianDeviation(analytic, computeFiniteDifferenceJacobian(F0))));
+      }
+      lastJacobianBuildTimeSeconds += (System.nanoTime() - jacobianStart) / 1.0e9;
+      return analytic;
+    }
+    double[][] J = computeFiniteDifferenceJacobian(F0);
+    lastFiniteDifferenceJacobianColumns += totalVars;
+    lastJacobianBuildTimeSeconds += (System.nanoTime() - jacobianStart) / 1.0e9;
+    return J;
+  }
+
+  /**
+   * Largest scaled difference between two Jacobian matrices.
+   *
+   * @param first first matrix
+   * @param second second matrix
+   * @return largest absolute entry difference divided by one plus the entry magnitude
+   */
+  private double maxJacobianDeviation(double[][] first, double[][] second) {
+    double deviation = 0.0;
+    for (int row = 0; row < totalVars; row++) {
+      for (int column = 0; column < totalVars; column++) {
+        deviation = Math.max(deviation,
+            Math.abs(first[row][column] - second[row][column]) / (1.0 + Math.abs(second[row][column])));
+      }
+    }
+    return deviation;
+  }
+
+  /**
+   * Evaluate one forced-root phase with composition derivatives and load it into a stage derivative set.
+   *
+   * @param derivatives destination stage derivative set
+   * @param composition normalized phase composition
+   * @param tempK temperature in kelvin
+   * @param pressBar absolute pressure in bar
+   * @param isVapor whether the gas root is requested
+   * @return true when the phase evaluation and its derivative consistency checks succeed
+   */
+  private boolean loadPhaseDerivatives(MeshStageDerivatives derivatives, double[] composition, double tempK,
+      double pressBar, boolean isVapor) {
+    try {
+      SystemInterface sys = getSinglePhaseWorkSystem();
+      sys.setTemperature(tempK);
+      sys.setPressure(pressBar);
+      sys.setTotalNumberOfMoles(1.0);
+      sys.setMolarComposition(composition);
+      sys.init(0);
+      sys.setNumberOfPhases(1);
+      sys.setPhaseType(0, isVapor ? PhaseType.GAS : PhaseType.LIQUID);
+      sys.setForcePhaseTypes(true);
+      return derivatives.loadPhase(sys, isVapor);
+    } catch (RuntimeException exception) {
+      logger.debug("Phase derivative evaluation failed for {} phase at T={}K P={}bar", isVapor ? "vapor" : "liquid",
+          Double.valueOf(tempK), Double.valueOf(pressBar));
+      return false;
+    }
+  }
+
+  /**
+   * Build the block-tridiagonal Jacobian from analytic thermodynamic derivatives.
+   *
+   * <p>
+   * Each stage needs one liquid and one vapor phase evaluation with composition derivatives, instead of the
+   * {@code C + 2} perturbed stage evaluations of the finite-difference build. The matrix is the exact derivative of
+   * {@link #computeResidual()}, including the state-dependent scale of the energy equation, so the Newton step is a
+   * descent direction of the residual norm that the line search measures.
+   * </p>
+   *
+   * <p>
+   * The analytic build is not used for stages with a Murphree efficiency below one, for a stage whose thermodynamic
+   * evaluation fell back to correlation K-values, or for a thermodynamic model whose derivatives fail the consistency
+   * checks of {@link MeshStageDerivatives#loadPhase}. In those cases the method returns {@code null} and the caller
+   * uses finite differences.
+   * </p>
+   *
+   * @param residual residual vector at the current state
+   * @return Jacobian matrix [totalVars][totalVars], or {@code null} when analytic derivatives are unavailable
+   */
+  private double[][] computeAnalyticJacobian(double[] residual) {
+    MeshStageDerivatives[] stages = new MeshStageDerivatives[N];
+    double[] x = new double[C];
+    double[] y = new double[C];
+    for (int j = 0; j < N; j++) {
+      if (trayEta[j] < 1.0 - 1.0e-10 || !(L[j] > 1.0e-15) || hL[j] == 0.0 && hV[j] == 0.0) {
+        return null;
+      }
+      double sumKx = 0.0;
+      for (int i = 0; i < C; i++) {
+        x[i] = liq[j][i] / L[j];
+        sumKx += K[j][i] * x[i];
+      }
+      if (!(sumKx > 1.0e-20) || !Double.isFinite(sumKx)) {
+        return null;
+      }
+      for (int i = 0; i < C; i++) {
+        y[i] = K[j][i] * x[i] / sumKx;
+      }
+      double pressBar = P[j] / 1.0e5;
+      MeshStageDerivatives stage = new MeshStageDerivatives(C);
+      if (!loadPhaseDerivatives(stage, x, T[j], pressBar, false)
+          || !loadPhaseDerivatives(stage, y, T[j], pressBar, true) || !stage.compute(liq[j], V[j], K[j])) {
+        return null;
+      }
+      stages[j] = stage;
+    }
+
+    double[][] J = new double[totalVars][totalVars];
+    for (int j = 0; j < N; j++) {
+      int base = j * varsPerTray;
+      MeshStageDerivatives own = stages[j];
+      for (int i = 0; i < C; i++) {
+        double[] row = J[base + i];
+        for (int m = 0; m < varsPerTray; m++) {
+          row[base + m] = own.getVaporFlowDerivative(i, m) / flowScale;
+        }
+        row[base + i] += 1.0 / flowScale;
+        if (j < N - 1) {
+          row[base + varsPerTray + i] = -internalLiquidFraction[j + 1] / flowScale;
+        }
+        if (j > 0) {
+          MeshStageDerivatives below = stages[j - 1];
+          for (int m = 0; m < varsPerTray; m++) {
+            row[base - varsPerTray + m] = -internalVaporFraction[j - 1] * below.getVaporFlowDerivative(i, m)
+                / flowScale;
+          }
+        }
+      }
+
+      double[] third = J[base + C];
+      if (hasTerminalRatioControl(j)) {
+        if (j == N - 1 && hasCondenser) {
+          // Same equation order as terminalRatioResidual: L - refluxRatio * V at the condenser.
+          for (int m = 0; m < C; m++) {
+            third[base + m] = 1.0 / flowScale;
+          }
+          third[base + C + 1] = -refluxRatio / flowScale;
+        } else {
+          // V - boilupRatio * L at the reboiler.
+          for (int m = 0; m < C; m++) {
+            third[base + m] = -boilupRatio / flowScale;
+          }
+          third[base + C + 1] = 1.0 / flowScale;
+        }
+      } else if (!Double.isNaN(fixedTemperature[j])) {
+        third[base + C] = 1.0 / tempScale;
+      } else {
+        boolean flowScaleActive = L[j] + V[j] > flowScale;
+        double trayFlow = flowScaleActive ? L[j] + V[j] : flowScale;
+        double enthalpyDifference = hV[j] - hL[j];
+        boolean latentActive = Math.abs(enthalpyDifference) > 1.0e3;
+        double latentHeat = latentActive ? Math.abs(enthalpyDifference) : 1.0e3;
+        double energyScale = trayFlow * latentHeat;
+        // residual[base + C] is H / energyScale, so d(H / scale) = dH / scale - residual * dscale / scale.
+        double scaledResidual = residual[base + C];
+        for (int m = 0; m < varsPerTray; m++) {
+          double enthalpyDerivative = own.getLiquidEnthalpyFlowDerivative(m) + own.getVaporEnthalpyFlowDerivative(m);
+          double scaleDerivative = 0.0;
+          if (flowScaleActive && (m < C || m == C + 1)) {
+            scaleDerivative += latentHeat;
+          }
+          if (latentActive) {
+            scaleDerivative += trayFlow * Math.signum(enthalpyDifference)
+                * (own.getVaporMolarEnthalpyDerivative(m) - own.getLiquidMolarEnthalpyDerivative(m));
+          }
+          third[base + m] = (enthalpyDerivative - scaledResidual * scaleDerivative) / energyScale;
+        }
+        if (j < N - 1) {
+          MeshStageDerivatives above = stages[j + 1];
+          for (int m = 0; m < varsPerTray; m++) {
+            third[base + varsPerTray + m] = -internalLiquidFraction[j + 1] * above.getLiquidEnthalpyFlowDerivative(m)
+                / energyScale;
+          }
+        }
+        if (j > 0) {
+          MeshStageDerivatives below = stages[j - 1];
+          for (int m = 0; m < varsPerTray; m++) {
+            third[base - varsPerTray + m] = -internalVaporFraction[j - 1] * below.getVaporEnthalpyFlowDerivative(m)
+                / energyScale;
+          }
+        }
+      }
+
+      double[] summation = J[base + C + 1];
+      for (int m = 0; m < varsPerTray; m++) {
+        summation[base + m] = own.getSummationDerivative(m);
+      }
+    }
+    return J;
+  }
+
+  /**
+   * Compute the Jacobian matrix numerically using finite differences.
+   *
+   * @param F0 current residual vector
+   * @return the Jacobian matrix [totalVars][totalVars]
+   */
+  private double[][] computeFiniteDifferenceJacobian(double[] F0) {
     double[][] J = new double[totalVars][totalVars];
     double pertSize = 1e-4;
     double minPert = 1e-8;
@@ -3383,8 +3595,6 @@ public class NaphtaliSandholmSolver {
     double[] restoredResidual = computeResidual();
     lastJacobianBaseResidualMutation = Math.max(lastJacobianBaseResidualMutation,
         vectorDifferenceNorm(F0, restoredResidual));
-    lastFiniteDifferenceJacobianColumns += totalVars;
-    lastJacobianBuildTimeSeconds += (System.nanoTime() - jacobianStart) / 1.0e9;
     return J;
   }
 
@@ -4776,13 +4986,12 @@ public class NaphtaliSandholmSolver {
    * Apply a trust-region clamp to the Newton direction dx (in-place).
    *
    * <p>
-   * Limits each variable's per-iteration change to a physically reasonable magnitude to prevent Newton from leaving the
-   * basin of attraction. The whole step vector is scaled by the smallest acceptable ratio so the descent direction is
-   * preserved.
-   * </p>
-   *
-   * <p>
-   * Bounds: |dT| &le; 10 K, |dV| &le; 0.5*V + 0.05*flowScale, |d(liq_ij)| &le; 0.5*liq_ij + 1e-3*flowScale.
+   * The whole step vector is scaled by the smallest acceptable ratio, so the Newton direction and the closure of the
+   * linear material balances are preserved. Bounds per stage: the temperature change is at most
+   * {@link #MAX_NEWTON_TEMPERATURE_STEP}, the vapor flow change at most {@code 0.5 V + 0.05 flowScale}, and a liquid
+   * component flow change at most half the component flow plus {@link #TRACE_FLOW_STEP_FRACTION} of the stage liquid
+   * flow. The second term is relative to the stage flow, not to the component flow, so a trace component cannot
+   * throttle the step of every other variable in the column.
    * </p>
    *
    * @param dx the Newton step (will be scaled in place)
@@ -4790,25 +4999,25 @@ public class NaphtaliSandholmSolver {
    */
   private double applyTrustRegion(double[] dx) {
     double scale = 1.0;
-    final double maxDT = 10.0;
     for (int j = 0; j < N; j++) {
       int base = j * varsPerTray;
+      double stageFlow = Math.max(L[j], flowScale);
       for (int i = 0; i < C; i++) {
-        double cap = 0.5 * liq[j][i] + 1.0e-3 * flowScale;
+        double cap = 0.5 * liq[j][i] + TRACE_FLOW_STEP_FRACTION * stageFlow;
         double step = Math.abs(dx[base + i]);
-        if (step > cap && cap > 0.0) {
+        if (step > cap) {
           scale = Math.min(scale, cap / step);
         }
       }
       if (Double.isNaN(fixedTemperature[j])) {
         double step = Math.abs(dx[base + C]);
-        if (step > maxDT) {
-          scale = Math.min(scale, maxDT / step);
+        if (step > MAX_NEWTON_TEMPERATURE_STEP) {
+          scale = Math.min(scale, MAX_NEWTON_TEMPERATURE_STEP / step);
         }
       }
       double capV = 0.5 * V[j] + 0.05 * flowScale;
       double stepV = Math.abs(dx[base + C + 1]);
-      if (stepV > capV && capV > 0.0) {
+      if (stepV > capV) {
         scale = Math.min(scale, capV / stepV);
       }
     }
@@ -4818,6 +5027,33 @@ public class NaphtaliSandholmSolver {
       }
     }
     return scale;
+  }
+
+  /**
+   * Apply a signed change to a non-negative flow variable without crossing zero.
+   *
+   * <p>
+   * Increases and moderate decreases are applied linearly, so the Newton step keeps the linear material balances
+   * closed. A decrease below {@link #LINEAR_FLOW_STEP_FRACTION} of the current value continues on an exponential that
+   * joins the linear branch with the same value and slope and approaches zero asymptotically. This is the damping
+   * proposed by Naphtali and Sandholm (1971) for component flows that a full Newton step would make negative; it limits
+   * only the offending variable instead of scaling the whole correction vector.
+   * </p>
+   *
+   * @param value current non-negative value
+   * @param change signed change requested by the Newton step
+   * @return damped positive value
+   */
+  static double applyPositiveFlowStep(double value, double change) {
+    if (!(value > 0.0)) {
+      return Math.max(value + change, 1.0e-20);
+    }
+    double floor = LINEAR_FLOW_STEP_FRACTION * value;
+    double linear = value + change;
+    if (linear >= floor) {
+      return linear;
+    }
+    return Math.max(floor * Math.exp((linear - floor) / floor), 1.0e-20);
   }
 
   /**
@@ -4836,8 +5072,7 @@ public class NaphtaliSandholmSolver {
 
       // Update liquid component flows with non-negativity bounds
       for (int i = 0; i < C; i++) {
-        double newVal = liq[j][i] - alpha * dx[base + i];
-        liq[j][i] = Math.max(newVal, 1e-20);
+        liq[j][i] = applyPositiveFlowStep(liq[j][i], -alpha * dx[base + i]);
       }
 
       // Update temperature with physical bounds (skip if fixed)
@@ -4848,8 +5083,7 @@ public class NaphtaliSandholmSolver {
       }
 
       // Update vapor flow
-      double newV = V[j] - alpha * dx[base + C + 1];
-      V[j] = Math.max(newV, 0.0);
+      V[j] = applyPositiveFlowStep(V[j], -alpha * dx[base + C + 1]);
     }
   }
 

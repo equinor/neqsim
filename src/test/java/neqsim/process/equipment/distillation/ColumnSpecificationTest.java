@@ -677,7 +677,8 @@ public class ColumnSpecificationTest {
     assertNotEquals(DistillationColumn.SolverType.AUTO, column.getLastSolverTypeUsed());
     assertTrue(column.getGasOutStream().getFlowRate("kg/hr") >= 0.0);
     assertTrue(column.getLiquidOutStream().getFlowRate("kg/hr") >= 0.0);
-    assertTrue(column.getLastAutoSolverSummary().contains("DAMPED_SUBSTITUTION"));
+    assertTrue(column.getLastAutoSolverSummary().contains(column.getLastSolverTypeUsed().name()),
+        column.getLastAutoSolverSummary());
     assertTrue(column.getLastAutoSolverSummary().contains("FEASIBILITY_SCREEN"));
     assertFalse(column.getLastAutoSolverHistory().isEmpty());
     assertTrue(column.getLastAutoFeasibilityReport().contains("Validation Report"));
@@ -751,7 +752,7 @@ public class ColumnSpecificationTest {
   }
 
   /**
-   * Test that Naphtali-Sandholm classifies its numerical Jacobian and converged K-value work accurately.
+   * Test that Naphtali-Sandholm classifies its analytic Jacobian and converged K-value work accurately.
    */
   @Test
   public void naphtaliSandholmTelemetryRecordsJacobianWork() {
@@ -771,10 +772,11 @@ public class ColumnSpecificationTest {
     assertTrue(gasFlow > 0.0);
     assertTrue(liquidFlow > 0.0);
     assertEquals(250.0, gasFlow + liquidFlow, 1.0e-8);
-    assertEquals(0, column.getLastNaphtaliAnalyticJacobianColumns(),
-        "the current implementation does not analytically differentiate any Jacobian column");
-    assertEquals(800, column.getLastNaphtaliFiniteDifferenceJacobianColumns(),
-        "eight stages times five variables times twenty Jacobian builds must all be finite-difference columns");
+    int analyticColumns = column.getLastNaphtaliAnalyticJacobianColumns();
+    int columnsPerBuild = column.getNumberOfTrays() * 5; // Three component flows, temperature and vapor flow per stage.
+    assertTrue(analyticColumns > 0);
+    assertEquals(columnsPerBuild * column.getLastNaphtaliBlockLinearSolveCount(), analyticColumns);
+    assertEquals(0, column.getLastNaphtaliFiniteDifferenceJacobianColumns());
     assertTrue(column.getLastNaphtaliThermoEvaluationCount() > 0);
     assertTrue(column.getLastNaphtaliThermoEvaluationCount() < 16000,
         () -> "accepted line-search trials should be reused without restoring and reevaluating the same Newton step: "
@@ -799,8 +801,8 @@ public class ColumnSpecificationTest {
     assertTrue(column.getLastNaphtaliDenseLinearSolveCount() >= 0);
     assertTrue(column.getLastNaphtaliLinearSolveTimeSeconds() >= 0.0);
     assertTrue(column.getConvergenceDiagnostics().contains("Naphtali-Sandholm Jacobian"));
-    assertTrue(column.getConvergenceDiagnostics().contains("analytic columns: 0"));
-    assertTrue(column.getConvergenceDiagnostics().contains("finite-difference columns: 800"));
+    assertTrue(column.getConvergenceDiagnostics().contains("analytic columns: " + analyticColumns));
+    assertTrue(column.getConvergenceDiagnostics().contains("finite-difference columns: 0"));
     assertTrue(column.getConvergenceDiagnostics().contains("K-value iterations"));
     assertTrue(column.getConvergenceDiagnostics().contains("K-value evaluations at iteration cap"));
     assertTrue(column.getConvergenceDiagnostics().contains("thermodynamic cache hits"));
