@@ -98,6 +98,7 @@ class TwoFluidUnsplitTengesdalPreparationTest {
     solver.setRelativeTolerance(1.0e-9);
     solver.setTimeIntegrationMethod(UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER);
     pipe.setUnsplitTransientSolver(solver, 0.1);
+    pipe.setUnsplitMaximumNonlinearHalvings(12);
 
     pipe.runTransient(180.0,
         UUID.nameUUIDFromBytes("tracked-force-tengesdal:16:0.1:180.0".getBytes(StandardCharsets.UTF_8)));
