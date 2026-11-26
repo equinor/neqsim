@@ -2809,5 +2809,19 @@
   "neqsim-cooling-water",
   "neqsim-process-modeling",
   "neqsim-utility-design"
- ]
+ ],
+ "dexpi conformance validation": ["neqsim-dexpi-conformance-validation"],
+ "dexpi 2.0.1 schema check": ["neqsim-dexpi-conformance-validation"],
+ "forward separator train": ["neqsim-forward-separator-train"],
+ "gor and bo for an e300 fluid": ["neqsim-forward-separator-train"],
+ "hp lp interface overpressure": ["neqsim-hp-lp-interface-overpressure"],
+ "packed line ivo choke collapse": ["neqsim-hp-lp-interface-overpressure"],
+ "jurisdiction regulatory basis": ["neqsim-jurisdiction-regulatory-basis"],
+ "country regulations for an asset": ["neqsim-jurisdiction-regulatory-basis"],
+ "reservoir h2s estimate": ["neqsim-reservoir-h2s-estimation", "neqsim-reservoir-h2s-mineral-buffer"],
+ "pyrite buffer h2s": ["neqsim-reservoir-h2s-mineral-buffer"],
+ "reservoir mercury estimate": ["neqsim-reservoir-mercury-estimation"],
+ "standard equipment sizes": ["neqsim-standard-equipment-sizes"],
+ "subsea equipment placement": ["neqsim-subsea-equipment-placement"],
+ "tank gas freeing emissions": ["neqsim-tank-gas-freeing-emissions"]
 }

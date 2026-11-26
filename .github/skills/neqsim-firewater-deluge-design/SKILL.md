@@ -1,9 +1,9 @@
 ---
 name: neqsim-firewater-deluge-design
 calculation_basis: "screening"
-version: "0.2.0"
+version: "1.0.0"
 description: "Fire-water and deluge coverage design per NORSOK S-001 / ISO 13702 / NFPA 15: area versus dedicated object demand, nozzle-net sizing from flow and spacing, fire monitors with wind drift, hydraulic feasibility, active-versus-passive substitution. USE WHEN: a task asks if an area has adequate deluge coverage, how many nozzles are needed, or whether monitors or PFP can replace fire water."
-last_verified: "2026-11-14"
+last_verified: "2026-10-18"
 requires:
   python_packages: []
   java_packages: [neqsim.process.safety.firewater]
@@ -113,8 +113,6 @@ Answer them in this order. Reversing the order is the usual way these studies go
 2. **Can the inventory be removed faster than the target fails?** NORSOK S-001 makes
    blowdown the *primary* means of protecting a pressurised inventory. Run
    `DepressurizationSimulator` against `PfpDemandCalculator.bareSteelTimeToCriticalS()`.
-   The bare-steel calculation requires finite temperatures in kelvin and a
-   critical steel temperature strictly above the positive initial temperature.
    Thick-walled vessels frequently outlive the blowdown; thin support steel frequently
    does not, and that asymmetry decides where protection goes.
 3. **What does the requirement actually demand?** See the application-rate table and
@@ -191,10 +189,6 @@ s.rankedMeasures();
 
 Validated by `FireWaterDesignTest` (orifice law, both nozzle-count criteria, wind-drift
 model, verdict routing, JSON contract).
-
-Supply both finite hydraulic inputs to `FireWaterCoverageAssessment`. If either
-input is unavailable, the verdict is `SUPPLY_DATA_INCOMPLETE` and JSON reports
-`null` for that input. Finite negative inputs indicate a shortfall.
 
 ## Application Rates
 

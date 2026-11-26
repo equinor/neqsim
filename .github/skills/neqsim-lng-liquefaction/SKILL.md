@@ -45,6 +45,7 @@ Inspect `src/main/java/neqsim/process/lng/LNGProcessBuilder.java` and the execut
 - Construct `LNGProcessBuilder` with no arguments, then set its name and select
   an `LNGProcessCycle`: SMR, DMR, C3MR or NITROGEN_EXPANDER. The current enum
   does not expose a cascade cycle.
+- For C3MR, compare the default one-level propane loop with `setPropanePrecoolingLevels(3)` on identical feed and product specifications. Report propane and MR shaft kW, train kWh/kg liquid LNG, yield and minimum approach. Use the utility-design plotting helper for p–h, p–s, T–s and the main exchanger T–Q curves.
 - Supply the treated feed with `setFeedStream(StreamInterface)` or the documented
   fluid/flow/T/P setters. Set the cold-end target with
   `setTargetLiquefactionTemperature(double)` in °C, and the product pressure with

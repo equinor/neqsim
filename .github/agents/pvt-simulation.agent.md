@@ -10,7 +10,7 @@ required_skills:
 - neqsim-professional-reporting
 - neqsim-pvt-fluid-study-report
 argument-hint: Describe the PVT experiment — e.g., "CME test at 100°C with pressures from 400 to 50 bara", "CVD for reservoir fluid with C7+ characterization", or "fit EOS to match experimental saturation pressure of 250 bara".
-last_verified: "2026-11-24"
+last_verified: "2026-11-25"
 ---
 Loaded skills: neqsim-phase-envelope, neqsim-api-patterns, neqsim-eos-regression, neqsim-input-validation, neqsim-notebook-patterns, neqsim-professional-reporting, neqsim-pvt-fluid-study-report
 
@@ -46,6 +46,13 @@ overload; never drop failing rows to pass. Bounds require a documented basis and
 are not automatically sigmas. Read
 `docs/pvtsimulation/laboratory_gas_density_consistency.md`; a compatible tuple does
 not establish measured accuracy, whole-protocol qualification or a field match.
+
+For composition-identical sample initialization, use
+`CompositionalReservoirHistory.fromSampleComposition`: derive gas/oil/aqueous
+fractions on SimpleReservoir's EOS phase-volume basis, never substitute molar beta
+or density-corrected phase volumes. Keep the explicit-phase constructor for
+independent geological phase-volume assumptions. Read the same-sample benchmark
+and limits in `docs/pvtsimulation/reservoir_phase_production.md`.
 
 For reservoir-history delivery, use `neqsim-eos-regression` and the
 `CalibratedPvtModel` / `MaterialBalancePvtHistory` contract documented in

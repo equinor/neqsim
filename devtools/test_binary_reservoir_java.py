@@ -3,6 +3,7 @@ import importlib.util
 import json
 import math
 import os
+import sys
 from pathlib import Path
 from time import perf_counter
 
@@ -26,10 +27,23 @@ def test_nonfinite_admission_control(bad):
         require_finite([1.0,bad])
 
 
-def oracle():
+def oracle(same_sample=False):
     spec = importlib.util.spec_from_file_location('binary_reference',FOLDER / 'reference.py')
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
+    if same_sample:
+        previous = sys.modules.get('reference')
+        sys.modules['reference'] = module
+        try:
+            spec = importlib.util.spec_from_file_location('binary_same_sample',FOLDER / 'same_sample.py')
+            same = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(same)
+            return same
+        finally:
+            if previous is None:
+                del sys.modules['reference']
+            else:
+                sys.modules['reference'] = previous
     return module
 
 
@@ -73,18 +87,40 @@ def history(java,model,values,shift=0):
     steps = [Step.phaseWithdrawal(86400,[8000,2000,0],[200,10],
                                  row['pressure_bara']+(shift if i==3 else 0),0.1,i==3,values['substeps'])
              for i,row in enumerate(values['rows'])]
+    if 'initial_phase_volume_fractions' in values:
+        return History.fromSampleComposition(model,'Independent same-sample binary protocol',
+                   ['methane','n-heptane'],323.15,80,steps)
     return History(model,'Independent binary PR synthetic fixed-substep protocol',
                    ['methane','n-heptane'],323.15,80,[0.7,0.3,0],steps)
 
 
-def test_laboratory_and_independent_two_phase_tank(java):
+@pytest.mark.parametrize('same_sample',[False,True])
+def test_laboratory_and_independent_two_phase_tank(java,same_sample):
     ref = oracle()
-    values = ref.generate()
+    values = oracle(True).generate() if same_sample else ref.generate()
     assert len(values['rows']) == 4
-    lab = ref.laboratory()
+    lab = values['laboratory'] if same_sample else ref.laboratory()
     assert abs(lab['identified_kij']-0.02) < 1e-10
     tuned = fluid(java,lab['identified_kij'])
     original = fluid(java,0.0)
+    two_phase_errors = []
+    if same_sample:
+        # Execute the actual whole closed-mass CCE, retaining every phase/component.
+        cce = java.JClass('neqsim.pvtsimulation.simulation.ConstantMassExpansion')(tuned.clone())
+        cce.setTemperature(lab['two_phase_holdout_temperature_k'])
+        cce.setPressures([row['pressure_bara'] for row in lab['two_phase_holdout']])
+        snapshots = cce.runNativeExpansion()
+        assert len(snapshots) == len(lab['two_phase_holdout']) == 4
+        for snapshot,row in zip(snapshots,lab['two_phase_holdout']):
+            sample = snapshot.getEquilibriumFluid()
+            require_finite([sample.getVolume('m3'),sample.getBeta(sample.getPhaseNumberOfPhase('gas'))])
+            two_phase_errors.append(abs(sample.getVolume('m3')/row['molar_volume_m3']-1))
+            assert abs(sample.getBeta(sample.getPhaseNumberOfPhase('gas'))-row['gas_mole_fraction']) <= 1e-6
+            assert abs(sample.getPhase('oil').getComponent('methane').getx()-row['liquid_methane_fraction']) <= 1e-6
+            assert abs(sample.getPhase('gas').getComponent('methane').getx()-row['vapor_methane_fraction']) <= 1e-6
+            assert abs(sample.getComponent('methane').getNumberOfmoles()-0.8) <= 1e-9
+            assert abs(sample.getComponent('n-heptane').getNumberOfmoles()-0.2) <= 1e-9
+        assert max(two_phase_errors) <= 1e-7
     lab_errors = []
     original_errors = []
     for f,target in ((original,original_errors),(tuned,lab_errors)):
@@ -93,6 +129,7 @@ def test_laboratory_and_independent_two_phase_tank(java):
             sample.setTemperature(lab['holdout_temperature_k'])
             sample.setPressure(row['pressure_pa']/1e5)
             java.JClass('neqsim.thermodynamicoperations.ThermodynamicOperations')(sample).TPflash()
+            require_finite([sample.getVolume('m3')])
             target.append(abs(sample.getVolume('m3')/row['molar_volume_m3']-1))
     assert max(lab_errors) < 1e-7
     Model = java.JClass('neqsim.pvtsimulation.util.CalibratedPvtModel')
@@ -100,9 +137,20 @@ def test_laboratory_and_independent_two_phase_tank(java):
                   'independent600K200bar occupied volume; no reservoir data',['laboratory600K'])
     serializer = java.JClass('org.apache.commons.lang3.SerializationUtils')
     before = bytes(serializer.serialize(model))
+    initialization_started = perf_counter()
     tank = history(java,model,values)
+    initialization_seconds = perf_counter()-initialization_started
+    if same_sample:
+        for volume in [80,100,120]:
+            initial = list(tank.replay(volume).getComponentMoles()[0])
+            require_finite(initial)
+            assert abs(initial[0]/sum(initial)-0.8) <= 1e-10
+            assert max(abs(initial[i]/values['initial_moles'][i]-volume/100) for i in range(2)) <= 1e-9
+        assert max(abs(a-b) for a,b in zip(tank.getInitialPhaseVolumeFractions(),
+                                         values['initial_phase_volume_fractions'])) <= 1e-9
     started = perf_counter()
     result = tank.replay(100)
+    replay_seconds = perf_counter()-started
     separator = java.JClass('neqsim.pvtsimulation.util.PvtSeparatorPath')(
         [1.01325],[288.15],'single equilibrium surface flash; gas/oil m3 at288.15K/1.01325bara')
     errors = {'pressure_bar':0.0,'composition':0.0,'gor_relative':0.0,'component_mol':0.0}
@@ -124,7 +172,9 @@ def test_laboratory_and_independent_two_phase_tank(java):
     assert errors['pressure_bar'] <= 1e-4
     assert errors['composition'] <= 1e-6
     assert errors['gor_relative'] <= 1e-4
+    fit_started = perf_counter()
     fit = tank.fitVolume(80,120)
+    fit_seconds = perf_counter()-fit_started
     assert abs(fit.getResult().getInitialVolumeM3()-100) <= 0.01
     assert not fit.isAtBound()
     heldout = fit.getResult()
@@ -140,11 +190,21 @@ def test_laboratory_and_independent_two_phase_tank(java):
     shifted = history(java,model,values,5).fitVolume(80,120).getResult()
     assert shifted.getInitialVolumeM3() == fit.getResult().getInitialVolumeM3()
     assert shifted.getHoldoutChiSquare() > fit.getResult().getHoldoutChiSquare()
-    with pytest.raises(Exception):
+    rejection_started = perf_counter()
+    with pytest.raises(Exception) as failure:
         tank.replay(1)
+    rejection_seconds = perf_counter()-rejection_started
+    assert 'substep 0' in str(failure.value)
+    assert 'Phase interval cannot retain' in str(failure.value)
     assert list(tank.replay(100).getPressuresBara()) == list(result.getPressuresBara())
     assert bytes(serializer.serialize(model)) == before
-    print(json.dumps(dict(errors=errors,predictions=predictions,
+    print(json.dumps(dict(case='same_sample' if same_sample else 'phase_volume',errors=errors,predictions=predictions,
+                          two_phase_lab_holdout_relative_errors=two_phase_errors,
+                          initialization_seconds=initialization_seconds,
+                          truth_replay_seconds=replay_seconds,
+                          volume_fit_seconds=fit_seconds,
+                          infeasible_trial_seconds=rejection_seconds,
+                          infeasible_trial_message=str(failure.value),
                           fitted_volume_m3=fit.getResult().getInitialVolumeM3(),
                           fitted_pressures_bara=list(fit.getResult().getPressuresBara()),
                           fitted_holdout_gor=float(heldout_gor),
@@ -155,7 +215,8 @@ def test_laboratory_and_independent_two_phase_tank(java):
                           elapsed_seconds=perf_counter()-started)))
 
 
-def test_independent_finite_protocol_refinement(java):
+@pytest.mark.parametrize('same_sample',[False,True])
+def test_independent_finite_protocol_refinement(java,same_sample):
     ref = oracle()
     Model = java.JClass('neqsim.pvtsimulation.util.CalibratedPvtModel')
     model = Model(fluid(java,0.0),fluid(java,ref.laboratory()['identified_kij']),
@@ -163,7 +224,7 @@ def test_independent_finite_protocol_refinement(java):
                   'independent600K200bar calibration',['laboratory600K'])
     diagnostics = []
     for count in [1,2,4,8,16]:
-        values = ref.generate(count)
+        values = oracle(True).generate(count) if same_sample else ref.generate(count)
         native = history(java,model,values).replay(100)
         separator = java.JClass('neqsim.pvtsimulation.util.PvtSeparatorPath')(
             [1.01325],[288.15],'fixed synthetic surface basis')
@@ -179,4 +240,4 @@ def test_independent_finite_protocol_refinement(java):
                                 reference_gor=last['gor'],native_gor=float(gor),
                                 reference_methane_fraction=last['produced_methane_fraction'],
                                 native_methane_fraction=produced[0]/sum(produced)))
-    print(json.dumps(dict(finite_protocol_refinement=diagnostics)))
+    print(json.dumps(dict(case='same_sample' if same_sample else 'phase_volume',finite_protocol_refinement=diagnostics)))

@@ -1,6 +1,7 @@
 package neqsim.process.equipment.refrigeration;
 
 import java.io.Serializable;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.heatexchanger.Heater;
 
@@ -129,6 +130,7 @@ public interface RefrigerationLoad extends Serializable {
       }
 
       @Override
+      @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Graph ordering and utility accounting require the same live cooler registered with the flowsheet")
       public ProcessEquipmentInterface getSourceEquipment() {
         return cooler;
       }
@@ -169,6 +171,7 @@ public interface RefrigerationLoad extends Serializable {
       }
 
       @Override
+      @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "A cascade reads the live condenser of the exact upstream refrigeration system")
       public ProcessEquipmentInterface getSourceEquipment() {
         return colderSystem;
       }

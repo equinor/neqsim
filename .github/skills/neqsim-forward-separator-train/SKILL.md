@@ -44,7 +44,16 @@ coolers into earlier stages; build a `ProcessSystem` with recycles instead.
 Ask the user for the stage P/T and feed conditions if they are not given. The
 defaults are placeholders, not a design.
 
-## Run
+## Engineering Method
+
+Per stage the script applies a `ThrottlingValve` to the stage pressure, a
+`Heater` to the stage temperature and a `Separator`; the liquid outlet feeds the
+next stage and each gas outlet leaves the system. A stock-tank stage at 15 degC
+and 1.01325 bara is always appended. GOR and Bo follow from the stage gas
+volumes and the stock-tank oil volume. For the regression of one shared P/T set
+over many fluids see "Fit ONE P/T set to reservoir-simulation rates".
+
+## Python Usage Pattern
 
 ```
 <python> scripts/run_forward_separator.py fluid.e300 --feed-p 300 --feed-t 110 \
@@ -63,7 +72,9 @@ temperature, `Separator`; the liquid outlet feeds the next stage.
 - `stages[]`: `P_bara`, `T_C`, `gas_Sm3_h`, `gas_MW_gmol`, `liquid_kg_h` per stage.
 - `feed_n_phases`, `mass_balance_rel_err`, `warnings[]`.
 
-## Validation checks (do before reporting)
+## Validation Checklist
+
+Do these before reporting a result.
 
 1. `mass_balance_rel_err` below 1e-6.
 2. `feed_n_phases`: if 2 at feed P/T, the feed is not a single-phase reservoir
@@ -130,8 +141,21 @@ a factor 1.8 in pressure). So:
    one P/T set does not fit all formations; say so instead of tuning further.
 5. A run on 30 fluids and 3 stages takes about 1 minute.
 
-## Limits
+## Common Mistakes
+
+- Using the placeholder feed and stage defaults as if they were a design; ask for the real P/T.
+- Running a feed that is two-phase at feed P/T and reading Bo as a reservoir-fluid value.
+- Comparing with PVTsim or ECL300 using different stage P/T, standard conditions or EOS parameters.
+- Presenting poorly determined fitted stage P/T values, without their standard errors, as measured data.
+
+## Limitations
 
 - Equilibrium stages only; no entrainment, carry-over or separation efficiency.
 - Water is not treated specially; an aqueous phase in the liquid outlet is counted as liquid.
 - Stage gas rates are ideal-gas standard volumes, which can differ by a fraction of a percent from PVTsim's real-gas standard volumes.
+
+## References
+
+- Whitson, C.H. and Brule, M.R., Phase Behavior, SPE Monograph 20 (2000): separator tests and Bo/GOR definitions.
+- NeqSim: ThrottlingValve, Heater and Separator in neqsim.process.equipment; E300 reading via the e300-fluid tools.
+

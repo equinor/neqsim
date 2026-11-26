@@ -204,6 +204,21 @@ class RefrigerationSystemTest {
   }
 
   @Test
+  void heatPumpReportsUsefulCondenserHeatOnElectricalBasis() {
+    RefrigerationSystem pump = new RefrigerationSystem("water heating");
+    pump.setRefrigerant("ammonia");
+    pump.setCondenserCoolingMedium(35.0, 50.0, 5.0, "C");
+    pump.setCoolingMediumHeatCapacity(4180.0);
+    pump.setDriverEfficiency(0.90);
+    pump.addLevel("source", 5.0, "C").addFixedDuty("recovered heat", 100.0, "kW");
+    pump.run();
+    assertEquals(328.15, pump.getCondensingTemperature(), 1.0e-8);
+    assertEquals(100.0 + pump.getCompressorPower("kW"), pump.getCondenserDuty("kW"), 0.001);
+    assertEquals(0.90 * (pump.getCOP() + 1.0), pump.getHeatingCOPElectrical(), 1.0e-6);
+    assertEquals(pump.getCondenserDuty(), pump.getCoolingMediumFlow("kg/sec") * 4180.0 * 15.0, 0.1);
+  }
+
+  @Test
   void warnsWhenALevelIsTooWarmForItsLoad() {
     RefrigerationSystem system = new RefrigerationSystem("propane refrigeration");
     system.setRefrigerant("propane");
@@ -229,6 +244,10 @@ class RefrigerationSystemTest {
     process.run();
 
     assertEquals(cold.getCondenserDuty(), warm.getRefrigerationDuty(), 1.0e-6);
+    UtilitySystemDesigner utility = UtilitySystemDesigner.fromProcessSystem(process);
+    utility.design();
+    assertEquals(warm.getCondenserDuty("kW"), utility.getTotalCoolingDutyKW(), 1.0e-6);
+    assertEquals(warm.getCompressorPower("kW") + cold.getCompressorPower("kW"), utility.getTotalShaftPowerKW(), 1.0e-6);
     assertTrue(warm.getWarnings().isEmpty(), warm.getWarnings().toString());
     double overallCop = cold.getRefrigerationDuty() / (cold.getCompressorPower() + warm.getCompressorPower());
     assertTrue(overallCop > 1.0 && overallCop < cold.getCOP());
@@ -291,6 +310,7 @@ class RefrigerationSystemTest {
     idle.run();
     assertEquals(0.0, idle.getCompressorPower(), 0.0);
     assertTrue(Double.isNaN(idle.getCOP()));
+    assertTrue(Double.isNaN(idle.getHeatingCOPElectrical()));
     assertNotNull(idle.toJson());
   }
 }

@@ -26,9 +26,9 @@
 - Changed: `UtilitySystemDesigner` books a `RefrigerationSystem` as its condenser duty plus its compressor shaft load
   and no longer counts the coolers bound to it as cooling-water or air-cooler demands. Migration: none unless a
   flowsheet contains a `RefrigerationSystem`.
-- Fixed: R134a and R12 had all-zero ideal-gas heat capacity coefficients in `COMP.csv`, so isentropic and isenthalpic
-  calculations with them failed or gave non-physical temperatures. Enthalpy, entropy and compressor results for these
-  two components change.
+- Added optional two- to four-level C3MR precooling, propane and MR shaft-power reporting, electrical heating COP
+  for condenser heat recovery, and cycle and exchanger plotting recipes. Cascade utility totals include only external heat rejection.
+- Added R12 ideal-gas heat capacity and retained the R134a correlation delivered in 3.30.0.
 - Fixed: ammonia ideal-gas heat capacity coefficients in `COMP.csv` were 16 % (200 K) to 42 % (500 K) too high; they
   are now the Poling, Prausnitz and O'Connell polynomial. Enthalpy, entropy, heat duty and compressor discharge
   temperature of ammonia change for every cubic and CPA model. Migration: re-baseline ammonia heat balances; the

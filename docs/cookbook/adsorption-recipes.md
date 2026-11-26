@@ -11,6 +11,15 @@ parameters over the relevant temperature, pressure, and composition range.
 See [Adsorption Isotherm Models](../thermo/adsorption_isotherms.md) for the equations
 and [Adsorption Bed](../process/equipment/adsorption_bed.md) for the equipment model.
 
+The repository regression
+[`AdsorptionCookbookDocumentationTest`](../../src/test/java/neqsim/documentation/AdsorptionCookbookDocumentationTest.java)
+extracts, compiles with the Java 8 language target, enables assertions, and executes
+all three complete programs exactly as published here. Run it with:
+
+```bash
+./mvnw -Dtest=AdsorptionCookbookDocumentationTest test
+```
+
 ## Choose a recipe
 
 | Task | Recipe | Main limitation |
@@ -49,6 +58,7 @@ Equilibrium loadings are reported in mol/kg of adsorbent and Langmuir constants 
 This program flashes one gas state, then compares only material/component pairs that
 exist in the packaged parameter inventory.
 
+<!-- adsorption-example: competitive-equilibrium -->
 ```java
 import neqsim.physicalproperties.interfaceproperties.solidadsorption.LangmuirAdsorption;
 import neqsim.thermo.system.SystemSrkEos;
@@ -121,6 +131,7 @@ The next program evaluates the same characterized bed first with the steady scre
 method and then from a clean transient grid. A new calculation identifier is used for
 every physical time step.
 
+<!-- adsorption-example: bed-screen -->
 ```java
 import java.util.UUID;
 import neqsim.physicalproperties.interfaceproperties.solidadsorption.IsothermType;
@@ -225,6 +236,7 @@ logic, and relief/mechanical review.
 `AdsorptionCycleController` schedules operating phases for one bed. The program below
 inspects PSA and TSA schedules without claiming a cyclic-steady-state solution.
 
+<!-- adsorption-example: cycle-schedule -->
 ```java
 import neqsim.physicalproperties.interfaceproperties.solidadsorption.IsothermType;
 import neqsim.process.equipment.adsorber.AdsorptionBed;

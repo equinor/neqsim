@@ -207,6 +207,16 @@ public final class ClosedLoopSafetyFunction implements ProcessLogic, DynamicSafe
     trace.add(loopSample);
   }
 
+  /**
+   * Reports whether the logic solver issued its latched final-element demand during this execution. Individual
+   * actuators may still be travelling or unavailable.
+   *
+   * @return true from actuation until reset or rearming
+   */
+  public boolean hasActuated() {
+    return finalElementActuationSeconds != null;
+  }
+
   @Override
   public boolean isActive() {
     return state == LogicState.RUNNING;

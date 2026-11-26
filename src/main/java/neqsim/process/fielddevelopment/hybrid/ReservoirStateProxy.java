@@ -518,12 +518,19 @@ public final class ReservoirStateProxy extends AbstractReservoirState implements
    * {@inheritDoc}
    *
    * <p>
-   * The volume is added to the abscissa quantity of the table.
+   * The volume is added to the abscissa quantity of the table. An oil or water increment also advances total liquid
+   * production, including any liquid-only production history.
    * </p>
    */
   @Override
   public void produce(double producedVolumeSm3, double dtDays) {
-    setCumulative(abscissaQuantity, getCumulative(abscissaQuantity) + producedVolumeSm3);
+    if (abscissaQuantity == CumulativeQuantity.OIL_PRODUCED) {
+      produce(producedVolumeSm3, 0.0, 0.0);
+    } else if (abscissaQuantity == CumulativeQuantity.WATER_PRODUCED) {
+      produce(0.0, producedVolumeSm3, 0.0);
+    } else {
+      setCumulative(abscissaQuantity, getCumulative(abscissaQuantity) + producedVolumeSm3);
+    }
   }
 
   /** {@inheritDoc} */

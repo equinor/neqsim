@@ -110,8 +110,13 @@ public class GERG2008 {
    * @param composition normalized GERG mole fractions
    * @param legacyRefinement retain the baseline root-refinement sequence for envelope finite differences
    * @return density in mol/L
+   * @throws IllegalStateException if the target state is invalid or no pressure-closed stable root is found
    */
   double phaseDensity(int flag, double temperature, double pressure, double[] composition, boolean legacyRefinement) {
+    if (!(temperature > 0.0 && Double.isFinite(temperature) && pressure > 0.0 && Double.isFinite(pressure))) {
+      throw new IllegalStateException("GERG density solve requires positive finite temperature and pressure: T="
+          + temperature + " K and P=" + pressure + " kPa");
+    }
     int branch = flag / 2;
     // A cache hit must also leave the kernel at the same T and x as a fresh solve. The reducing-function
     // evaluator can otherwise follow a different numerical history during nested envelope differences.
@@ -121,10 +126,9 @@ public class GERG2008 {
       return phaseDensities[branch];
     }
     doubleW density = new doubleW(0.0);
-    intW error = new intW(0);
+    doubleW calculatedPressure = new doubleW(0.0);
+    doubleW compressibility = new doubleW(0.0);
     if (flag == 2 && pressure > epsilon) {
-      doubleW calculatedPressure = new doubleW(0.0);
-      doubleW compressibility = new doubleW(0.0);
       density.val = ReferenceEosLiquidDensitySolver.solve(pressure, trialDensity -> {
         PressureGERG(temperature, trialDensity, composition, calculatedPressure, compressibility);
         return calculatedPressure.val;
@@ -132,15 +136,21 @@ public class GERG2008 {
     }
     if (!(density.val > 0.0) || !Double.isFinite(density.val)) {
       density.val = 0.0;
-      DensityGERG(flag, temperature, pressure, composition, density, error, new StringW(""));
+      DensityGERG(flag, temperature, pressure, composition, density, new intW(0), new StringW(""));
+      PressureGERG(temperature, density.val, composition, calculatedPressure, compressibility);
+      if (!(density.val > 0.0 && dPdDsave > 0.0 && Math.abs(calculatedPressure.val - pressure) <= 1.0e-7 * pressure)) {
+        if (flag == 2) {
+          throw new IllegalStateException("GERG density solve requires a mechanically stable root at T=" + temperature
+              + " K and P=" + pressure + " kPa");
+        }
+        density.val = phaseDensity(2, temperature, pressure, composition, legacyRefinement);
+      }
     }
-    if (error.val == 0 && Double.isFinite(density.val)) {
-      densityTemperatures[branch] = temperature;
-      densityPressures[branch] = pressure;
-      phaseDensities[branch] = density.val;
-      densityLegacyRefinement[branch] = legacyRefinement;
-      System.arraycopy(composition, 0, densityCompositions[branch], 0, composition.length);
-    }
+    densityTemperatures[branch] = temperature;
+    densityPressures[branch] = pressure;
+    phaseDensities[branch] = density.val;
+    densityLegacyRefinement[branch] = legacyRefinement;
+    System.arraycopy(composition, 0, densityCompositions[branch], 0, composition.length);
     return density.val;
   }
 

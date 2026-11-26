@@ -1,7 +1,7 @@
 ---
 name: neqsim-pipeline-and-terminal-networks
 description: "Guides agents through NeqSim pipeline and terminal networks. USE WHEN: users ask to solve a looped gathering/export network, optimize well and choke settings, apply nominations or quality limits, track gas linepack or transient composition, blend crude, or schedule terminal tanks and cargoes. Anchors: LoopedPipeNetwork, NetworkOptimizer, TransientGasNetwork, TransientCompositionalPipeNetwork, NetworkQualityProfile, OilNetworkSchedule."
-last_verified: "2026-11-23"
+last_verified: "2026-11-26"
 ---
 
 # Pipeline and Terminal Networks
@@ -77,6 +77,17 @@ requested step size from the same detached steady state, advances to one common 
 retains mass, named-component and conservative-energy ledgers plus final normalized profiles.
 Treat its microsecond production/injection acceptance cases as numerical handoff evidence,
 not moving-slug, closure, fluid or field-duration qualification.
+For a conservative multi-branch transient, use `TwoFluidPipeNetworkRefinementStudy`
+to replay one serialized network at common physical time while varying outer time step,
+branch subcycles and explicit per-branch section counts. Mesh overrides preserve length and
+resample cell-face terrain; non-flat legacy section-indexed terrain fails closed. Compare
+pressure, temperature, holdup and both phase-velocity profiles with
+`getMaximumNormalizedBranchProfileDifference`. For an equally refined 8/12/18-cell sequence,
+use `getSpatialConvergenceReport`; it rejects timestep/subcycle or unequal-grid-ratio confounding
+and returns an explicit `MONOTONIC`, `NON_MONOTONIC` or `ROUND_OFF_LIMITED` status. Only a monotonic
+receipt carries a finite observed order and fine-grid convergence index. The synthetic 5 km
+production/injection cases retain unresolved pressure/holdup/velocity statuses as blockers; they do
+not establish field-duration mesh independence or physical qualification.
 Use `FieldNetworkTopology` for stable production/injection node, edge, tag and port
 identity over that same graph. Its typed `addChoke`, `addPump`,
 `addPumpDifferentialPressure` and `addCompressor` methods create the existing canonical
@@ -225,7 +236,7 @@ replace it. Live well/injection coupling must reuse WellSystem/WellFlow physics.
 | Quality tracking and mixing: `NetworkQualitySpecification`, `NetworkQualityProfile`, `NetworkQualityLimit`, `NetworkQualityEvaluator`, `NetworkQualityComplianceReport`, `NetworkMixingResult` | `neqsim.process.equipment.network` | Point-specific calculated and measured attributes, component limits, mixing evidence, and compliance status. | `NetworkQualityProfile.addUpperLimit`, `addRange`, `addMeasuredAttributeLimit`, `LoopedPipeNetwork.evaluateQualityProfiles`, `report.isCompliant`, `report.getResults` |
 | Gas linepack and transient history: `GasLinepackState`, `TransientGasNetwork`, `TransientGasNetworkHistory`, `TransientGasNetworkStepReport` | `neqsim.process.equipment.network` | Advances edge inventory and solves transient gas pressure, flow, composition, and conservation histories. | `GasLinepackState.fromSolvedState`, `GasLinepackState.advance`, `setSourceSchedule`, `setFixedPressureBoundary`, `run`, `getHistory` |
 | Prescribed-flow composition transport: `TransientCompositionalPipeNetwork`, `TransientCompositionalPipeNetworkHistory`, `TransientSpeciesConservationReport` | `neqsim.process.equipment.network` | Tracks named component mass fractions through finite-volume gas-pipe cells and junctions. | `addNode`, `addPipe`, `setSourceSchedule`, `run`, `getSpeciesHistory`, `getNodeMassFractionHistory` |
-| Two-fluid transient pipes: `TwoFluidPipeNetwork`, `TwoFluidPipe`, `TwoFluidPipeNetworkRefinementStudy` | `neqsim.process.equipment.network` and `neqsim.process.equipment.pipeline` | Couples storage nodes and one or more conservative zero-volume equilibrium junctions to two-fluid pipe state, with optional synchronous branch-local subcycles and phase, component and energy balances. The scalar algebraic-junction path under-relaxes donor-state updates without relaxing conservation tolerances. The study harness replays one serialized topology at common times while varying outer step/subcycles and retaining runtime, residuals and complete branch profiles. | `addCompressibleNode`, `addConservativeCompressibleNode`, `addAlgebraicJunction`, `addFixedPressureNode`, `addPipe`, `setBranchSubcycles`, `runTransient`, `addConfiguration`, `getNodePressurePa`, `getLastBalanceReport`, `getLastAlgebraicJunctionNames`, `getLastAlgebraicJunctionReport` |
+| Two-fluid transient pipes: `TwoFluidPipeNetwork`, `TwoFluidPipe`, `TwoFluidPipeNetworkRefinementStudy` | `neqsim.process.equipment.network` and `neqsim.process.equipment.pipeline` | Couples storage nodes and one or more conservative zero-volume equilibrium junctions to two-fluid pipe state, with optional synchronous branch-local subcycles and phase, component and energy balances. The scalar algebraic-junction path under-relaxes donor-state updates without relaxing conservation tolerances. The study harness replays one serialized topology at common times while varying outer step, subcycles and branch section counts, retaining runtime, residuals and position-aware complete branch profiles, and classifying equally refined three-grid sequences without inventing error estimates for unresolved quantities. | `addCompressibleNode`, `addConservativeCompressibleNode`, `addAlgebraicJunction`, `addFixedPressureNode`, `addPipe`, `setBranchSubcycles`, `runTransient`, `addConfiguration`, `getMaximumNormalizedBranchProfileDifference`, `getSpatialConvergenceReport`, `getNodePressurePa`, `getLastBalanceReport`, `getLastAlgebraicJunctionNames`, `getLastAlgebraicJunctionReport` |
 | Oil terminal, cargo, and assay: `OilNetworkSchedule`, `OilTerminalNode`, `OilTerminalTank`, `CrudeAssay`, `CrudeParcel`, `CargoNomination`, `CrudeBlendResult` | `neqsim.process.equipment.network` | Receipts, segregated or mixed inventory, compatible assay blending, and cargo scheduling by period/berth. | `addHourlyPeriods`, `addReceipt`, `addCargoNomination`, `OilNetworkSchedule.optimize`, `CrudeAssay.blend`, `getMassBalanceResidualKg` |
 | Benchmarks and adjacent equipment: `NetworkValidationBenchmarks`, `Manifold`, `PipeBeggsAndBrills` | `neqsim.process.equipment.network`, `neqsim.process.equipment.manifold`, `neqsim.process.equipment.pipeline` | Reproducible network checks; ordinary process-manifold routing and standalone multiphase pipe calculations remain separate. | `NetworkValidationBenchmarks.runAllBenchmarks`, `Manifold.addStream`, `PipeBeggsAndBrills.run` |
 

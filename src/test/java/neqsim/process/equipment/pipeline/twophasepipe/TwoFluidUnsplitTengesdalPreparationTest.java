@@ -60,7 +60,48 @@ class TwoFluidUnsplitTengesdalPreparationTest {
   @ParameterizedTest
   @CsvSource({"16,0.1", "16,0.05", "24,0.05"})
   void shortTrackedSubcellForceRiserHandoffIsConservative(int cells, double maximumStep) {
-    verifyTrackedSubcellForces(cells, maximumStep);
+    verifyTrackedSubcellForces(cells, maximumStep, 0.1);
+  }
+
+  /** Require the tracked-force five-second mesh and time-step matrix to complete conservatively. */
+  @Tag("slow")
+  @EnabledIfSystemProperty(named = "neqsim.unsplit.tengesdal.tracked-force-qualification", matches = "true")
+  @ParameterizedTest
+  @CsvSource({"16,0.1", "16,0.05", "24,0.05"})
+  void fiveSecondTrackedSubcellForceRiserQualificationMustCompleteTheWholeInterval(int cells, double maximumStep) {
+    verifyTrackedSubcellForces(cells, maximumStep, 5.0);
+  }
+
+  /** Require the tracked-force 180 s interval to remain conservative as a marker enters a new cell. */
+  @Tag("slow")
+  @EnabledIfSystemProperty(named = "neqsim.unsplit.tengesdal.tracked-force-long-qualification", matches = "true")
+  @Test
+  void trackedSubcellForceLongIntervalMustCompleteConservatively() {
+    TwoFluidPipe pipe = createPipe(16);
+    pipe.setBlendInclinedAnnularSlugTransitions(true);
+    pipe.setSignedDonorTransportEnabled(true);
+    pipe.setSlugTrackingMode(TwoFluidPipe.SlugTrackingMode.CONSERVATIVE_LAGRANGIAN);
+    pipe.configureLagrangianSlugTracking(false, true, false);
+    LiquidAccumulationTracker.SlugCharacteristics characteristics = new LiquidAccumulationTracker.SlugCharacteristics();
+    characteristics.tailPosition = 18.0;
+    characteristics.frontPosition = 24.0;
+    characteristics.length = characteristics.frontPosition - characteristics.tailPosition;
+    characteristics.holdup = 0.9;
+    characteristics.volume = characteristics.length * pipe.getSectionSnapshots()[0].getArea() * characteristics.holdup;
+    LagrangianSlugTracker.SlugBubbleUnit original = pipe.getLagrangianSlugTracker()
+        .initializeTerrainSlug(characteristics, pipe.getSectionSnapshots());
+    assertTrue(original != null);
+    pipe.getLagrangianSlugTracker().setEnableTerrainSlugGeneration(false);
+    pipe.setSharedSlugForceBalanceEnabled(true);
+    pipe.setConservativeSlugForceIntegrationEnabled(true);
+    UnsplitTransientSolver solver = new UnsplitTransientSolver();
+    solver.setRelativeTolerance(1.0e-9);
+    solver.setTimeIntegrationMethod(UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER);
+    pipe.setUnsplitTransientSolver(solver, 0.1);
+
+    UUID id = UUID.nameUUIDFromBytes("tracked-force-tengesdal:16:0.1:180.0".getBytes(StandardCharsets.UTF_8));
+    pipe.runTransient(180.0, id);
+    assertPublishedInterval(pipe, id, 0.1, 180.0);
   }
 
   @Tag("slow")
@@ -296,8 +337,9 @@ class TwoFluidUnsplitTengesdalPreparationTest {
    *
    * @param count number of pipe sections
    * @param maximumStep maximum nominal substep in seconds
+   * @param duration complete prepared interval in seconds
    */
-  private static void verifyTrackedSubcellForces(int count, double maximumStep) {
+  private static void verifyTrackedSubcellForces(int count, double maximumStep, double duration) {
     TwoFluidPipe pipe = createPipe(count);
     pipe.setBlendInclinedAnnularSlugTransitions(true);
     pipe.setSignedDonorTransportEnabled(true);
@@ -319,9 +361,9 @@ class TwoFluidUnsplitTengesdalPreparationTest {
     UnsplitTransientSolver solver = new UnsplitTransientSolver();
     solver.setRelativeTolerance(1.0e-9);
     solver.setTimeIntegrationMethod(UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER);
-    PreparedInterval interval = pipe.prepareUnsplitTransient(0.1, maximumStep, solver,
+    PreparedInterval interval = pipe.prepareUnsplitTransient(duration, maximumStep, solver,
         pipe.createUnsplitDensityModel());
-    assertEquals(0.1, interval.getEndTimeSeconds(), 0.0);
+    assertEquals(duration, interval.getEndTimeSeconds(), 0.0);
     for (PreparedStep step : interval.getSubsteps()) {
       assertEquals(0.0, step.getPressureInterpolationTimeScale(), 0.0);
     }
@@ -330,7 +372,7 @@ class TwoFluidUnsplitTengesdalPreparationTest {
     LagrangianSlugTracker accepted = interval.getAcceptedSlugTracker();
     assertTrue(accepted != null);
     assertEquals(1, accepted.getSlugCount());
-    assertEquals(0.1, accepted.getSlugs().get(0).age, 1.0e-12);
+    assertEquals(duration, accepted.getSlugs().get(0).age, 1.0e-12 * Math.max(1.0, duration));
     double impulse = 0.0;
     for (double[] cellImpulse : interval.getConservativeFrictionImpulsePerLength()) {
       for (double phaseImpulse : cellImpulse) {
@@ -423,6 +465,25 @@ class TwoFluidUnsplitTengesdalPreparationTest {
 
     pipe.runTransient(duration, id);
 
+    TwoFluidMassBalanceReport report = assertPublishedInterval(pipe, id, maximumStep, duration);
+    logger.info(
+        "Published unsplit Tengesdal interval: cells={}, maximumStep={}, duration={}, substeps={}, gasClosure={}, oilClosure={}, waterClosure={}, outletFlow={}",
+        count, maximumStep, duration, report.getAcceptedSubsteps(), report.getRelativeResidual(Phase.GAS),
+        report.getRelativeResidual(Phase.OIL), report.getRelativeResidual(Phase.WATER),
+        pipe.getOutletStream().getFlowRate("kg/sec"));
+  }
+
+  /**
+   * Check the committed clock, full-interval mass balance and physical endpoint for a published riser run.
+   *
+   * @param pipe pipe that published the interval
+   * @param id interval calculation identifier
+   * @param maximumStep nominal step bound in seconds
+   * @param duration published duration in seconds
+   * @return the verified mass balance report
+   */
+  private static TwoFluidMassBalanceReport assertPublishedInterval(TwoFluidPipe pipe, UUID id, double maximumStep,
+      double duration) {
     assertEquals(duration, pipe.getSimulationTime(), 0.0);
     assertEquals(duration, pipe.getTime(), 0.0);
     assertEquals(id, pipe.getCalculationIdentifier());
@@ -439,11 +500,7 @@ class TwoFluidUnsplitTengesdalPreparationTest {
       assertTrue(Double.isFinite(section.getPressure()) && section.getPressure() > 0.0);
       assertEquals(1.0, section.getGasHoldup() + section.getOilHoldup() + section.getWaterHoldup(), 1.0e-8);
     }
-    logger.info(
-        "Published unsplit Tengesdal interval: cells={}, maximumStep={}, duration={}, substeps={}, gasClosure={}, oilClosure={}, waterClosure={}, outletFlow={}",
-        count, maximumStep, duration, report.getAcceptedSubsteps(), report.getRelativeResidual(Phase.GAS),
-        report.getRelativeResidual(Phase.OIL), report.getRelativeResidual(Phase.WATER),
-        pipe.getOutletStream().getFlowRate("kg/sec"));
+    return report;
   }
 
   /**

@@ -1,6 +1,7 @@
 package neqsim.process.equipment.refrigeration;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -99,19 +100,19 @@ public class RefrigerationSystem extends ProcessEquipmentBaseClass {
   private RefrigerantFluid refrigerant = null;
 
   /** Condensing temperature in K. */
-  private double condensingTemperature = 273.15 + 35.0;
+  private volatile double condensingTemperature = 273.15 + 35.0;
 
   /** Liquid subcooling at the condenser outlet in K. */
-  private double subcooling = 0.0;
+  private volatile double subcooling = 0.0;
 
   /** Pressure drop between the compressor discharge and the condenser outlet in bar. */
-  private double condenserPressureDrop = 0.0;
+  private volatile double condenserPressureDrop = 0.0;
 
   /** Default isentropic efficiency of the compressor stages. */
-  private double isentropicEfficiency = 0.75;
+  private volatile double isentropicEfficiency = 0.75;
 
   /** Combined mechanical and driver efficiency used for the electrical power. */
-  private double driverEfficiency = 0.95;
+  private volatile double driverEfficiency = 0.95;
 
   /** Liquid expansion arrangement. */
   private EconomizerType economizerType = EconomizerType.FLASH_TANK;
@@ -120,33 +121,33 @@ public class RefrigerationSystem extends ProcessEquipmentBaseClass {
   private InterstageCooling interstageCooling = InterstageCooling.NONE;
 
   /** Minimum approach between process outlet and evaporating refrigerant that does not raise a warning, in K. */
-  private double minimumApproach = 2.0;
+  private volatile double minimumApproach = 2.0;
 
   /** Cooling medium supply temperature in K, or NaN when the condensing temperature is fixed. */
-  private double coolingMediumSupplyTemperature = Double.NaN;
+  private volatile double coolingMediumSupplyTemperature = Double.NaN;
 
   /** Cooling medium return temperature in K. */
-  private double coolingMediumReturnTemperature = Double.NaN;
+  private volatile double coolingMediumReturnTemperature = Double.NaN;
 
   /** Approach between cooling medium return and condensing refrigerant in K. */
-  private double condenserApproach = Double.NaN;
+  private volatile double condenserApproach = Double.NaN;
 
   /** Cooling medium heat capacity in J/(kg K). */
-  private double coolingMediumHeatCapacity = 4186.0;
+  private volatile double coolingMediumHeatCapacity = 4186.0;
 
   /** Evaporating levels in the order they were added. */
   private final List<RefrigerationLevel> levels = new ArrayList<RefrigerationLevel>();
 
   // Results
-  private List<RefrigerationStage> stages = new ArrayList<RefrigerationStage>();
+  private volatile List<RefrigerationStage> stages = Collections.emptyList();
   private List<String> warnings = new ArrayList<String>();
   private RefrigerantState condenserOutlet = null;
-  private double refrigerationDuty = 0.0;
-  private double compressorPower = 0.0;
-  private double condenserDuty = 0.0;
-  private double carnotPower = 0.0;
-  private double circulation = 0.0;
-  private boolean solved = false;
+  private volatile double refrigerationDuty = 0.0;
+  private volatile double compressorPower = 0.0;
+  private volatile double condenserDuty = 0.0;
+  private volatile double carnotPower = 0.0;
+  private volatile double circulation = 0.0;
+  private volatile boolean solved = false;
 
   /**
    * Creates a refrigeration system.
@@ -482,7 +483,8 @@ public class RefrigerationSystem extends ProcessEquipmentBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void run(UUID id) {
+  public synchronized void run(UUID id) {
+    solved = false;
     ValidationResult validation = validateSetup();
     if (!validation.isValid()) {
       throw new IllegalStateException("RefrigerationSystem '" + getName() + "' is not ready: " + validation);
@@ -609,10 +611,7 @@ public class RefrigerationSystem extends ProcessEquipmentBaseClass {
       reversiblePower += duty * (condensing - temperature) / temperature;
     }
 
-    stages = new ArrayList<RefrigerationStage>();
-    for (int k = 0; k < count; k++) {
-      stages.add(stageResults[k]);
-    }
+    stages = Arrays.asList(stageResults);
     circulation = colderDischargeFlow;
     refrigerationDuty = totalDuty;
     compressorPower = totalPower;
@@ -838,6 +837,17 @@ public class RefrigerationSystem extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * Gets the heating COP assuming all condenser heat is delivered to the sink. The denominator is compressor electrical
+   * input including driver losses and excluding auxiliary loads.
+   *
+   * @return heating COP on an electrical basis, or NaN at zero compressor power
+   */
+  public double getHeatingCOPElectrical() {
+    double input = getElectricalPower("W");
+    return input > 0.0 ? getCondenserDuty() / input : Double.NaN;
+  }
+
+  /**
    * Gets the coefficient of performance of a reversible machine working between each level and the condensing
    * temperature.
    *
@@ -961,7 +971,7 @@ public class RefrigerationSystem extends ProcessEquipmentBaseClass {
    *
    * @return ordered results map
    */
-  public Map<String, Object> toResultsMap() {
+  public synchronized Map<String, Object> toResultsMap() {
     requireSolved();
     Map<String, Object> root = new LinkedHashMap<String, Object>();
     root.put("schemaVersion", SCHEMA_VERSION);
@@ -977,6 +987,12 @@ public class RefrigerationSystem extends ProcessEquipmentBaseClass {
     basis.put("condenserPressureDrop_bar", condenserPressureDrop);
     basis.put("defaultIsentropicEfficiency", isentropicEfficiency);
     basis.put("driverEfficiency", driverEfficiency);
+    if (!Double.isNaN(coolingMediumSupplyTemperature)) {
+      basis.put("condenserMediumInlet_C", coolingMediumSupplyTemperature - 273.15);
+      basis.put("condenserMediumOutlet_C", coolingMediumReturnTemperature - 273.15);
+      basis.put("condenserMediumCp_J_per_kg_K", coolingMediumHeatCapacity);
+      basis.put("condenserApproach_K", condenserApproach);
+    }
     root.put("designBasis", basis);
     Map<String, Object> results = new LinkedHashMap<String, Object>();
     results.put("refrigerationDuty_kW", refrigerationDuty / 1000.0);
@@ -984,6 +1000,7 @@ public class RefrigerationSystem extends ProcessEquipmentBaseClass {
     results.put("electricalPower_kW", compressorPower / driverEfficiency / 1000.0);
     results.put("condenserDuty_kW", condenserDuty / 1000.0);
     results.put("COP", compressorPower > 0.0 ? Double.valueOf(refrigerationDuty / compressorPower) : null);
+    results.put("heatingCOP_electrical", compressorPower > 0.0 ? Double.valueOf(getHeatingCOPElectrical()) : null);
     results.put("carnotCOP", carnotPower > 0.0 ? Double.valueOf(refrigerationDuty / carnotPower) : null);
     results.put("carnotFraction", compressorPower > 0.0 ? Double.valueOf(carnotPower / compressorPower) : null);
     results.put("refrigerantCirculation_kg_per_hr", circulation * 3600.0);
@@ -1025,7 +1042,7 @@ public class RefrigerationSystem extends ProcessEquipmentBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public String toJson() {
+  public synchronized String toJson() {
     if (!solved) {
       return null;
     }

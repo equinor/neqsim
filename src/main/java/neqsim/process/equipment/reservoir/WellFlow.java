@@ -131,6 +131,8 @@ public class WellFlow extends TwoPortEquipment {
   static Logger logger = LogManager.getLogger(ThrottlingValve.class);
   SystemInterface thermoSystem;
   private double wellProductionIndex = 0;
+  /** Last physical interval charged to the well clock; algebraic passes may repeat its identifier. */
+  private UUID lastTransientInterval;
   double pressureOut = 1.0;
   String pressureUnit = "bara";
   boolean useWellProductionIndex = false;
@@ -1080,16 +1082,22 @@ public class WellFlow extends TwoPortEquipment {
     if (liquidMassInjection && !getCalculateSteadyState()) {
       throw new UnsupportedOperationException("Liquid mass injectivity supports steady/quasi-steady evaluation only");
     }
-    if (getCalculateSteadyState()) {
+    if (getCalculateSteadyState() || isMultiLayer || inflowModel != InflowPerformanceModel.PRODUCTION_INDEX
+        || useWellProductionIndex && !calcpressure || thermoSystem == null) {
+      // Re-evaluate the configured algebraic inflow relationship and rate/pressure specification.
       run(id);
-      increaseTime(dt);
-      return;
+    } else {
+      // Preserve the calibrated PI boundary: downstream equipment may supply the flowing pressure.
+      double flow = wellProductionIndex
+          * (Math.pow(getInletStream().getPressure("bara"), 2.0) - Math.pow(thermoSystem.getPressure("bara"), 2.0));
+      outStream.setFlowRate(flow, "MSm3/day");
+      outStream.run(id);
     }
-    double flow = wellProductionIndex
-        * (Math.pow(getInletStream().getPressure("bara"), 2.0) - Math.pow(thermoSystem.getPressure("bara"), 2.0));
-
-    outStream.setFlowRate(flow, "MSm3/day");
-    outStream.run();
+    if (dt > 0.0 && (id == null || !id.equals(lastTransientInterval))) {
+      increaseTime(dt);
+      lastTransientInterval = id;
+    }
+    setCalculationIdentifier(id);
   }
 
   /**

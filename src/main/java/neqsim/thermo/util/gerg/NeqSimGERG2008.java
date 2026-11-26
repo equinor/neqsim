@@ -214,6 +214,32 @@ public class NeqSimGERG2008 {
   }
 
   /**
+   * Tests whether an initialized gas-labelled phase represents the same subcritical dense root as a liquid request.
+   *
+   * @return true if the gas-labelled root is on the dense side of the pseudo-critical density and a liquid request
+   * reproduces it
+   */
+  public boolean isSubcriticalDenseGasRoot() {
+    if (phase.getType() != PhaseType.GAS) {
+      return false;
+    }
+    GERG2008 model = kernel();
+    doubleW criticalTemperature = new doubleW(0.0);
+    doubleW criticalDensity = new doubleW(0.0);
+    model.PseudoCriticalPointGERG(normalizedGERGComposition, criticalTemperature, criticalDensity);
+    if (phase.getTemperature() >= criticalTemperature.val) {
+      return false;
+    }
+    double density = getMolarDensity();
+    if (density <= criticalDensity.val) {
+      return false;
+    }
+    double liquidDensity = model.phaseDensity(2, phase.getTemperature(), phase.getPressure() * 100.0,
+        normalizedGERGComposition, false);
+    return Math.abs(density - liquidDensity) <= 1.0e-7 * liquidDensity;
+  }
+
+  /**
    * propertiesGERG.
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object

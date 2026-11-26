@@ -51,6 +51,52 @@ class ReservoirStateProxyTest {
     assertFalse(state.isOutsideValidity());
   }
 
+  /** Absolute oil and water histories locate a liquid-based proxy at their sum, including after a correction. */
+  @Test
+  void settingProducedPhasesUpdatesLiquidCoordinate() {
+    ReservoirStateProxy state = new ReservoirStateProxy("W1", CumulativeQuantity.LIQUID_PRODUCED,
+        new double[] {0.0, 2.0e6}, new double[] {250.0, 150.0});
+    state.setCumulative(CumulativeQuantity.OIL_PRODUCED, 1.0e6);
+    assertEquals(200.0, state.getReservoirPressure(), 1.0e-12);
+    state.setCumulative(CumulativeQuantity.WATER_PRODUCED, 0.5e6);
+    assertEquals(175.0, state.getReservoirPressure(), 1.0e-12);
+    state.produce(0.1e6, 0.1e6, 5.0e6);
+    state.setCumulative(CumulativeQuantity.OIL_PRODUCED, 0.8e6);
+    state.setCumulative(CumulativeQuantity.WATER_INJECTED, 1.0e6);
+    assertEquals(1.4e6, state.getCumulative(CumulativeQuantity.LIQUID_PRODUCED), 1.0e-6);
+    assertEquals(180.0, state.getReservoirPressure(), 1.0e-12);
+  }
+
+  /** A liquid-only drive can advance and restore totals from a history with unknown oil and water split. */
+  @Test
+  void liquidOnlyHistorySurvivesProductionAndRestore() {
+    ReservoirStateProxy state = new ReservoirStateProxy("W1", CumulativeQuantity.LIQUID_PRODUCED,
+        new double[] {0.0, 2.0e6}, new double[] {250.0, 150.0});
+    state.setCumulative(CumulativeQuantity.LIQUID_PRODUCED, 1.0e6);
+    double[] saved = state.getCumulativeState();
+    state.produce(0.3e6, 1.0);
+    state.produce(0.1e6, 0.2e6, 0.0);
+    assertEquals(1.6e6, state.getCumulativeProduction(), 1.0e-6);
+    state.setCumulativeState(saved);
+    assertEquals(200.0, state.getReservoirPressure(), 1.0e-12);
+    assertEquals(0.0, state.getCumulative(CumulativeQuantity.OIL_PRODUCED), 0.0);
+    assertEquals(0.0, state.getCumulative(CumulativeQuantity.WATER_PRODUCED), 0.0);
+  }
+
+  /** A scalar oil or water drive adds its phase increment to any existing reported liquid history. */
+  @Test
+  void singlePhaseDriveAdvancesReportedLiquid() {
+    for (CumulativeQuantity phase : new CumulativeQuantity[] {CumulativeQuantity.OIL_PRODUCED,
+        CumulativeQuantity.WATER_PRODUCED}) {
+      ReservoirStateProxy state = new ReservoirStateProxy("W1", phase, new double[] {0.0, 2.0e6},
+          new double[] {250.0, 150.0});
+      state.setCumulative(CumulativeQuantity.LIQUID_PRODUCED, 1.0e6);
+      state.produce(0.2e6, 1.0);
+      assertEquals(0.2e6, state.getCumulative(phase), 1.0e-6);
+      assertEquals(1.2e6, state.getCumulative(CumulativeQuantity.LIQUID_PRODUCED), 1.0e-6);
+    }
+  }
+
   /** Holds the last value beyond the simulator run and reports that the proxy is outside its data. */
   @Test
   void holdsEndValueAndFlagsOutsideValidity() {

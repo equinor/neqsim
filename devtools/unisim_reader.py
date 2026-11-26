@@ -13,13 +13,18 @@ Architecture:
 Usage:
     from devtools.unisim_reader import UniSimReader, UniSimToNeqSim
 
-    reader = UniSimReader()
-    model = reader.read("path/to/file.usc")
+    with UniSimReader() as reader:   # own UniSim process, ended on exit
+        model = reader.read("path/to/file.usc")   # reads a temporary copy
     print(model.summary())
 
     converter = UniSimToNeqSim(model)
     neqsim_json = converter.to_json()
     process = converter.build_and_run()
+
+Process safety (see unisim_session.py): the reader starts its own UniSim
+process, never attaches to or quits a UniSim that is already running,
+dismisses modal pop-ups (never pressing Yes) and ends its own process when a
+read exceeds ``time_limit_s``.
 """
 
 import json
@@ -31,6 +36,16 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, Any
 
 logger = logging.getLogger(__name__)
+
+
+def _session_module():
+    """Return ``unisim_session``, imported flat (toolkit install or ``devtools``
+    on ``sys.path``) or as ``devtools.unisim_session`` from the repo root."""
+    try:
+        import unisim_session
+    except ImportError:
+        from devtools import unisim_session
+    return unisim_session
 
 # Names recognized by EclipseFluidReadWrite as database components or common
 # aliases. Components not listed here are intentionally kept as named TBP
@@ -523,6 +538,9 @@ class UniSimModel:
     file_name: str
     fluid_packages: List[UniSimFluidPackage] = field(default_factory=list)
     flowsheet: Optional[UniSimFlowsheet] = None
+    #: How the case was read: own UniSim PID, source SHA-256, solver state,
+    #: inconsistent variables, streams without values and dismissed pop-ups.
+    session_report: Dict[str, Any] = field(default_factory=dict)
 
     def summary(self) -> str:
         """Human-readable summary of the model."""
@@ -842,14 +860,23 @@ class UniSimReader:
     #: Seconds to wait for an opened case to publish its object model.
     CASE_OPEN_TIMEOUT_S = 300.0
 
-    def __init__(self, visible: bool = False):
+    def __init__(self, visible: bool = False,
+                 time_limit_s: Optional[float] = 1800.0):
         """Initialize but don't start UniSim yet.
 
         Args:
             visible: If True, show the UniSim GUI window.
+            time_limit_s: Wall-clock limit per ``read``. When reached, the
+                reader's own UniSim process is ended and ``UniSimTimeout`` is
+                raised instead of hanging (for example on a modal dialog the
+                watchdog cannot dismiss). ``None`` disables the limit.
         """
         self._app = None
+        self._session = None
         self._visible = visible
+        self.time_limit_s = time_limit_s
+        #: Report of the last closed session (PIDs, sources, pop-ups).
+        self.session_report: Dict[str, Any] = {}
 
     @staticmethod
     def _wait_ready(probe, timeout: float, description: str,
@@ -883,30 +910,41 @@ class UniSimReader:
         return False
 
     def _ensure_app(self):
-        """Start UniSim if not already running."""
-        if self._app is None:
-            import win32com.client
-            logger.info("Starting UniSim Design via COM...")
-            self._app = win32com.client.dynamic.Dispatch('UnisimDesign.Application')
-            self._app.Visible = self._visible
-            self._wait_ready(lambda: self._app.SimulationCases.Count,
-                             self.APP_START_TIMEOUT_S, 'UniSim to start')
-            logger.info("UniSim started.")
+        """Start the reader's own UniSim process if it is not running.
 
-    def close(self):
-        """Close UniSim application."""
-        if self._app is not None:
+        A UniSim that is already running (a user's session or an orphan) is
+        never attached to or quit; see ``unisim_session``.
+        """
+        if self._session is None:
+            self._session = _session_module().UniSimSession(
+                visible=self._visible)
+        if self._session.app is None:
+            logger.info("Starting own UniSim Design process via COM...")
+            self._session.start()
+            self._wait_ready(lambda: self._session.app.SimulationCases.Count,
+                             self.APP_START_TIMEOUT_S, 'UniSim to start')
+            logger.info("UniSim started (PID %s).", self._session.pid)
+        self._app = self._session.app
+
+    def close(self, error: bool = False):
+        """Close the cases, quit and end the reader's own UniSim process.
+
+        Args:
+            error: True when an exception is already being raised; suppresses
+                the session's own timeout and source-changed errors.
+        """
+        session, self._session, self._app = self._session, None, None
+        if session is not None:
             try:
-                self._app.Quit()
-            except Exception:
-                pass
-            self._app = None
+                session.close(error=error)
+            finally:
+                self.session_report = session.report
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
+        self.close(error=exc_type is not None)
 
     @staticmethod
     def _safe_file_stem(name: str, fallback: str) -> str:
@@ -940,14 +978,34 @@ class UniSimReader:
 
         Returns:
             UniSimModel with all extracted data. Each fluid package will have
-            its e300_file_path set if export_e300 is True.
+            its e300_file_path set if export_e300 is True. The case is read
+            from a temporary copy in the reader's own UniSim process; the
+            source file is never opened (``model.session_report``).
         """
         usc_path = os.path.abspath(usc_path)
         if not os.path.exists(usc_path):
             raise FileNotFoundError(f"UniSim file not found: {usc_path}")
 
-        self._ensure_app()
-        logger.info(f"Opening: {usc_path}")
+        if self._session is None:
+            self._session = _session_module().UniSimSession(
+                visible=self._visible)
+        # Startup (Visible, readiness) counts against the read limit as well.
+        try:
+            with self._session.limit(self.time_limit_s,
+                                     f"reading {os.path.basename(usc_path)}"):
+                self._ensure_app()
+                return self._read_case(usc_path, extract_streams, export_e300,
+                                       e300_output_dir)
+        except _session_module().UniSimTimeout:
+            self.close(error=True)  # finished; the next read starts a new one
+            raise
+
+    def _read_case(self, usc_path: str, extract_streams: bool,
+                   export_e300: bool, e300_output_dir: Optional[str]
+                   ) -> UniSimModel:
+        """Body of ``read`` once the own UniSim process is running."""
+        logger.info(f"Opening a copy of: {usc_path}")
+        popup_mark = len(self._session.popups)
 
         case = self._open_case(usc_path)
         self._wait_ready(lambda: case.Flowsheet.MaterialStreams.Count,
@@ -961,6 +1019,7 @@ class UniSimReader:
             file_path=usc_path,
             file_name=os.path.basename(usc_path),
         )
+        model.session_report = self._solve_status_report(case)
 
         # Extract fluid packages (with critical properties for E300 export)
         model.fluid_packages = self._extract_fluid_packages(
@@ -1010,21 +1069,46 @@ class UniSimReader:
                         f"Fluid package '{fp.name}' has no critical "
                         f"properties — skipping E300 export")
 
-        # Close the case (not the app — may read more files)
-        case.Close()
+        # Close the copy (not the app — may read more files)
+        self._session.close_case(case)
+        popups = self._session.popups[popup_mark:]
+        model.session_report['popups'] = popups
+        for popup in popups:
+            logger.warning("UniSim pop-up while reading %s: %s | %s (%s)",
+                           model.file_name, popup.get('title'),
+                           popup.get('text'), popup.get('action'))
         logger.info(f"Extracted: {len(model.all_operations())} operations, "
                      f"{len(model.all_streams())} streams")
         return model
 
+    def _solve_status_report(self, case) -> Dict[str, Any]:
+        """Record whether the stored case is still solving or inconsistent.
+
+        An unsolved case is otherwise only visible as ``-32767`` values. The
+        report names the variables so a caller can tell a fight between
+        specifications from a NeqSim conversion problem.
+        """
+        source = next((s for s in reversed(self._session.report['sources'])),
+                      {})
+        status = self._session.solve_status(case)
+        report = {'pid': self._session.pid,
+                  'source_sha256': source.get('sha256'),
+                  **status}
+        if status['is_solving']:
+            logger.warning("UniSim was still solving when the case was read")
+        if status['inconsistent']:
+            logger.warning("UniSim flags %d inconsistent variable(s): %s",
+                           len(status['inconsistent']),
+                           status['inconsistent'][:10])
+        return report
+
     def _open_case(self, usc_path: str):
-        """Open a case, retrying once on a fresh UniSim session.
+        """Open a copy of a case in the reader's own UniSim process.
 
         ``SimulationCases.Open`` raises a bare ``com_error`` that says nothing
-        about the cause. The two recoverable causes are a stale shared UniSim
-        session (the automation server is a singleton, so another script can
-        leave it wedged) and a case already open under the same name. Anything
-        else is almost always a missing UniSim extension or licensed module for
-        that case type, which no retry can fix — so report it as such.
+        about the cause. ``E_ACCESSDENIED`` has been seen both for cases that
+        need a UniSim extension or licensed module that is not installed and
+        while the licence server was unreachable, so the error names both.
 
         Args:
             usc_path: Absolute path to the .usc case.
@@ -1036,22 +1120,16 @@ class UniSimReader:
             RuntimeError: When the case cannot be opened, with the likely cause.
         """
         try:
-            return self._app.SimulationCases.Open(usc_path)
-        except Exception as first_error:  # noqa: BLE001 - COM raises com_error
-            logger.warning("Open failed (%s); retrying on a fresh session",
-                           first_error)
-            self.close()
-            self._ensure_app()
-            try:
-                return self._app.SimulationCases.Open(usc_path)
-            except Exception as retry_error:  # noqa: BLE001
-                raise RuntimeError(
-                    f"UniSim refused to open '{os.path.basename(usc_path)}'. "
-                    f"This usually means the case needs a UniSim extension or "
-                    f"licensed module that is not installed (for example the "
-                    f"CCC controls or equation-oriented electrical packages), "
-                    f"or the file is corrupt. COM error: {retry_error}"
-                ) from retry_error
+            return self._session.open_copy(usc_path)
+        except Exception as error:  # noqa: BLE001 - COM raises com_error
+            raise RuntimeError(
+                f"UniSim refused to open '{os.path.basename(usc_path)}'. "
+                f"This usually means the case needs a UniSim extension or "
+                f"licensed module that is not installed (for example the "
+                f"CCC controls or equation-oriented electrical packages), "
+                f"the licence server is unreachable, or the file is "
+                f"corrupt. COM error: {error}"
+            ) from error
 
     @staticmethod
     def _get_reference_composition(model: UniSimModel,
@@ -8054,11 +8132,15 @@ def main():
                         help='Skip stream property extraction (faster)')
     parser.add_argument('--visible', action='store_true',
                         help='Show UniSim GUI window')
+    parser.add_argument('--time-limit-s', type=float, default=1800.0,
+                        help='End the own UniSim process if the read takes '
+                             'longer (default 1800; 0 disables)')
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
-    with UniSimReader(visible=args.visible) as reader:
+    with UniSimReader(visible=args.visible,
+                      time_limit_s=args.time_limit_s or None) as reader:
         model = reader.read(args.usc_file, extract_streams=not args.no_streams)
 
         if args.summary or not (args.json or args.python or args.notebook

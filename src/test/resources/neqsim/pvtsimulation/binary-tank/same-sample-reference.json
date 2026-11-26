@@ -1,0 +1,123 @@
+{
+  "initial_volume_m3": 100.0,
+  "initial_moles": [
+    324383.11378630355,
+    81095.77844657589
+  ],
+  "substeps": 4,
+  "rows": [
+    {
+      "pressure_bara": 78.07029861325637,
+      "retained_moles": [
+        316049.9195039707,
+        79638.97272890873
+      ],
+      "produced_moles": [
+        8533.19428233285,
+        1466.8057176671514
+      ],
+      "produced_methane_fraction": 0.8533194282332849,
+      "gor": 1255.1542244889388
+    },
+    {
+      "pressure_bara": 76.14011725159077,
+      "retained_moles": [
+        307728.5208731671,
+        78170.3713597124
+      ],
+      "produced_moles": [
+        8521.39863080368,
+        1478.6013691963199
+      ],
+      "produced_methane_fraction": 0.852139863080368,
+      "gor": 1239.8929674421215
+    },
+    {
+      "pressure_bara": 74.20928199931353,
+      "retained_moles": [
+        299419.0839707705,
+        76689.80826210909
+      ],
+      "produced_moles": [
+        8509.436902396672,
+        1490.5630976033283
+      ],
+      "produced_methane_fraction": 0.8509436902396672,
+      "gor": 1224.749297313286
+    },
+    {
+      "pressure_bara": 72.2776197363476,
+      "retained_moles": [
+        291121.7785265315,
+        75197.11370634811
+      ],
+      "produced_moles": [
+        8497.305444239017,
+        1502.6945557609843
+      ],
+      "produced_methane_fraction": 0.8497305444239016,
+      "gor": 1209.721712565262
+    }
+  ],
+  "initial_phase_volume_fractions": [
+    0.8608171004940031,
+    0.13918289950599694,
+    0.0
+  ],
+  "laboratory": {
+    "temperature_k": 600.0,
+    "pressure_pa": 20000000.0,
+    "molar_volume_m3": 0.00024898835926602026,
+    "identified_kij": 0.019999999999997856,
+    "holdout_temperature_k": 650.0,
+    "holdout": [
+      {
+        "pressure_pa": 20000000.0,
+        "molar_volume_m3": 0.0002759542120199769
+      },
+      {
+        "pressure_pa": 15000000.0,
+        "molar_volume_m3": 0.0003607733777739816
+      },
+      {
+        "pressure_pa": 10000000.0,
+        "molar_volume_m3": 0.0005348990797196347
+      },
+      {
+        "pressure_pa": 5000000.0,
+        "molar_volume_m3": 0.0010686010781842782
+      }
+    ],
+    "two_phase_holdout_temperature_k": 323.15,
+    "two_phase_holdout": [
+      {
+        "pressure_bara": 80.0,
+        "molar_volume_m3": 0.00024662196211823234,
+        "gas_mole_fraction": 0.7199658778080049,
+        "liquid_methane_fraction": 0.3164055391309787,
+        "vapor_methane_fraction": 0.9880963452860764
+      },
+      {
+        "pressure_bara": 70.0,
+        "molar_volume_m3": 0.0002839863100294131,
+        "gas_mole_fraction": 0.7327725498385097,
+        "liquid_methane_fraction": 0.282262986864474,
+        "vapor_methane_fraction": 0.9888083033472302
+      },
+      {
+        "pressure_bara": 60.0,
+        "molar_volume_m3": 0.0003342705644558117,
+        "gas_mole_fraction": 0.7450882620284769,
+        "liquid_methane_fraction": 0.24675444850970002,
+        "vapor_methane_fraction": 0.9892779583877221
+      },
+      {
+        "pressure_bara": 50.0,
+        "molar_volume_m3": 0.00040524962558071407,
+        "gas_mole_fraction": 0.7570117963932478,
+        "liquid_methane_fraction": 0.20977918377645005,
+        "vapor_methane_fraction": 0.9894510713687351
+      }
+    ]
+  }
+}

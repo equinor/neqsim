@@ -1,7 +1,7 @@
 ---
 name: neqsim-utility-design
 version: "1.0.0"
-description: "Utility-system design with NeqSim and MCP designUtilities: Boiler, Deaerator, NitrogenSystem, SteamNetwork, UtilitySystemDesigner, screening RefrigerationCycle and the rigorous multi-level RefrigerationSystem (economizers, inter-cooling, cascades, chiller integration). USE WHEN: sizing a utility duty/flow/power, simulating a refrigeration cycle, estimating utility CO2 and cost, or building a steam header balance. Levels: neqsim-utilities-specification; duties: neqsim-heat-integration."
+description: "Utility-system design with NeqSim and MCP designUtilities: Boiler, Deaerator, NitrogenSystem, SteamNetwork, UtilitySystemDesigner, screening RefrigerationCycle and the rigorous multi-level RefrigerationSystem (economizers, inter-cooling, cascades, chiller integration, heat pumps and p-h/p-s/T-s cycle diagrams). USE WHEN: sizing a utility duty/flow/power, simulating a refrigeration cycle, estimating utility CO2 and cost, or building a steam header balance. Levels: neqsim-utilities-specification; duties: neqsim-heat-integration."
 last_verified: "2026-11-26"
 ---
 
@@ -257,3 +257,16 @@ Load [neqsim-cooling-water](../neqsim-cooling-water/SKILL.md) for water-cooled
 process equipment, seawater utilities, reference IAPWS properties, coolant flow
 and pumping. Keep each exchanger side on its own fluid model and distinguish
 fixed-salinity bulk utilities from electrolyte chemistry and salt mixing.
+
+## Draw refrigeration and heat-pump diagrams
+
+Run the flowsheet and check the stage flows, warnings, energy balance and absolute
+pressures. Use [the plotting helper](scripts/refrigeration_diagrams.py) with a
+solved `RefrigerationSystem` for p–h, p–s and T–s, or a solved `LNGHeatExchanger`
+for T–Q. Both functions return Matplotlib figures. Use the examples and medium
+inputs in [the refrigeration guide](../../../docs/process/equipment/refrigeration.md#plot-the-solved-process).
+
+- Plot physical pressure in bara on log axes. Use mass-specific h and s and one EOS/reference throughout.
+- Identify suction, discharge, condenser liquid, valve outlets, and active evaporators. Show each compression stage and its ideal isentropic endpoint. Preserve separate flash or side-load branches. Label lines between state points as schematic.
+- For T–Q, use each composite's cumulative duty from the same cold end, keep the reported minimum internal approach and retain any temperature cross. Inspect the rendered axes and legend before exporting.
+- For a heat pump specify both source and sink conditions, medium composition, pressure, temperature range and property basis. Report recovered heat, shaft and electrical power, and useful heat delivered per electrical input. Include only recovered condenser duty within the stated heating boundary.

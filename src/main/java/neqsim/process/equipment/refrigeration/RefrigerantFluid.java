@@ -35,7 +35,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author NeqSim
  * @version 1.0
  */
-public class RefrigerantFluid implements Serializable {
+public final class RefrigerantFluid implements Serializable {
   /** Serialization version identifier. */
   private static final long serialVersionUID = 1000L;
 

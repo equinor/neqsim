@@ -44,11 +44,23 @@ The separate `setConservativeSlugForceIntegrationEnabled(true)` option remains
 experimental and off by default. When it is paired with explicit
 `CONSERVATIVE_LAGRANGIAN` tracking, the unsplit route now keeps ordinary cell friction on
 untracked cells and applies reconstructed body/film friction once to accepted tracked cells.
+A first geometric overlap owns that implicit source even before an admissible body/film contrast
+can be reconstructed; that threshold cell uses its unchanged mean-cell friction closure. This keeps
+the friction owner independent of Newton's trial state while a marker enters a new cell.
+The nonlinear momentum residual retains probes at exactly zero phase mass. The physical face
+and source states keep that phase absent, preserving the tracked reconstruction of the other
+phases. Accepted endpoints require zero momentum for every absent phase. If the tracked cell-only solve exhausts line search at a closure
+transition, it can restart Newton once from its first admissible trial. The restart uses
+the existing iteration budget, and the endpoint must still pass the original nonlinear
+and independent conservation checks.
 Rejected attempts cannot advance marker state or publish a source impulse. Keep
 `setUnsplitPressureInterpolationEnabled(false)` when using reconstructed slug faces. The 0.1 s
 Tengesdal startup probe uses this configuration at 16 cells with 0.1 and 0.05 s steps and at
 24 cells with a 0.05 s step. It checks numerical conservation across these discretizations.
-The tracking-enabled five-second and 600 s publication gates remain open.
+An opt-in tracking-enabled five-second gate now repeats the same 16/0.1, 16/0.05 and
+24/0.05 mesh/time-step matrix with the accepted marker and subcell-force owner. It must
+complete conservatively before any tracking-enabled 180/600 s publication or experimental-cycle
+claim; an enforced sign or a short startup alone is not qualification.
 
 The earlier 65.163 kPa inlet-pressure amplitude is below
 the unchanged 68.6 kPa lower bound; the unchanged liquid-trough detector finds no
@@ -1044,15 +1056,108 @@ reclassifies 272 of 320 sections as stratified-wavy and moves the maximum holdup
 | Method | Default | Description |
 |--------|---------|-------------|
 | `setSeparatedFrictionModel(boolean)` | `true` | Charge each phase its own wall shear where the phases are separated |
+| `setAnnularFlowingDensityFriction(boolean)` | `false` | Charge the annular share of the wall friction at the flowing (no-slip) mixture density |
 
-The friction gradient uses per-phase wall shear, `-dP/dx = (tau_wG*S_G + tau_wL*S_L)/A`, in stratified flow, and the
-mixture correlation elsewhere. The mixture form charges the whole perimeter with a holdup-weighted density; on a
+The friction gradient uses per-phase wall shear, `-dP/dx = (tau_wG*S_G + tau_wL*S_L)/A`, in stratified flow, the
+optional flowing-density mixture form in annular flow, and otherwise the holdup-weighted mixture correlation. The holdup-weighted
+form charges the whole perimeter with a holdup-weighted density; on a
 stratified line that over-predicts the pressure drop by a factor of about 2.3 at 41 per cent holdup, and because it
 scales as `G^2 / rho_mix` it also makes extra liquid *reduce* the gradient, which inverts the terrain response.
 
 The separated form is scoped to stratified flow because its wetted perimeters come from a circular-segment layer at the
 bottom of the bore. Annular flow, whose film wets the whole perimeter, is not described by that geometry: including it
 moved the export-line error from +1.4 to +14.7 per cent at 10 MSm3/d and pushed 12 MSm3/d into the pressure floor.
+
+**Annular friction.** In annular flow the liquid travels as a wall film and as droplets in the gas core. The
+holdup-weighted density $\rho_m = \alpha_G\rho_G + \alpha_L\rho_L$ charges every kilogram of liquid in the bore at the
+mixture velocity, although the film moves several times slower. With `setAnnularFlowingDensityFriction(true)`, the annular share of a section is charged at
+the flowing density $\rho_f = G/j$, the total mass flux $G$ (kg/m²s) divided by the total volumetric flux $j$ (m/s):
+$-dP/dx|_f = f(\mathrm{Re}_f)\,\rho_f\,j^2/(2D)$. Without slip $\rho_f = \rho_m$ and nothing changes. The gravity term
+keeps $\rho_m$, and the holdup closure is unchanged. `setAnnularFlowingDensityFriction(false)` restores the
+holdup-weighted density.
+
+On a lean high-pressure line $\rho_m/\rho_f$ is 1.05 to 1.07 and the choice hardly shows. On a low-pressure line with a
+large liquid mass fraction it is 1.3 to 2.5, and so was the friction gradient. Measured 2026-11-25 against OLGA 2025.1.0
+on the same fluid, geometry and boundary conditions, with 78 sections here and 164 to 308 in OLGA. Rich gas: 15.5 km,
+285.7 mm, 121 m riser, 13 bara at the outlet, 38 per cent liquid by mass. Lean gas-condensate: 30 km, 355 mm, level,
+80 bara at the outlet, 69.4 kg/s.
+
+| Case | OLGA inlet pressure (bara) | Holdup-weighted density (bara) | Flowing density (bara) |
+|------|---------------------------:|-------------------------------:|-----------------------:|
+| Rich gas, 18 kg/s | 26.49 | 30.95 | 26.05 |
+| Rich gas, 37 kg/s | 49.71 | 59.27 | 47.22 |
+| Rich gas, 55 kg/s | 71.88 | 83.97 | 67.86 |
+| Lean gas-condensate | 113.85 | 114.04 | 112.44 |
+
+On pressure drop the flowing-density form is 3.3, 6.8 and 6.8 per cent below OLGA on the rich line, where the
+holdup-weighted form is 33, 26 and 21 per cent above. On the lean line it moves from 0.6 per cent above to 4.2 per cent
+below. On 312 sections the 37 kg/s case gives 47.62 bara. In OLGA the local friction gradient is 1.03 to 1.10 times the
+flowing-density value in all four cases. OLGA classifies these lines as stratified with 6 to 88 per cent of the liquid
+entrained; this model classifies them as annular. The comparison is against another simulator, not against measurements,
+and the low side is the non-conservative side for a pressure-drop design: add a margin.
+
+The annular holdup is not improved by this change. Its mean is 38 per cent below, 12 per cent above and 48 per cent
+above OLGA on the three rich cases and within 1 per cent on the lean case. The annular closure floors the holdup at a
+slip ratio that rises from 1.5 to 4 with gas velocity, while the slip of the total liquid in OLGA falls as more liquid
+is entrained. Do not quote the annular holdup of a rich low-pressure line as a design number.
+
+**Riser mesh and pressure location.** In the 78-cell rich-gas comparison above, the uniform cell length
+(201 m) exceeds the entire 150 m riser. Repeating the public cases with the same 78 cells, 72 equal
+flowline cells and six 25 m riser cells puts a face at the bend. Configure these lengths with
+`setSectionLengths`, supply the 79 physical face elevations with `setCellFaceElevationProfile`,
+and compare the upstream boundary using `getInletFacePressure("bara")`. All three cases converged.
+
+| Rich feed (kg/s) | Uniform, first cell (bara) | Bend-aligned, first cell (bara) | Bend-aligned, inlet face (bara) | Face-to-outlet pressure-drop error vs OLGA | Length-weighted liquid holdup, uniform / aligned |
+|---:|---:|---:|---:|---:|---:|
+| 18 | 26.05 | 26.33 | 26.40 | −0.7% | 0.0339 / 0.0341 |
+| 37 | 47.22 | 47.62 | 47.78 | −5.3% | 0.0679 / 0.0686 |
+| 55 | 67.86 | 68.46 | 68.69 | −5.4% | 0.1001 / 0.1012 |
+
+Both geometry and pressure sampling contribute to the change. All cells on both meshes were classified
+annular. The length-weighted holdup moves by less than 0.0012 absolute. The mesh resolves the riser
+geometry and leaves a material high-rate pressure deficit. The low-gas slug/stratified discrepancy
+in issue #5266 concerns a separate fluid for which a public composition is unavailable. In a public
+surrogate sweep with 33 flowline cells and six riser cells, the solver classified 33, 33, 27 and zero
+of the 39 cells as stratified-wavy at 6, 9, 12 and 15 kg/s respectively. The other cells were annular.
+
+As a diagnostic for the remaining pressure deficit, the change in axial momentum flux between the
+first and last cells, $\Delta\sum_k \alpha_k \rho_k u_k^2$, was 0.017, 0.105 and 0.251 bar in the
+three rich cases and 0.019 bar on the lean line (39 uniform cells). These endpoint values are small
+compared with the respective pressure deficits. They do not include any feedback from a new steady solve.
+
+A physical closure to investigate is the roughness of the liquid film deposited on the wall exposed
+to the gas. Kjølaas and Holm measured a pressure-drop dependence on liquid properties and water cut
+in an inclined 8-inch loop at approximately 60 bara. Figures 8 and 9 provide measurement series against
+which to test a film model independently of OLGA. The effect on the present fluids still needs to be
+measured or validated against representative data. [Kjølaas and Holm, 2019](https://www.sintef.no/en/publications/publication/0198cc67b483-67700e8b-ff61-4793-b83a-4ac39e38adb0/).
+
+**Transient reporting interval.** On the 39-cell public lines with flowing-density friction, energy
+enabled and fixed boundaries, select `TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION`, enable
+interfacial pressure and enable coupled pressure–momentum. This integration method bounds its
+internal time step using the explicit drag relaxation time. The legacy RK4 pressure reconstruction
+admitted a first-cell pressure of 484.25 bara after one 1 s call on the lean line, even with a
+small integrated mass residual.
+
+| Case | Steady first cell (bara) | After 1 s, IMEX with 1 / 0.1 s calls (bara) | After 60 s, IMEX with 1 / 0.1 s calls (bara) |
+|---|---:|---:|---:|
+| Lean, 69.44 kg/s | 112.040 | 112.016 / 112.012 | 110.055 / 110.056 |
+| Rich, 37 kg/s | 46.784 | 46.846 / 46.851 | 49.061 / 49.061 |
+
+The maximum first-second difference anywhere on either pressure profile was 0.005 bar. Over 60 s the
+maximum per-phase mass residual was below 2e−10 kg per reporting interval, with zero coupled
+substep rejections or pressure-correction limits. A 2 bar drift from the steady solution persists
+at both reporting intervals. These fixed-boundary replays establish numerical time-step agreement
+over the reported duration. They do not validate the transient against a measured pressure trace.
+
+New pipes and models saved before this option use holdup-weighted friction by default. The historical
+73.8 km comparison used the earlier closure. Its full input is unavailable for replay.
+
+On the public 37 kg/s rich-gas line (39 cells, 0.25 s steps), a 60 s fixed-boundary replay with coupled
+pressure–momentum, interfacial pressure and the energy equation moved the inlet from 58.72 to 59.15 bara
+with holdup weighting and from 46.78 to 49.06 bara with flowing density. Maximum absolute pressure changes
+across all cells and times were 1.50 and 2.27 bar respectively. Both runs closed each phase to within
+4e-11 kg per step without a pressure limiter or coupled-solver failure. This configuration skips momentum
+calibration and uses its own transient wall friction. Its pressure profile drifts even with fixed boundaries.
 
 The steady stratified residual uses the calibrated depth-squared wave enhancement
 $f_i/f_G = 1 + 80(h_L/D)^2\min(U_{SG}/U_{SG,t}-1,4)$ above
@@ -1296,7 +1401,11 @@ a conservative screen but is not a high-specificity classifier and must not be d
 quantitative dynamic validation.
 
 The slow dynamic benchmark exercises large-facility Test 3 ($v_{SL}=0.50$ m/s and standard
-$v_{SG}=1.00$ m/s). Its active 180 s trajectories characterize coupled numerical progress,
+$v_{SG}=1.00$ m/s). The fixture selects `setUseStreamPhaseSplit(true)` so pressure
+oscillations in the first cell preserve the phase proportions of the supplied air–oil surrogate.
+At 2.3 bara the surrogate stream supplies 4.749 g/s of free gas. An equilibrium flash at the
+24-cell steady inlet pressure of 1.697 bara would supply 4.944 g/s. The stream split includes
+nitrogen dissolved in the oil surrogate at the feed conditions. The five 180 s trajectories characterize coupled numerical progress,
 conservation, repeatability, mesh sensitivity, and outer-step sensitivity. The exact 600 s
 qualification method remains disabled under #3298 until the amplitude, liquid-production-cycle,
 steady-flowline-hold-up, sticky-limiter, rejection, and conservation gates all pass together.
@@ -1875,6 +1984,27 @@ pipe.runTransient(2.0, UUID.randomUUID());
 Avoid over-specifying the same side. For example, a `STREAM_CONNECTED` inlet already gets flow,
 temperature, pressure, and composition from the inlet stream; switch to `CONSTANT_FLOW` only when
 the flow should be independent of the stream flow rate.
+
+**Feed split with a prescribed outlet pressure.** When the outlet pressure is prescribed, the inlet
+pressure is a result of the steady solve and the pressure of the inlet stream is only a starting
+value. Without phase-transfer sources (`setIncludeMassTransfer(false)`, the default) the gas, oil and
+aqueous mass rates of the feed are carried unchanged down the line. They are flashed at the inlet
+temperature and the *solved* inlet pressure, and re-evaluated as the solve moves that pressure, so
+the result does not depend on the pressure the inlet stream happens to carry. Before 2026-11-25 the
+split was flashed once at the stream pressure: on a 30 km, 355 mm lean gas-condensate line with
+80 bara at the outlet the mean holdup was 0.021, 0.020, 0.017 and 0.009 for stream pressures of 90,
+100, 114 and 140 bara, and on a rich low-pressure line the solved inlet pressure moved by 1.6 bar
+between stream pressures of 30 and 90 bara. Both are now the same to four digits. A transient
+continued from that steady solution flashes the connected feed at its temperature and current inlet-cell
+pressure. A rate change scales the admitted phase rates immediately. The split is cached until the cell
+pressure changes by more than one part per million or the feed temperature or composition changes beyond
+round-off tolerance. Replacing the feed object also refreshes the split.
+
+For separately metered gas and liquid, select `setUseStreamPhaseSplit(true)` before the steady
+run. The source-free pipe then takes the gas, oil and aqueous mass fractions from the connected
+stream in both steady and transient operation. Changes to the stream split or prescribed total
+mass rate change the admitted phase rates. The caller must supply a stream with the intended
+phase proportions at its own conditions.
 
 ### Compressible upstream-volume boundary
 

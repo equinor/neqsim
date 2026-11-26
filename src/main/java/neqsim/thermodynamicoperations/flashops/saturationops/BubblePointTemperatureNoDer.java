@@ -156,6 +156,15 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
         setSuperCritical(true);
       }
     }
+    if (!isSuperCritical() && system.getNumberOfComponents() == 1) {
+      // The pure-component vapor composition is exactly its feed composition, including at the final temperature.
+      for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
+        ComponentInterface component = system.getPhase(phaseIndex).getComponent(0);
+        component.setx(1.0);
+        component.setK(1.0);
+      }
+      system.init(1);
+    }
     if (isSuperCritical()) {
       if (allowRestart && ktot < 1e-3 && system.getNumberOfComponents() > 1 && !system.isChemicalSystem()) {
         double guess = WilsonSaturationEstimate.temperature(system, true);

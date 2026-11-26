@@ -318,22 +318,84 @@ identity, branch-order reversal and serialized continuation. This is synthetic s
 evidence only.
 
 `TwoFluidPipeNetworkRefinementStudy` now snapshots one unadvanced canonical network and replays named
-outer-step/subcycle configurations from that exact serialized state to one common physical time. It
+outer-step/subcycle/spatial-mesh configurations from that exact serialized state to one common physical time. It
 retains measured runtime, worst accepted conservation/junction diagnostics, every final node pressure,
-and complete pressure, temperature, liquid-holdup and phase-velocity branch profiles. The slow
-acceptance test covers a direct tieback, a two-junction daisy chain and two finite conservative
-template inventories feeding a conservative PLEM and export riser. The source network remains
+and complete position/cell-length, pressure, temperature, liquid-holdup and phase-velocity branch profiles.
+Per-branch section-count overrides preserve length, interpolate explicit cell-face terrain onto the requested
+uniform mesh and leave omitted branches unchanged. Flat legacy terrain is converted without changing its physical
+route; non-flat legacy section-indexed terrain fails closed and must first be expressed as physical cell faces.
+The symmetric profile-difference API interpolates both results onto the other mesh and normalizes the largest
+absolute discrepancy by the largest magnitude present in either case.
+For an equally refined three-grid sequence, `getSpatialConvergenceReport` additionally requires identical outer
+steps and branch-subcycle maps, unchanged physical length, increasing cell counts and one constant grid ratio.
+It reports the two normalized adjacent-grid discrepancies and classifies the result as `MONOTONIC`,
+`NON_MONOTONIC` or `ROUND_OFF_LIMITED`. A positive observed order and safety-factored fine-grid convergence index
+are published only for `MONOTONIC`; the other statuses retain `NaN` for the index rather than manufacturing an
+error estimate. Unequal grid ratios or time-integration changes fail closed as confounded studies.
+
+```java
+Map<String, Integer> eightCells = new LinkedHashMap<String, Integer>();
+Map<String, Integer> twelveCells = new LinkedHashMap<String, Integer>();
+Map<String, Integer> eighteenCells = new LinkedHashMap<String, Integer>();
+for (String branch : network.getBranchNames()) {
+  eightCells.put(branch, Integer.valueOf(8));
+  twelveCells.put(branch, Integer.valueOf(12));
+  eighteenCells.put(branch, Integer.valueOf(18));
+}
+TwoFluidPipeNetworkRefinementStudy.Result spatial =
+    new TwoFluidPipeNetworkRefinementStudy(network)
+        .addConfiguration("eight cells", 0.0005, null, eightCells)
+        .addConfiguration("twelve cells", 0.0005, null, twelveCells)
+        .addConfiguration("eighteen cells", 0.0005, null, eighteenCells)
+        .run(0.001);
+double pressureDifference = spatial.getMaximumNormalizedBranchProfileDifference(
+    "eight cells", "twelve cells", "export riser",
+    TwoFluidPipeNetworkRefinementStudy.ProfileQuantity.PRESSURE);
+TwoFluidPipeNetworkRefinementStudy.SpatialConvergenceReport convergence =
+    spatial.getSpatialConvergenceReport(
+        "eight cells", "twelve cells", "eighteen cells", "export riser",
+        TwoFluidPipeNetworkRefinementStudy.ProfileQuantity.PRESSURE);
+if (!convergence.isMonotonicallyConvergent()) {
+  throw new IllegalStateException("No defensible three-grid pressure error estimate");
+}
+```
+
+The slow acceptance test covers a direct tieback, a two-junction daisy chain, two finite conservative
+template inventories feeding an algebraic PLEM and export riser, and a source-to-PLET-to-well injection route.
+The source network remains
 unadvanced; 1 ms/factor-1, 1 ms/factor-2 and 0.5 ms/factor-2 cases retain finite profiles and nearby
-final pressures at the common 1 ms endpoint. The branched fixture now uses the same three-incident
+final pressures at the common 1 ms endpoint. The branched fixture additionally compares 8- and 12-cell
+meshes at the same time step and checks pressure, temperature, liquid holdup and both phase velocities.
+It uses the same three-incident
 algebraic PLEM contract as the network solver. Its scalar composition/enthalpy fixed point applies a
 50% donor-state update; the coupled-junction path retains its established full update. A retained
 finite-template regression requires donor convergence, exact component/energy closure and
 branch-order-independent pressure, temperature and composition without relaxing any conservation
 tolerance. These four-cell synthetic fixtures qualify the replay and numerical conservation contract
 only. Their 25% nearby-pressure screen is not a convergence rate, field error band or time-step
-recommendation. Mesh refinement still requires an independently rebuilt but physically identical
-network, longer field trajectories remain open, and independent field/commercial comparison remains
-open.
+recommendation. The 8/12-cell screen demonstrates the spatial-replay and common-position comparison contract;
+its broad 50% profile guard is not a field error band or mesh recommendation.
+
+The follow-on 8/12/18-cell test uses a constant 1.5 grid ratio on separate 5 km production and injection routes
+with explicit terrain. It deliberately records both resolved and unresolved quantities:
+
+| Route and quantity | 8/12 normalized difference | 12/18 normalized difference | Status |
+| --- | ---: | ---: | --- |
+| Production pressure | 0.208659 | 0.208704 | `NON_MONOTONIC` |
+| Production temperature | 9.4369e-5 | 6.2906e-5 | `MONOTONIC` |
+| Production liquid holdup | 0.023700 | 0.020177 | `MONOTONIC` |
+| Production gas velocity | 8.0016e-4 | 5.8019e-4 | `MONOTONIC` |
+| Production liquid velocity | 0.023721 | 0.018833 | `MONOTONIC` |
+| Injection pressure | 0.162180 | 0.161855 | `MONOTONIC` |
+| Injection temperature | 2.8565e-4 | 1.9274e-4 | `MONOTONIC` |
+| Injection liquid holdup | 0.005012 | 0.010971 | `NON_MONOTONIC` |
+| Injection gas velocity | 0.002415 | 0.004702 | `NON_MONOTONIC` |
+| Injection liquid velocity | 0.005562 | 0.011426 | `NON_MONOTONIC` |
+
+These results are topology-specific numerical diagnostics at a 1 ms endpoint, not field-duration mesh independence,
+a universal discretization order or a physical error band. The non-monotonic pressure/holdup/velocity results are
+retained as blockers, not tuned away. Broader closure, fluid and operating-envelope studies plus independent
+field/commercial comparisons remain open.
 
 ## Typed field and equipment identity
 
@@ -1122,11 +1184,13 @@ second transition detector or interpret a heuristic `OPTIMAL` status as operatin
    coupled common pressures plus per-junction component/enthalpy donors and reports equilibrium
    interphase transfer. Positive integer branch-local subcycles now aggregate mass, component and
    energy ledgers inside the unchanged frozen whole-network transaction. A common-start/common-time
-   harness now records direct-tieback, daisy-chain and branched multi-template runtime, accepted
-   conservation and complete profiles while varying outer step and subcycles. Its multi-template
+   harness now records direct-tieback, daisy-chain, injection and branched multi-template runtime, accepted
+   conservation and complete position-aware profiles while varying outer step, subcycles and explicit branch meshes.
+   Its multi-template
    case uses a three-incident algebraic PLEM, with a retained donor-convergence regression and no
-   relaxed conservation tolerance. Next complete spatial mesh refinement, longer representative
-   field trajectories and independent field/commercial comparisons; only then
+   relaxed conservation tolerance. Longer production/injection trajectories now retain topology- and
+   quantity-specific three-grid statuses without claiming unresolved sequences converged. Next broaden closure,
+   fluid and operating-envelope coverage and add independent field/commercial comparisons; only then
    consider asynchronous multirate boundary coupling. Enable dynamics only within the quantitatively
    tested scope.
 4. Add reviewed Java/Python builders, agent/MCP routes (#3153) and DEXPI identity export

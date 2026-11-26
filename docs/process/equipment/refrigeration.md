@@ -262,7 +262,7 @@ parameter, not only to refrigeration.
 | Ammonia | Mathias-Copeman parameters for Peng-Robinson | Saturation pressure 76 % low | Fitted to the reference equation, within 0.2 % from 220 to 380 K |
 | R134a | Critical temperature, critical pressure, acentric factor, molar mass, boiling point | 100.85 C, 40.7 bara, 0.332, 102.0, -26.55 C | 101.06 C, 40.593 bara, 0.32684, 102.032, -26.07 C |
 | R134a | Mathias-Copeman parameters for SRK and Peng-Robinson | SRK: the PSRK constants of CO2, pressure 38 % high. Peng-Robinson: none | Fitted to the Tillner-Roth and Baehr equation, within 0.5 % from 215 to 360 K |
-| R134a, R12 | Ideal-gas heat capacity | All zero; compressor calculations failed | McLinden (1989) for R134a, within 0.5 % of the Tillner-Roth and Baehr value from 250 to 400 K; Reid, Prausnitz and Poling for R12 |
+| R134a, R12 | Ideal-gas heat capacity | All zero; compressor calculations failed | Retains the R134a ideal-gas correlation from NeqSim 3.30.0 and adds the Reid, Prausnitz and Poling correlation for R12 |
 | R12 | Critical temperature, critical pressure, acentric factor, molar mass, boiling point | 111.85 C, 41.4 bara, 0.176, 121.0, -30.15 C | 111.97 C, 41.361 bara, 0.17948, 120.913, -29.75 C |
 | R12 | Mathias-Copeman parameters for SRK | The PSRK constants of CO2 | Removed; the standard SRK temperature function applies |
 
@@ -297,6 +297,80 @@ critical temperature, and is correct for propane at 0 C.
 `validateSetup()` reports a missing refrigerant or level, a level at or above the condensing
 temperature, a condensing temperature at or above the critical temperature, and flash inter-cooling
 without flash vessels. `run()` throws an `IllegalStateException` carrying the same message.
+
+## Heat recovery and heat pumps
+
+Use the same vapour-compression system for a heat pump. Specify the available
+evaporator load and the heating-medium temperatures at the condenser. This
+example warms returning water from 35 to 50 °C and assumes full condenser
+heat recovery. Method arguments follow the flow direction through the condenser
+(inlet 35 °C, outlet 50 °C). A 5 K approach means condensation at 55 °C.
+
+```java
+RefrigerationSystem pump = new RefrigerationSystem("water heating");
+pump.setRefrigerant("ammonia");
+pump.setCondenserCoolingMedium(35.0, 50.0, 5.0, "C");
+pump.setCoolingMediumHeatCapacity(4180.0); // mean water Cp, J/(kg K)
+pump.setDriverEfficiency(0.90);
+pump.addLevel("source", 5.0, "C").addFixedDuty("recovered heat", 100.0, "kW");
+pump.run();
+double deliveredKW = pump.getCondenserDuty("kW");
+double electricalKW = pump.getElectricalPower("kW");
+double heatingCOP = pump.getHeatingCOPElectrical();
+double waterKgPerSec = pump.getCoolingMediumFlow("kg/sec");
+```
+
+The model delivers 129.65 kW to 2.07 kg/s of water and draws 32.94 kW of
+electricity, giving a heating COP of 3.94. The fluid energy balance uses shaft
+power. Motor losses are outside the refrigerant circuit. With partial heat
+recovery, divide the useful heat actually delivered by electrical input and
+include pumps and fans when reporting plant COP. The source duty in this example
+is specified. Bind a real source cooler with `addCooler` to follow its duty.
+
+| Medium or duty | Inputs and property basis |
+|---|---|
+| Water heated or cooled sensibly | Use condenser-medium inlet/outlet temperature, approach (K), and mean mass heat capacity in J/(kg K). The unit defaults to 4186. Use reference-water enthalpies at actual pressure over a wide temperature span. |
+| Once-through seawater | Register the solved condenser using `addCondenserTo` on a fresh `CoolingWaterSystem`. Set its supply/return temperatures, pressure (bara), reference salinity (g/kg solution), system pressure drop (bar), pump efficiency and zero tower-fan fraction. It calculates flow from the reference enthalpy difference. [Water and seawater models](reference_cooling_water) |
+| Glycol/water, brine or thermal oil | Supply composition and operating pressure. Use a validated mean Cp for a narrow, single-liquid range or size the medium flow from its own model or tabulated enthalpy rise. Check freezing and boiling margins for that concentration. |
+| Evaporator source or a phase-changing utility | Bind the process cooler and use its enthalpy duty. Specify the temperature approach separately. A constant-Cp liquid calculation does not represent latent heat. |
+
+As a check on the choice of cooling medium, a 1 MW condenser heating water
+from 20 to 30 °C at 4 bara requires 23.92 kg/s of fresh water or 25.00 kg/s
+of seawater at 35 g/kg reference salinity in `CoolingWaterSystem`. For the
+heat-pump example, the reference fresh-water calculation gives 2.069 kg/s at
+4 bara, compared with 2.068 kg/s using the specified mean heat capacity.
+
+For a service with known supply and return enthalpies, `UtilityEnergyBus`
+accepts two `ThermalUtilityState` values with temperature (K), absolute pressure (Pa)
+and specific enthalpy (J/kg). Its `getMassFlowForDuty` uses the enthalpy
+difference. This also supports hot-oil and steam service when the project
+supplies appropriate fluid properties and states. A utility grade label
+alone does not supply a fluid composition or a property correlation.
+
+## Plot the solved process
+
+Use pressure–enthalpy to read specific work, evaporation duty and valve
+enthalpy; pressure–entropy to compare each compression with an isentropic
+reference; and temperature–entropy to see condensation and evaporation.
+The calculation and the saturation limits must use the same refrigerant
+and property reference. Connections between reported states are schematic.
+A separate T–Q diagram shows hot and cold composites of a solved LNG exchanger.
+
+![Calculated three-level propane cycle on pressure–enthalpy, pressure–entropy and temperature–entropy axes](figures/c3mr-propane-cycle.svg)
+
+From a NeqSim checkout with Matplotlib 3.7+ and NumPy, pass the live solved
+objects from the Java/Python bridge to the plotting helper:
+
+```python
+from runpy import run_path
+
+plots = run_path(".github/skills/neqsim-utility-design/scripts/refrigeration_diagrams.py")
+plots["plot_cycle"](pump).savefig("heat-pump.svg")
+plots["plot_exchanger"](main_exchanger).savefig("temperature-duty.svg")
+```
+
+Use [the C3MR comparison](../lng_liquefaction#compare-one-and-three-propane-levels)
+for a complete train example.
 
 ## Limits
 

@@ -1,7 +1,7 @@
 ---
 name: neqsim-integrated-production-and-lifecycle
 description: "Guides integrated production and lifecycle studies using IntegratedProductionModel, WellDeliverabilityCurve, TieInCapacityPlanner, FieldLifecycleEvaluator, CashFlowEngine, and ReservoirCouplingExporter. USE WHEN: a user asks to couple well deliverability with a gathering network, match well tests, allocate limited gas lift, compare host tie-in capacity, screen lifecycle modifications or product specifications, connect reservoir production to fiscal cash flow, or export well VFP tables."
-last_verified: "2026-11-24"
+last_verified: "2026-11-26"
 ---
 
 # Integrated Production and Lifecycle
@@ -169,6 +169,8 @@ Build the capacity curve from repeated process-model throughput sweeps at severa
   cases. So: one run is enough for a change that moves production between wells for a limited time; a lasting change
   of depletion rate (back-pressure, injection) needs at least two runs that bracket it, three when gas rates matter.
   With one run the model overstated the loss from a back-pressure rise by 58 to 73 % of the effect.
+- Seed a hybrid proxy from cumulative oil and water when their split is known. Setting either phase in
+  `setCumulative` recomputes produced liquid from both totals. For an unsplit history, seed `LIQUID_PRODUCED` directly.
 - For the canonical field graph, call `ReservoirStateWellBinding.apply()` before
   `FieldWellNetworkCoupler.run()`. It updates the existing `WellSystem` boundary and does not create topology,
   hydraulics or a scheduler. Advance cumulative production/injection/time explicitly and reject results outside
