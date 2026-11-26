@@ -2,6 +2,7 @@ package neqsim.process.equipment.pipeline.twophasepipe;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -88,22 +89,33 @@ class TwoFluidUnsplitTengesdalPreparationTest {
     verifyTrackedSubcellForceMatrix(600.0);
   }
 
-  /** Run and compare the declared tracked-force mesh and time-step matrix. */
+  /**
+   * Run every tracked-force realization and compare each published refinement with the reference.
+   *
+   * @param duration complete publication interval in seconds
+   */
   private static void verifyTrackedSubcellForceMatrix(double duration) {
     int[] cells = {16, 16, 24};
     double[] maximumSteps = {0.1, 0.05, 0.05};
-    List<TrackedRun> runs = new ArrayList<TrackedRun>();
-    for (int index = 0; index < cells.length; index++) {
-      runs.add(simulateTrackedSubcellForceRun(cells[index], maximumSteps[index], duration));
-    }
-    TrackedRun reference = runs.get(0);
+    TrackedRun[] runs = new TrackedRun[cells.length];
     List<Executable> gates = new ArrayList<Executable>();
-    for (TrackedRun run : runs) {
-      gates.add(() -> assertTrackedRun(run, duration));
+    for (int index = 0; index < cells.length; index++) {
+      int realization = index;
+      gates.add(() -> {
+        runs[realization] = assertDoesNotThrow(
+            () -> simulateTrackedSubcellForceRun(cells[realization], maximumSteps[realization], duration),
+            cells[realization] + " cells / " + maximumSteps[realization] + " s must publish " + duration + " s");
+        assertTrackedRun(runs[realization], duration);
+      });
     }
-    for (int index = 1; index < runs.size(); index++) {
-      TrackedRun refined = runs.get(index);
-      gates.add(() -> assertTrackedDiscretizationAgreement(reference, refined));
+    for (int index = 1; index < runs.length; index++) {
+      int refinement = index;
+      gates.add(() -> {
+        // Publication failures are reported by the realization gates above.
+        if (runs[0] != null && runs[refinement] != null) {
+          assertTrackedDiscretizationAgreement(runs[0], runs[refinement]);
+        }
+      });
     }
     assertAll(duration + " s tracked-force mesh and time-step qualification", gates.stream());
   }
