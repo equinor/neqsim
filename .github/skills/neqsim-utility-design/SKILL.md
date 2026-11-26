@@ -1,7 +1,7 @@
 ---
 name: neqsim-utility-design
 version: "1.0.0"
-description: "Utility-system design with NeqSim and MCP designUtilities: Boiler, Deaerator, NitrogenSystem, SteamNetwork, UtilitySystemDesigner, screening RefrigerationCycle and the rigorous multi-level RefrigerationSystem (economizers, inter-cooling, cascades, chiller integration, heat pumps and p-h/p-s/T-s cycle diagrams). USE WHEN: sizing a utility duty/flow/power, simulating a refrigeration cycle, estimating utility CO2 and cost, or building a steam header balance. Levels: neqsim-utilities-specification; duties: neqsim-heat-integration."
+description: "Utility-system design with NeqSim and MCP designUtilities: Boiler, Deaerator, NitrogenSystem, SteamNetwork, UtilitySystemDesigner, and RefrigerationCycle or RefrigerationSystem. USE WHEN sizing duties, flows or power, estimating utility CO2 and cost, building a steam header balance, or modeling refrigeration and heat pumps. Covers economizers, intercooling, cascades, process chillers and p-h/p-s/T-s diagrams. Levels: neqsim-utilities-specification. Duties: neqsim-heat-integration."
 last_verified: "2026-11-26"
 ---
 
