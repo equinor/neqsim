@@ -227,8 +227,7 @@ public final class TwoFluidUnsplitIntegrator {
         pressure[cell] = local[cell].getPressure();
         area[cell] = local[cell].getArea();
       }
-      double localTolerance =
-          localSolveTolerance(solver.getRelativeTolerance(), relativeTolerance, dt, duration);
+      double localTolerance = localSolveTolerance(solver.getRelativeTolerance(), relativeTolerance, dt, duration);
       UnsplitTransientSolver.Result candidate = solver.solveWithTolerance(state, pressure, area, dt, time,
           outletPressure, outletPressureFixed, adapter, localTolerance);
       evaluations += candidate.getModelEvaluations();
@@ -275,8 +274,7 @@ public final class TwoFluidUnsplitIntegrator {
    */
   static double localSolveTolerance(double configuredTolerance, double verificationTolerance, double timeStep,
       double duration) {
-    double durationWeighted =
-        INTERVAL_RESIDUAL_BUDGET_FRACTION * verificationTolerance * timeStep / duration;
+    double durationWeighted = INTERVAL_RESIDUAL_BUDGET_FRACTION * verificationTolerance * timeStep / duration;
     return Math.min(configuredTolerance, Math.max(MINIMUM_SCALED_NONLINEAR_TOLERANCE, durationWeighted));
   }
 
