@@ -1,8 +1,8 @@
 ---
 name: neqsim-utility-design
 version: "1.0.0"
-description: "Screening-level utility-system design with NeqSim and the MCP designUtilities tool - fired Boiler, Deaerator, RefrigerationCycle, NitrogenSystem, multi-pressure SteamNetwork and the UtilitySystemDesigner that harvests demands from a run flowsheet. USE WHEN: sizing a utility duty/flow/power, estimating utility CO2 and cost, building a steam header balance, or exposing utility sizing through MCP. Levels: neqsim-utilities-specification; duties: neqsim-heat-integration."
-last_verified: "2026-06-27"
+description: "Utility-system design with NeqSim and MCP designUtilities: Boiler, Deaerator, NitrogenSystem, SteamNetwork, UtilitySystemDesigner, screening RefrigerationCycle and the rigorous multi-level RefrigerationSystem (economizers, inter-cooling, cascades, chiller integration). USE WHEN: sizing a utility duty/flow/power, simulating a refrigeration cycle, estimating utility CO2 and cost, or building a steam header balance. Levels: neqsim-utilities-specification; duties: neqsim-heat-integration."
+last_verified: "2026-11-26"
 ---
 
 # NeqSim Utility Design Skill
@@ -22,7 +22,8 @@ decide *which* utility levels to provide and
 - Estimating utility CO₂ emissions and annual operating cost for ESG/screening
 - Exposing utility sizing through the MCP `designUtilities` tool
 
-These are **screening-level** models for early design, not detailed mechanical design.
+These are **screening-level** models for early design, not detailed mechanical design. The
+exception is refrigeration: `RefrigerationSystem` (below) is a rigorous cycle simulation.
 
 ## Classes
 
@@ -35,7 +36,7 @@ All classes live in `neqsim.process.util.utilitydesign`, expose
 |-------|--------|-----------|-------------|
 | `Boiler` | Fired steam boiler package | steam duties (kW), efficiency, fuel LHV | fuel mass, steam generation, feedwater/blowdown, fan power, CO₂, OPEX |
 | `Deaerator` | Feedwater deaerator | feedwater flow, inlet T, pressure | deaerator T, heat duty, stripping steam, vent rate |
-| `RefrigerationCycle` | Vapour-compression chiller (Carnot × efficiency) | duties (kW), evaporator/condenser T | COP, compressor power, condenser duty, CO₂, OPEX |
+| `RefrigerationCycle` | Vapour-compression chiller, screening (Carnot × efficiency) | duties (kW), evaporator/condenser T | COP, compressor power, condenser duty, CO₂, OPEX |
 | `NitrogenSystem` | On-site N₂ generation | demand (Nm³/h), purity, method | specific energy, power, air feed, CO₂, OPEX |
 | `SteamNetwork` | Multi-pressure header cascade + embedded `Boiler`/`Deaerator` | levels, demands, local generation | per-header balance, boiler generation, totals |
 | `UtilitySystemDesigner` | Plant-wide aggregator | run `ProcessSystem`/`ProcessModel` | total heating/cooling/shaft/air, CW + air-cooler split |
@@ -73,6 +74,57 @@ cycle.calculate();
 double power = cycle.getCompressorPowerKW();
 double cop = cycle.getCop();
 ```
+
+## RefrigerationSystem (rigorous cycle, process unit)
+
+Use `neqsim.process.equipment.refrigeration.RefrigerationSystem` instead of `RefrigerationCycle`
+when the answer needs compressor power per stage, refrigerant flows, discharge temperatures,
+suction volume flows, an economizer or inter-cooler, a cascade, or a refrigeration plant that
+follows the process chillers. It is a `ProcessEquipmentInterface`: add it to the `ProcessSystem`.
+Guide: [docs/process/equipment/refrigeration.md](../../../docs/process/equipment/refrigeration.md).
+
+```java
+import neqsim.process.equipment.refrigeration.RefrigerationLoad;
+import neqsim.process.equipment.refrigeration.RefrigerationSystem;
+
+RefrigerationSystem ref = new RefrigerationSystem("propane refrigeration");
+ref.setRefrigerant("propane"); // or R717, CO2, propene, ethylene, R134a ...
+ref.setCondenserCoolingMedium(20.0, 30.0, 8.0, "C"); // or setCondensingTemperature(40.0, "C")
+ref.setSubcooling(3.0);
+ref.setIsentropicEfficiency(0.78);
+ref.addLevel("MP", 0.0, "C").setTemperatureFromLoads(5.0).addCooler(warmChiller);
+ref.addLevel("LP", -30.0, "C").setTemperatureFromLoads(5.0).addCooler(coldChiller);
+process.add(ref);
+process.run();
+double powerKW = ref.getCompressorPower("kW");
+double cop = ref.getCOP();
+double condenserKW = ref.getCondenserDuty("kW");
+List<String> warnings = ref.getWarnings(); // loads colder than their level allows, wet suction
+```
+
+| Task | Call |
+|------|------|
+| Economizer stage at the geometric-mean pressure | `ref.addGeometricMeanEconomizer("economizer")` after the levels and condenser are set |
+| Two-stage ammonia with open flash inter-cooler | `ref.setInterstageCooling(RefrigerationSystem.InterstageCooling.FLASH_INTERCOOLER)` |
+| Side-load cycle without flash vessels | `ref.setEconomizerType(RefrigerationSystem.EconomizerType.NONE)` |
+| Fixed duty | `level.addFixedDuty("name", 1000.0, "kW")` |
+| Cascade (CO2 under ammonia or propane) | `warmLevel.addLoad(RefrigerationLoad.cascadeCondenser(coldSystem))` |
+| Detailed compressor on a stage | `new Compressor("K", ref.createSuctionStream(stageIndex))`; stage 0 discharges to the condenser |
+| Power to an energy stream or bus | `ref.connectEnergyStream(RefrigerationSystem.SHAFT_POWER_PORT, stream)` |
+| Condenser onto cooling water | `ref.addCondenserTo(coolingWaterSystem, approachK)` |
+| Calibrate the screening model | `cycle.setCycleEfficiency(ref.getCarnotFraction())` |
+
+**Refrigerant model.** `setRefrigerant(name)` picks the equation of state; do not swap it without a
+reason. Measured against NIST saturation data on 2026-11-26 (saturation pressure / latent heat
+error): ammonia with `SystemAmmoniaEos` below 0.1 % (Peng-Robinson up to +1.1 % / +3.1 % and an
+isentropic discharge temperature 11 K low); CO2 with `SystemGERG2008Eos` below 0.1 % (Peng-Robinson
+-1.6 % / +1.6 %); propane with Peng-Robinson within 0.4 % / 0.6 % (SRK 1.2 % / 1.5 %); R134a with
+Peng-Robinson within 0.5 % / 2.7 %. Another single-component model goes in through
+`RefrigerantFluid.of(name, fluid)`.
+
+**Carnot fraction.** Measured the same day at -35 C / 35 C and 0.75 isentropic efficiency:
+single-stage propane 0.515, propene 0.518, R134a 0.523, ammonia 0.554; with a geometric-mean flash
+economizer 0.611, 0.607, 0.618, 0.579. Use these, not a guess, for `RefrigerationCycle`.
 
 ## NitrogenSystem
 
@@ -173,7 +225,15 @@ wiring any utility flowsheet into a closed optimization loop.
 - All duties are **kW**; negative duties are rejected (boiler, refrigeration).
 - `SteamNetwork.addDemand`/`setLocalGeneration` validate the header name exists.
 - Refrigeration COP uses absolute temperatures — keep evaporator below condenser.
-- These are screening models: no detailed mechanical, control, or transient design.
+- `RefrigerationSystem` takes single-component refrigerants and subcritical condensing only: a
+  mixture is rejected (mixed refrigerants: `neqsim-lng-liquefaction`), and CO2 must be cascaded.
+- `RefrigerationSystem` is solved after the coolers it serves under graph execution. A flowsheet
+  with `Recycle` or `Adjuster` units runs in insertion order: add it after those coolers.
+- `UtilitySystemDesigner` counts a `RefrigerationSystem` as its condenser duty plus its compressor
+  shaft load, and skips the coolers bound to it. Without one in the flowsheet, sub-ambient coolers
+  are still booked as cooling water.
+- Halocarbons: only R134a and R12 are in the component database.
+- The `utilitydesign` classes are screening models: no detailed mechanical, control, or transient design.
 - Set the mixing rule and run the flowsheet **before** `UtilitySystemDesigner.fromProcessSystem`.
 
 ## Related

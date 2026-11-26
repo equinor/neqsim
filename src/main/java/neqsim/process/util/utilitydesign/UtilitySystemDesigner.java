@@ -2,9 +2,11 @@ package neqsim.process.util.utilitydesign;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -15,6 +17,9 @@ import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.CoolingWaterSystem;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.pump.Pump;
+import neqsim.process.equipment.refrigeration.RefrigerationLevel;
+import neqsim.process.equipment.refrigeration.RefrigerationLoad;
+import neqsim.process.equipment.refrigeration.RefrigerationSystem;
 import neqsim.process.equipment.util.UtilityAirSystem;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessModel;
@@ -225,12 +230,40 @@ public class UtilitySystemDesigner implements Serializable {
   /**
    * Harvests heating, cooling, shaft-power and actuator demands from one process system.
    *
+   * <p>
+   * A cooler bound to a {@link RefrigerationSystem} in the same process is served by the refrigerant, so it is not
+   * counted as a cooling-water or air-cooler demand. The refrigeration system contributes its condenser duty as a
+   * cooling demand at the condensing temperature and its compressor power as a shaft load instead.
+   * </p>
+   *
    * @param process the process system to walk; must not be {@code null}
    * @param area the area label to tag harvested demands with (may be {@code null})
    */
   private void harvest(ProcessSystem process, String area) {
+    Set<String> refrigerated = new HashSet<String>();
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
-      if (unit instanceof Heater) {
+      if (unit instanceof RefrigerationSystem) {
+        for (RefrigerationLevel level : ((RefrigerationSystem) unit).getLevels()) {
+          for (RefrigerationLoad load : level.getLoads()) {
+            refrigerated.add(load.getName());
+          }
+        }
+      }
+    }
+    for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+      if (unit instanceof RefrigerationSystem) {
+        RefrigerationSystem refrigeration = (RefrigerationSystem) unit;
+        double condenserKW = refrigeration.getCondenserDuty("kW");
+        if (condenserKW > 1.0e-6) {
+          coolingDemands.add(new CoolingDemand(unit.getName() + " condenser", area, condenserKW,
+              refrigeration.getCondensingTemperature() - 273.15));
+          shaftLoads.add(
+              new ShaftLoad(unit.getName(), area, refrigeration.getCompressorPower("kW"), "refrigeration compressor"));
+        }
+      } else if (unit instanceof Heater) {
+        if (refrigerated.contains(unit.getName())) {
+          continue;
+        }
         Heater heater = (Heater) unit;
         double dutyKW = heater.getDuty("kW");
         if (Math.abs(dutyKW) < 1.0e-6) {

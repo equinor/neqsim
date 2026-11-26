@@ -101,6 +101,10 @@ PACKAGE_GUIDES: Mapping[str, Tuple[str, str]] = {
         "Turbines, fuel cells, renewables, and combined-cycle systems",
     ),
     "pump": ("[Pumps](pumps)", "Centrifugal, ESP, jet, and sucker-rod pumps"),
+    "refrigeration": (
+        "[Refrigeration systems](refrigeration)",
+        "Multi-level vapour-compression refrigeration plants",
+    ),
     "reactor": (
         "[Reactors](reactors) and [multi-burner hot-oil heater](multi_burner_fired_heater)",
         "Chemical reactors and optional finite-rate gas-fired hot-oil equipment",

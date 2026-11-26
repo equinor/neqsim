@@ -482,6 +482,7 @@ See the [property method alignment audit](physical_properties/method_alignment_a
 | **Stream Fitters**           | [docs/process/equipment/util/stream_fitters.md](process/equipment/util/stream_fitters.md)                     | **GORfitter, MPFMfitter: GOR/GVF adjustment, MPFM reference fluids**                             |
 | **Fuel Gas System**          | [docs/process/equipment/util/fuel_gas_system.md](process/equipment/util/fuel_gas_system.md)                   | **Complete fuel gas conditioning: gas turbines, fired heaters, pilots, Wobbe Index, JT cooling** |
 | **Utility Air System**       | [docs/process/equipment/util/utility_air_system.md](process/equipment/util/utility_air_system.md)             | **ISO 8573-1 utility air: instrument/plant/breathing air, compressor/dryer sizing**              |
+| **Refrigeration Systems**    | [docs/process/equipment/refrigeration.md](process/equipment/refrigeration.md)                                 | **Rigorous multi-level vapour-compression refrigeration: economizers, flash inter-cooling, cascades, process-cooler integration** |
 | **Produced Water Degassing** | [docs/process/equipment/util/produced_water_degassing.md](process/equipment/util/produced_water_degassing.md) | **Multi-stage degassing with GHG emissions per Norwegian regulations (Aktivitetsforskriften)**   |
 
 ### Chapter 21: Process Control

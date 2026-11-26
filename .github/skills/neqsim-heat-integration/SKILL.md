@@ -2,7 +2,7 @@
 name: neqsim-heat-integration
 version: "1.0.0"
 description: "Pinch analysis and heat integration — composite curves, ΔTmin selection, MER targeting, grand composite, HEN synthesis, retrofit. USE WHEN: a task involves reducing utility cost, evaluating heat recovery, sizing utility duties, or comparing process alternatives on energy efficiency. Anchors on neqsim.process.equipment.heatexchanger.heatintegration.PinchAnalysis."
-last_verified: "2026-04-26"
+last_verified: "2026-11-26"
 requires:
   java_packages: [neqsim.process.equipment.heatexchanger.heatintegration]
 ---
@@ -94,7 +94,7 @@ double[] Qc_ = pinch.getColdCompositeQ();
 // Plot T vs Q → composite curves; the overlap = recoverable, the tails = utility
 ```
 
-Plot the **grand composite curve** (`getGrandCompositeQ/T()`) to choose utility levels (HP/MP/LP steam, CW, refrigeration).
+Plot the **grand composite curve** (`getGrandCompositeQ/T()`) to choose utility levels (HP/MP/LP steam, CW, refrigeration). Size the refrigeration levels it gives with `RefrigerationSystem` (`neqsim-utility-design`).
 
 ## Pattern 5 — Retrofit Diagnostics
 

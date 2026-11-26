@@ -2499,4 +2499,104 @@ public class DocExamplesCompilationTest {
     assertTrue(json.contains("\"freeMercuryState\": \"solid\""));
   }
 
+  /**
+   * Covers the gas-chilling example in docs/process/equipment/refrigeration.md.
+   */
+  @Test
+  void testRefrigerationSystemGasChillingExampleRuns() {
+    neqsim.thermo.system.SystemInterface gas = new neqsim.thermo.system.SystemSrkEos(298.15, 60.0);
+    gas.addComponent("methane", 0.85);
+    gas.addComponent("ethane", 0.08);
+    gas.addComponent("propane", 0.05);
+    gas.addComponent("n-butane", 0.02);
+    gas.setMixingRule("classic");
+
+    Stream feed = new Stream("feed gas", gas);
+    feed.setFlowRate(100000.0, "kg/hr");
+    feed.setTemperature(30.0, "C");
+    feed.setPressure(60.0, "bara");
+    neqsim.process.equipment.heatexchanger.Cooler warmChiller = new neqsim.process.equipment.heatexchanger.Cooler(
+        "warm chiller", feed);
+    warmChiller.setOutTemperature(273.15 + 5.0);
+    neqsim.process.equipment.heatexchanger.Cooler coldChiller = new neqsim.process.equipment.heatexchanger.Cooler(
+        "cold chiller", warmChiller.getOutletStream());
+    coldChiller.setOutTemperature(273.15 - 25.0);
+
+    neqsim.process.equipment.refrigeration.RefrigerationSystem refrigeration = new neqsim.process.equipment.refrigeration.RefrigerationSystem(
+        "propane refrigeration");
+    refrigeration.setRefrigerant("propane");
+    refrigeration.setCondenserCoolingMedium(20.0, 30.0, 8.0, "C"); // supply, return, approach
+    refrigeration.setSubcooling(3.0);
+    refrigeration.setIsentropicEfficiency(0.78);
+    refrigeration.addLevel("MP", 0.0, "C").setTemperatureFromLoads(5.0).addCooler(warmChiller);
+    refrigeration.addLevel("LP", -30.0, "C").setTemperatureFromLoads(5.0).addCooler(coldChiller);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(warmChiller);
+    process.add(coldChiller);
+    process.add(refrigeration);
+    process.run();
+
+    double dutyKW = refrigeration.getRefrigerationDuty("kW");
+    double powerKW = refrigeration.getCompressorPower("kW");
+    double condenserKW = refrigeration.getCondenserDuty("kW");
+    double cop = refrigeration.getCOP();
+    double circulation = refrigeration.getRefrigerantCirculation("kg/hr");
+    double coolingWater = refrigeration.getCoolingMediumFlow("tonnes/hr");
+    List<String> warnings = refrigeration.getWarnings();
+    String json = refrigeration.toJson();
+
+    assertEquals(5191.5, dutyKW, 50.0);
+    assertEquals(1827.0, powerKW, 35.0);
+    assertEquals(2.84, cop, 0.05);
+    assertEquals(dutyKW + powerKW, condenserKW, 1.0e-3);
+    assertTrue(circulation > 0.0 && coolingWater > 0.0);
+    assertTrue(warnings.isEmpty());
+    assertTrue(json.contains("\"compressorStages\""));
+  }
+
+  /**
+   * Covers the two-stage ammonia and cascade examples in docs/process/equipment/refrigeration.md.
+   */
+  @Test
+  void testRefrigerationSystemTwoStageAndCascadeExamplesRun() {
+    neqsim.process.equipment.refrigeration.RefrigerationSystem ammonia = new neqsim.process.equipment.refrigeration.RefrigerationSystem(
+        "ammonia plant");
+    ammonia.setRefrigerant("R717");
+    ammonia.setCondensingTemperature(35.0, "C");
+    ammonia.setIsentropicEfficiency(0.75);
+    ammonia.addLevel("freezer", -30.0, "C").addFixedDuty("blast freezers", 1000.0, "kW");
+    ammonia.addGeometricMeanEconomizer("intermediate vessel");
+    ammonia.setInterstageCooling(
+        neqsim.process.equipment.refrigeration.RefrigerationSystem.InterstageCooling.FLASH_INTERCOOLER);
+    ammonia.run();
+    double twoStageCop = ammonia.getCOP();
+    double highStageDischargeC = ammonia.getStages().get(0).getDischarge().getTemperature() - 273.15;
+    double lowStageSweptVolume = ammonia.getStages().get(1).getSuctionVolumeFlow(); // m3/hr
+    assertEquals(2.37, twoStageCop, 0.05);
+    assertEquals(107.0, highStageDischargeC, 3.0);
+    assertTrue(lowStageSweptVolume > 0.0);
+
+    neqsim.process.equipment.refrigeration.RefrigerationSystem co2 = new neqsim.process.equipment.refrigeration.RefrigerationSystem(
+        "CO2 low stage");
+    co2.setRefrigerant("CO2");
+    co2.setCondensingTemperature(-10.0, "C");
+    co2.addLevel("freezer", -45.0, "C").addFixedDuty("freezers", 1000.0, "kW");
+
+    neqsim.process.equipment.refrigeration.RefrigerationSystem highStage = new neqsim.process.equipment.refrigeration.RefrigerationSystem(
+        "ammonia high stage");
+    highStage.setRefrigerant("ammonia");
+    highStage.setCondensingTemperature(35.0, "C");
+    highStage.addLevel("cascade condenser", -15.0, "C")
+        .addLoad(neqsim.process.equipment.refrigeration.RefrigerationLoad.cascadeCondenser(co2));
+
+    ProcessSystem cascade = new ProcessSystem();
+    cascade.add(co2);
+    cascade.add(highStage);
+    cascade.run();
+    double cascadeCop = co2.getRefrigerationDuty() / (co2.getCompressorPower() + highStage.getCompressorPower());
+    assertEquals(co2.getCondenserDuty(), highStage.getRefrigerationDuty(), 1.0e-6);
+    assertEquals(1.51, cascadeCop, 0.05);
+  }
 }

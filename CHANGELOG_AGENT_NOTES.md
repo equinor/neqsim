@@ -9,6 +9,31 @@
 
 ---
 
+## 2026-11-26 — Rigorous refrigeration system, signal-source execution ordering, R134a/R12 heat capacity
+
+- New: `neqsim.process.equipment.refrigeration.RefrigerationSystem`, a process unit for multi-level vapour-compression
+  refrigeration with single-component refrigerants: flash economizers or direct expansion, open flash inter-stage
+  cooling, subcooling, superheat, pressure drops, loads bound to process coolers (`level.addCooler`), fixed duties and
+  cascade condensers (`RefrigerationLoad.cascadeCondenser`). Results per stage and level, `getCOP`,
+  `getCarnotFraction`, `getWarnings`, energy ports `shaftPower` and `condenserHeat`, `createSuctionStream`,
+  `addCondenserTo(CoolingWaterSystem, approach)`. `RefrigerantFluid.of(name)` selects the equation of state
+  (`SystemAmmoniaEos` for ammonia, GERG-2008 for CO2, Peng-Robinson otherwise) and accepts ASHRAE designations.
+- New: `ProcessEquipmentInterface.getSignalSources()` (default empty). Equipment that reads results of other
+  equipment outside the stream and energy topology returns those units; `ProcessGraphBuilder` adds signal edges so
+  graph execution solves them first. Sequential execution (flowsheets with `Recycle` or `Adjuster`) still uses
+  insertion order.
+- Changed: `UtilitySystemDesigner` books a `RefrigerationSystem` as its condenser duty plus its compressor shaft load
+  and no longer counts the coolers bound to it as cooling-water or air-cooler demands. Migration: none unless a
+  flowsheet contains a `RefrigerationSystem`.
+- Fixed: R134a and R12 had all-zero ideal-gas heat capacity coefficients in `COMP.csv`, so isentropic and isenthalpic
+  calculations with them failed or gave non-physical temperatures. Enthalpy, entropy and compressor results for these
+  two components change.
+- `RefrigerationCycle` (screening, Carnot fraction) is unchanged; calibrate it with
+  `setCycleEfficiency(refrigerationSystem.getCarnotFraction())`.
+- Updated: new `docs/process/equipment/refrigeration.md`, `docs/process/processmodel/graph_simulation.md`, equipment
+  catalog and indexes; `neqsim-utility-design` skill (owner), cross-references in `neqsim-heat-integration`,
+  `neqsim-lng-liquefaction`, `neqsim-process-extraction`, `neqsim-capability-map`; `utility-design` agent.
+
 ## 2026-11-23 — Flory-Huggins asphaltene regression to onset data; naphthenate precipitation model
 
 - New: `FloryHugginsAsphalteneModel.calibrateToOnsetPressure(T, P)` and `fitToOnsetData(T[], P[])` regress the

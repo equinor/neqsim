@@ -625,7 +625,7 @@ The tested guides in `docs/physical_properties/` cover more than the short table
 | Sulfur species (S8, SO2, COS) | ⚠️ Partial |
 | Ionic species | ⚠️ Limited database |
 | Polymers | ⚠️ Few PC-SAFT parameters |
-| Refrigerants | ⚠️ Some available |
+| Refrigerants | ⚠️ Ammonia, CO2, propane, propene, ethylene, ethane, butanes, R134a, R12; other halocarbons missing |
 | Specialty chemicals | ❌ Case-by-case |
 
 ---
