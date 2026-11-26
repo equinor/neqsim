@@ -125,6 +125,9 @@ class NaphtaliSandholmAnalyticJacobianTest extends neqsim.NeqSimTest {
     DistillationColumn stripper = new DistillationColumn("stripper", 5, true, false);
     assertTrue(!stripper.isPreferredSimultaneousCorrectionCandidate());
     DistillationColumn fractionator = new DistillationColumn("fractionator", 5, true, true);
+    assertTrue(!fractionator.isPreferredSimultaneousCorrectionCandidate(),
+        "Two terminal temperatures without a ratio keep the sequential ladder");
+    fractionator.setCondenserRefluxRatio(1.5);
     assertTrue(fractionator.isPreferredSimultaneousCorrectionCandidate());
     fractionator.setMurphreeEfficiency(0.7);
     assertTrue(!fractionator.isPreferredSimultaneousCorrectionCandidate(),

@@ -1497,11 +1497,18 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * tear loops call the inner solver from a state the sequential solvers reuse.
    * </p>
    *
+   * <p>
+   * A condenser reflux ratio or a reboiler boilup ratio must be active. With two terminal temperatures and no ratio the
+   * simultaneous solver and the sequential solvers can settle on different condenser states, so those columns stay on
+   * the ladder.
+   * </p>
+   *
    * @return {@code true} when the direct simultaneous-correction probe applies
    */
   boolean isPreferredSimultaneousCorrectionCandidate() {
-    return hasReboiler && hasCondenser && numberOfTrays > 1 && !isReactive() && !hasActiveColumnTearVariables()
-        && !hasActiveSideDrawFractions() && !hasNonidealMurphreeStages();
+    return hasReboiler && hasCondenser && numberOfTrays > 1
+        && (hasCondenserRatioControl() || getReboiler().isRefluxSet()) && !isReactive()
+        && !hasActiveColumnTearVariables() && !hasActiveSideDrawFractions() && !hasNonidealMurphreeStages();
   }
 
   /**
