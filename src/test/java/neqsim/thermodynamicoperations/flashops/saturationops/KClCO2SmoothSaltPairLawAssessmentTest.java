@@ -213,10 +213,11 @@ class KClCO2SmoothSaltPairLawAssessmentTest {
     double zetaInv = fit.parameters[fit.parameters.length - 1];
     double zetaInvSe = fit.standardError(fit.parameters.length - 1);
     return row("FIT", model, null, null, null, model, 26, fit.parameters.length, fit.rank, fit.conditionNumber,
-        fit.rmse, fit.maxAbsoluteResidual, fit.aicc, fit.parameters[0], fit.standardError(0),
-        fit.parameters.length <= 4 ? fit.parameters[1] : null, fit.parameters.length <= 4 ? fit.standardError(1) : null,
-        zetaRef, zetaRefSe, zetaInv, zetaInvSe, fit.maxAbsoluteCorrelation(), null, null, null, null, null, null, null,
-        null, null, null, null, "candidate_selection_only_no_activation");
+        fit.rmse, fit.maxAbsoluteResidual, fit.aicc, fit.parameters.length <= 4 ? fit.parameters[0] : null,
+        fit.parameters.length <= 4 ? fit.standardError(0) : null, fit.parameters.length <= 4 ? fit.parameters[1] : null,
+        fit.parameters.length <= 4 ? fit.standardError(1) : null, zetaRef, zetaRefSe, zetaInv, zetaInvSe,
+        fit.maxAbsoluteCorrelation(), null, null, null, null, null, null, null, null, null, null, null,
+        "candidate_selection_only_no_activation");
   }
 
   /** Formats one independent source-matched holdout row. */
