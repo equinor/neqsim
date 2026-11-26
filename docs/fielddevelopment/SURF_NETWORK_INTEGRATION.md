@@ -143,6 +143,14 @@ distributed across route legs with at least one increment per leg, including non
 It applies the count only to selected edges on detached definitions, executes the normal
 fail-closed comparison at every mesh and returns each full result by count. Unselected edge
 fidelity and mesh settings remain unchanged, and the caller topology is not run or mutated.
+For three increasing meshes with one constant ratio,
+`MeshSensitivityResult.getSpatialConvergenceReport(...)` applies the same symmetric
+common-position discrepancy and fail-closed status contract used by
+`TwoFluidPipeNetworkRefinementStudy`. It reports `MONOTONIC`, `NON_MONOTONIC` or
+`ROUND_OFF_LIMITED` separately for either Beggs-Brill or two-fluid pressure, temperature,
+liquid-holdup and superficial phase-velocity profiles. Observed order and a safety-factored
+fine-grid convergence index are finite only for a resolved monotonic sequence; unresolved
+sequences retain `NaN` instead of manufacturing an error estimate.
 
 ```java
 NetworkHydraulicModelComparison comparison =
@@ -166,9 +174,9 @@ conservative.runTransient(0.000001, UUID.randomUUID());
 
 NetworkHydraulicModelComparison.MeshSensitivityResult mesh =
     comparison.compareMeshSensitivity(
-        Arrays.asList("flowline"), Arrays.asList(4, 8, 10), UUID.randomUUID());
+        Arrays.asList("flowline"), Arrays.asList(4, 6, 9), UUID.randomUUID());
 NetworkHydraulicModelComparison.EdgeComparison fine =
-    mesh.getResult(10).getEdgeComparison("flowline");
+    mesh.getResult(9).getEdgeComparison("flowline");
 
 NetworkHydraulicModelComparison.TransientTimeStepSensitivityResult rateStep =
     result.compareTransientRateStep(
@@ -185,12 +193,33 @@ double acceptedEnergyResidualJ = fineTransient.getEnergyResidualJ();
 a conservative template, an undulating 20 km flowline and a 500 m riser at 2.0 kg/s,
 plus a nearby 1.5 kg/s point. It checks both network mass balances, physical and
 distance-aligned profile bounds, cross-model engineering bounds for all five quantities,
-4/8/10-segment sensitivity, preservation of the original topology/model selection,
+4/6/9-segment sensitivity and explicit three-grid status, preservation of the original topology/model selection,
 clone independence and one accepted transactional transient step. This is evidence-ladder
 level 3/4 (conservation and engineering bounds), not an independent correlation benchmark.
 The test also checks that the conservative-energy handoff preserves every accepted steady
 pressure, temperature, holdup, phase-velocity and section-energy value exactly, then exercises
 the component and total-energy ledgers for one accepted transient interval.
+
+The equally refined 4/6/9 production-flowline receipt deliberately retains the unresolved
+quantities found by the acceptance run:
+
+| Model and quantity | 4/6 normalized difference | 6/9 normalized difference | Status |
+| --- | ---: | ---: | --- |
+| Beggs-Brill pressure | 0.00519958 | 0.00526264 | `NON_MONOTONIC` |
+| Beggs-Brill temperature | 0.000817490 | 0.00116597 | `NON_MONOTONIC` |
+| Beggs-Brill liquid holdup | 0.0473558 | 0.0675760 | `NON_MONOTONIC` |
+| Beggs-Brill gas velocity | 0.00473765 | 0.00637535 | `NON_MONOTONIC` |
+| Beggs-Brill liquid velocity | 0.00106831 | 0.00137218 | `NON_MONOTONIC` |
+| Two-fluid pressure | 0.00630335 | 0.00732692 | `NON_MONOTONIC` |
+| Two-fluid temperature | 0.0104224 | 0.00673976 | `MONOTONIC` |
+| Two-fluid liquid holdup | 0.499260 | 0.477140 | `MONOTONIC` |
+| Two-fluid gas velocity | 0.0174235 | 0.0153676 | `MONOTONIC` |
+| Two-fluid liquid velocity | 0.00181692 | 0.00154802 | `MONOTONIC` |
+
+The typed injection route executes the same ten model/quantity receipt paths. These are
+topology-specific synthetic numerical diagnostics, not a mesh recommendation, a physical
+accuracy band or independent B&B/two-fluid qualification. In particular, the large monotonic
+two-fluid holdup discrepancy is retained rather than accepted as practically mesh independent.
 
 `Result.compareTransientRateStep(...)` extends that handoff without rebuilding the
 field. Every requested positive outer time step starts from an independent copy of the
@@ -1189,8 +1218,11 @@ second transition detector or interpret a heuristic `OPTIMAL` status as operatin
    Its multi-template
    case uses a three-incident algebraic PLEM, with a retained donor-convergence regression and no
    relaxed conservation tolerance. Longer production/injection trajectories now retain topology- and
-   quantity-specific three-grid statuses without claiming unresolved sequences converged. Next broaden closure,
-   fluid and operating-envelope coverage and add independent field/commercial comparisons; only then
+   quantity-specific three-grid statuses without claiming unresolved sequences converged. The same-topology
+   steady B&B/two-fluid comparison now also emits fail-closed three-grid statuses for production and injection
+   routes; its unresolved B&B profiles and two-fluid pressure are retained as blockers. Next broaden closure,
+   fluid and operating-envelope coverage, resolve or bound those non-monotonic sequences, and add independent
+   field/commercial comparisons; only then
    consider asynchronous multirate boundary coupling. Enable dynamics only within the quantitatively
    tested scope.
 4. Add reviewed Java/Python builders, agent/MCP routes (#3153) and DEXPI identity export
