@@ -389,7 +389,7 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     double cp = phase.getCp("J/molK");
     double cv = phase.getCv("J/molK");
     double soundSpeed = phase.getSoundSpeed();
-    double jouleThomson = phase.getJouleThomsonCoefficient() / 1000.0;
+    double jouleThomson = phase.getJouleThomsonCoefficient("K/bar") / 100.0;
     double kappa = raw[14];
     double z = phase.getZ();
     for (double value : new double[] {density, enthalpy, internalEnergy, entropy, gibbsEnergy, cp, cv, soundSpeed,
@@ -417,7 +417,7 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     double[] raw = leachman.propertiesLeachman();
     return new double[] {leachman.getMolarDensity(), phase.getEnthalpy("J/mol"), phase.getInternalEnergy("J/mol"),
         phase.getEntropy("J/molK"), phase.getGibbsEnergy() / phase.getNumberOfMolesInPhase(), phase.getCp("J/molK"),
-        phase.getCv("J/molK"), phase.getSoundSpeed(), phase.getJouleThomsonCoefficient() / 1000.0, raw[14],
+        phase.getCv("J/molK"), phase.getSoundSpeed(), phase.getJouleThomsonCoefficient("K/bar") / 100.0, raw[14],
         phase.getZ()};
   }
 

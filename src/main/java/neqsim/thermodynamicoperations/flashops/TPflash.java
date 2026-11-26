@@ -3,11 +3,13 @@ package neqsim.thermodynamicoperations.flashops;
 import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.phase.PhaseGERG2008Eos;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.EosGeFlashModel;
 import neqsim.thermo.system.HybridEosGeFlashModel;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.util.gerg.NeqSimGERG2008;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.exception.IsNaNException;
 import neqsim.util.exception.TooManyIterationsException;
@@ -729,6 +731,7 @@ public class TPflash extends Flash {
       }
       repairInvalidMultiphaseHydrocarbonEndpoint();
       synchronizeEquilibratedAqueousPhaseAmounts();
+      relabelGergDenseSinglePhase();
       validateTraceWaterAqueousRepair();
       validateCharacterizedFluidPhaseInventories();
     } finally {
@@ -736,6 +739,22 @@ public class TPflash extends Flash {
       if (disableWarmStart) {
         neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarmStart);
       }
+    }
+  }
+
+  /**
+   * Retains the liquid label when a single-phase GERG flash found the dense root through its vapor trial.
+   */
+  private void relabelGergDenseSinglePhase() {
+    if (system.getNumberOfPhases() != 1 || system.isForcePhaseTypes()
+        || !(system.getPhase(0) instanceof PhaseGERG2008Eos)) {
+      return;
+    }
+    PhaseGERG2008Eos phase = (PhaseGERG2008Eos) system.getPhase(0);
+    if (phase.getType() == PhaseType.GAS
+        && new NeqSimGERG2008(phase, phase.getGergModelType()).isSubcriticalDenseGasRoot()) {
+      system.setPhaseType(0, PhaseType.LIQUID);
+      system.init(1, 0);
     }
   }
 

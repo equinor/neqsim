@@ -70,10 +70,8 @@ public class ComponentLeachmanEos extends ComponentEos {
   public void Finit(PhaseInterface phase, double T, double p, double totalNumberOfMoles, double beta,
       int numberOfComponents, int initType) {
     super.Finit(phase, T, p, totalNumberOfMoles, beta, numberOfComponents, initType);
-
     if (initType == 3) {
-      double phi = fugcoef(phase);
-      phase.getComponent(getComponentNumber()).setFugacityCoefficient(phi);
+      fugcoef(phase);
     }
   }
 
@@ -141,7 +139,7 @@ public class ComponentLeachmanEos extends ComponentEos {
     double pressure = phase.getPressure();
     double logFugacityCoefficient = dFdN(phase, phase.getNumberOfComponents(), temperature, pressure)
         - Math.log(phase.getZ());
-    double fugacityCoefficient = Math.exp(logFugacityCoefficient);
-    return fugacityCoefficient;
+    setFugacityCoefficient(Math.exp(logFugacityCoefficient));
+    return getFugacityCoefficient();
   }
 }

@@ -27,6 +27,9 @@ class HomogeneousEquilibriumDenseCo2BenchmarkTest extends neqsim.NeqSimTest {
   private static final double RESTRICTION_SENSITIVITY_BACK_PRESSURE_PA = 600000.0;
   private static final double[] RESTRICTION_SENSITIVITY_BACK_PRESSURES_PA = {600000.0, 700000.0, 800000.0};
   private static final double RESTRICTION_RATE_RELATIVE_TOLERANCE = 2.0e-8;
+  // GERG pressure closure affects the last digits of the restriction rates and derived error statistics.
+  private static final double SUMMARY_RELATIVE_ERROR_TOLERANCE = 1.0e-9;
+  private static final double SUMMARY_UNCERTAINTY_MULTIPLE_TOLERANCE = 1.0e-8;
   private static final double[] EXPECTED_SOLID_MASS_FRACTIONS = {0.41238620556823946, 0.41116003185166017,
       0.40963012688431566, 0.40993911095569924, 0.41358726185580075, 0.4158684359820324};
   private static final double EXPECTED_AMBIENT_SUBLIMATION_TEMPERATURE_K = 194.65411168766354;
@@ -296,11 +299,11 @@ class HomogeneousEquilibriumDenseCo2BenchmarkTest extends neqsim.NeqSimTest {
     double meanAbsoluteRelativeError = absoluteRelativeErrorSum / count;
     double meanSignedRelativeError = signedRelativeErrorSum / count;
     double rootMeanSquaredRelativeError = Math.sqrt(squaredRelativeErrorSum / count);
-    assertEquals(0.1938602080317141, meanAbsoluteRelativeError, 1.0e-12);
-    assertEquals(0.09858475470227625, meanSignedRelativeError, 1.0e-12);
-    assertEquals(0.21191467226918664, rootMeanSquaredRelativeError, 1.0e-12);
-    assertEquals(0.3425940889197125, maximumAbsoluteRelativeError, 1.0e-12);
-    assertEquals(10.269665665474237, maximumUncertaintyMultiple, 1.0e-12);
+    assertEquals(0.1938602080317141, meanAbsoluteRelativeError, SUMMARY_RELATIVE_ERROR_TOLERANCE);
+    assertEquals(0.09858475470227625, meanSignedRelativeError, SUMMARY_RELATIVE_ERROR_TOLERANCE);
+    assertEquals(0.21191467226918664, rootMeanSquaredRelativeError, SUMMARY_RELATIVE_ERROR_TOLERANCE);
+    assertEquals(0.3425940889197125, maximumAbsoluteRelativeError, SUMMARY_RELATIVE_ERROR_TOLERANCE);
+    assertEquals(10.269665665474237, maximumUncertaintyMultiple, SUMMARY_UNCERTAINTY_MULTIPLE_TOLERANCE);
     assertEquals(1, withinReportedUncertainty);
     String summary = "caseCount,meanAbsoluteRelativeError,meanSignedRelativeError,rootMeanSquaredRelativeError,"
         + "maximumAbsoluteRelativeError,maximumUncertaintyMultiple,withinReportedUncertainty,"

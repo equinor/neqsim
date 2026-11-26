@@ -826,7 +826,7 @@ final class ModelSpecFixtures {
     case GIBBS_ENERGY:
       return phase.getGibbsEnergy() / phase.getNumberOfMolesInPhase();
     case JT:
-      return phase.getJouleThomsonCoefficient() / 1000.0;
+      return phase.getJouleThomsonCoefficient("K/bar") / 100.0;
     case KAPPA:
       return values[14];
     default:

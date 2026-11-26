@@ -1,0 +1,5 @@
+temperature_K,pressure_bara,liquid_density_kg_m3,relative_expanded_uncertainty
+105.000,9.7309,460.771,0.00044
+115.000,9.7249,446.792,0.00044
+120.000,9.7135,439.538,0.00044
+135.000,9.6924,416.394,0.00044
