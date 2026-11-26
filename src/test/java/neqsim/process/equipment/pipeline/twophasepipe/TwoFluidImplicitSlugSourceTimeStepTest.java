@@ -47,8 +47,7 @@ class TwoFluidImplicitSlugSourceTimeStepTest {
     equations.setEnableWaterOilSlip(false);
     equations.setConservativeSlugForceIntegrationEnabled(true);
 
-    SlugFilmCoupling.Reconstruction split =
-        SlugFilmCoupling.reconstruct(section, Collections.singletonList(marker));
+    SlugFilmCoupling.Reconstruction split = SlugFilmCoupling.reconstruct(section, Collections.singletonList(marker));
     assertFalse(split.isActive(), "sub-tolerance entry has no admissible body/film contrast yet");
     assertTrue(split.getBodyFraction() > 0.0, "the tracked interval already owns a geometric overlap");
     assertNotNull(equations.conservativeSlugForces(section),
@@ -57,8 +56,8 @@ class TwoFluidImplicitSlugSourceTimeStepTest {
         equations.calcExplicitMomentumSourceTimeStep(new TwoFluidSection[] {section}));
 
     double[] before = section.getStateVector();
-    double[][] advanced =
-        equations.applyConservativeSlugFriction(new double[][] {before}, new TwoFluidSection[] {section}, 0.1);
+    double[][] advanced = equations.applyConservativeSlugFriction(new double[][] {before},
+        new TwoFluidSection[] {section}, 0.1);
     for (int phase = 0; phase < 3; phase++) {
       assertEquals(before[phase], advanced[0][phase], 0.0);
     }

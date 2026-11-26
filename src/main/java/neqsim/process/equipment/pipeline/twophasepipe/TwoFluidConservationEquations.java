@@ -790,11 +790,10 @@ public class TwoFluidConservationEquations implements Serializable {
     if (!split.isActive() && !(split.getBodyFraction() > 0.0)) {
       return null;
     }
-    TwoFluidSection[] states = split.isActive()
-        ? new TwoFluidSection[] {split.getBodyState(), split.getFilmState()}
+    TwoFluidSection[] states = split.isActive() ? new TwoFluidSection[] {split.getBodyState(), split.getFilmState()}
         : new TwoFluidSection[] {section.clone()};
-    double[] weights =
-        split.isActive() ? new double[] {split.getBodyFraction(), 1.0 - split.getBodyFraction()} : new double[] {1.0};
+    double[] weights = split.isActive() ? new double[] {split.getBodyFraction(), 1.0 - split.getBodyFraction()}
+        : new double[] {1.0};
     double[] forces = new double[4];
     for (int part = 0; part < states.length; part++) {
       TwoFluidSection state = states[part];
