@@ -44,6 +44,15 @@ The separate `setConservativeSlugForceIntegrationEnabled(true)` option remains
 experimental and off by default. When it is paired with explicit
 `CONSERVATIVE_LAGRANGIAN` tracking, the unsplit route now keeps ordinary cell friction on
 untracked cells and applies reconstructed body/film friction once to accepted tracked cells.
+A first geometric overlap owns that implicit source even before an admissible body/film contrast
+can be reconstructed; that threshold cell uses its unchanged mean-cell friction closure. This keeps
+the friction owner independent of Newton's trial state while a marker enters a new cell.
+The nonlinear momentum residual retains probes at exactly zero phase mass. The physical face
+and source states keep that phase absent, preserving the tracked reconstruction of the other
+phases. Accepted endpoints require zero momentum for every absent phase. If the tracked cell-only solve exhausts line search at a closure
+transition, it can restart Newton once from its first admissible trial. The restart uses
+the existing iteration budget, and the endpoint must still pass the original nonlinear
+and independent conservation checks.
 Rejected attempts cannot advance marker state or publish a source impulse. Keep
 `setUnsplitPressureInterpolationEnabled(false)` when using reconstructed slug faces. The 0.1 s
 Tengesdal startup probe uses this configuration at 16 cells with 0.1 and 0.05 s steps and at

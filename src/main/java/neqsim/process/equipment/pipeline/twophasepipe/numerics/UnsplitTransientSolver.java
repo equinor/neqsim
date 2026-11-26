@@ -515,12 +515,28 @@ public final class UnsplitTransientSolver implements Serializable {
   public Result solve(double[][] previousState, double[] previousPressure, double[] cellAreas, double timeStep,
       double startTime, double outletPressure, boolean outletPressureFixed, Model model) {
     return solveWithTolerance(previousState, previousPressure, cellAreas, timeStep, startTime, outletPressure,
-        outletPressureFixed, model, relativeTolerance);
+        outletPressureFixed, model, relativeTolerance, false);
   }
 
-  /** Solve one step with a stricter caller-owned tolerance without mutating this solver's configuration. */
+  /**
+   * Solve one step with caller-owned convergence controls without mutating this solver's configuration.
+   *
+   * @param previousState accepted seven-column state
+   * @param previousPressure accepted cell pressure in Pa
+   * @param cellAreas pipe cross-sectional area per cell in m2
+   * @param timeStep positive step duration in s
+   * @param startTime accepted start time in s
+   * @param outletPressure fixed outlet-face pressure in Pa, or NaN for a free outlet
+   * @param outletPressureFixed true when the outlet face pressure is prescribed
+   * @param model transactional spatial model
+   * @param solveTolerance positive scaled tolerance bounded by the configured tolerance
+   * @param allowNewtonRestart whether the cell-only solve may restart once from its first admissible trial after a
+   * failed line search
+   * @return nonlinear result subject to the same residual and active-set gates
+   */
   Result solveWithTolerance(double[][] previousState, double[] previousPressure, double[] cellAreas, double timeStep,
-      double startTime, double outletPressure, boolean outletPressureFixed, Model model, double solveTolerance) {
+      double startTime, double outletPressure, boolean outletPressureFixed, Model model, double solveTolerance,
+      boolean allowNewtonRestart) {
     validateInputs(previousState, previousPressure, cellAreas, timeStep, startTime, outletPressure, outletPressureFixed,
         model);
     if (!(solveTolerance > 0.0) || !Double.isFinite(solveTolerance) || solveTolerance > relativeTolerance) {
@@ -537,6 +553,7 @@ public final class UnsplitTransientSolver implements Serializable {
     CountingModel countedModel = new CountingModel(model);
     int iterations = 0;
     double minimumAcceptedStep = 1.0;
+    boolean restartAvailable = allowNewtonRestart;
     ResidualEvaluation current = evaluateResidual(previousState, previousPressure, state, pressure, cellAreas, timeStep,
         startTime, outletPressure, outletPressureFixed, countedModel, timeWeight);
     ActiveSetEvaluation refreshed = refreshActiveSet(previousState, previousPressure, state, pressure, cellAreas,
@@ -580,6 +597,9 @@ public final class UnsplitTransientSolver implements Serializable {
       ResidualEvaluation trial = current;
       double[][] trialState = state;
       double[] trialPressure = pressure;
+      double[][] restartState = null;
+      double[] restartPressure = null;
+      ResidualEvaluation restart = null;
       for (int lineSearch = 0; lineSearch < maximumLineSearchSteps && stepLength > 0.0; lineSearch++) {
         trialState = copyMatrixArray(state);
         trialPressure = pressure.clone();
@@ -587,6 +607,11 @@ public final class UnsplitTransientSolver implements Serializable {
         trial = evaluateResidual(previousState, previousPressure, trialState, trialPressure, cellAreas, timeStep,
             startTime, outletPressure, outletPressureFixed, countedModel, timeWeight);
         double trialNorm = maximumAbsolute(trial.residual);
+        if (restartAvailable && iterations < maximumIterations && lineSearch == 0 && Double.isFinite(trialNorm)) {
+          restart = trial;
+          restartState = trialState;
+          restartPressure = trialPressure;
+        }
         if (trialNorm <= residualNorm * (1.0 - 1.0e-4 * stepLength) || trialNorm < solveTolerance) {
           accepted = true;
           break;
@@ -594,14 +619,23 @@ public final class UnsplitTransientSolver implements Serializable {
         stepLength *= 0.5;
       }
       if (!accepted) {
-        terminationReason = TerminationReason.LINE_SEARCH_FAILED;
-        break;
+        if (restart == null) {
+          terminationReason = TerminationReason.LINE_SEARCH_FAILED;
+          break;
+        }
+        // A closure switch can block descent from the current side. Use the first admissible trial only as a
+        // new linearization point and require convergence of the original equations before preparing an endpoint.
+        restartAvailable = false;
+        trialState = restartState;
+        trialPressure = restartPressure;
+        trial = restart;
+      } else {
+        minimumAcceptedStep = Math.min(minimumAcceptedStep, stepLength);
       }
 
       state = trialState;
       pressure = trialPressure;
       current = trial;
-      minimumAcceptedStep = Math.min(minimumAcceptedStep, stepLength);
       refreshed = refreshActiveSet(previousState, previousPressure, state, pressure, cellAreas, timeStep, startTime,
           outletPressure, outletPressureFixed, countedModel, current, timeWeight);
       current = refreshed.evaluation;

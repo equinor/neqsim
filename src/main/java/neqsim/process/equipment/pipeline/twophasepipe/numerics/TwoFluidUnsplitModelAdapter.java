@@ -582,13 +582,32 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     }
   }
 
+  /**
+   * Build physical trial sections for the spatial closures without changing the nonlinear unknowns.
+   *
+   * @param state selected-time conservative variables, possibly containing a momentum probe at zero phase mass
+   * @param pressure selected-time pressures in Pa
+   * @param time coefficient evaluation time in seconds
+   * @return independent sections for face and source evaluation
+   */
   private TwoFluidSection[] createTrialSections(double[][] state, double[] pressure, double time) {
     TwoFluidSection[] trial = cloneSections(acceptedTemplates);
+    double[][] transportState = state.clone();
     for (int cell = 0; cell < trial.length; cell++) {
       trial[cell].setPressure(pressure[cell]);
       installDensities(trial[cell], densities(cell, state[cell], pressure[cell], time));
+      for (int phase = 0; phase < PHASE_COUNT; phase++) {
+        int momentum = phase + PHASE_COUNT;
+        if (state[cell][phase] == 0.0 && state[cell][momentum] != 0.0) {
+          // The momentum row still sees the original unknown. An absent phase cannot carry it into face or source laws.
+          if (transportState[cell] == state[cell]) {
+            transportState[cell] = state[cell].clone();
+          }
+          transportState[cell][momentum] = 0.0;
+        }
+      }
     }
-    equations.applyState(trial, state);
+    equations.applyState(trial, transportState);
     return trial;
   }
 

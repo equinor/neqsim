@@ -58,10 +58,17 @@ Leaving shared slug forces disabled does not repair the earlier default-mode
 The separate `setConservativeSlugForceIntegrationEnabled(true)` option remains
 experimental and off by default. With explicit conservative Lagrangian tracking, the unsplit
 transaction now leaves mean-cell friction on untracked cells and applies reconstructed body/film
-friction once after a tracked step passes nonlinear and conservation checks. Rejected attempts
-publish neither marker motion nor source impulse. Keep `setUnsplitPressureInterpolationEnabled(false)`
-when using reconstructed slug faces. The 0.1 s Tengesdal startup probe uses this configuration at
-16 cells with 0.1 and 0.05 s steps and at 24 cells with a 0.05 s step. An opt-in tracking-enabled five-second gate now repeats the 16/0.1, 16/0.05 and
+friction once after a tracked step passes nonlinear and conservation checks. A first geometric
+overlap owns that implicit source before body/film contrast is admissible and uses the unchanged
+mean-cell friction closure, so Newton trial state cannot switch the owner at cell entry. Momentum
+probes at exactly zero phase mass contribute to the nonlinear momentum residual while the face
+and source states keep that phase absent. If line search stalls at a closure transition,
+the tracked cell-only solver can restart Newton once within its existing iteration budget.
+The resulting endpoint must pass the original nonlinear and conservation checks. Rejected
+attempts publish neither marker motion nor source impulse. Keep
+`setUnsplitPressureInterpolationEnabled(false)` when using reconstructed slug faces. The 0.1 s
+Tengesdal startup probe uses this configuration at 16 cells with 0.1 and 0.05 s steps and at
+24 cells with a 0.05 s step. The opt-in five-second gate repeats the 16/0.1, 16/0.05 and
 24/0.05 mesh/time-step matrix with the accepted marker and subcell-force owner. It must
 complete conservatively before any tracking-enabled 180/600 s publication or experimental-cycle
 claim.

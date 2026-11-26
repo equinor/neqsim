@@ -2,6 +2,7 @@ package neqsim.process.equipment.pipeline.twophasepipe;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -33,6 +34,36 @@ class TwoFluidImplicitSlugSourceTimeStepTest {
         equations.calcExplicitMomentumSourceTimeStep(new TwoFluidSection[] {section}),
         "wall and gas-liquid friction are advanced by the implicit subcell split");
     assertArrayEquals(before, section.getStateVector(), 0.0);
+  }
+
+  /** A first representable marker overlap must select one stable implicit friction owner. */
+  @Test
+  void firstRepresentableTrackedOverlapKeepsOneImplicitFrictionOwner() {
+    TwoFluidSection section = section(0.0);
+    SlugBubbleUnit marker = marker();
+    marker.tailPosition = Math.nextDown(10.0);
+    marker.frontPosition = 11.0;
+    TwoFluidConservationEquations equations = equations(marker);
+    equations.setEnableWaterOilSlip(false);
+    equations.setConservativeSlugForceIntegrationEnabled(true);
+
+    SlugFilmCoupling.Reconstruction split = SlugFilmCoupling.reconstruct(section, Collections.singletonList(marker));
+    assertFalse(split.isActive(), "sub-tolerance entry has no admissible body/film contrast yet");
+    assertTrue(split.getBodyFraction() > 0.0, "the tracked interval already owns a geometric overlap");
+    assertNotNull(equations.conservativeSlugForces(section),
+        "friction ownership must not depend on whether state reconstruction is active");
+    assertEquals(Double.POSITIVE_INFINITY,
+        equations.calcExplicitMomentumSourceTimeStep(new TwoFluidSection[] {section}));
+
+    double[] before = section.getStateVector();
+    double[][] advanced = equations.applyConservativeSlugFriction(new double[][] {before},
+        new TwoFluidSection[] {section}, 0.1);
+    for (int phase = 0; phase < 3; phase++) {
+      assertEquals(before[phase], advanced[0][phase], 0.0);
+    }
+    assertEquals(before[6], advanced[0][6], 0.0);
+    assertTrue(advanced[0][3] != before[3] || advanced[0][4] != before[4],
+        "the accepted implicit owner must apply the mean-cell fallback resistance");
   }
 
   /** Oil-water slip remains explicit even where tracked-slug wall and gas-liquid forces are implicit. */
