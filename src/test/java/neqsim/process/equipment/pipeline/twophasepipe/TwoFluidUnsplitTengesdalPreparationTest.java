@@ -72,7 +72,7 @@ class TwoFluidUnsplitTengesdalPreparationTest {
     verifyTrackedSubcellForces(cells, maximumStep, 5.0);
   }
 
-  /** Require the tracked-force 180 s interval to complete conservatively across the gas-flow reversal. */
+  /** Require the tracked-force 180 s interval to remain conservative as a marker enters a new cell. */
   @Tag("slow")
   @EnabledIfSystemProperty(named = "neqsim.unsplit.tengesdal.tracked-force-long-qualification", matches = "true")
   @Test
@@ -98,7 +98,6 @@ class TwoFluidUnsplitTengesdalPreparationTest {
     solver.setRelativeTolerance(1.0e-9);
     solver.setTimeIntegrationMethod(UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER);
     pipe.setUnsplitTransientSolver(solver, 0.1);
-    pipe.setUnsplitMaximumNonlinearHalvings(12);
 
     pipe.runTransient(180.0,
         UUID.nameUUIDFromBytes("tracked-force-tengesdal:16:0.1:180.0".getBytes(StandardCharsets.UTF_8)));

@@ -36,8 +36,6 @@ class TwoFluidPipeUnsplitRunTest {
     TwoFluidPipe pipe = createPipe(false, 4);
     assertNull(pipe.getUnsplitTransientSolver());
     assertEquals(0.0, pipe.getUnsplitMaximumTimeStep(), 0.0);
-    assertEquals(8, pipe.getUnsplitMaximumNonlinearHalvings());
-    pipe.setUnsplitMaximumNonlinearHalvings(12);
     UnsplitTransientSolver selected = solver();
     pipe.setUnsplitTransientSolver(selected, 0.1);
     selected.setRelativeTolerance(0.01);
@@ -46,11 +44,8 @@ class TwoFluidPipeUnsplitRunTest {
     assertEquals(1.0e-9, pipe.getUnsplitTransientSolver().getRelativeTolerance(), 0.0);
     TwoFluidPipe restored = SerializationUtils.clone(pipe);
     assertEquals(0.1, restored.getUnsplitMaximumTimeStep(), 0.0);
-    assertEquals(12, restored.getUnsplitMaximumNonlinearHalvings());
     assertEquals(UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER,
         restored.getUnsplitTransientSolver().getTimeIntegrationMethod());
-    assertThrows(IllegalArgumentException.class, () -> pipe.setUnsplitMaximumNonlinearHalvings(-1));
-    assertThrows(IllegalArgumentException.class, () -> pipe.setUnsplitMaximumNonlinearHalvings(31));
     assertThrows(IllegalArgumentException.class, () -> pipe.setUnsplitTransientSolver(solver(), Double.NaN));
     assertEquals(0.1, pipe.getUnsplitMaximumTimeStep(), 0.0);
     pipe.setUnsplitTransientSolver(null, 0.0);

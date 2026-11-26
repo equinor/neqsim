@@ -787,19 +787,26 @@ public class TwoFluidConservationEquations implements Serializable {
       return null;
     }
     SlugFilmCoupling.Reconstruction split = SlugFilmCoupling.reconstruct(section, conservativeSlugs);
-    if (!split.isActive()) {
+    if (!split.isActive() && !(split.getBodyFraction() > 0.0)) {
       return null;
     }
-    TwoFluidSection[] states = {split.getBodyState(), split.getFilmState()};
-    double[] weights = {split.getBodyFraction(), 1.0 - split.getBodyFraction()};
+    TwoFluidSection[] states = split.isActive()
+        ? new TwoFluidSection[] {split.getBodyState(), split.getFilmState()}
+        : new TwoFluidSection[] {section.clone()};
+    double[] weights =
+        split.isActive() ? new double[] {split.getBodyFraction(), 1.0 - split.getBodyFraction()} : new double[] {1.0};
     double[] forces = new double[4];
-    for (int part = 0; part < 2; part++) {
+    for (int part = 0; part < states.length; part++) {
       TwoFluidSection state = states[part];
-      // Reconstructed geometry owns the subcell closure. Do not reclassify it using the cell-average flow map.
-      state.setRegimeWeights(null);
-      state.setFlowRegime(part == 0 ? PipeSection.FlowRegime.SLUG : PipeSection.FlowRegime.ANNULAR);
-      WallFriction.WallFrictionResult wall = calculateWallFriction(state, null);
-      InterfacialFriction.InterfacialFrictionResult drag = calculateInterfacialFriction(state, null);
+      Map<PipeSection.FlowRegime, Double> regimeWeights = state.getRegimeWeights();
+      if (split.isActive()) {
+        // Reconstructed geometry owns the subcell closure. Do not reclassify it using the cell-average flow map.
+        state.setRegimeWeights(null);
+        state.setFlowRegime(part == 0 ? PipeSection.FlowRegime.SLUG : PipeSection.FlowRegime.ANNULAR);
+        regimeWeights = null;
+      }
+      WallFriction.WallFrictionResult wall = calculateWallFriction(state, regimeWeights);
+      InterfacialFriction.InterfacialFrictionResult drag = calculateInterfacialFriction(state, regimeWeights);
       forces[0] -= weights[part] * (state.getGasHoldup() > 0.0 ? wall.gasWallForcePerLength : 0.0);
       forces[1] -= weights[part] * (state.getLiquidHoldup() > 0.0 ? wall.liquidWallForcePerLength : 0.0);
       if (state.getGasHoldup() > 0.0 && state.getLiquidHoldup() > 0.0) {
@@ -824,8 +831,8 @@ public class TwoFluidConservationEquations implements Serializable {
     if (!conservativeSlugForceIntegrationEnabled || conservativeSlugs == null || conservativeSlugs.isEmpty()) {
       return state;
     }
-    if (!Double.isFinite(dt) || dt < 0.0) {
-      throw new IllegalArgumentException("Source interval must be finite and nonnegative");
+    if (state == null || sections == null || state.length != sections.length || !Double.isFinite(dt) || dt < 0.0) {
+      throw new IllegalArgumentException("Tracked friction requires matching cells and a finite nonnegative interval");
     }
     if (dt == 0.0) {
       return state;
@@ -838,6 +845,12 @@ public class TwoFluidConservationEquations implements Serializable {
       mean.extractPrimitiveVariables();
       SlugFilmCoupling.Reconstruction split = SlugFilmCoupling.reconstruct(mean, conservativeSlugs);
       if (!split.isActive()) {
+        if (split.getBodyFraction() > 0.0) {
+          integrateSubcellFriction(mean, dt, mean.getRegimeWeights());
+          for (int phase = 0; phase < 3; phase++) {
+            result[cell][phase + 3] = mean.getStateVector()[phase + 3];
+          }
+        }
         continue;
       }
       TwoFluidSection[] parts = {split.getBodyState(), split.getFilmState()};
@@ -845,7 +858,7 @@ public class TwoFluidConservationEquations implements Serializable {
       for (int part = 0; part < 2; part++) {
         parts[part].setRegimeWeights(null);
         parts[part].setFlowRegime(part == 0 ? PipeSection.FlowRegime.SLUG : PipeSection.FlowRegime.ANNULAR);
-        integrateSubcellFriction(parts[part], dt);
+        integrateSubcellFriction(parts[part], dt, null);
       }
       for (int phase = 0; phase < 3; phase++) {
         result[cell][phase + 3] = weight * parts[0].getStateVector()[phase + 3]
@@ -856,7 +869,8 @@ public class TwoFluidConservationEquations implements Serializable {
   }
 
   /** Solve passive wall and interface friction in a frozen subcell without an explicit stiffness limit. */
-  private void integrateSubcellFriction(TwoFluidSection state, double dt) {
+  private void integrateSubcellFriction(TwoFluidSection state, double dt,
+      Map<PipeSection.FlowRegime, Double> regimeWeights) {
     double gasMass = state.getGasMassPerLength();
     double liquidMass = state.getOilMassPerLength() + state.getWaterMassPerLength();
     double gasVelocity = state.getGasVelocity();
@@ -876,7 +890,7 @@ public class TwoFluidConservationEquations implements Serializable {
         } else {
           state.setLiquidVelocity(trial);
         }
-        WallFriction.WallFrictionResult wall = calculateWallFriction(state, null);
+        WallFriction.WallFrictionResult wall = calculateWallFriction(state, regimeWeights);
         double resistance = phase == 0 ? wall.gasWallForcePerLength : wall.liquidWallForcePerLength;
         double residual = mass * (trial - old) + dt * resistance;
         if (!Double.isFinite(residual)) {
@@ -906,7 +920,7 @@ public class TwoFluidConservationEquations implements Serializable {
         double trial = 0.5 * (low + high);
         state.setGasVelocity(meanVelocity + liquidMass / (gasMass + liquidMass) * trial);
         state.setLiquidVelocity(meanVelocity - gasMass / (gasMass + liquidMass) * trial);
-        InterfacialFriction.InterfacialFrictionResult drag = calculateInterfacialFriction(state, null);
+        InterfacialFriction.InterfacialFrictionResult drag = calculateInterfacialFriction(state, regimeWeights);
         double force = drag.interfacialShear * drag.interfacialAreaPerLength;
         double residual = trial - oldSlip + dt * (1.0 / gasMass + 1.0 / liquidMass) * force;
         if (!Double.isFinite(residual)) {

@@ -372,12 +372,6 @@ public class TwoFluidPipe extends Pipeline {
   /** Maximum attempted step in the explicitly selected unsplit route (s). */
   private double unsplitMaximumTimeStep;
 
-  /** Default nonlinear subdivision depth for each attempted unsplit step. */
-  private static final int DEFAULT_UNSPLIT_MAXIMUM_NONLINEAR_HALVINGS = 8;
-
-  /** Nonlinear subdivision depth for each attempted unsplit step. */
-  private int unsplitMaximumNonlinearHalvings = DEFAULT_UNSPLIT_MAXIMUM_NONLINEAR_HALVINGS;
-
   /** Persistent pressure-dependent EOS branches for consecutive accepted unsplit intervals. */
   private AnchoredIsothermalDensityModel unsplitDensityModel;
 
@@ -5955,8 +5949,8 @@ public class TwoFluidPipe extends Pipeline {
       }
       trialEquations.setInletPhaseFlowBoundaryState(inletFace);
     }
-    TwoFluidUnsplitIntegrator integrator = new TwoFluidUnsplitIntegrator(trialEquations, densityModel, solver,
-        unsplitMaximumNonlinearHalvings, getMaximumTransientSubsteps(), trialSlugTracker);
+    TwoFluidUnsplitIntegrator integrator = new TwoFluidUnsplitIntegrator(trialEquations, densityModel, solver, 8,
+        getMaximumTransientSubsteps(), trialSlugTracker);
     integrator.setPressureInterpolationEnabled(unsplitPressureInterpolationEnabled);
     PreparedInterval interval = integrator.prepareInterval(snapshot, dx, dt, simulationTime, outletPressure,
         outletBCType == BoundaryCondition.CONSTANT_PRESSURE, 1.0e-8, maximumTimeStep);
@@ -6403,29 +6397,6 @@ public class TwoFluidPipe extends Pipeline {
   /** @return nominal unsplit time-step bound in s, or zero when the legacy route is selected */
   public synchronized double getUnsplitMaximumTimeStep() {
     return unsplitMaximumTimeStep;
-  }
-
-  /**
-   * Set the bounded nonlinear subdivision depth for each attempted unsplit step.
-   *
-   * <p>
-   * The default remains eight halvings. Raising the value permits a smaller local step only after a nonlinear
-   * rejection; it does not change the nominal time-step bound, solver tolerance or independent conservation checks.
-   * </p>
-   *
-   * @param maximumHalvings subdivision depth from zero through 30
-   * @throws IllegalArgumentException if the depth is outside the supported range
-   */
-  public synchronized void setUnsplitMaximumNonlinearHalvings(int maximumHalvings) {
-    if (maximumHalvings < 0 || maximumHalvings > 30) {
-      throw new IllegalArgumentException("Unsplit nonlinear halvings must be between zero and 30");
-    }
-    unsplitMaximumNonlinearHalvings = maximumHalvings;
-  }
-
-  /** @return configured nonlinear subdivision depth; default eight */
-  public synchronized int getUnsplitMaximumNonlinearHalvings() {
-    return unsplitMaximumNonlinearHalvings;
   }
 
   /**
@@ -7143,7 +7114,6 @@ public class TwoFluidPipe extends Pipeline {
     lastConservativeEnergyReport = candidate.lastConservativeEnergyReport;
     unsplitTransientSolver = candidate.unsplitTransientSolver;
     unsplitMaximumTimeStep = candidate.unsplitMaximumTimeStep;
-    unsplitMaximumNonlinearHalvings = candidate.unsplitMaximumNonlinearHalvings;
     unsplitDensityModel = candidate.unsplitDensityModel;
     unsplitReferenceSections = candidate.unsplitReferenceSections;
     sharedSlugForceBalanceEnabled = candidate.sharedSlugForceBalanceEnabled;
