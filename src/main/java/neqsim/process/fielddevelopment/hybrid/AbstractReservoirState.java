@@ -55,13 +55,19 @@ public abstract class AbstractReservoirState implements ReservoirStateModel {
   }
 
   /**
-   * Sets one cumulative volume, for example to start a model part-way through field life.
+   * Sets an absolute cumulative quantity, for example to start a model part-way through field life. Setting produced
+   * oil or water recomputes produced liquid from both phase totals. Setting liquid directly supports a measured total
+   * with an unknown phase split and leaves the phase totals unchanged.
    *
    * @param quantity cumulative quantity
-   * @param valueSm3 cumulative volume in Sm3
+   * @param valueSm3 cumulative volume in Sm3, or days for elapsed time
    */
   public void setCumulative(CumulativeQuantity quantity, double valueSm3) {
     cumulative[quantity.ordinal()] = valueSm3;
+    if (quantity == CumulativeQuantity.OIL_PRODUCED || quantity == CumulativeQuantity.WATER_PRODUCED) {
+      cumulative[CumulativeQuantity.LIQUID_PRODUCED.ordinal()] = getCumulative(CumulativeQuantity.OIL_PRODUCED)
+          + getCumulative(CumulativeQuantity.WATER_PRODUCED);
+    }
   }
 
   /** {@inheritDoc} */
