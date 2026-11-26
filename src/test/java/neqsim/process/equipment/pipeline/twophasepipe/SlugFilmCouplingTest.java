@@ -33,6 +33,21 @@ class SlugFilmCouplingTest {
   }
 
   @Test
+  void testFrozenInactiveChoiceKeepsMeanFacesWhenTrialStateWouldReconstruct() {
+    TwoFluidSection section = cell(0.2, 0.3);
+    SlugFilmCoupling.Reconstruction active = SlugFilmCoupling.reconstruct(section,
+        Collections.singletonList(slug(0.0, 1.0)));
+    SlugFilmCoupling.Reconstruction frozenInactive = SlugFilmCoupling.reconstruct(section,
+        Collections.singletonList(slug(0.0, 1.0)), false);
+    assertTrue(active.isActive());
+    assertFalse(frozenInactive.isActive());
+    assertEquals(active.getBodyFraction(), frozenInactive.getBodyFraction(), 0.0);
+    assertArrayEquals(section.getStateVector(), frozenInactive.getLeftFaceState().getStateVector(), 0.0);
+    assertArrayEquals(section.getStateVector(), frozenInactive.getRightFaceState().getStateVector(), 0.0);
+    assertPartition(section.getStateVector(), frozenInactive);
+  }
+
+  @Test
   void testOverlappingMarkersUseUnionOccupancy() {
     TwoFluidSection section = cell(0.3, 0.5);
     SlugFilmCoupling.Reconstruction result = SlugFilmCoupling.reconstruct(section,

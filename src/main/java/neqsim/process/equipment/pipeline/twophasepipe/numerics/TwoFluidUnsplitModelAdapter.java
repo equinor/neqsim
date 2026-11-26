@@ -83,6 +83,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
 
   private final TwoFluidConservationEquations equations;
   private final TwoFluidSection[] acceptedTemplates;
+  private final boolean[] conservativeSlugReconstructionActivity;
   private final double spatialStep;
   private final PhaseDensityModel densityModel;
   private final ActiveSetController activeSetController;
@@ -198,6 +199,8 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     }
     this.equations = equations;
     this.acceptedTemplates = cloneSections(acceptedTemplates);
+    this.conservativeSlugReconstructionActivity =
+        equations.classifyConservativeSlugReconstructionActivity(this.acceptedTemplates);
     double[][] acceptedState = new double[this.acceptedTemplates.length][];
     double[] acceptedPressure = new double[this.acceptedTemplates.length];
     for (int cell = 0; cell < this.acceptedTemplates.length; cell++) {
@@ -262,15 +265,18 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
       double savedOutletPressure = equations.getOutletBoundaryPressure();
       double savedInterpolationTimeScale = equations.getPressureInterpolationTimeScale();
       boolean savedConservativeFriction = equations.isConservativeFrictionEnabled();
+      boolean[] savedReconstructionActivity = equations.getFrozenConservativeSlugReconstructionActivity();
       try {
         equations.setOutletBoundaryPressure(outletPressureFixed ? outletPressure : Double.NaN);
         equations.setPressureInterpolationTimeScale(pressureInterpolationTimeScale);
         equations.setConservativeFrictionEnabled(conservativeFrictionSplitEnabled);
+        equations.setFrozenConservativeSlugReconstructionActivity(conservativeSlugReconstructionActivity);
         transport = equations.evaluateTransactional(trialSections, spatialStep);
       } finally {
         equations.setOutletBoundaryPressure(savedOutletPressure);
         equations.setPressureInterpolationTimeScale(savedInterpolationTimeScale);
         equations.setConservativeFrictionEnabled(savedConservativeFriction);
+        equations.setFrozenConservativeSlugReconstructionActivity(savedReconstructionActivity);
       }
     }
     double[] cellLengthsM = new double[trialSections.length];
@@ -357,15 +363,18 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
       double savedOutletPressure = equations.getOutletBoundaryPressure();
       double savedInterpolationTimeScale = equations.getPressureInterpolationTimeScale();
       boolean savedConservativeFriction = equations.isConservativeFrictionEnabled();
+      boolean[] savedReconstructionActivity = equations.getFrozenConservativeSlugReconstructionActivity();
       try {
         equations.setOutletBoundaryPressure(outletPressureFixed ? outletPressure : Double.NaN);
         equations.setPressureInterpolationTimeScale(pressureInterpolationTimeScale);
         equations.setConservativeFrictionEnabled(conservativeFrictionSplitEnabled);
+        equations.setFrozenConservativeSlugReconstructionActivity(conservativeSlugReconstructionActivity);
         evaluation = equations.evaluateTransactional(midpoint, spatialStep);
       } finally {
         equations.setOutletBoundaryPressure(savedOutletPressure);
         equations.setPressureInterpolationTimeScale(savedInterpolationTimeScale);
         equations.setConservativeFrictionEnabled(savedConservativeFriction);
+        equations.setFrozenConservativeSlugReconstructionActivity(savedReconstructionActivity);
       }
     }
     double[][] rates = evaluation.getRates();

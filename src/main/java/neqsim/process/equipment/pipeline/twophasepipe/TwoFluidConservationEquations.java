@@ -155,6 +155,9 @@ public class TwoFluidConservationEquations implements Serializable {
   /** Accepted tracked geometry; reconstruction never owns a second phase inventory. */
   private List<LagrangianSlugTracker.SlugBubbleUnit> conservativeSlugs = Collections.emptyList();
 
+  /** Accepted active reconstruction choices frozen across one nonlinear transport solve. */
+  private boolean[] frozenConservativeSlugReconstructionActivity;
+
   /** Liquid pressure terms actually used at each numerical interface. */
   private double[][] interfacePhaseHoldup = new double[0][3];
   private double[][] interfacePhasePressure = new double[0][3];
@@ -463,6 +466,44 @@ public class TwoFluidConservationEquations implements Serializable {
    */
   public void setConservativeSlugs(List<LagrangianSlugTracker.SlugBubbleUnit> slugs) {
     conservativeSlugs = slugs == null ? Collections.emptyList() : new java.util.ArrayList<>(slugs);
+  }
+
+  /**
+   * Classify accepted cells whose marker overlap admits conservative body/film contrast.
+   *
+   * @param sections accepted finite-volume cells
+   * @return one activity flag per cell, or null when no marker is configured
+   */
+  public boolean[] classifyConservativeSlugReconstructionActivity(TwoFluidSection[] sections) {
+    if (sections == null || sections.length == 0) {
+      throw new IllegalArgumentException("Reconstruction activity requires at least one accepted cell");
+    }
+    if (conservativeSlugs == null || conservativeSlugs.isEmpty()) {
+      return null;
+    }
+    boolean[] activity = new boolean[sections.length];
+    for (int cell = 0; cell < sections.length; cell++) {
+      if (sections[cell] == null) {
+        throw new IllegalArgumentException("Reconstruction activity requires non-null accepted cells");
+      }
+      activity[cell] = SlugFilmCoupling.reconstruct(sections[cell], conservativeSlugs).isActive();
+    }
+    return activity;
+  }
+
+  /**
+   * Freeze accepted body/film contrast choices across residual and Jacobian probes.
+   *
+   * @param activity one flag per cell, or null to classify every evaluation independently
+   */
+  public void setFrozenConservativeSlugReconstructionActivity(boolean[] activity) {
+    frozenConservativeSlugReconstructionActivity = activity == null ? null : activity.clone();
+  }
+
+  /** @return defensive accepted reconstruction activity, or null when not frozen */
+  public boolean[] getFrozenConservativeSlugReconstructionActivity() {
+    return frozenConservativeSlugReconstructionActivity == null ? null
+        : frozenConservativeSlugReconstructionActivity.clone();
   }
 
   // Settings
@@ -2933,9 +2974,15 @@ public class TwoFluidConservationEquations implements Serializable {
     interfacePhasePressure = new double[nInterfaces][3];
     lastDirectionalPhaseFaceFluxes = new DirectionalPhaseFaceFlux[nInterfaces][3];
     SlugFilmCoupling.Reconstruction[] reconstructions = new SlugFilmCoupling.Reconstruction[nCells];
+    if (frozenConservativeSlugReconstructionActivity != null
+        && frozenConservativeSlugReconstructionActivity.length != nCells) {
+      throw new IllegalStateException("Frozen slug reconstruction activity must cover every finite-volume cell");
+    }
     if (!conservativeSlugs.isEmpty()) {
       for (int cell = 0; cell < nCells; cell++) {
-        reconstructions[cell] = SlugFilmCoupling.reconstruct(sections[cell], conservativeSlugs);
+        boolean contrastEnabled = frozenConservativeSlugReconstructionActivity == null
+            || frozenConservativeSlugReconstructionActivity[cell];
+        reconstructions[cell] = SlugFilmCoupling.reconstruct(sections[cell], conservativeSlugs, contrastEnabled);
       }
     }
     reconstructedOutlet = nCells > 0 && reconstructions[nCells - 1] != null

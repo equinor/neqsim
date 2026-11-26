@@ -60,7 +60,10 @@ experimental and off by default. With explicit conservative Lagrangian tracking,
 transaction now leaves mean-cell friction on untracked cells and applies reconstructed body/film
 friction once after a tracked step passes nonlinear and conservation checks. A first geometric
 overlap owns that implicit source before body/film contrast is admissible and uses the unchanged
-mean-cell friction closure, so Newton trial state cannot switch the owner at cell entry. Rejected
+mean-cell friction closure, so Newton trial state cannot switch the owner at cell entry. The
+accepted endpoint now also freezes each cell's body/film transport-contrast choice for all residual,
+Jacobian and line-search probes in the following substep; an inadmissible trial falls continuously
+back to unchanged mean faces instead of activating a different branch. Rejected
 attempts publish neither marker motion nor source impulse. Keep `setUnsplitPressureInterpolationEnabled(false)`
 when using reconstructed slug faces. The 0.1 s Tengesdal startup probe uses this configuration at
 16 cells with 0.1 and 0.05 s steps and at 24 cells with a 0.05 s step. An opt-in tracking-enabled five-second gate now repeats the 16/0.1, 16/0.05 and
