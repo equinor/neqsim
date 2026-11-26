@@ -51,6 +51,7 @@ jobs:
           -Dneqsim.unsplit.tengesdal.tracked-force-long-qualification=true
           test
       - name: Qualify tracked-force 600 second mesh and time-step matrix
+        if: always()
         run: >-
           ./mvnw -B -ntp
           -Dtest=TwoFluidUnsplitTengesdalPreparationTest#trackedSubcellForceSustainedIntervalMustCompleteConservatively
@@ -59,6 +60,7 @@ jobs:
           -Dneqsim.unsplit.tengesdal.tracked-force-sustained-qualification=true
           test
       - name: Exercise the installed restart, instrument holdouts and blind decisions
+        if: always()
         run: |
           export NEQSIM_CLASSPATH="$PWD/target/classes:$(cat target/restart-classpath.txt)"
           uv run --project devtools --locked python -m unittest discover -s examples/production-decision -v
