@@ -61,10 +61,10 @@ transaction now leaves mean-cell friction on untracked cells and applies reconst
 friction once after a tracked step passes nonlinear and conservation checks. A first geometric
 overlap owns that implicit source before body/film contrast is admissible and uses the unchanged
 mean-cell friction closure, so Newton trial state cannot switch the owner at cell entry. The
-accepted endpoint seeds each cell's body/film transport-contrast choice, active-set refreshes may
-change it between accepted Newton iterates, and one choice is frozen for every residual, Jacobian
-and line-search probe in a linearization. An inadmissible probe falls continuously back to unchanged
-mean faces instead of activating a different branch. Rejected
+transport adapter classifies each cell's body/film contrast at the base state of a Jacobian and
+freezes it across the repeated base residual and finite-difference columns. Nonlinear updates and
+line-search states keep the existing physical reconstruction, while a Jacobian probe cannot activate
+a different branch inside one linearization. Rejected
 attempts publish neither marker motion nor source impulse. Keep `setUnsplitPressureInterpolationEnabled(false)`
 when using reconstructed slug faces. The 0.1 s Tengesdal startup probe uses this configuration at
 16 cells with 0.1 and 0.05 s steps and at 24 cells with a 0.05 s step. An opt-in tracking-enabled five-second gate now repeats the 16/0.1, 16/0.05 and

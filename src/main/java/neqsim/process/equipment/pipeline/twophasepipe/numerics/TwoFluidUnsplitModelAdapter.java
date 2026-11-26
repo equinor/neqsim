@@ -4,7 +4,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import static neqsim.util.util.ArrayUtils.copyMatrixArray;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations.TransactionalEvaluation;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
@@ -84,7 +83,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
 
   private final TwoFluidConservationEquations equations;
   private final TwoFluidSection[] acceptedTemplates;
-  private boolean[] conservativeSlugReconstructionActivity;
+  private boolean[] linearizationSlugReconstructionActivity;
   private double latestEvaluationTime = Double.NaN;
   private final double spatialStep;
   private final PhaseDensityModel densityModel;
@@ -201,8 +200,6 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     }
     this.equations = equations;
     this.acceptedTemplates = cloneSections(acceptedTemplates);
-    this.conservativeSlugReconstructionActivity = equations
-        .classifyConservativeSlugReconstructionActivity(this.acceptedTemplates);
     double[][] acceptedState = new double[this.acceptedTemplates.length][];
     double[] acceptedPressure = new double[this.acceptedTemplates.length];
     for (int cell = 0; cell < this.acceptedTemplates.length; cell++) {
@@ -225,27 +222,26 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
   @Override
   public synchronized void beginLinearization(double[][] state, double[] pressure) {
     validateShape(state, pressure, "linearization");
+    if (Double.isFinite(latestEvaluationTime)) {
+      linearizationSlugReconstructionActivity = equations
+          .classifyConservativeSlugReconstructionActivity(createTrialSections(state, pressure, latestEvaluationTime));
+    }
     activeSetController.beginLinearization(copyMatrixArray(state), pressure.clone());
   }
 
   @Override
   public synchronized void endLinearization() {
-    activeSetController.endLinearization();
+    try {
+      activeSetController.endLinearization();
+    } finally {
+      linearizationSlugReconstructionActivity = null;
+    }
   }
 
   @Override
   public synchronized boolean updateActiveSet(double[][] state, double[] pressure) {
     validateShape(state, pressure, "active-set");
-    boolean changed = activeSetController.update(copyMatrixArray(state), pressure.clone());
-    if (Double.isFinite(latestEvaluationTime)) {
-      boolean[] activity = equations
-          .classifyConservativeSlugReconstructionActivity(createTrialSections(state, pressure, latestEvaluationTime));
-      if (!Arrays.equals(conservativeSlugReconstructionActivity, activity)) {
-        conservativeSlugReconstructionActivity = activity;
-        changed = true;
-      }
-    }
-    return changed;
+    return activeSetController.update(copyMatrixArray(state), pressure.clone());
   }
 
   @Override
@@ -282,7 +278,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
         equations.setOutletBoundaryPressure(outletPressureFixed ? outletPressure : Double.NaN);
         equations.setPressureInterpolationTimeScale(pressureInterpolationTimeScale);
         equations.setConservativeFrictionEnabled(conservativeFrictionSplitEnabled);
-        equations.setFrozenConservativeSlugReconstructionActivity(conservativeSlugReconstructionActivity);
+        equations.setFrozenConservativeSlugReconstructionActivity(linearizationSlugReconstructionActivity);
         transport = equations.evaluateTransactional(trialSections, spatialStep);
       } finally {
         equations.setOutletBoundaryPressure(savedOutletPressure);
@@ -380,7 +376,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
         equations.setOutletBoundaryPressure(outletPressureFixed ? outletPressure : Double.NaN);
         equations.setPressureInterpolationTimeScale(pressureInterpolationTimeScale);
         equations.setConservativeFrictionEnabled(conservativeFrictionSplitEnabled);
-        equations.setFrozenConservativeSlugReconstructionActivity(conservativeSlugReconstructionActivity);
+        equations.setFrozenConservativeSlugReconstructionActivity(linearizationSlugReconstructionActivity);
         evaluation = equations.evaluateTransactional(midpoint, spatialStep);
       } finally {
         equations.setOutletBoundaryPressure(savedOutletPressure);

@@ -12,8 +12,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.Collections;
-import neqsim.process.equipment.pipeline.twophasepipe.LagrangianSlugTracker.SlugBubbleUnit;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations.MassBalanceRate;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
@@ -215,41 +213,6 @@ class TwoFluidUnsplitModelAdapterTest {
     assertTrue(state[0][0] >= 0.0);
     assertTrue(state[0][1] >= 0.0);
     assertTrue(pressure[0] > 0.0);
-  }
-
-  @Test
-  void refreshesTrackedReconstructionBetweenLinearizations() {
-    TwoFluidSection acceptedCell = section(0.0);
-    acceptedCell.setGasHoldup(0.0);
-    acceptedCell.setLiquidHoldup(1.0);
-    acceptedCell.setOilHoldup(0.5);
-    acceptedCell.setWaterHoldup(0.5);
-    acceptedCell.updateConservativeVariables();
-    acceptedCell.updateDerivedQuantities();
-    TwoFluidSection[] accepted = {acceptedCell};
-    TwoFluidConservationEquations equations = isothermalEquations();
-    SlugBubbleUnit marker = new SlugBubbleUnit();
-    marker.tailPosition = -5.0;
-    marker.frontPosition = 0.0;
-    marker.slugHoldup = 0.9;
-    equations.setConservativeSlugs(Collections.singletonList(marker));
-    TwoFluidUnsplitModelAdapter adapter = new TwoFluidUnsplitModelAdapter(equations, accepted, 10.0,
-        (cell, state, pressure, time) -> new double[] {40.0, 700.0, 1000.0});
-
-    TwoFluidSection trialCell = section(0.0);
-    double[][] trialState = {trialCell.getStateVector()};
-    double[] pressure = {trialCell.getPressure()};
-    adapter.evaluate(trialState, pressure, trialState, pressure, 0.05, Double.NaN, false);
-
-    assertTrue(adapter.updateActiveSet(trialState, pressure));
-    assertFalse(adapter.updateActiveSet(trialState, pressure));
-    adapter.beginLinearization(trialState, pressure);
-    adapter.evaluate(trialState, pressure, trialState, pressure, 0.05, Double.NaN, false);
-    adapter.endLinearization();
-
-    double[][] inactiveState = {acceptedCell.getStateVector()};
-    adapter.evaluate(inactiveState, pressure, inactiveState, pressure, 0.05, Double.NaN, false);
-    assertTrue(adapter.updateActiveSet(inactiveState, pressure));
   }
 
   @Test
