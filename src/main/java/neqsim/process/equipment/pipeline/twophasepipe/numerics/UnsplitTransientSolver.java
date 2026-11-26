@@ -550,51 +550,53 @@ public final class UnsplitTransientSolver implements Serializable {
     while (activeSetStable && iterations < maximumIterations && residualNorm > solveTolerance) {
       iterations++;
       double[][] jacobian;
+      double[] normalizedUpdate;
+      double stepLength = 0.0;
+      boolean accepted = false;
+      ResidualEvaluation trial = current;
+      double[][] trialState = state;
+      double[] trialPressure = pressure;
       try (Linearization ignored = new Linearization(countedModel, current)) {
         current = evaluateResidual(previousState, previousPressure, state, pressure, cellAreas, timeStep, startTime,
             outletPressure, outletPressureFixed, countedModel, timeWeight);
         residualNorm = maximumAbsolute(current.residual);
         jacobian = approximateJacobian(previousState, previousPressure, state, pressure, cellAreas, variableScale,
             current, timeStep, startTime, outletPressure, outletPressureFixed, countedModel, timeWeight);
-      }
-
-      double[] rightHandSide = new double[current.residual.length];
-      for (int row = 0; row < rightHandSide.length; row++) {
-        rightHandSide[row] = -current.residual[row];
-      }
-      double[] normalizedUpdate;
-      try {
-        normalizedUpdate = solveDense(jacobian, rightHandSide);
-      } catch (IllegalStateException singular) {
-        terminationReason = TerminationReason.SINGULAR_JACOBIAN;
-        break;
-      }
-
-      double admissibleStep = admissibleStepLength(state, pressure, variableScale, normalizedUpdate);
-      double stepLength = Math.min(1.0, admissibleStep);
-      if (!(stepLength > 0.0)) {
-        terminationReason = TerminationReason.NO_ADMISSIBLE_STEP;
-        break;
-      }
-      boolean accepted = false;
-      ResidualEvaluation trial = current;
-      double[][] trialState = state;
-      double[] trialPressure = pressure;
-      for (int lineSearch = 0; lineSearch < maximumLineSearchSteps && stepLength > 0.0; lineSearch++) {
-        trialState = copyMatrixArray(state);
-        trialPressure = pressure.clone();
-        applyUpdate(trialState, trialPressure, variableScale, normalizedUpdate, stepLength);
-        trial = evaluateResidual(previousState, previousPressure, trialState, trialPressure, cellAreas, timeStep,
-            startTime, outletPressure, outletPressureFixed, countedModel, timeWeight);
-        double trialNorm = maximumAbsolute(trial.residual);
-        if (trialNorm <= residualNorm * (1.0 - 1.0e-4 * stepLength) || trialNorm < solveTolerance) {
-          accepted = true;
+        double[] rightHandSide = new double[current.residual.length];
+        for (int row = 0; row < rightHandSide.length; row++) {
+          rightHandSide[row] = -current.residual[row];
+        }
+        try {
+          normalizedUpdate = solveDense(jacobian, rightHandSide);
+        } catch (IllegalStateException singular) {
+          terminationReason = TerminationReason.SINGULAR_JACOBIAN;
           break;
         }
-        stepLength *= 0.5;
+
+        double admissibleStep = admissibleStepLength(state, pressure, variableScale, normalizedUpdate);
+        stepLength = Math.min(1.0, admissibleStep);
+        if (!(stepLength > 0.0)) {
+          terminationReason = TerminationReason.NO_ADMISSIBLE_STEP;
+          break;
+        }
+        for (int lineSearch = 0; lineSearch < maximumLineSearchSteps && stepLength > 0.0; lineSearch++) {
+          trialState = copyMatrixArray(state);
+          trialPressure = pressure.clone();
+          applyUpdate(trialState, trialPressure, variableScale, normalizedUpdate, stepLength);
+          trial = evaluateResidual(previousState, previousPressure, trialState, trialPressure, cellAreas, timeStep,
+              startTime, outletPressure, outletPressureFixed, countedModel, timeWeight);
+          double trialNorm = maximumAbsolute(trial.residual);
+          if (trialNorm <= residualNorm * (1.0 - 1.0e-4 * stepLength) || trialNorm < solveTolerance) {
+            accepted = true;
+            break;
+          }
+          stepLength *= 0.5;
+        }
       }
       if (!accepted) {
-        terminationReason = TerminationReason.LINE_SEARCH_FAILED;
+        if (terminationReason == TerminationReason.MAXIMUM_ITERATIONS) {
+          terminationReason = TerminationReason.LINE_SEARCH_FAILED;
+        }
         break;
       }
 
@@ -652,6 +654,14 @@ public final class UnsplitTransientSolver implements Serializable {
     while (activeSetStable && iterations < maximumIterations && residualNorm > solveTolerance) {
       iterations++;
       double[][] jacobian;
+      double[] normalizedUpdate;
+      double stepLength = 0.0;
+      boolean accepted = false;
+      DirectionalResidualEvaluation trial = current;
+      double[][] trialState = state;
+      double[] trialPressure = pressure;
+      double[] trialAuxiliary = auxiliary;
+      SignedFaceComplementarity.State trialFaceState = faceState;
       try (Linearization ignored = new Linearization(countedModel, new ResidualEvaluation(current.residual,
           current.midpointState, current.midpointPressure, current.modelEvaluation))) {
         current = evaluateDirectionalResidual(previousState, previousPressure, state, pressure, auxiliary, faceState,
@@ -660,59 +670,54 @@ public final class UnsplitTransientSolver implements Serializable {
         jacobian = approximateDirectionalJacobian(previousState, previousPressure, state, pressure, auxiliary,
             faceState, cellAreas, variableScale, current, timeStep, startTime, outletPressure, outletPressureFixed,
             countedModel, timeWeight);
-      }
-
-      double[] rightHandSide = new double[current.residual.length];
-      for (int row = 0; row < rightHandSide.length; row++) {
-        rightHandSide[row] = -current.residual[row];
-      }
-      double[] normalizedUpdate;
-      try {
-        // The augmented KKT ordering deliberately couples zero-residual face rows to cell variables with different
-        // indices. The cell-only homogeneous-block shortcut assumes identical row/column partitions and can therefore
-        // report a singular subblock even when the complete complementarity Jacobian is nonsingular.
-        normalizedUpdate = solveDenseDirect(jacobian, rightHandSide);
-      } catch (IllegalStateException singular) {
-        terminationReason = TerminationReason.SINGULAR_JACOBIAN;
-        break;
-      }
-      projectDirectionalUpdateAtActiveBounds(state, auxiliary, variableScale, normalizedUpdate);
-      double admissibleStep = directionalAdmissibleStepLength(state, pressure, auxiliary, variableScale,
-          normalizedUpdate);
-      double stepLength = Math.min(1.0, admissibleStep);
-      if (!(stepLength > 0.0)) {
-        terminationReason = TerminationReason.NO_ADMISSIBLE_STEP;
-        break;
-      }
-      boolean accepted = false;
-      DirectionalResidualEvaluation trial = current;
-      double[][] trialState = state;
-      double[] trialPressure = pressure;
-      double[] trialAuxiliary = auxiliary;
-      SignedFaceComplementarity.State trialFaceState = faceState;
-      for (int lineSearch = 0; lineSearch < maximumLineSearchSteps && stepLength > 0.0; lineSearch++) {
-        trialState = copyMatrixArray(state);
-        trialPressure = pressure.clone();
-        trialAuxiliary = auxiliary.clone();
-        trialFaceState = faceState.copy();
-        applyDirectionalUpdate(trialState, trialPressure, trialAuxiliary, variableScale, normalizedUpdate, stepLength);
-        trial = evaluateDirectionalResidual(previousState, previousPressure, trialState, trialPressure, trialAuxiliary,
-            trialFaceState, cellAreas, timeStep, startTime, outletPressure, outletPressureFixed, countedModel,
-            timeWeight);
-        if (SignedFaceComplementarity.refreshActiveSet(trial.modelEvaluation, trialState, trialFaceState)) {
+        double[] rightHandSide = new double[current.residual.length];
+        for (int row = 0; row < rightHandSide.length; row++) {
+          rightHandSide[row] = -current.residual[row];
+        }
+        try {
+          // The augmented KKT ordering deliberately couples zero-residual face rows to cell variables with different
+          // indices. The cell-only homogeneous-block shortcut assumes identical row/column partitions and can therefore
+          // report a singular subblock even when the complete complementarity Jacobian is nonsingular.
+          normalizedUpdate = solveDenseDirect(jacobian, rightHandSide);
+        } catch (IllegalStateException singular) {
+          terminationReason = TerminationReason.SINGULAR_JACOBIAN;
+          break;
+        }
+        projectDirectionalUpdateAtActiveBounds(state, auxiliary, variableScale, normalizedUpdate);
+        double admissibleStep = directionalAdmissibleStepLength(state, pressure, auxiliary, variableScale,
+            normalizedUpdate);
+        stepLength = Math.min(1.0, admissibleStep);
+        if (!(stepLength > 0.0)) {
+          terminationReason = TerminationReason.NO_ADMISSIBLE_STEP;
+          break;
+        }
+        for (int lineSearch = 0; lineSearch < maximumLineSearchSteps && stepLength > 0.0; lineSearch++) {
+          trialState = copyMatrixArray(state);
+          trialPressure = pressure.clone();
+          trialAuxiliary = auxiliary.clone();
+          trialFaceState = faceState.copy();
+          applyDirectionalUpdate(trialState, trialPressure, trialAuxiliary, variableScale, normalizedUpdate,
+              stepLength);
           trial = evaluateDirectionalResidual(previousState, previousPressure, trialState, trialPressure,
               trialAuxiliary, trialFaceState, cellAreas, timeStep, startTime, outletPressure, outletPressureFixed,
               countedModel, timeWeight);
+          if (SignedFaceComplementarity.refreshActiveSet(trial.modelEvaluation, trialState, trialFaceState)) {
+            trial = evaluateDirectionalResidual(previousState, previousPressure, trialState, trialPressure,
+                trialAuxiliary, trialFaceState, cellAreas, timeStep, startTime, outletPressure, outletPressureFixed,
+                countedModel, timeWeight);
+          }
+          double trialNorm = maximumAbsolute(trial.residual);
+          if (trialNorm <= residualNorm * (1.0 - 1.0e-4 * stepLength) || trialNorm < solveTolerance) {
+            accepted = true;
+            break;
+          }
+          stepLength *= 0.5;
         }
-        double trialNorm = maximumAbsolute(trial.residual);
-        if (trialNorm <= residualNorm * (1.0 - 1.0e-4 * stepLength) || trialNorm < solveTolerance) {
-          accepted = true;
-          break;
-        }
-        stepLength *= 0.5;
       }
       if (!accepted) {
-        terminationReason = TerminationReason.LINE_SEARCH_FAILED;
+        if (terminationReason == TerminationReason.MAXIMUM_ITERATIONS) {
+          terminationReason = TerminationReason.LINE_SEARCH_FAILED;
+        }
         break;
       }
       state = trialState;
