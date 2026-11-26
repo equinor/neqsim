@@ -44,6 +44,7 @@ identity, version and diagnostics with every frame:
 | Model | Intended use | Required behavior |
 |---|---|---|
 | `HomogeneousEquilibriumReleaseModel` | Short-opening equilibrium gas, liquid and flashing calculations. | EOS/flash closure is strict; unsupported phase physics and failed required properties return no numeric payload. |
+| `EquilibriumSolidCo2ReleaseModel` | Pure-CO2 choked short opening with an equilibrium gas/dry-ice ambient station below the CO2 triple pressure. | Delegates only the solid-free restriction rate to HEM and requires that boundary to remain choked. Resolves an isentropic, zero-slip gas/solid ambient state; mixtures, solid at the restriction and transport/deposition physics fail closed or remain outside scope. |
 | `SlipCorrectedHomogeneousEquilibriumReleaseModel` | Short-opening gas/liquid flow with equilibrium thermodynamics and caller-declared velocity slip. | Requires exactly one gas and one liquid phase at the opening, exposes phase densities and velocities, and closes phase area and kinetic energy. It does not infer a slip or entrainment correlation. |
 | `DriftFluxHomogeneousEquilibriumReleaseModel` | Vertical-upward, short-opening gas/liquid screening with equilibrium thermodynamics and predictive slip. | Solves Zuber-Findlay/Harmathy drift flux together with phase-area and kinetic-energy closure. Exactly one gas and one liquid phase, caller-declared positive interfacial tension and gas area fraction at most 0.80 are required. |
 | `FiniteRateDriftFluxReleaseModel` | Sensitivity screening for delayed gas/liquid phase-split response at a vertical short opening. | Applies an exact first-order relaxation between upstream and equilibrium phase mass fractions, then solves the bounded drift-flux closure. Relaxation time, residence time, surface tension and parameter provenance are mandatory. |
@@ -546,6 +547,45 @@ always invalidate the calculation. No ideal-gas property defaults or replacement
 For upstream pressure at or below back pressure, the result is valid zero forward flow, with
 `NO_FORWARD_FLOW`; there is no ambient-expanded station and no reverse-flow calculation.
 
+## Pure-CO2 equilibrium dry-ice ambient expansion
+
+`EquilibriumSolidCo2ReleaseModel` is a separate opt-in model for a narrow boundary that the
+ordinary HEM deliberately rejects. It accepts pure CO2, a short opening, receiving pressure below
+the CO2 triple pressure, and a solid-free choked restriction. The model evaluates HEM at
+$1.02p_{triple}$ and accepts the rate only when the restriction remains choked, so the auxiliary
+pressure cannot determine the mass flow. The ordinary `HomogeneousEquilibriumReleaseModel`
+continues to return `UNSUPPORTED`/`SOLID_RISK` for the same ambient path.
+
+At receiving pressure $p_b$, the model solves the NeqSim CO2 sublimation-pressure correlation for
+$T_{sub}$. The sublimation enthalpy is derived from its Clausius--Clapeyron slope,
+
+$$h_{sub}=\frac{RT_{sub}^2}{M p_{sat}}\frac{dp_{sat}}{dT},$$
+
+where $R$ is in J/(mol K), $M$ in kg/mol and consistent pressure units cancel in the derivative
+ratio. With gas entropy $s_g$ and gas enthalpy $h_g$ at $(p_b,T_{sub})$, the dry-ice entropy and
+isentropic gas mass fraction are
+
+$$s_s=s_g-\frac{h_{sub}}{T_{sub}},\qquad
+y_g=\frac{s_0-s_s}{s_g-s_s},\qquad y_s=1-y_g.$$
+
+The ambient mixture enthalpy and velocity close the upstream stagnation energy,
+
+$$h_{mix}=h_g-y_s h_{sub},\qquad
+u=\sqrt{2(h_0-h_{mix})}.$$
+
+The immutable ambient snapshot reports explicit `GAS` and `SOLID` mass fractions, pure-CO2
+component fractions in each phase, phase densities, SI quantities and model/evidence provenance.
+Mixture density is the mass-fraction-weighted harmonic density. The Hammer cases at 101325 Pa
+resolve 194.654 K, predicted dry-ice mass fractions from 0.4096 to 0.4159 and ambient velocities
+from about 373 to 381 m/s while closing entropy and stagnation energy. These solid fractions were
+not measured in the source experiment.
+
+This is an equilibrium thermodynamic ambient adapter, not a solid-flow or dispersion
+qualification. It assumes one common temperature and zero gas/solid slip and does not model
+particle size, nucleation, deposition, shocks, atmospheric mixing, dry ice inside the restriction
+or mixtures. Results remain `UNQUALIFIED`; use the reported gas/solid station only inside this
+declared applicability boundary.
+
 ## Applicability and evidence
 
 | Case | Behavior |
@@ -554,6 +594,7 @@ For upstream pressure at or below back pressure, the result is valid zero forwar
 | Flashing hydrocarbon liquid | Supports equilibrium phase redistribution with zero slip. |
 | Forced phases, reactions, solid or hydrate checking enabled | `UNSUPPORTED`. |
 | Mixture-specific equilibrium solid or hydrate risk at a resolved station | `UNSUPPORTED`; a separately assessed solid-capable model is required. |
+| Pure CO2, solid-free choked short opening, receiving pressure below the CO2 triple pressure | Select `EquilibriumSolidCo2ReleaseModel` for the bounded equilibrium gas/dry-ice ambient station. |
 | Required solid or hydrate assessment cannot resolve | `INVALID`; absence of risk is never inferred from a failed check. |
 | Full-bore calorically perfect gas pipe with specified constant Darcy friction | Select `IdealGasFannoPipeReleaseModel`; outside HEM physics. |
 | Full-bore single-equilibrium-gas pipe requiring EOS departure | Select `RealGasFannoPipeReleaseModel`; phase appearance fails closed. |
@@ -615,8 +656,12 @@ six cases the mean absolute relative error is 19.39%, the
 signed bias is +9.86%, the relative RMSE is 21.19%, and the maximum absolute error is 34.26%. Only
 one of six predictions is inside the reported experimental uncertainty; the largest deviation is
 10.27 reported uncertainty intervals. These results are independent accuracy evidence and a clear
-model limitation, not calibration or qualification. The live ambient path remains fail-closed and
-solid-capable physics plus accountable domain review are still required.
+model limitation, not calibration or qualification. The separate opt-in
+`EquilibriumSolidCo2ReleaseModel` now exports schema-valid gas/dry-ice ambient stations for these
+pure-CO2 cases without changing the rate error. Its predicted 40.96--41.59% dry-ice fractions are
+analytical closure results rather than measured validation evidence. Mixture solids, restriction
+solids, particle transport/deposition, rate-error resolution and accountable domain review remain
+required.
 
 Richardson et al., *Process Safety and Environmental Protection* 84(B1) (2006) 40--53,
 DOI `10.1205/psep.04298`, report measured rates for well-mixed natural-gas/commercial-propane
