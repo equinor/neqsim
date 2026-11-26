@@ -1257,3 +1257,45 @@ the dense MCB states before fitting any production parameter. Table A.24,
 Dholabhai/Burgass hydrate, NaCl/CaCl2/MgCl2, Archer water-activity and pure-water
 controls remain frozen holdouts; no temperature offset, parameter-table edit,
 tolerance relaxation or hydrate qualification is introduced.
+
+## Dense-KCl residual pressure identifiability
+
+`KClCO2SaltPairTransferAssessmentTest` also tests the next proposed physical
+direction without adding a pressure parameter. The nine independent
+Mousavi-Chapoy-Burgass states at 323.15 K are grouped by 10, 15 and 22 mass
+percent KCl. The nested regressions compare three concentration-specific
+intercepts with those same intercepts plus one common pressure slope in the
+baseline residual
+
+$$
+r=\ln(x_{\mathrm{CO_2},model}/x_{\mathrm{CO_2},source}).
+$$
+
+The common slope is `-6.39865e-4 MPa-1` with standard error
+`5.65813e-4 MPa-1` and a t statistic of `-1.13088`. It lowers log-RMSE only
+from `0.0230877` to `0.0206027`, while corrected AIC increases from
+`-57.0322` to `-51.8820`. Separate within-concentration slopes are
+`+1.18399e-4`, `-1.37634e-3` and `-1.54139e-3 MPa-1` for 10, 15 and 22 mass
+percent KCl, respectively. The opposite sign at 10 mass percent and the
+two-point 22 mass percent block prevent a common pressure response from being
+identified.
+
+If the same-fugacity Poynting relation
+$d\ln x/dP=-\bar V/(RT)$ is imposed only as an interpretation, the fitted
+residual slope corresponds to
+
+$$
+\Delta\bar V_{app}=\bar V_{model}-\bar V_{source}=-RT\,dr/dP
+=+1.71920\ \mathrm{cm^3\,mol^{-1}}.
+$$
+
+This is an apparent residual volume, not a fitted partial molar volume or a
+production parameter. Total pressure, gas composition and guest fugacity vary
+across the dense measurements, so the residual slope cannot be assigned to the
+aqueous standard-state pressure term alone. A pressure-law candidate requires
+an independent KCl source with at least three matched pressures per
+temperature and concentration, an explicit source/model CO2 fugacity mapping,
+and a salt-free reference on the same convention. The Table A.24 mixed-brine
+series and independent hydrate families remain frozen holdouts. No parameter,
+equation, tolerance, hydrate model or empirical temperature offset changes in
+this diagnostic.

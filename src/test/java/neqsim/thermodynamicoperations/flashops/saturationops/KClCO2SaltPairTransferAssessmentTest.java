@@ -25,7 +25,8 @@ import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
  * activity uses a matched pure-water state at the same temperature and CO2 partial pressure. The independently
  * transferable increment is therefore {@code ln(gamma_source/gamma_model)}, not the full source coefficient. The
  * full-source and residual corrections are both tested against independent Mousavi-Chapoy-Burgass 323.15 K KCl states.
- * This first-order diagnostic changes no production parameter or flash equation.
+ * A concentration-intercept pressure discriminator then tests whether the remaining dense-source residual supports a
+ * common Poynting-like pressure term. This first-order diagnostic changes no production parameter or flash equation.
  * </p>
  *
  * @author OpenAI
@@ -34,6 +35,7 @@ import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 class KClCO2SaltPairTransferAssessmentTest {
   private static final double REFERENCE_TEMPERATURE_K = 298.15;
   private static final double KCL_MOLAR_MASS_KG_PER_MOL = 0.0745513;
+  private static final double GAS_CONSTANT_J_PER_MOL_K = 8.314462618;
   private static final double TRANSFER_TEMPERATURE_K = 323.15;
   private static final double[] TEMPERATURES_K = {273.15, 298.15, 323.15, 348.15, 363.15};
   private static final String OUTPUT = "target/co2-kcl-salt-pair-transfer-assessment.csv";
@@ -66,6 +68,7 @@ class KClCO2SaltPairTransferAssessmentTest {
     List<String> rows = new ArrayList<String>();
     rows.add(header());
     double[][] groups = new double[3][10];
+    List<PressurePoint> pressurePoints = new ArrayList<PressurePoint>();
     int selected = 0;
     for (KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Reference reference : references) {
       if (reference.temperatureK != TRANSFER_TEMPERATURE_K || reference.kclMassFractionPercent <= 0.0
@@ -86,21 +89,30 @@ class KClCO2SaltPairTransferAssessmentTest {
       double residualError = relativeError(residualCandidate, reference.sourceCo2MolePercent);
       accumulate(groups[concentrationGroup(reference.kclMassFractionPercent)], baselineLog, sourceLog, residualLog,
           baselineError, sourceError, residualError);
+      pressurePoints.add(new PressurePoint(concentrationGroup(reference.kclMassFractionPercent),
+          reference.totalPressureMpa, baselineLog));
       rows.add(transferRow(reference, molality, baseline.molecularMolePercent, sourceCandidate, residualCandidate,
           baselineLog, sourceLog, residualLog, baselineError, sourceError, residualError, fits, sourceZeta,
           sourceZetaSe, modelZeta, modelZetaSe, residualZeta, residualZetaSe));
       selected++;
     }
     assertEquals(9, selected, "independent 323.15 K KCl states");
+    PressureDiagnostics pressure = fitPressureDiagnostics(pressurePoints, new EjmlLinearAlgebra());
+    assertTrue(Math.abs(pressure.commonSlopeTStatistic) < 2.0,
+        "common pressure slope must remain statistically unresolved");
+    assertTrue(pressure.commonSlope.aicc > pressure.interceptOnly.aicc,
+        "common pressure slope must not outperform concentration intercepts by AICc");
+    assertTrue(pressure.groupSlopes[0] > 0.0 && pressure.groupSlopes[1] < 0.0 && pressure.groupSlopes[2] < 0.0,
+        "retained concentration families must preserve their inconsistent pressure-slope signs");
 
     double[] aggregate = new double[10];
     for (int group = 0; group < groups.length; group++) {
       merge(aggregate, groups[group]);
       rows.add(summaryRow("SUMMARY-KCL" + (group == 0 ? 10 : group == 1 ? 15 : 22), groups[group], fits, sourceZeta,
-          sourceZetaSe, modelZeta, modelZetaSe, residualZeta, residualZetaSe));
+          sourceZetaSe, modelZeta, modelZetaSe, residualZeta, residualZetaSe, pressure, group));
     }
     rows.add(summaryRow("SUMMARY", aggregate, fits, sourceZeta, sourceZetaSe, modelZeta, modelZetaSe, residualZeta,
-        residualZetaSe));
+        residualZetaSe, pressure, null));
     assertEquals(14, rows.size());
     int columns = rows.get(0).split(",", -1).length;
     for (String row : rows) {
@@ -178,6 +190,49 @@ class KClCO2SaltPairTransferAssessmentTest {
     return new Regression(parameters, sumSquares, rank, rmse, aicc);
   }
 
+  /** Fits concentration intercepts with and without one common pressure slope. */
+  private static PressureDiagnostics fitPressureDiagnostics(List<PressurePoint> points,
+      LinearAlgebraOperations algebra) {
+    double[][] interceptDesign = new double[points.size()][3];
+    double[][] pressureDesign = new double[points.size()][4];
+    double[] observed = new double[points.size()];
+    for (int row = 0; row < points.size(); row++) {
+      PressurePoint point = points.get(row);
+      interceptDesign[row][point.group] = 1.0;
+      System.arraycopy(interceptDesign[row], 0, pressureDesign[row], 0, 3);
+      pressureDesign[row][3] = point.pressureMpa;
+      observed[row] = point.logResidual;
+    }
+    Regression interceptOnly = regression(interceptDesign, observed, algebra);
+    Regression commonSlope = regression(pressureDesign, observed, algebra);
+    double variance = commonSlope.sumSquares / (observed.length - commonSlope.rank);
+    double[][] covariance = algebra
+        .scale(algebra.invert(algebra.multiply(algebra.transpose(pressureDesign), pressureDesign)), variance);
+    double slopeStandardError = Math.sqrt(covariance[3][3]);
+    double[] groupSlopes = new double[3];
+    for (int group = 0; group < groupSlopes.length; group++) {
+      int count = 0;
+      for (PressurePoint point : points) {
+        if (point.group == group) {
+          count++;
+        }
+      }
+      double[][] groupDesign = new double[count][2];
+      double[] groupObserved = new double[count];
+      int row = 0;
+      for (PressurePoint point : points) {
+        if (point.group == group) {
+          groupDesign[row][0] = 1.0;
+          groupDesign[row][1] = point.pressureMpa;
+          groupObserved[row] = point.logResidual;
+          row++;
+        }
+      }
+      groupSlopes[group] = algebra.solveLeastSquares(groupDesign, groupObserved)[1];
+    }
+    return new PressureDiagnostics(interceptOnly, commonSlope, slopeStandardError, groupSlopes);
+  }
+
   /** Returns the stable evidence header. */
   private static String header() {
     return "record_type,point_id,kcl_mass_fraction_percent,kcl_molality_mol_per_kg_water,"
@@ -191,7 +246,11 @@ class KClCO2SaltPairTransferAssessmentTest {
         + "model_linear_rmse,model_candidate_rmse,model_linear_aicc,model_candidate_aicc,"
         + "residual_linear_rmse,residual_candidate_rmse,residual_linear_aicc,residual_candidate_aicc,"
         + "baseline_log_rmse,source_candidate_log_rmse,residual_candidate_log_rmse,baseline_mape,"
-        + "source_candidate_mape,residual_candidate_mape,disposition";
+        + "source_candidate_mape,residual_candidate_mape,pressure_group_slope_per_mpa,"
+        + "pressure_intercept_only_log_rmse,pressure_intercept_only_aicc,pressure_common_slope_per_mpa,"
+        + "pressure_common_slope_standard_error_per_mpa,pressure_common_slope_t_statistic,"
+        + "pressure_common_slope_log_rmse,pressure_common_slope_aicc,"
+        + "apparent_delta_partial_molar_volume_cm3_per_mol,disposition";
   }
 
   /** Formats one independent transfer row. */
@@ -206,19 +265,28 @@ class KClCO2SaltPairTransferAssessmentTest {
         residualZeta, residualZetaSe, fits.source.linearRmse, fits.source.candidateRmse, fits.source.linearAicc,
         fits.source.candidateAicc, fits.model.linearRmse, fits.model.candidateRmse, fits.model.linearAicc,
         fits.model.candidateAicc, fits.residual.linearRmse, fits.residual.candidateRmse, fits.residual.linearAicc,
-        fits.residual.candidateAicc, null, null, null, null, null, null, "diagnostic_only_no_activation");
+        fits.residual.candidateAicc, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+        null, "diagnostic_only_no_activation");
   }
 
   /** Formats one concentration-family or aggregate summary row. */
   private static String summaryRow(String label, double[] statistics, ActivityFits fits, double sourceZeta,
-      double sourceZetaSe, double modelZeta, double modelZetaSe, double residualZeta, double residualZetaSe) {
+      double sourceZetaSe, double modelZeta, double modelZetaSe, double residualZeta, double residualZetaSe,
+      PressureDiagnostics pressure, Integer pressureGroup) {
+    boolean aggregate = pressureGroup == null;
     return row("SUMMARY", label, null, null, null, null, null, null, null, null, null, null, null, null, sourceZeta,
         sourceZetaSe, modelZeta, modelZetaSe, residualZeta, residualZetaSe, fits.source.linearRmse,
         fits.source.candidateRmse, fits.source.linearAicc, fits.source.candidateAicc, fits.model.linearRmse,
         fits.model.candidateRmse, fits.model.linearAicc, fits.model.candidateAicc, fits.residual.linearRmse,
         fits.residual.candidateRmse, fits.residual.linearAicc, fits.residual.candidateAicc, rmse(statistics, 1),
         rmse(statistics, 2), rmse(statistics, 3), mape(statistics, 7), mape(statistics, 8), mape(statistics, 9),
-        "residual_curvature_not_transferable");
+        aggregate ? null : pressure.groupSlopes[pressureGroup], aggregate ? pressure.interceptOnly.rmse : null,
+        aggregate ? pressure.interceptOnly.aicc : null, aggregate ? pressure.commonSlope.parameters[3] : null,
+        aggregate ? pressure.commonSlopeStandardError : null, aggregate ? pressure.commonSlopeTStatistic : null,
+        aggregate ? pressure.commonSlope.rmse : null, aggregate ? pressure.commonSlope.aicc : null,
+        aggregate ? pressure.apparentDeltaPartialMolarVolumeCm3PerMol : null,
+        aggregate ? "residual_curvature_not_transferable_pressure_not_identifiable"
+            : "pressure_group_slope_diagnostic_only");
   }
 
   /** Converts values to one locale-independent CSV row. */
@@ -307,6 +375,42 @@ class KClCO2SaltPairTransferAssessmentTest {
       this.source = source;
       this.model = model;
       this.residual = residual;
+    }
+  }
+
+  /** Holds one retained dense-source pressure and residual coordinate. */
+  private static final class PressurePoint {
+    private final int group;
+    private final double pressureMpa;
+    private final double logResidual;
+
+    /** Creates one immutable pressure point. */
+    private PressurePoint(int group, double pressureMpa, double logResidual) {
+      this.group = group;
+      this.pressureMpa = pressureMpa;
+      this.logResidual = logResidual;
+    }
+  }
+
+  /** Holds nested pressure-model diagnostics without defining a production pressure law. */
+  private static final class PressureDiagnostics {
+    private final Regression interceptOnly;
+    private final Regression commonSlope;
+    private final double commonSlopeStandardError;
+    private final double commonSlopeTStatistic;
+    private final double apparentDeltaPartialMolarVolumeCm3PerMol;
+    private final double[] groupSlopes;
+
+    /** Creates immutable pressure diagnostics and the explicitly signed apparent-volume mapping. */
+    private PressureDiagnostics(Regression interceptOnly, Regression commonSlope, double commonSlopeStandardError,
+        double[] groupSlopes) {
+      this.interceptOnly = interceptOnly;
+      this.commonSlope = commonSlope;
+      this.commonSlopeStandardError = commonSlopeStandardError;
+      this.commonSlopeTStatistic = commonSlope.parameters[3] / commonSlopeStandardError;
+      this.apparentDeltaPartialMolarVolumeCm3PerMol = -GAS_CONSTANT_J_PER_MOL_K * TRANSFER_TEMPERATURE_K
+          * commonSlope.parameters[3];
+      this.groupSlopes = groupSlopes;
     }
   }
 
