@@ -109,8 +109,7 @@ class WaterNaClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
   }
 
   /** Loads the exact source rows without interpreting the reported uncertainty as a tolerance. */
-  static List<KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Reference> loadReferences()
-      throws Exception {
+  static List<KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Reference> loadReferences() throws Exception {
     InputStream stream = WaterNaClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.class
         .getResourceAsStream(RESOURCE);
     assertNotNull(stream, RESOURCE);
