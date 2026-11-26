@@ -159,6 +159,17 @@ class KClCO2SaltPairTransferAssessmentTest {
     return new ActivityFits(fit(design, source, algebra), fit(design, model, algebra), fit(design, residual, algebra));
   }
 
+  /**
+   * Returns the complete fitted He-Morse source-minus-model KCl salt-pair response.
+   *
+   * @return residual linear-plus-quadratic law on the retained molality basis
+   * @throws Exception if a source fixture or matched model state cannot be evaluated
+   */
+  static ResidualSaltPairLaw fitResidualSaltPairLaw() throws Exception {
+    FitStatistics residual = fitActivityCurvatures(new EjmlLinearAlgebra()).residual;
+    return new ResidualSaltPairLaw(residual.parameters, residual.covariance);
+  }
+
   /** Fits the reduced law and its five-linear-coefficient comparator. */
   private static FitStatistics fit(double[][] design, double[] observed, LinearAlgebraOperations algebra) {
     double[][] linearDesign = new double[design.length][5];
@@ -362,6 +373,57 @@ class KClCO2SaltPairTransferAssessmentTest {
       return 2;
     }
     throw new IllegalArgumentException("Unexpected KCl mass fraction " + massFractionPercent);
+  }
+
+  /** Complete source-minus-model KCl activity response retained for independent transfer tests. */
+  static final class ResidualSaltPairLaw {
+    private final double[] parameters;
+    private final double[][] covariance;
+
+    /** Creates an immutable fitted response. */
+    private ResidualSaltPairLaw(double[] parameters, double[][] covariance) {
+      this.parameters = parameters.clone();
+      this.covariance = new double[covariance.length][];
+      for (int row = 0; row < covariance.length; row++) {
+        this.covariance[row] = covariance[row].clone();
+      }
+    }
+
+    /**
+     * Evaluates the complete linear-plus-quadratic log-activity correction.
+     *
+     * @param temperatureK retained He-Morse source temperature in K
+     * @param molality KCl molality in mol/kg water
+     * @return source-minus-model log-activity correction
+     */
+    double correctionAt(double temperatureK, double molality) {
+      double squared = molality * molality;
+      double inverseTemperature = REFERENCE_TEMPERATURE_K / temperatureK - 1.0;
+      return parameters[temperatureIndex(temperatureK)] * molality + parameters[5] * squared
+          + parameters[6] * squared * inverseTemperature;
+    }
+
+    /**
+     * Propagates fitted covariance to one complete correction.
+     *
+     * @param temperatureK retained He-Morse source temperature in K
+     * @param molality KCl molality in mol/kg water
+     * @return standard error of the log-activity correction
+     */
+    double standardErrorAt(double temperatureK, double molality) {
+      double[] coordinate = new double[7];
+      double squared = molality * molality;
+      coordinate[temperatureIndex(temperatureK)] = molality;
+      coordinate[5] = squared;
+      coordinate[6] = squared * (REFERENCE_TEMPERATURE_K / temperatureK - 1.0);
+      double variance = 0.0;
+      for (int row = 0; row < coordinate.length; row++) {
+        for (int column = 0; column < coordinate.length; column++) {
+          variance += coordinate[row] * covariance[row][column] * coordinate[column];
+        }
+      }
+      return Math.sqrt(variance);
+    }
   }
 
   /** Holds source, current-model and residual fits. */
