@@ -353,9 +353,9 @@ top reflux-ratio specification.
 | `WEGSTEIN` | Accelerated successive substitution after warm-up. | Well-conditioned fixed-point problems. |
 | `SUM_RATES` | Flow-corrected tearing method. Native for columns without a condenser; condenser configurations remain guarded to damped substitution. | Absorbers, reboiler-only strippers, and flow-sensitive columns. |
 | `NEWTON` | Tray-temperature Newton accelerator. | Difficult temperature convergence. It is not full simultaneous MESH Newton. |
-| `NAPHTALI_SANDHOLM` | Guarded simultaneous correction of MESH blocks after inside-out warm start, with early return to coordinated fallback after repeated non-descent steps. | Residual-driven hydrocarbon fractionators. |
+| `NAPHTALI_SANDHOLM` | Simultaneous Newton correction of all MESH equations with an analytic Jacobian, a scaled step and a line search. Returns to the coordinated sequential fallback when it stops making progress. | Columns with a condenser, a reboiler and a reflux or boilup ratio, where it is the fastest solver when it converges. |
 | `MESH_RESIDUAL` | Inside-out initialization plus full residual auditing. | Material, equilibrium, summation, energy, product-draw, and spec residual checks. |
-| `AUTO` | Runs a feasibility pre-screen and copy-based candidate probes. Fixed-specification reboiler-only strippers try native `SUM_RATES` first; other configurations retain the relaxed damped base and guarded fallback ladder. | Agent workflows and uncertain cases where robust automatic selection and diagnostics are useful. |
+| `AUTO` | Runs a feasibility pre-screen and copy-based candidate probes. Fixed-specification reboiler-only strippers try native `SUM_RATES` first. Ideal-stage columns with condenser and reboiler try `NAPHTALI_SANDHOLM` and then `MESH_RESIDUAL`, and accept only a rigorously converged result. Everything else, and every rejected probe, goes to the relaxed damped base and guarded fallback ladder. | Columns with a condenser, a reboiler and a reflux ratio (see "Choosing a solver"), and uncertain cases where automatic selection and diagnostics are useful. |
 
 ### Choosing a solver
 

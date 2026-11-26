@@ -4403,16 +4403,33 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     this.lastNaphtaliSandholmWarmStateReused = false;
     this.solverTypeExplicitlySet = candidate.solverTypeExplicitlySet;
     this.fullFractionatorFastPathEnabled = candidate.fullFractionatorFastPathEnabled;
-    this.lastSolverTypeUsed = candidate.lastSolverTypeUsed;
-    this.lastSolveStatus = candidate.lastSolveStatus;
-    this.lastSolveStatusReason = candidate.lastSolveStatusReason;
+    // A candidate is a serialized copy, so its transient reporting fields are null unless the candidate solve set
+    // them. Keep the live values in that case instead of publishing a solved column without a solver or report.
+    if (candidate.lastSolverTypeUsed != null) {
+      this.lastSolverTypeUsed = candidate.lastSolverTypeUsed;
+    }
+    if (candidate.lastSolveStatus != null) {
+      this.lastSolveStatus = candidate.lastSolveStatus;
+    }
+    if (candidate.lastSolveStatusReason != null) {
+      this.lastSolveStatusReason = candidate.lastSolveStatusReason;
+    }
     this.lastFullFractionatorFastPathApplied = candidate.lastFullFractionatorFastPathApplied;
-    this.lastFullFractionatorFastPathReason = candidate.lastFullFractionatorFastPathReason;
-    this.lastAutoSolverSummary = candidate.lastAutoSolverSummary;
-    this.lastAutoFeasibilityReport = candidate.lastAutoFeasibilityReport;
-    this.lastInitializationReport = candidate.lastInitializationReport;
-    this.lastAutoSolverHistory = candidate.lastAutoSolverHistory == null ? new ArrayList<String>()
-        : new ArrayList<String>(candidate.lastAutoSolverHistory);
+    if (candidate.lastFullFractionatorFastPathReason != null) {
+      this.lastFullFractionatorFastPathReason = candidate.lastFullFractionatorFastPathReason;
+    }
+    if (candidate.lastAutoSolverSummary != null) {
+      this.lastAutoSolverSummary = candidate.lastAutoSolverSummary;
+    }
+    if (candidate.lastAutoFeasibilityReport != null) {
+      this.lastAutoFeasibilityReport = candidate.lastAutoFeasibilityReport;
+    }
+    if (candidate.lastInitializationReport != null) {
+      this.lastInitializationReport = candidate.lastInitializationReport;
+    }
+    if (candidate.lastAutoSolverHistory != null) {
+      this.lastAutoSolverHistory = new ArrayList<String>(candidate.lastAutoSolverHistory);
+    }
     this.specificationHomotopySteps = candidate.specificationHomotopySteps;
     this.lastSpecificationHomotopyStepCount = candidate.lastSpecificationHomotopyStepCount;
   }
@@ -4453,7 +4470,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   void acceptAutoSolverCandidate(DistillationColumn candidate, SolverType selectedSolver) {
     acceptSolvedStateCandidate(candidate);
-    lastSolverTypeUsed = selectedSolver;
+    if (selectedSolver != null) {
+      lastSolverTypeUsed = selectedSolver;
+    }
     // Remember the concrete solver AUTO selected so warm re-solves can reuse it directly.
     if (selectedSolver != null && selectedSolver != SolverType.AUTO) {
       autoWarmStartSolver = selectedSolver;

@@ -1,6 +1,7 @@
 package neqsim.process.equipment.distillation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,17 @@ class NaphtaliSandholmAnalyticJacobianTest extends neqsim.NeqSimTest {
    * @return configured column
    */
   private static DistillationColumn createDepropanizer(SolverType solverType) {
+    return createDepropanizer(solverType, 1.8);
+  }
+
+  /**
+   * Build a 20-tray depropanizer with the given condenser reflux ratio and fixed terminal temperatures.
+   *
+   * @param solverType solver to use
+   * @param refluxRatio condenser reflux ratio
+   * @return configured column
+   */
+  private static DistillationColumn createDepropanizer(SolverType solverType, double refluxRatio) {
     SystemSrkEos fluid = new SystemSrkEos(333.15, 10.0);
     fluid.addComponent("propane", 0.35);
     fluid.addComponent("n-butane", 0.45);
@@ -39,7 +51,7 @@ class NaphtaliSandholmAnalyticJacobianTest extends neqsim.NeqSimTest {
     column.setBottomPressure(10.2);
     column.getCondenser().setOutletTemperature(300.15);
     column.getReboiler().setOutletTemperature(370.15);
-    column.setCondenserRefluxRatio(1.8);
+    column.setCondenserRefluxRatio(refluxRatio);
     column.setSolverType(solverType);
     return column;
   }
@@ -83,6 +95,26 @@ class NaphtaliSandholmAnalyticJacobianTest extends neqsim.NeqSimTest {
         1.0e-6);
     assertTrue(automatic.getLastAutoSolverSummary().contains("NAPHTALI_SANDHOLM"),
         automatic.getLastAutoSolverSummary());
+  }
+
+  /**
+   * When the simultaneous solve does not converge, AUTO must take the residual-gated solver next and still report which
+   * solver produced the state and what it tried.
+   */
+  @Test
+  @Timeout(value = 120, unit = TimeUnit.SECONDS)
+  void autoFallsBackToMeshResidualAndReportsTheSolver() {
+    DistillationColumn automatic = createDepropanizer(SolverType.AUTO, 4.0);
+    automatic.run();
+
+    assertTrue(automatic.solved(), automatic.getConvergenceDiagnostics());
+    assertNotNull(automatic.getLastSolverTypeUsed(), "A solved column must name its solver");
+    assertEquals(SolverType.MESH_RESIDUAL, automatic.getLastSolverTypeUsed());
+    assertEquals(SolveStatus.RIGOROUS_CONVERGED, automatic.getLastSolveStatus());
+    String summary = automatic.getLastAutoSolverSummary();
+    assertNotNull(summary, "AUTO must keep its candidate summary");
+    assertTrue(summary.contains("NAPHTALI_SANDHOLM") && summary.contains("MESH_RESIDUAL"), summary);
+    assertTrue(!summary.contains("DAMPED_SUBSTITUTION"), "The sequential ladder must not run: " + summary);
   }
 
   /**
