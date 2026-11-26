@@ -60,7 +60,16 @@ class TwoFluidUnsplitTengesdalPreparationTest {
   @ParameterizedTest
   @CsvSource({"16,0.1", "16,0.05", "24,0.05"})
   void shortTrackedSubcellForceRiserHandoffIsConservative(int cells, double maximumStep) {
-    verifyTrackedSubcellForces(cells, maximumStep);
+    verifyTrackedSubcellForces(cells, maximumStep, 0.1);
+  }
+
+  /** Require the tracked-force five-second mesh and time-step matrix to complete conservatively. */
+  @Tag("slow")
+  @EnabledIfSystemProperty(named = "neqsim.unsplit.tengesdal.tracked-force-qualification", matches = "true")
+  @ParameterizedTest
+  @CsvSource({"16,0.1", "16,0.05", "24,0.05"})
+  void fiveSecondTrackedSubcellForceRiserQualificationMustCompleteTheWholeInterval(int cells, double maximumStep) {
+    verifyTrackedSubcellForces(cells, maximumStep, 5.0);
   }
 
   @Tag("slow")
@@ -296,8 +305,9 @@ class TwoFluidUnsplitTengesdalPreparationTest {
    *
    * @param count number of pipe sections
    * @param maximumStep maximum nominal substep in seconds
+   * @param duration complete prepared interval in seconds
    */
-  private static void verifyTrackedSubcellForces(int count, double maximumStep) {
+  private static void verifyTrackedSubcellForces(int count, double maximumStep, double duration) {
     TwoFluidPipe pipe = createPipe(count);
     pipe.setBlendInclinedAnnularSlugTransitions(true);
     pipe.setSignedDonorTransportEnabled(true);
@@ -319,9 +329,9 @@ class TwoFluidUnsplitTengesdalPreparationTest {
     UnsplitTransientSolver solver = new UnsplitTransientSolver();
     solver.setRelativeTolerance(1.0e-9);
     solver.setTimeIntegrationMethod(UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER);
-    PreparedInterval interval = pipe.prepareUnsplitTransient(0.1, maximumStep, solver,
+    PreparedInterval interval = pipe.prepareUnsplitTransient(duration, maximumStep, solver,
         pipe.createUnsplitDensityModel());
-    assertEquals(0.1, interval.getEndTimeSeconds(), 0.0);
+    assertEquals(duration, interval.getEndTimeSeconds(), 0.0);
     for (PreparedStep step : interval.getSubsteps()) {
       assertEquals(0.0, step.getPressureInterpolationTimeScale(), 0.0);
     }
@@ -330,7 +340,7 @@ class TwoFluidUnsplitTengesdalPreparationTest {
     LagrangianSlugTracker accepted = interval.getAcceptedSlugTracker();
     assertTrue(accepted != null);
     assertEquals(1, accepted.getSlugCount());
-    assertEquals(0.1, accepted.getSlugs().get(0).age, 1.0e-12);
+    assertEquals(duration, accepted.getSlugs().get(0).age, 1.0e-12 * Math.max(1.0, duration));
     double impulse = 0.0;
     for (double[] cellImpulse : interval.getConservativeFrictionImpulsePerLength()) {
       for (double phaseImpulse : cellImpulse) {
