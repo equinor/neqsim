@@ -78,7 +78,7 @@ class DryFixedCellPhaseTransitionTest {
    */
   private PvtSeparatorPath separator() {
     return new PvtSeparatorPath(new double[] {1.5, 1.01325}, new double[] {303.15, 298.15},
-        "synthetic equilibrium separator; final actual volumes at1.01325bara298.15K");
+        "synthetic equilibrium separator; final actual volumes at 1.01325 bara and 298.15 K");
   }
 
   /**
@@ -331,6 +331,20 @@ class DryFixedCellPhaseTransitionTest {
   void literalGuideExampleCompilesAndRuns() throws Exception {
     String guide = new String(Files.readAllBytes(Paths.get("docs/pvtsimulation/depletion_pvt_generation.md")),
         StandardCharsets.UTF_8);
+    assertFalse(Pattern.compile("(?m)^#\\s+").matcher(guide).find(),
+        "Front matter owns the guide title; do not add a duplicate H1");
+    assertTrue(guide.contains(
+        "[`DepletionPvtHistoryGenerator.replayNativeDryPhaseChangingFixedCell`](../../src/main/java/neqsim/pvtsimulation/util/DepletionPvtHistoryGenerator.java)"));
+    assertTrue(guide.contains(
+        "[`ConstantVolumeDepletion.runDryPhaseChangingFixedCellDepletion`](../../src/main/java/neqsim/pvtsimulation/simulation/ConstantVolumeDepletion.java)"));
+    assertTrue(guide.contains(
+        "[`DryFixedCellPhaseTransitionTest`](../../src/test/java/neqsim/pvtsimulation/util/DryFixedCellPhaseTransitionTest.java)"));
+    assertTrue(guide.contains("./mvnw -Dtest=DryFixedCellPhaseTransitionTest#literalGuideExampleCompilesAndRuns test"));
+    for (String malformed : Arrays.asList("n-butane275K", "covers500", "than1e-8", "bounds are1e-8",
+        "closure is1e-10mol", "separator closure1e-8mol", "Its108", "original216synthetic", "across72complete",
+        "and480", "across96five-pressure", "at1.01325bara298.15K", "initial100bara")) {
+      assertFalse(guide.contains(malformed), "Malformed engineering prose: " + malformed);
+    }
     String marker = "<!-- dry-fixed-cell-example -->";
     assertEquals(guide.indexOf(marker), guide.lastIndexOf(marker));
     assertTrue(guide.indexOf(marker) >= 0);

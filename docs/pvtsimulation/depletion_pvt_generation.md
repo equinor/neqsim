@@ -3,8 +3,6 @@ title: "Native CCE, CVD and DLE laboratory PVT handoff"
 description: "Closed-mass CCE evidence and bounded depletion-PVT generation with frozen original/tuned EOS, immutable native snapshots and fixed separator provenance."
 ---
 
-# Native CCE, CVD and DLE laboratory PVT handoff
-
 ## Closed-mass CCE without an inferred saturation reference
 
 Use `DepletionPvtHistoryGenerator.replayNative` with `Path.CCE` for a complete dry
@@ -291,7 +289,7 @@ samples. The direct route retains its selected scan reference and precision
 limitation. Native CVD uses the qualified refined upper dew. It does not assign absent oil density, Bo or Rs. The modified
 black-oil route still requires both phases and rejects these rows.
 
-The dry methane/n-butane275K synthetic reference covers500/200/100/50/20/5/2bara,
+The dry methane/n-butane 275 K synthetic reference covers 500/200/100/50/20/5/2 bara,
 including two-phase depletion and a gas-only tail. Independent SRK cubic roots,
 fugacity equality, two-phase algebraic gas removal and single-phase extensivity
 provide numerical references. This is model consistency, not measured lab/field
@@ -310,7 +308,7 @@ Supply an independently accepted wet EOS and its appropriate multiphase-check
 configuration in each original/tuned checkpoint. The handoff does not select or
 retune that model, infer water density, estimate saturation, or calibrate a
 reservoir. Every present phase pair must have composition L1 distance greater
-than1e-8; this is an unchanged critical-degeneracy rejection threshold, not an
+than 1e-8; this is an unchanged critical-degeneracy rejection threshold, not an
 accuracy tolerance. Solids/hydrates and other phase types remain unsupported.
 Wet CVD and modified-black-oil water conversion require separate qualification.
 
@@ -319,7 +317,7 @@ closure, pure-water and single-phase wet-gas limits, nine independently solved
 gas/aqueous states and three independent gas/oil/aqueous states. The references
 use unshifted classic SRK and shared explicit component parameters, not measured
 water/hydrocarbon data. Volume relative and phase-composition/fraction absolute
-bounds are1e-8; cell component closure is1e-10mol and separator closure1e-8mol
+bounds are 1e-8; cell component closure is 1e-10 mol and separator closure 1e-8 mol
 for the one-mole fixtures. These bounds establish numerical consistency within
 the stated synthetic cases, not measured-fluid accuracy or near-critical validity.
 
@@ -400,7 +398,7 @@ energy allowance, final component/fugacity checks and phase-family restriction.
 It does not fit the EOS, change the laboratory protocol or prove global stability.
 `FixedCellFeasibleGibbsTest` retains the three public ternary regressions at
 300/325 K and 10 bara, with three extensive scales and immutable caller inputs.
-Its108 additional reference-only controls cover classic SRK/PR, volume correction
+Its 108 additional reference-only controls cover classic SRK/PR, volume correction
 off/on and nearby T/P. Analytic extensivity and fresh homogeneous constructions
 verify this energy calculation; they do not qualify a new depletion path or an
 independently calibrated or measured fluid. See the frozen EOS-control scope in
@@ -424,8 +422,8 @@ Keep original/tuned laboratory calibration and whole-experiment holdouts separat
 from reservoir-volume matching and held-out field pressures/GOR/composition.
 
 The [independent reference and reproduction instructions](../../src/test/resources/neqsim/pvtsimulation/fixed-cell/README.md)
-cover the original216synthetic states across72complete pressure paths and480
-additional states across96five-pressure paths, including wet gas without
+cover the original 216 synthetic states across 72 complete pressure paths and 480
+additional states across 96 five-pressure paths, including wet gas without
 oil, nearby temperatures and three sample sizes. Both checkpoint selections and
 all separator products are tested. This is bounded numerical consistency, not
 measured laboratory/field accuracy, critical or global phase-stability acceptance.
@@ -433,8 +431,10 @@ measured laboratory/field accuracy, critical or global phase-stability acceptanc
 ## Dry phase-changing fixed-cell experiment
 
 For an independently declared **dry** initial-volume experiment, select
-`DepletionPvtHistoryGenerator.replayNativeDryPhaseChangingFixedCell`. Its core API is
-`ConstantVolumeDepletion.runDryPhaseChangingFixedCellDepletion`. Both preserve the
+[`DepletionPvtHistoryGenerator.replayNativeDryPhaseChangingFixedCell`](../../src/main/java/neqsim/pvtsimulation/util/DepletionPvtHistoryGenerator.java).
+Its core API is
+[`ConstantVolumeDepletion.runDryPhaseChangingFixedCellDepletion`](../../src/main/java/neqsim/pvtsimulation/simulation/ConstantVolumeDepletion.java).
+Both preserve the
 explicit first occupied volume and permit oil to appear or disappear while gas
 remains present. `FixedCellResult.allowsDryPhaseChanges()` records this opt-in in
 the immutable, serializable result. The existing `replayNativeFixedCell` and
@@ -451,10 +451,18 @@ volume restoration fail without mutating the input or publishing a partial path.
 This does not infer a wet upper dew or qualify near-critical gas condensates.
 
 The following one-mole synthetic example is compiled and executed directly from
-this guide by `DryFixedCellPhaseTransitionTest`. The two checkpoints are separately
-labeled numerical controls, not an experimental EOS tune. The whole-experiment
-identity includes the initial-volume convention; separator volumes remain actual
-volumes at the final stated pressure and temperature.
+this guide by
+[`DryFixedCellPhaseTransitionTest`](../../src/test/java/neqsim/pvtsimulation/util/DryFixedCellPhaseTransitionTest.java).
+The two checkpoints are separately labeled numerical controls, not an experimental
+EOS tune. The whole-experiment identity includes the initial-volume convention;
+separator volumes remain actual volumes at the final stated pressure and
+temperature.
+
+Run the owning executable documentation regression with:
+
+```bash
+./mvnw -Dtest=DryFixedCellPhaseTransitionTest#literalGuideExampleCompilesAndRuns test
+```
 
 <!-- dry-fixed-cell-example -->
 ```java
@@ -488,9 +496,9 @@ public class DryFixedCellGuideExample {
         "synthetic dry sample", "original SRK", "separate identical consistency control",
         "synthetic laboratory protocol; no field fit", new String[] {"whole-experiment-control"});
     PvtSeparatorPath separator = new PvtSeparatorPath(new double[] {1.5, 1.01325},
-        new double[] {303.15, 298.15}, "final actual product volumes at1.01325bara298.15K");
+        new double[] {303.15, 298.15}, "final actual product volumes at 1.01325 bara and 298.15 K");
     return DepletionPvtHistoryGenerator.replayNativeDryPhaseChangingFixedCell(model, false,
-        "synthetic dry CVD; initial100bara occupied volume; public numerical control",
+        "synthetic dry CVD; initial 100 bara occupied volume; public numerical control",
         275, new double[] {100, 60, 50, 30, 20, 5, 2}, separator);
   }
 }
