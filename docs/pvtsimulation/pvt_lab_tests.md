@@ -195,6 +195,13 @@ Read `getSaturationPressure`, `getRelativeVolume`, `getLiquidRelativeVolume`,
 `getCummulativeMolePercDepleted` is the current compatibility API.
 `getLiquidRelativeVolume` returns percent of saturation volume, not a unitless fraction.
 
+For a custom depletion loop, keep the material balance on an explicit mole basis. Suppose a
+100 mol cell contains 75 mol after gas withdrawal. Passing the remaining component amounts to
+`setMolarComposition` sets their proportions and leaves the fluid at 100 mol. Set the total
+to 75 mol with `setTotalNumberOfMoles` before the flash. The resulting phase amounts and
+volumes already represent the 75 mol cell. If the calculation uses a separate 1 mol sample,
+multiply its phase amounts and volumes by 75 once to recover the cell values.
+
 The legacy `setTemperaturesAndPressures(temperaturesK, pressuresBara)` also sets the
 pressure schedule used by `runCalc`, replacing any earlier schedule. `runCalc` remains
 isothermal: use `setTemperature` for its common temperature; the temperature array

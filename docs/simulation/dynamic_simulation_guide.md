@@ -18,6 +18,7 @@ Comprehensive guide to transient and dynamic simulation in NeqSim.
 - [Vessel Depressurization](#vessel-depressurization)
 - [Calculation Identifiers](#calculation-identifiers)
 - [Best Practices](#best-practices)
+- [Well-to-export control and shutdown](#well-to-export-control-and-shutdown)
 - [Examples](#examples)
 - [Related Documentation](#related-documentation)
 
@@ -73,9 +74,8 @@ separator.setCalculateSteadyState(false);
 pipeline.setCalculateSteadyState(false);
 
 // Time step through simulation
-UUID id = UUID.randomUUID();
 for (int step = 0; step < 100; step++) {
-    process.runTransient(1.0, id);  // 1 second time step
+    process.runTransient(1.0, UUID.randomUUID());  // 1 second time step
 }
 ```
 
@@ -676,6 +676,52 @@ try {
 ```
 
 ---
+
+## Well-to-export control and shutdown
+
+`neqsim.process.util.scenario.WellToExportDynamics` builds a synthetic field with a separate Vogel well,
+short Beggs-Brill gathering line and pressure-reducing choke per producer. All producers feed a finite
+host separator. Oil flows through a level valve and cooler to a 50 bara export pump. Each parallel
+gas train has its own suction and discharge inventories, compressor map, aftercooler, non-return
+valve, anti-surge recycle and export isolation. Equipment tags within a compressor package are
+local to its train.
+
+Construct `WellToExportDynamics(12, 2)` for twelve wells and two duty trains, or use the no-argument
+constructor for one well and one train. Both configurations share the same total nominal well rate
+of 0.55 MSm³/day. Call `plant.runTransient(0.1)` for each 0.10 s interval. Use `getGathering()`,
+`getHost()`, `getOilExport()` and `getGasTrains()` to read the live equipment and change boundaries.
+Advance the assembled plant as a whole so each parallel withdrawal is calculated from the same
+starting pressure and is counted once in the host inventory.
+
+| Function | Measured input and simulated response |
+|---|---|
+| Production control | Host pressure regulates the train inlet valves. Host liquid level regulates the oil export valve. The oil cooler supplies a 285 K pump suction. |
+| Compressor control | Discharge pressure controls shaft speed. Aftercooler temperature controls cooling, and scrubber levels control liquid drains. Measured map margin commands the recycle valve. |
+| Compressor package trip | Local high discharge pressure, high cooled-gas temperature, high suction/discharge level, or the package push button trips the driver, closes its inlet and export valves, and opens its recycle. Other trains keep their own protection state. |
+| Plant shutdown | Independent host sensors trip at 36 bara or 0.80 level fraction. Either trip or the plant push button commands well shut-in, oil valve closure, oil pump and compressor trips, and host blowdown. |
+| Mechanical pressure relief | A separate host PSV starts lifting at 38 bara and reaches full opening at 40 bara. Both relief and blowdown withdraw actual gas to a specified 3 bara disposal boundary. |
+
+The single-train regression reduces well deliverability, raises gas-export backpressure and then
+trips the plant. It compares every component entering and leaving against the summed change in
+vessel holdup at each step, using both 0.10 s and 0.05 s. A second case trips just one train while
+twelve wells continue producing. Run `./mvnw -Dtest=WellToExportDynamicsTest test` to reproduce them.
+
+In dynamic mode, `WellFlow` re-evaluates a selected Vogel, Fetkovich, backpressure, tabulated or
+multilayer production model at each step. With an explicit production index and prescribed outlet
+pressure it also reads the current pressure specification. Repeated algebraic evaluations with one
+physical step identifier advance the well clock once.
+
+In a 30 s replay with twelve wells and two trains, each train exported 2.32 kg/s before a local
+trip at 3 s. At 15 s the tripped train exported zero, the operating train exported 2.34 kg/s and
+the host separator had risen from 32.00 to 34.02 bara. A plant ESD at 15 s stopped oil and gas
+export; at 30 s the separator was at 33.12 bara and its blowdown valve discharged 0.607 kg/s.
+
+The synthetic SRK fluid contains methane, ethane, propane and n-heptane. The calculations cover
+short-duration oil and gas handling. Reservoir pressure is prescribed, and shut-in removes well
+drawdown immediately. The gathering lines use steady hydraulics at each step. Export and disposal
+pressures are boundary conditions. Long-line inventory, water handling, oil stabilization to a sales
+specification, flare-network backpressure and site-specific protection performance require separate models.
+The fixed-step assembly does not support plant-wide adaptive retries or transactional rollback.
 
 ## Examples
 

@@ -154,6 +154,12 @@ flowing bottom-hole pressure), so it is consistent with the pressure the table u
   wells. Give the wells of the unit the same `ReservoirStateProxy` with `HybridWell.setDrainageUnit(unit)`.
 - **Well.** The well block pressure, keyed on the well's own cumulative oil.
 
+To start part-way through production, use `setCumulative` on the proxy or scenario state. Setting
+`OIL_PRODUCED` or `WATER_PRODUCED` replaces that phase total and recomputes `LIQUID_PRODUCED` as
+their sum in Sm³. If only total liquid is known, set `LIQUID_PRODUCED` directly. This leaves the
+phase split unspecified. Subsequent production adds the oil and water increments to the reported
+total. Saving and restoring a cumulative-state snapshot preserves all coordinates exactly.
+
 ## Solving and time stepping
 
 `solve()` finds the well rates and node pressures at the current cumulative volumes by fixed-point iteration on the

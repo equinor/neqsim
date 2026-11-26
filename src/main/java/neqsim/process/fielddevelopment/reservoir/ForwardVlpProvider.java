@@ -124,8 +124,8 @@ public class ForwardVlpProvider implements VlpProvider {
    * <p>
    * A forward model can jump across the requested outlet pressure, for example where a pipe correlation changes flow
    * pattern. No inlet pressure then gives the outlet pressure within the tolerance and the search would end without a
-   * result. With a bracket narrower than this interval the jump location is returned as the root and counted in
-   * {@link #getDiscontinuousRoots()}.
+   * result. When finite model evaluations bracket the target within this interval, their midpoint is returned and
+   * counted in {@link #getDiscontinuousRoots()}.
    * </p>
    *
    * @param bar inlet pressure interval in bar (0.001 by default); zero or negative disables the check
@@ -150,39 +150,48 @@ public class ForwardVlpProvider implements VlpProvider {
   public double bottomHolePressure(double rate, double outletPressure, double waterRatio, double gasRatio, double alq) {
     double lo = Double.NaN;
     double flo = Double.NaN;
+    boolean lowerEndpointCollapsed = false;
     double hi = Double.NaN;
     double fhi = Double.NaN;
     double p = Math.min(maxInletBar, Math.max(minInletBar, outletPressure * 1.2 + 10.0));
     for (int iter = 0; iter < 80; iter++) {
       double out = model.outletPressure(rate, p, waterRatio, gasRatio, alq);
       evaluations++;
-      if (Double.isNaN(out)) {
+      boolean collapsed = Double.isNaN(out);
+      if (collapsed) {
         if (Double.isNaN(collapsedDropBar) || collapsedDropBar <= 0.0) {
           return Double.NaN;
         }
         collapsedEvaluations++;
         out = Math.min(p - collapsedDropBar, outletPressure - 1.0);
+      } else if (!Double.isFinite(out)) {
+        return Double.NaN;
       }
       double f = out - outletPressure;
-      if (Math.abs(f) < toleranceBar) {
+      if (!collapsed && Math.abs(f) < toleranceBar) {
         return p;
       }
       if (f < 0.0) {
         lo = p;
         flo = f;
+        lowerEndpointCollapsed = collapsed;
       } else {
         hi = p;
         fhi = f;
       }
       double next;
       if (!Double.isNaN(lo) && !Double.isNaN(hi)) {
-        if (bracketToleranceBar > 0.0 && hi - lo < bracketToleranceBar) {
+        // A collapsed evaluation always supplies the lower endpoint. Only real model values can establish a jump.
+        if (!lowerEndpointCollapsed && bracketToleranceBar > 0.0 && hi - lo < bracketToleranceBar) {
           discontinuousRoots++;
           return 0.5 * (lo + hi);
         }
         next = hi - fhi * (hi - lo) / (fhi - flo);
         if (!(next > lo && next < hi) || iter % 4 == 3) {
           next = 0.5 * (lo + hi);
+          if (!(next > lo && next < hi)) {
+            return Double.NaN;
+          }
         }
       } else {
         next = p - f;

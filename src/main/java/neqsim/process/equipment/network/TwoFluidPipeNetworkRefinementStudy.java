@@ -2,6 +2,7 @@ package neqsim.process.equipment.network;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -13,15 +14,18 @@ import neqsim.process.equipment.pipeline.TwoFluidMassBalanceReport.Phase;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
 
 /**
- * Replays one accepted two-fluid network definition at common physical times with different outer steps and branch
- * subcycle factors.
+ * Replays one accepted two-fluid network definition at common physical times with different outer steps, branch
+ * subcycle factors and branch spatial meshes.
  *
  * <p>
  * The study snapshots the supplied canonical {@link TwoFluidPipeNetwork} through serialization. Every case starts from
- * that same snapshot, changes only the outer time step and existing per-branch subcycle factors, and retains measured
- * runtime, conservation residuals, node pressures and full branch profiles. It does not change topology, meshes,
- * boundary states, physical closures or solver tolerances. Results therefore support numerical refinement and runtime
- * screening; they are not independent physical qualification.
+ * that same snapshot, changes only the outer time step, existing per-branch subcycle factors and explicitly requested
+ * section counts, and retains measured runtime, conservation residuals, node pressures and full branch profiles. A mesh
+ * override preserves length and resamples an explicit cell-face elevation route. Flat legacy elevation arrays are
+ * converted to the equivalent constant face route; non-flat legacy arrays fail closed because their section-indexed
+ * geometry cannot be changed without interpretation. The study does not change topology, boundary states, physical
+ * closures or solver tolerances. Results therefore support numerical refinement and runtime screening; they are not
+ * independent physical qualification.
  * </p>
  *
  * @author Even Solbraa
@@ -34,6 +38,20 @@ public final class TwoFluidPipeNetworkRefinementStudy implements Serializable {
   private final Set<String> nodeNames;
   private final Set<String> branchNames;
   private final List<Configuration> configurations = new ArrayList<Configuration>();
+
+  /** Quantities available for common-position branch-profile comparison. */
+  public enum ProfileQuantity {
+    /** Mechanical pressure in Pa. */
+    PRESSURE,
+    /** Fluid temperature in K. */
+    TEMPERATURE,
+    /** Total liquid volume fraction. */
+    LIQUID_HOLDUP,
+    /** Gas phase velocity in m/s. */
+    GAS_VELOCITY,
+    /** Liquid phase velocity in m/s. */
+    LIQUID_VELOCITY
+  }
 
   /**
    * Create a study from an unadvanced canonical network definition.
@@ -71,6 +89,28 @@ public final class TwoFluidPipeNetworkRefinementStudy implements Serializable {
    */
   public TwoFluidPipeNetworkRefinementStudy addConfiguration(String name, double outerTimeStepSeconds,
       Map<String, Integer> branchSubcycles) {
+    return addConfiguration(name, outerTimeStepSeconds, branchSubcycles, null);
+  }
+
+  /**
+   * Add a numerical configuration with optional spatial mesh overrides.
+   *
+   * <p>
+   * Omitted branches retain their captured section count. A mesh override is applied only to an independently restored
+   * case and never mutates the captured network. Explicit cell-face terrain is interpolated onto the new uniform mesh.
+   * Non-flat legacy section-indexed terrain is rejected because it cannot be reinterpreted as physical faces without a
+   * user decision.
+   * </p>
+   *
+   * @param name unique case name
+   * @param outerTimeStepSeconds positive outer time step in seconds
+   * @param branchSubcycles positive integer factors keyed by branch name
+   * @param branchSectionCounts section counts of at least two keyed by branch name
+   * @return this study
+   * @throws IllegalArgumentException for invalid or duplicate inputs
+   */
+  public TwoFluidPipeNetworkRefinementStudy addConfiguration(String name, double outerTimeStepSeconds,
+      Map<String, Integer> branchSubcycles, Map<String, Integer> branchSectionCounts) {
     requireName(name, "Configuration");
     requirePositiveFinite(outerTimeStepSeconds, "Outer time step");
     for (Configuration existing : configurations) {
@@ -90,7 +130,8 @@ public final class TwoFluidPipeNetworkRefinementStudy implements Serializable {
         copied.put(entry.getKey(), entry.getValue());
       }
     }
-    configurations.add(new Configuration(name, outerTimeStepSeconds, copied));
+    Map<String, Integer> copiedSections = copyPositiveBranchIntegers(branchSectionCounts, "Section count", 2);
+    configurations.add(new Configuration(name, outerTimeStepSeconds, copied, copiedSections));
     return this;
   }
 
@@ -128,6 +169,9 @@ public final class TwoFluidPipeNetworkRefinementStudy implements Serializable {
    */
   private CaseResult runCase(Configuration configuration, long stepCount) {
     TwoFluidPipeNetwork network = SerializationUtils.deserialize(networkSnapshot);
+    for (Map.Entry<String, Integer> entry : configuration.branchSectionCounts.entrySet()) {
+      applyUniformMesh(network.getPipe(entry.getKey()), entry.getValue().intValue(), entry.getKey());
+    }
     for (Map.Entry<String, Integer> entry : configuration.branchSubcycles.entrySet()) {
       network.setBranchSubcycles(entry.getKey(), entry.getValue().intValue());
     }
@@ -169,6 +213,146 @@ public final class TwoFluidPipeNetworkRefinementStudy implements Serializable {
   }
 
   /**
+   * Copy and validate an optional branch-to-positive-integer map.
+   *
+   * @param values optional source map
+   * @param label value label used in diagnostics
+   * @param minimum smallest accepted integer
+   * @return independently allocated validated map
+   */
+  private Map<String, Integer> copyPositiveBranchIntegers(Map<String, Integer> values, String label, int minimum) {
+    Map<String, Integer> copied = new LinkedHashMap<String, Integer>();
+    if (values == null) {
+      return copied;
+    }
+    for (Map.Entry<String, Integer> entry : values.entrySet()) {
+      if (!branchNames.contains(entry.getKey())) {
+        throw new IllegalArgumentException("Unknown branch '" + entry.getKey() + "'");
+      }
+      if (entry.getValue() == null || entry.getValue().intValue() < minimum) {
+        throw new IllegalArgumentException(label + " for '" + entry.getKey() + "' must be at least " + minimum);
+      }
+      copied.put(entry.getKey(), entry.getValue());
+    }
+    return copied;
+  }
+
+  /**
+   * Apply one physically aligned uniform mesh to an unadvanced restored pipe.
+   *
+   * @param pipe independently restored pipe
+   * @param sectionCount requested section count
+   * @param branchName branch name used in diagnostics
+   */
+  private static void applyUniformMesh(TwoFluidPipe pipe, int sectionCount, String branchName) {
+    double length = pipe.getLength();
+    if (!Double.isFinite(length) || length <= 0.0) {
+      throw new IllegalArgumentException("Branch '" + branchName + "' must have a positive finite length");
+    }
+    double[] targetLengths = new double[sectionCount];
+    Arrays.fill(targetLengths, length / sectionCount);
+    double[] faceElevations = pipe.getCellFaceElevationProfile();
+    double[] legacyElevations = pipe.getElevationProfile();
+    double[] resampledFaces = null;
+    if (faceElevations != null) {
+      double[] sourceLengths = physicalCellLengths(pipe, faceElevations.length - 1);
+      resampledFaces = resampleFaceValues(faceElevations, sourceLengths, length, sectionCount);
+    } else if (legacyElevations != null) {
+      if (!isConstant(legacyElevations)) {
+        throw new IllegalArgumentException("Branch '" + branchName
+            + "' uses non-flat legacy section-indexed terrain; set an explicit cell-face elevation profile before spatial refinement");
+      }
+      resampledFaces = new double[sectionCount + 1];
+      Arrays.fill(resampledFaces, legacyElevations[0]);
+    }
+    pipe.setSectionLengths(targetLengths);
+    if (resampledFaces != null) {
+      pipe.setCellFaceElevationProfile(resampledFaces);
+    }
+  }
+
+  /**
+   * Read physical source-cell lengths, expanding a uniform mesh when necessary.
+   *
+   * @param pipe pipe definition
+   * @param sectionCount expected number of cells
+   * @return physical cell lengths in m
+   */
+  private static double[] physicalCellLengths(TwoFluidPipe pipe, int sectionCount) {
+    double[] lengths = pipe.getSectionLengths();
+    if (lengths != null) {
+      if (lengths.length != sectionCount) {
+        throw new IllegalArgumentException("Cell-face terrain and section lengths have inconsistent dimensions");
+      }
+      return lengths;
+    }
+    lengths = new double[sectionCount];
+    Arrays.fill(lengths, pipe.getLength() / sectionCount);
+    return lengths;
+  }
+
+  /**
+   * Interpolate physical face values from one mesh onto another uniform mesh.
+   *
+   * @param sourceValues values at original cell faces
+   * @param sourceLengths original physical cell lengths in m
+   * @param totalLength branch length in m
+   * @param targetSections requested uniform section count
+   * @return values interpolated at target cell faces
+   */
+  private static double[] resampleFaceValues(double[] sourceValues, double[] sourceLengths, double totalLength,
+      int targetSections) {
+    double[] sourcePositions = new double[sourceValues.length];
+    for (int index = 1; index < sourcePositions.length; index++) {
+      sourcePositions[index] = sourcePositions[index - 1] + sourceLengths[index - 1];
+    }
+    double[] targetValues = new double[targetSections + 1];
+    for (int index = 0; index <= targetSections; index++) {
+      targetValues[index] = interpolate(sourcePositions, sourceValues, totalLength * index / targetSections);
+    }
+    return targetValues;
+  }
+
+  /**
+   * Return whether every value equals the first within scale-aware roundoff.
+   *
+   * @param values candidate values
+   * @return true when the array is constant within roundoff
+   */
+  private static boolean isConstant(double[] values) {
+    for (int index = 1; index < values.length; index++) {
+      double scale = Math.max(1.0, Math.max(Math.abs(values[0]), Math.abs(values[index])));
+      if (Math.abs(values[index] - values[0]) > 1.0e-12 * scale) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Linearly interpolate one monotonic profile with endpoint clamping.
+   *
+   * @param positions monotonic physical positions
+   * @param values values aligned with positions
+   * @param target requested physical position
+   * @return interpolated or endpoint-clamped value
+   */
+  private static double interpolate(double[] positions, double[] values, double target) {
+    if (target <= positions[0]) {
+      return values[0];
+    }
+    if (target >= positions[positions.length - 1]) {
+      return values[values.length - 1];
+    }
+    int upper = 1;
+    while (positions[upper] < target) {
+      upper++;
+    }
+    double fraction = (target - positions[upper - 1]) / (positions[upper] - positions[upper - 1]);
+    return values[upper - 1] + fraction * (values[upper] - values[upper - 1]);
+  }
+
+  /**
    * Require a nonblank name.
    *
    * @param value candidate name
@@ -198,6 +382,7 @@ public final class TwoFluidPipeNetworkRefinementStudy implements Serializable {
     private final String name;
     private final double outerTimeStepSeconds;
     private final Map<String, Integer> branchSubcycles;
+    private final Map<String, Integer> branchSectionCounts;
 
     /**
      * Create a configuration.
@@ -205,11 +390,14 @@ public final class TwoFluidPipeNetworkRefinementStudy implements Serializable {
      * @param name case name
      * @param outerTimeStepSeconds outer time step in seconds
      * @param branchSubcycles branch subcycle factors
+     * @param branchSectionCounts branch spatial section counts
      */
-    private Configuration(String name, double outerTimeStepSeconds, Map<String, Integer> branchSubcycles) {
+    private Configuration(String name, double outerTimeStepSeconds, Map<String, Integer> branchSubcycles,
+        Map<String, Integer> branchSectionCounts) {
       this.name = name;
       this.outerTimeStepSeconds = outerTimeStepSeconds;
       this.branchSubcycles = Collections.unmodifiableMap(new LinkedHashMap<String, Integer>(branchSubcycles));
+      this.branchSectionCounts = Collections.unmodifiableMap(new LinkedHashMap<String, Integer>(branchSectionCounts));
     }
   }
 
@@ -298,6 +486,72 @@ public final class TwoFluidPipeNetworkRefinementStudy implements Serializable {
       double second = secondProfile[secondProfile.length - 1];
       return Math.abs(first - second) / Math.max(Math.abs(second), 1.0e-30);
     }
+
+    /**
+     * Compare complete final branch profiles on both cases' physical cell-centre positions.
+     *
+     * <p>
+     * Each profile is linearly interpolated onto the other mesh and the larger absolute difference is normalized by the
+     * largest magnitude present in either result. This symmetric measure avoids selecting one mesh as the hidden
+     * reference and remains dimensionless for every supported quantity.
+     * </p>
+     *
+     * @param firstName first case
+     * @param secondName second case
+     * @param branchName branch name
+     * @param quantity profile quantity
+     * @return symmetric maximum normalized profile difference
+     */
+    public double getMaximumNormalizedBranchProfileDifference(String firstName, String secondName, String branchName,
+        ProfileQuantity quantity) {
+      BranchProfile first = getCase(firstName).getBranchProfile(branchName);
+      BranchProfile second = getCase(secondName).getBranchProfile(branchName);
+      return maximumNormalizedDifference(first, second, quantity);
+    }
+
+    /**
+     * Calculate a symmetric maximum normalized profile difference.
+     *
+     * @param first first profile
+     * @param second second profile
+     * @param quantity requested quantity
+     * @return symmetric normalized difference
+     */
+    private static double maximumNormalizedDifference(BranchProfile first, BranchProfile second,
+        ProfileQuantity quantity) {
+      double[] firstValues = first.values(quantity);
+      double[] secondValues = second.values(quantity);
+      double scale = 1.0e-30;
+      for (double value : firstValues) {
+        scale = Math.max(scale, Math.abs(value));
+      }
+      for (double value : secondValues) {
+        scale = Math.max(scale, Math.abs(value));
+      }
+      double maximum = directionalMaximumDifference(first.positionM, firstValues, second.positionM, secondValues);
+      maximum = Math.max(maximum,
+          directionalMaximumDifference(second.positionM, secondValues, first.positionM, firstValues));
+      return maximum / scale;
+    }
+
+    /**
+     * Interpolate a source profile at every target position and return the maximum absolute difference.
+     *
+     * @param sourcePositions source cell-centre positions
+     * @param sourceValues source values
+     * @param targetPositions target cell-centre positions
+     * @param targetValues target values
+     * @return maximum absolute interpolated difference
+     */
+    private static double directionalMaximumDifference(double[] sourcePositions, double[] sourceValues,
+        double[] targetPositions, double[] targetValues) {
+      double maximum = 0.0;
+      for (int index = 0; index < targetPositions.length; index++) {
+        maximum = Math.max(maximum,
+            Math.abs(interpolate(sourcePositions, sourceValues, targetPositions[index]) - targetValues[index]));
+      }
+      return maximum;
+    }
   }
 
   /**
@@ -370,6 +624,15 @@ public final class TwoFluidPipeNetworkRefinementStudy implements Serializable {
      */
     public Map<String, Integer> getBranchSubcycles() {
       return configuration.branchSubcycles;
+    }
+
+    /**
+     * Get explicitly configured branch section counts.
+     *
+     * @return immutable configured branch section-count map
+     */
+    public Map<String, Integer> getBranchSectionCounts() {
+      return configuration.branchSectionCounts;
     }
 
     /**
@@ -465,6 +728,8 @@ public final class TwoFluidPipeNetworkRefinementStudy implements Serializable {
    */
   public static final class BranchProfile implements Serializable {
     private static final long serialVersionUID = 1000L;
+    private final double[] positionM;
+    private final double[] cellLengthM;
     private final double[] pressurePa;
     private final double[] temperatureK;
     private final double[] liquidHoldup;
@@ -478,10 +743,35 @@ public final class TwoFluidPipeNetworkRefinementStudy implements Serializable {
      */
     private BranchProfile(TwoFluidPipe pipe) {
       pressurePa = pipe.getPressureProfile();
+      cellLengthM = physicalCellLengths(pipe, pressurePa.length);
+      positionM = new double[pressurePa.length];
+      double distance = 0.0;
+      for (int index = 0; index < positionM.length; index++) {
+        positionM[index] = distance + 0.5 * cellLengthM[index];
+        distance += cellLengthM[index];
+      }
       temperatureK = pipe.getTemperatureProfile();
       liquidHoldup = pipe.getLiquidHoldupProfile();
       gasVelocityMPerS = pipe.getGasVelocityProfile();
       liquidVelocityMPerS = pipe.getLiquidVelocityProfile();
+    }
+
+    /**
+     * Get physical cell-centre positions.
+     *
+     * @return cell-centre positions in m from the branch inlet
+     */
+    public double[] getPositionM() {
+      return positionM.clone();
+    }
+
+    /**
+     * Get represented physical cell lengths.
+     *
+     * @return cell lengths in m
+     */
+    public double[] getCellLengthM() {
+      return cellLengthM.clone();
     }
 
     /**
@@ -527,6 +817,32 @@ public final class TwoFluidPipeNetworkRefinementStudy implements Serializable {
      */
     public double[] getLiquidVelocityMPerS() {
       return liquidVelocityMPerS.clone();
+    }
+
+    /**
+     * Select one internally retained profile without exposing its mutable array.
+     *
+     * @param quantity requested quantity
+     * @return internally retained immutable-by-contract array
+     */
+    private double[] values(ProfileQuantity quantity) {
+      if (quantity == null) {
+        throw new IllegalArgumentException("Profile quantity cannot be null");
+      }
+      switch (quantity) {
+      case PRESSURE:
+        return pressurePa;
+      case TEMPERATURE:
+        return temperatureK;
+      case LIQUID_HOLDUP:
+        return liquidHoldup;
+      case GAS_VELOCITY:
+        return gasVelocityMPerS;
+      case LIQUID_VELOCITY:
+        return liquidVelocityMPerS;
+      default:
+        throw new IllegalArgumentException("Unsupported profile quantity " + quantity);
+      }
     }
   }
 }

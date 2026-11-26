@@ -2,7 +2,7 @@
 name: neqsim-hp-lp-interface-overpressure
 version: "1.2.0"
 description: "Assess overpressure when a high-pressure well, flowline or separator feeds a low-pressure system: packed-line IVO with choke collapse, blocked outlet, relief and flare capacity, PAHH/HIPPS, LOPA, SIL. Mandatory: scenario register, installed valve-Cv input table with sources, Cv sensitivity for failed-open and blocked outlet, comparison with existing wells. Use for HP/LP tie-ins or reuse of an approved study with a new source."
-last_verified: "2026-11-25"
+last_verified: "2026-11-26"
 requires:
   java_packages: [neqsim.process.safety.overpressure, neqsim.process.safety.risk.sis, neqsim.process.safety.risk.fta, neqsim.process.safety.risk.eta, neqsim.process.safety.depressurization]
 ---
@@ -76,7 +76,7 @@ Record `scenario_register`, `valve_cv_inputs`, `cv_sensitivity` (and `usability_
 - LOPA with `LOPAResult.getSTS0131OverpressureTargetFrequency(eventBara, designBara, testBara)` (categories are checked in the order 2 x design, test, design). Initiating frequency = f_IVO x P_CC (x exposure E; design basis E = 1).
 - SIL: `SafetyInstrumentedFunction.calculatePfd1oo1/1oo2/2oo3(lambdaDU, tau)` have no beta; add `beta*lambda*tau/2` (GL070: PT 6 %, valves/solenoids 10 %, logic 5 %). GL070 Table A.2.1 lambda-DU per 1E6 h: PT 0.5, HIPPS valve 1.5, XV 1.9, pilot 0.6, PSV 1.1; test 12 months.
 - Fault tree: `FaultTreeNode.basic/voting/withCCF`; in Python `and` and `or` are keywords, so use `getattr(FT, "and_")` and `getattr(FT, "or_")`. `EventTreeAnalyzer` needs `(name, initiatingFrequency)`. `FaultTreeAnalyzer.minimalCutSets(root, maxCardinality)` returns the cut sets.
-- `PsvValveModel.massFlowKgPerS` returns 0 until `update(P)` has latched the valve open; for ODE right-hand sides use the stateless full-open and lift-fraction methods.
+- `PsvValveModel.massFlowKgPerS` returns 0 until `update(P)` has latched the valve open; for ODE right-hand sides use the stateless full-open and lift-fraction methods. Supply finite gas properties at every lift and a finite lift command. Invalid input raises `IllegalArgumentException`.
 
 ## 4. Read the conclusions the right way
 

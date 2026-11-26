@@ -1201,3 +1201,59 @@ identifying a bounded saturation or ionic-strength law. No empirical
 temperature offset, invented pressure dependence, relaxed tolerance or hydrate
 qualification is introduced here.
 
+
+
+## Residual KCl curvature and independent-transfer diagnostic
+
+`KClCO2SaltPairTransferAssessmentTest` now distinguishes the total He-Morse
+source curvature from the curvature already produced by the current
+electrolyte-CPA/Furst formulation. For every He-Morse temperature block it
+calculates a matched pure-water state at the same temperature and CO2 partial
+pressure, then defines
+
+$$
+\ln\gamma_{\mathrm{CO_2}}^{\mathrm{model}}
+=\ln\left(\frac{m_{\mathrm{CO_2}}^{\mathrm{pure,model}}}
+                 {m_{\mathrm{CO_2}}^{\mathrm{KCl,model}}}\right),
+\qquad
+\ln\gamma_{\mathrm{CO_2}}^{\mathrm{residual}}
+=\ln\gamma_{\mathrm{CO_2}}^{\mathrm{source}}
+ -\ln\gamma_{\mathrm{CO_2}}^{\mathrm{model}}.
+$$
+
+Source, model and residual responses use the same five temperature-specific
+linear nuisance coefficients and the same reduced inverse-temperature
+quadratic law. At 323.15 K the source curvature is
+`-0.00902050 +/- 0.00151516 kg2/mol2`, whereas the current model curvature is
+`-0.01753862 +/- 0.00012732 kg2/mol2`. The identifiable incremental residual
+is therefore positive, `+0.00851812 +/- 0.00149621 kg2/mol2`, more than five
+standard errors from zero. This is the numerical cause of the prior dense-KCl
+overcorrection: applying the full negative source coefficient on top of the
+existing model double-counts curvature.
+
+The reduced law improves the source, model and residual fits over their
+linear-only comparators. Their log-space RMSE values are respectively
+`0.0305432 -> 0.0173592`, `0.0502774 -> 0.00145868`, and
+`0.0399819 -> 0.0171421`; corrected AICc changes are `-168.408 ->
+-190.567`, `-142.490 -> -319.349`, and `-154.405 -> -191.221`.
+The residual is thus statistically identifiable on the He-Morse design, but
+identifiability alone does not establish transferability.
+
+Both first-order mappings are evaluated against the frozen independent
+Mousavi-Chapoy-Burgass 323.15 K KCl series. The full-source correction retains
+its aggregate improvement in log-RMSE (`0.0857793 -> 0.0672304`) but still
+worsens 22 wt% KCl (`0.0519884 -> 0.0804617`) and reverses its residual sign.
+The non-double-counted residual correction worsens every concentration family:
+aggregate log-RMSE becomes `0.136861` and MAPE becomes `12.3379%`, compared
+with baseline `0.0857793` and `7.73204%`. The 10, 15 and 22 wt% residual
+log-RMSE values are `0.107098`, `0.145144` and `0.172480`.
+
+Disposition: neither the total source coefficient nor the identified residual
+coefficient is activated. The evidence rules out a standalone, pressure-
+independent first-order activity correction as the smallest defensible model
+change. The next formulation check must resolve the pressure/composition
+coupling that differs between the low-pressure He-Morse activity design and
+the dense MCB states before fitting any production parameter. Table A.24,
+Dholabhai/Burgass hydrate, NaCl/CaCl2/MgCl2, Archer water-activity and pure-water
+controls remain frozen holdouts; no temperature offset, parameter-table edit,
+tolerance relaxation or hydrate qualification is introduced.

@@ -318,22 +318,48 @@ identity, branch-order reversal and serialized continuation. This is synthetic s
 evidence only.
 
 `TwoFluidPipeNetworkRefinementStudy` now snapshots one unadvanced canonical network and replays named
-outer-step/subcycle configurations from that exact serialized state to one common physical time. It
+outer-step/subcycle/spatial-mesh configurations from that exact serialized state to one common physical time. It
 retains measured runtime, worst accepted conservation/junction diagnostics, every final node pressure,
-and complete pressure, temperature, liquid-holdup and phase-velocity branch profiles. The slow
-acceptance test covers a direct tieback, a two-junction daisy chain and two finite conservative
-template inventories feeding a conservative PLEM and export riser. The source network remains
+and complete position/cell-length, pressure, temperature, liquid-holdup and phase-velocity branch profiles.
+Per-branch section-count overrides preserve length, interpolate explicit cell-face terrain onto the requested
+uniform mesh and leave omitted branches unchanged. Flat legacy terrain is converted without changing its physical
+route; non-flat legacy section-indexed terrain fails closed and must first be expressed as physical cell faces.
+The symmetric profile-difference API interpolates both results onto the other mesh and normalizes the largest
+absolute discrepancy by the largest magnitude present in either case.
+
+```java
+Map<String, Integer> eightCells = new LinkedHashMap<String, Integer>();
+Map<String, Integer> twelveCells = new LinkedHashMap<String, Integer>();
+for (String branch : network.getBranchNames()) {
+  eightCells.put(branch, Integer.valueOf(8));
+  twelveCells.put(branch, Integer.valueOf(12));
+}
+TwoFluidPipeNetworkRefinementStudy.Result spatial =
+    new TwoFluidPipeNetworkRefinementStudy(network)
+        .addConfiguration("eight cells", 0.0005, null, eightCells)
+        .addConfiguration("twelve cells", 0.0005, null, twelveCells)
+        .run(0.001);
+double pressureDifference = spatial.getMaximumNormalizedBranchProfileDifference(
+    "eight cells", "twelve cells", "export riser",
+    TwoFluidPipeNetworkRefinementStudy.ProfileQuantity.PRESSURE);
+```
+
+The slow acceptance test covers a direct tieback, a two-junction daisy chain, two finite conservative
+template inventories feeding an algebraic PLEM and export riser, and a source-to-PLET-to-well injection route.
+The source network remains
 unadvanced; 1 ms/factor-1, 1 ms/factor-2 and 0.5 ms/factor-2 cases retain finite profiles and nearby
-final pressures at the common 1 ms endpoint. The branched fixture now uses the same three-incident
+final pressures at the common 1 ms endpoint. The branched fixture additionally compares 8- and 12-cell
+meshes at the same time step and checks pressure, temperature, liquid holdup and both phase velocities.
+It uses the same three-incident
 algebraic PLEM contract as the network solver. Its scalar composition/enthalpy fixed point applies a
 50% donor-state update; the coupled-junction path retains its established full update. A retained
 finite-template regression requires donor convergence, exact component/energy closure and
 branch-order-independent pressure, temperature and composition without relaxing any conservation
 tolerance. These four-cell synthetic fixtures qualify the replay and numerical conservation contract
 only. Their 25% nearby-pressure screen is not a convergence rate, field error band or time-step
-recommendation. Mesh refinement still requires an independently rebuilt but physically identical
-network, longer field trajectories remain open, and independent field/commercial comparison remains
-open.
+recommendation. The 8/12-cell screen demonstrates the spatial-replay and common-position comparison contract;
+its broad 50% profile guard is not a field error band or mesh recommendation. Longer representative field
+trajectories, topology-specific convergence-rate evidence and independent field/commercial comparisons remain open.
 
 ## Typed field and equipment identity
 
@@ -1122,11 +1148,12 @@ second transition detector or interpret a heuristic `OPTIMAL` status as operatin
    coupled common pressures plus per-junction component/enthalpy donors and reports equilibrium
    interphase transfer. Positive integer branch-local subcycles now aggregate mass, component and
    energy ledgers inside the unchanged frozen whole-network transaction. A common-start/common-time
-   harness now records direct-tieback, daisy-chain and branched multi-template runtime, accepted
-   conservation and complete profiles while varying outer step and subcycles. Its multi-template
+   harness now records direct-tieback, daisy-chain, injection and branched multi-template runtime, accepted
+   conservation and complete position-aware profiles while varying outer step, subcycles and explicit branch meshes.
+   Its multi-template
    case uses a three-incident algebraic PLEM, with a retained donor-convergence regression and no
-   relaxed conservation tolerance. Next complete spatial mesh refinement, longer representative
-   field trajectories and independent field/commercial comparisons; only then
+   relaxed conservation tolerance. Next complete longer representative field trajectories,
+   topology-specific convergence rates and independent field/commercial comparisons; only then
    consider asynchronous multirate boundary coupling. Enable dynamics only within the quantitatively
    tested scope.
 4. Add reviewed Java/Python builders, agent/MCP routes (#3153) and DEXPI identity export

@@ -19,12 +19,17 @@ Deck formatting and unit conversion are delegated to `EclipseVFPExporter`
 | `VlpProvider` | Single-method interface: flowing pressure at datum for rate, outlet pressure, water ratio, gas ratio and ALQ |
 | `TubingVlpProvider` | Deviated tubing survey (`TubingPerformance.setSurvey`) with an inlet-pressure solve for the wellhead pressure |
 | `InjectionVlpProvider` | Final water/gas injection implementation with surveyed tubing, flashed fluid properties, hydrostatic head and Darcy-Weisbach friction |
-| `ForwardVlpProvider` | Turns any forward model (outlet pressure from inlet pressure: pipes, valves, a process) into a provider by inverse solve. Where the forward model jumps across the target (a flow-regime switch), the solve ends when the bracket is narrower than `setBracketTolerance(bar)` (default 0.001 bar) and returns its midpoint; `getDiscontinuousRoots()` counts those points |
+| `ForwardVlpProvider` | Turns any forward model (outlet pressure from inlet pressure: pipes, valves, a process) into a provider by inverse solve. For a flow-regime jump, returns the midpoint when two finite outlet evaluations straddle the target within the configured inlet-pressure bracket tolerance (default 0.001 bar). `getDiscontinuousRoots()` counts these roots |
 | `FlowlineVlpProvider` | A chain of `PipeBeggsAndBrills` segments (flowline, riser) with a recombined fluid, as a provider: inlet pressure for rate, outlet pressure, water ratio and gas ratio |
 | `VfpTableLookup` (package `neqsim.process.fielddevelopment.hybrid`) | An existing `VFPPROD` table used as a provider: reads the include file, interpolates as the simulators do, converts between OIL, LIQ and GAS rate basis |
 | `RecombinationFluidFactory` | Recombines surface gas, stock-tank liquid and water to the well stream for each coordinate |
 | `VfpTableBuilder` | Axes, evaluation, rate cap, sanity enforcement, deck text |
 | `VfpDeckReader` | Parses a `VFPPROD`/`VFPINJ` keyword back to numbers, for round-trip checks |
+
+When a low-inlet-pressure profile fails with `NaN`, `setCollapsedProfileDrop` lets the search move
+to a higher inlet pressure. The synthetic outlet can guide the search only. For example, if the
+first feasible inlet is 16.5 bara and the valid pressure drop is 12 bar, a 5 bara outlet target
+has a 17 bara inlet solution. A 4 bara target is below every feasible outlet and returns `NaN`.
 
 `InjectionVlpProvider` validates its survey in both constructors and owns a cloned working fluid.
 It is not thread safe; use one provider per concurrent calculation. Implement `VlpProvider` for a

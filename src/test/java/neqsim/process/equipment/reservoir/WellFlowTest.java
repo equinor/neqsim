@@ -14,6 +14,55 @@ import neqsim.process.processmodel.ProcessSystem;
 public class WellFlowTest {
   private static final Logger logger = LogManager.getLogger(WellFlowTest.class);
 
+  /** The transient rate follows the configured Vogel drawdown at both operating points. */
+  @Test
+  void transientProductionUsesConfiguredInflowCurve() {
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(320.0, 100.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+    StreamInterface source = new neqsim.process.equipment.stream.Stream("reservoir", fluid);
+    source.setFlowRate(0.1, "MSm3/day");
+    source.run();
+    WellFlow well = new WellFlow("producer");
+    well.setInletStream(source);
+    well.setVogelParameters(0.1, 60.0, 100.0);
+    well.solveFlowFromOutletPressure(true);
+    well.setOutletPressure(60.0, "bara");
+    well.run();
+    well.setCalculateSteadyState(false);
+    well.runTransient(0.5, java.util.UUID.randomUUID());
+    assertEquals(0.1, well.getOutletStream().getFlowRate("MSm3/day"), 1.0e-8);
+    well.setOutletPressure(80.0, "bara");
+    java.util.UUID step = java.util.UUID.randomUUID();
+    well.runTransient(0.0, step);
+    well.runTransient(0.5, step);
+    well.runTransient(0.5, step);
+    double expected = 0.1 * (1.0 - 0.2 * 0.8 - 0.8 * 0.8 * 0.8) / (1.0 - 0.2 * 0.6 - 0.8 * 0.6 * 0.6);
+    assertEquals(expected, well.getOutletStream().getFlowRate("MSm3/day"), 1.0e-8);
+    assertEquals(1.0, well.getTime(), 1.0e-12);
+  }
+
+  /** An explicit PI rate specification follows changes in prescribed flowing pressure at each step. */
+  @Test
+  void transientSpecifiedPiUsesCurrentFlowingPressure() {
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(320.0, 100.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+    StreamInterface source = new neqsim.process.equipment.stream.Stream("reservoir", fluid);
+    source.run();
+    WellFlow well = new WellFlow("well");
+    well.setInletStream(source);
+    well.setWellProductionIndex(1.0e-5);
+    well.solveFlowFromOutletPressure(true);
+    well.setOutletPressure(60.0, "bara");
+    well.setCalculateSteadyState(false);
+    well.runTransient(1.0, java.util.UUID.randomUUID());
+    assertEquals(0.064, well.getOutletStream().getFlowRate("MSm3/day"), 1.0e-8);
+    well.setOutletPressure(80.0, "bara");
+    well.runTransient(1.0, java.util.UUID.randomUUID());
+    assertEquals(0.036, well.getOutletStream().getFlowRate("MSm3/day"), 1.0e-8);
+  }
+
   @Test
   void testRun() {
     neqsim.thermo.system.SystemInterface fluid1 = new neqsim.thermo.system.SystemPrEos(373.15, 100.0);

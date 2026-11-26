@@ -102,7 +102,7 @@ class KClCO2SolubilityReferenceAssessmentTest {
    * @param reference experimental state
    * @return calculated diagnostics
    */
-  private static Result calculate(Reference reference) {
+  static Result calculate(Reference reference) {
     return calculate(reference, CO2_FEED_MOLES);
   }
 
@@ -277,7 +277,7 @@ class KClCO2SolubilityReferenceAssessmentTest {
    * @return experimental rows
    * @throws Exception if the fixture cannot be read or parsed
    */
-  private static List<Reference> loadReferences() throws Exception {
+  static List<Reference> loadReferences() throws Exception {
     InputStream stream = KClCO2SolubilityReferenceAssessmentTest.class.getResourceAsStream(RESOURCE);
     assertNotNull(stream, RESOURCE);
     List<Reference> references = new ArrayList<Reference>();
@@ -335,14 +335,14 @@ class KClCO2SolubilityReferenceAssessmentTest {
    * @author OpenAI
    * @version 1.0
    */
-  private static final class Reference {
-    private final String pointId;
-    private final double temperatureK;
-    private final double targetCo2PartialPressureBara;
-    private final double sourceSolventDensity;
-    private final double experimentalCo2Molality;
-    private final double kclMolality;
-    private final double sourceCo2ActivityCoefficient;
+  static final class Reference {
+    final String pointId;
+    final double temperatureK;
+    final double targetCo2PartialPressureBara;
+    final double sourceSolventDensity;
+    final double experimentalCo2Molality;
+    final double kclMolality;
+    final double sourceCo2ActivityCoefficient;
 
     /**
      * Creates an experimental state.
@@ -355,7 +355,7 @@ class KClCO2SolubilityReferenceAssessmentTest {
      * @param kclMolality KCl molality
      * @param sourceCo2ActivityCoefficient source CO2 activity coefficient
      */
-    private Reference(String pointId, double temperatureK, double co2PartialPressureAtm, double sourceSolventDensity,
+    Reference(String pointId, double temperatureK, double co2PartialPressureAtm, double sourceSolventDensity,
         double experimentalCo2Molality, double kclMolality, double sourceCo2ActivityCoefficient) {
       this.pointId = pointId;
       this.temperatureK = temperatureK;
@@ -365,6 +365,16 @@ class KClCO2SolubilityReferenceAssessmentTest {
       this.kclMolality = kclMolality;
       this.sourceCo2ActivityCoefficient = sourceCo2ActivityCoefficient;
     }
+
+    /**
+     * Creates the matched salt-free model state at the same temperature and CO2 partial pressure.
+     *
+     * @return matched pure-water reference used only to identify the model's existing salt response
+     */
+    Reference withoutSalt() {
+      return new Reference(pointId + "-PURE", temperatureK, targetCo2PartialPressureBara / ATM_TO_BAR,
+          sourceSolventDensity, experimentalCo2Molality, 0.0, 1.0);
+    }
   }
 
   /**
@@ -373,10 +383,10 @@ class KClCO2SolubilityReferenceAssessmentTest {
    * @author OpenAI
    * @version 1.0
    */
-  private static final class Result {
+  static final class Result {
     private final double actualCo2PartialPressureBara;
     private final double totalPressureBara;
-    private final double modelCo2Molality;
+    final double modelCo2Molality;
     private final double aqueousWaterMassKg;
     private final double aqueousCo2MoleFraction;
     private final String phaseTypes;

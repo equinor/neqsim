@@ -2,7 +2,7 @@
 name: neqsim-pvt-fluid-study-report
 version: "1.0.0"
 description: "Executes a professional PVT and fluid characterization study report from samples and laboratory analyses to final EOS model, ALL effective parameters and verified E300 file. USE WHEN: a complete PVT report, sample QC, recombination, heavy-end characterization, calibration/hold-out validation, full parameter/BIP documentation, E300 handover or neqsim pvt-study workflow is requested."
-last_verified: "2026-11-24"
+last_verified: "2026-11-25"
 requires:
   python_packages: [python-docx, matplotlib, pyyaml, jpype1]
 ---
@@ -196,3 +196,12 @@ composition and surface GOR alongside bounded volume matching. See
 separate laboratory/reservoir holdouts, units and finite-substep limits.
 Preserve original/tuned checkpoints. Independent synthetic-code agreement is
 not measured accuracy, a continuous-flow limit, or complete #4740 acceptance.
+
+For composition-identical laboratory sample handoff, use
+`CompositionalReservoirHistory.fromSampleComposition` and the frozen
+`binary-tank/SAME_SAMPLE_SCOPE.md` benchmark. This derives EOS phase-volume
+fractions, not mole fractions or density-corrected fractions, at reservoir T/P.
+Preserve the original constructor when geological phase volumes intentionally
+imply a different bulk mixture. The same-sample benchmark adds a whole closed-mass
+two-phase CCE holdout and predicts production/GOR on a fixed surface basis;
+synthetic independent numerical evidence does not replace measured field accuracy.

@@ -1,0 +1,124 @@
+{
+  "schema": "neqsim4740_independent_review_20261125.v1",
+  "reviewed_master": "99fa305f69dac3dc82f237aa41389774f68fadc1",
+  "verdict": "No remaining source/scientific blocker within the stated bounded synthetic scope. Parent publication checks remain separate.",
+  "source_sha256": {
+    "src/main/java/neqsim/pvtsimulation/util/CompositionalReservoirHistory.java": "abe0aec6aa2f762c0d04216914b8a24a0593e95e784921d1a8a1845d3e5d3c44",
+    "devtools/test_binary_reservoir_java.py": "a48bbf74bc021acb1675831bb4a5403296de975d5b8b67dece5b7f48a465d370",
+    "src/test/resources/neqsim/pvtsimulation/binary-tank/reference.py": "f7cbf982ccc303439d22aaa1ca9cb7b5d313da34e903bbb9c7a1faece8d0625b",
+    "src/test/resources/neqsim/pvtsimulation/binary-tank/same_sample.py": "96fe29ddbac39afcde64ff954be159a0953497f2a8442a77169ef935c4ec0a8d",
+    "src/test/java/neqsim/pvtsimulation/util/SampleCompositionReservoirHistoryTest.java": "466dcdfb97c37a4b0208cc3bee676055d6750a3ceda279ec5b3fec31348f80c1",
+    "src/test/resources/neqsim/pvtsimulation/binary-tank/test_same_sample.py": "708b2804ae63ea8b77609b04b72a00fc1f0a994a7d20ae010ddbe8b1861796d4",
+    "src/test/resources/neqsim/pvtsimulation/binary-tank/SAME_SAMPLE_SCOPE.md": "2e9e1ea0280fe7a69f9afb2378bf31c220f4091fcee3b1d676e636ee42c492fd",
+    "src/test/resources/neqsim/pvtsimulation/binary-tank/same-sample-reference.json": "f568bd9669d18fb73602674c9dd98bf9cc89f8aaab8b3baa03d2e5bae88cb5ab",
+    "src/test/resources/neqsim/pvtsimulation/binary-tank/same-sample-stability.json": "5696a5a4bc04645bbb250ed800f332a7789c7497299439d606867d55fb96bbc2"
+  },
+  "native_process_exit": 0,
+  "native_pytest_summary": "1 passed, 6 deselected in 181.74s",
+  "native_results": {
+    "case": "same_sample",
+    "errors": {
+      "pressure_bar": 1.0393819138698746e-10,
+      "composition": 3.6137759451548845e-13,
+      "gor_relative": 1.8505863508266884e-11,
+      "component_mol": 4.7510548029094934e-07
+    },
+    "predictions": [
+      {
+        "pressure_bara": 78.07029861315243,
+        "produced_methane_fraction": 0.8533194282336463,
+        "gor": 1255.1542244673394
+      },
+      {
+        "pressure_bara": 76.14011725164804,
+        "produced_methane_fraction": 0.8521398630804872,
+        "gor": 1239.8929674193869
+      },
+      {
+        "pressure_bara": 74.20928199937373,
+        "produced_methane_fraction": 0.8509436902396407,
+        "gor": 1224.749297290621
+      },
+      {
+        "pressure_bara": 72.27761973640968,
+        "produced_methane_fraction": 0.8497305444238676,
+        "gor": 1209.721712544313
+      }
+    ],
+    "two_phase_lab_holdout_relative_errors": [
+      1.6330270469211428e-12,
+      9.618528196142506e-12,
+      2.1094237467877974e-15,
+      0.0
+    ],
+    "initialization_seconds": 0.007451444000253105,
+    "truth_replay_seconds": 1.775882174999424,
+    "volume_fit_seconds": 83.87897585999963,
+    "infeasible_trial_seconds": 0.030902441998478025,
+    "infeasible_trial_message": "java.lang.IllegalStateException: History interval 0, substep 0 at volume 1.0 m3: Phase interval cannot retain a positive finite total component inventory",
+    "fitted_volume_m3": 99.9999986074546,
+    "fitted_pressures_bara": [
+      80.0,
+      78.07029858627386,
+      76.14011719787466,
+      74.20928191868228,
+      72.27761962876966
+    ],
+    "fitted_holdout_gor": 1209.7217118404137,
+    "calibration_chi_square": 1.011487467219397e-12,
+    "holdout_chi_square": 1.1573014584112292e-12,
+    "lab_holdout_relative_errors": [
+      0.0,
+      0.0,
+      2.220446049250313e-16,
+      2.220446049250313e-16
+    ],
+    "original_holdout_relative_errors": [
+      0.0016315976017650113,
+      0.001406341735244343,
+      0.0010587104680386261,
+      0.0005810311759998354
+    ],
+    "elapsed_seconds": 171.44905874300093
+  },
+  "native_log": "independent-native-360.log",
+  "diagnostic_script": "independent-native.py",
+  "earlier_attempts": [
+    {
+      "result": "setup failure before JVM startup",
+      "reason": "Missing classpath cache during clean compilation; Maven plugin-prefix resolution failed: No plugin found for prefix dependency",
+      "assertions_executed": false
+    },
+    {
+      "result": "bounded command exit 124 at 150 seconds",
+      "log": "independent-native-timeout150.log",
+      "stacks": "45/90 s first volume fit; 135 s held-out-pressure-perturbed fit. No evidence of a hang or exhaustion-stage cost."
+    }
+  ],
+  "independent_oracle_evidence": {
+    "command": "selected Python -O -m unittest discover -s src/test/resources/neqsim/pvtsimulation/binary-tank -p test_*.py -v",
+    "earlier_result": "15 passed in 4.245s, process exit 0",
+    "final_log": "independent-oracle-final.log",
+    "stability_receipt": "Full stored same-sample-stability.json equals current test_same_sample.diagnose(), including all input and wrapper hashes.",
+    "state_count": 22,
+    "physical_root_checks": 23534,
+    "final_result": "15 passed in 4.286s; full process exit 0",
+    "final_log_sha256": "8c9bb76ec82c72d7ee5f1e1fc0de95fb64b634d68c25201ec78aa94cc3058d43"
+  },
+  "review_findings_addressed": [
+    "EOS volume convention matches SimpleReservoir; beta and corrected density volume are excluded.",
+    "Unsupported/duplicate phases, invalid totals and positive phase-fraction underflow fail explicitly.",
+    "Whole-interval admission uses exact binary-value BigDecimal sums; temporal and per-phase tests remain independent.",
+    "Whole laboratory CCE holdouts remain separate from reservoir calibration/holdouts.",
+    "Same-sample receipt contains initial component amounts and complete wrapper provenance.",
+    "Documentation discloses the added admission check; runtime evidence records fit cost without a paired speedup claim."
+  ],
+  "limitations": [
+    "Only the independent same-sample native case was rerun by this reviewer; parent executes the surrounding Java/native matrix.",
+    "Reviewer did not run Maven, PMD, SpotBugs, Javadoc or coverage checks; their status belongs to parent validation receipts.",
+    "Wet qualification here is representative initialization/no-flow conservation, not wet production accuracy.",
+    "Synthetic independent PR-code agreement is not measured laboratory/field accuracy or general critical-phase stability.",
+    "No GitHub approval, CI approval, or full issue completion claim."
+  ],
+  "repository_edits_by_reviewer": false
+}

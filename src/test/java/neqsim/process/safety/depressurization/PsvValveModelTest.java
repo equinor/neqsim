@@ -72,6 +72,37 @@ public class PsvValveModelTest {
     assertThrows(IllegalArgumentException.class, () -> psv.massFlowKgPerS(55.0e5, 350.0, 0.018, 1.0, 0.95));
   }
 
+  /** Non-finite gas properties cannot represent a relieving capacity, including when commanded closed. */
+  @Test
+  public void rejectsNonfiniteFlowProperties() {
+    PsvValveModel psv = new PsvValveModel(50.0e5, 0.1, 0.975, 1.0e-3, 1.0e5);
+    double[] valid = {55.0e5, 350.0, 0.018, 1.3, 0.95};
+    for (int index = 0; index < valid.length; index++) {
+      for (double invalid : new double[] {Double.NaN, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY}) {
+        double[] gas = valid.clone();
+        gas[index] = invalid;
+        String where = "gas property " + index + " = " + invalid;
+        assertThrows(IllegalArgumentException.class,
+            () -> psv.fullOpenMassFlowKgPerS(gas[0], gas[1], gas[2], gas[3], gas[4]), where);
+        assertThrows(IllegalArgumentException.class, () -> psv.massFlowKgPerS(gas[0], gas[1], gas[2], gas[3], gas[4]),
+            where);
+        for (double lift : new double[] {0.0, 0.4}) {
+          assertThrows(IllegalArgumentException.class,
+              () -> psv.massFlowKgPerS(gas[0], gas[1], gas[2], gas[3], gas[4], lift), where);
+        }
+      }
+    }
+  }
+
+  /** Non-finite lift commands must be rejected before they can produce a flow. */
+  @Test
+  public void rejectsNonfiniteLift() {
+    PsvValveModel psv = new PsvValveModel(50.0e5, 0.1, 0.975, 1.0e-3, 1.0e5);
+    for (double lift : new double[] {Double.NaN, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY}) {
+      assertThrows(IllegalArgumentException.class, () -> psv.massFlowKgPerS(55.0e5, 350.0, 0.018, 1.3, 0.95, lift));
+    }
+  }
+
   /** Reset must close the valve and clear the cycle counter. */
   @Test
   public void resetClearsState() {
