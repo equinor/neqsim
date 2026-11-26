@@ -1,6 +1,6 @@
 ---
 title: "NeqSim 3.30.0 release and migration notes"
-description: "Changes since 3.29.0, in preparation. Removal of the deprecated Aspen IP.21 online-signal integration."
+description: "Changes since 3.29.0, in preparation. Removal of the deprecated Aspen IP.21 online-signal integration; changed TwoFluidPipe annular friction and feed split."
 ---
 
 # NeqSim 3.30.0
@@ -46,3 +46,35 @@ Migration:
 
 See the [API lifecycle guidance](api-lifecycle.md#legacy-aspen-ip21-historian-integration)
 and [measurement devices](../process/equipment/measurement_devices.md#historian-measurements).
+
+## Changed results
+
+### `TwoFluidPipe`: annular wall friction and the feed split with a prescribed outlet pressure
+
+This release updates the feed calculation and adds a steady annular friction option
+(issue [#5266](https://github.com/equinor/neqsim/issues/5266)). No method is removed or renamed.
+
+- **Optional flowing-density annular friction.** With `setAnnularFlowingDensityFriction(true)`, sections
+  classified as annular return a lower friction gradient than before: about 5 per cent lower on
+  a lean high-pressure gas-condensate line and 20 to 30 per cent lower on a low-pressure line
+  with a large liquid mass fraction. Against OLGA 2025.1.0 on four cases the pressure drop is
+  now 3 to 7 per cent below the reference, where it was 0.6 to 33 per cent above. Stratified,
+  slug and dispersed sections are unchanged, as is the holdup closure.
+  New pipes and older saved models use the holdup-weighted density by default.
+- **With a prescribed outlet pressure the feed split is flashed at the solved inlet pressure.**
+  The pressure of the inlet stream used to set the gas, oil and aqueous rates carried down the
+  line; it is now only a starting value. Results change wherever the stream pressure differed
+  from the solved inlet pressure. During a transient the connected feed uses the current inlet-cell pressure, feed temperature
+  and composition to set the admitted phase rates. For separately metered phases, select
+  `setUseStreamPhaseSplit(true)` to take the source-free inlet split from the connected stream
+  throughout steady and transient operation.
+
+Migration:
+
+- When enabling flowing-density friction, compare both pressure drops. All four reference cases
+  fall on the low side of OLGA with the option enabled.
+- Outer loops that iterated the inlet stream pressure to the solved inlet pressure are no longer
+  needed for a steady solve and can be removed; keeping them is harmless.
+- Serialized pipes written before this release load with the holdup-weighted density.
+
+See [TwoFluidPipe friction model](../process/TWOFLUIDPIPE_MODEL.md#friction-model).

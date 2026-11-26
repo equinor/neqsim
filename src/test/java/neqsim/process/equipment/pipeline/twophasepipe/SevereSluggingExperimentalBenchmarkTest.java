@@ -434,6 +434,8 @@ class SevereSluggingExperimentalBenchmarkTest {
     pipe.setEnableAdaptiveTimestepping(true);
     pipe.setThermodynamicUpdateInterval(1000);
     pipe.setIncludeMassTransfer(false);
+    // Air and mineral oil enter at independently metered rates in the facility.
+    pipe.setUseStreamPhaseSplit(true);
     pipe.setEnableInterfacialPressure(true);
     pipe.setImplicitInterfacialPressureCoupling(true);
     pipe.setEnableCoupledPressureMomentum(true);
