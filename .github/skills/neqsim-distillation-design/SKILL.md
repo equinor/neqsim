@@ -106,7 +106,7 @@ Naphtali-Sandholm Jacobian and the new `AUTO` route):
 
 | Solver | Converged before | Converged now | Total time before | Total time now |
 |--------|------------------|---------------|-------------------|----------------|
-| `AUTO` | 103 | 108 | 1414 s | 117 s |
+| `AUTO` | 103 | 108 | 1414 s | 115 s |
 | `MESH_RESIDUAL` | 105 | 108 | 361 s | 285 s |
 | `NAPHTALI_SANDHOLM` | 42 | 63 | 527 s | 375 s |
 
@@ -253,7 +253,7 @@ duties or a tray profile.
 |------------|-------------------|-------|
 | Hydrocarbon column without a condenser reflux ratio, first attempt | `NEWTON` | Measured default, see "Default set-up for agent work" |
 | Short reboiled HC column (10 trays or fewer), cold solve | `DIRECT_SUBSTITUTION` | Fastest there with Anderson mixing; status may be `RECONCILED_PRODUCTS` |
-| Condenser + reboiler with reflux ratio, ideal stages | `AUTO` | 108 of 108 cases in 117 s against 285 s for `MESH_RESIDUAL` (2026-11-25); picks `NAPHTALI_SANDHOLM` or `MESH_RESIDUAL` |
+| Condenser + reboiler with reflux ratio, ideal stages | `AUTO` | 108 of 108 cases in 115 s against 285 s for `MESH_RESIDUAL` (2026-11-25); picks `NAPHTALI_SANDHOLM` or `MESH_RESIDUAL` |
 | Larger HC fractionators | `MATRIX_INSIDE_OUT` or `NEWTON` | Adaptive: small columns bypass matrix overhead; larger columns try the matrix warm start before rigorous inside-out polishing |
 | Non-ideal (alcohols, water) | `DAMPED_SUBSTITUTION` or `DIRECT_SUBSTITUTION` | More conservative for non-ideal K-values |
 | Absorbers (no condenser/reboiler) | `SUM_RATES` or `DIRECT_SUBSTITUTION` | Flow-corrected updates can help absorber/stripper cases |

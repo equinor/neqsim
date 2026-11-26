@@ -440,13 +440,13 @@ without the analytic Jacobian, the new step control and the new `AUTO` route.
 
 | Solver | Converged before | Converged now | Total time before | Total time now |
 |--------|------------------|---------------|-------------------|----------------|
-| `AUTO` | 103 | 108 | 1414 s | 117 s |
+| `AUTO` | 103 | 108 | 1414 s | 115 s |
 | `MESH_RESIDUAL` | 105 | 108 | 361 s | 285 s |
 | `NAPHTALI_SANDHOLM` | 42 | 63 | 527 s | 375 s |
 
 - `AUTO` now tries `NAPHTALI_SANDHOLM` and then `MESH_RESIDUAL` on copies and accepts only a
   `RIGOROUS_CONVERGED` result. It selected `NAPHTALI_SANDHOLM` in 57 cases and `MESH_RESIDUAL` in
-  51; the slowest case took 11 s. Two of the five "before" failures were runs that ended
+  51; the slowest case took 10 s. Two of the five "before" failures were runs that ended
   without reporting a solver type, which is fixed.
 - `NAPHTALI_SANDHOLM` selected directly takes 0.02 to 1.0 s when it converges (63 cases, 5.6 s in
   total, against 175 s for `MESH_RESIDUAL` on the same cases). When it does not converge it runs
