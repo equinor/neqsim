@@ -199,8 +199,8 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     }
     this.equations = equations;
     this.acceptedTemplates = cloneSections(acceptedTemplates);
-    this.conservativeSlugReconstructionActivity =
-        equations.classifyConservativeSlugReconstructionActivity(this.acceptedTemplates);
+    this.conservativeSlugReconstructionActivity = equations
+        .classifyConservativeSlugReconstructionActivity(this.acceptedTemplates);
     double[][] acceptedState = new double[this.acceptedTemplates.length][];
     double[] acceptedPressure = new double[this.acceptedTemplates.length];
     for (int cell = 0; cell < this.acceptedTemplates.length; cell++) {
