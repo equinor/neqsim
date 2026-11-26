@@ -69,8 +69,8 @@ public class EntryPointExamplesDocumentationTest extends NeqSimTest {
     String source = markedPythonSource(guide, "<!-- python-quickstart-example: flash -->");
 
     for (String token : Arrays.asList("from neqsim import jneqsim", "SystemSrkEos(273.15 + 25, 50.0)",
-        "fluid.setMixingRule(\"classic\")", "ops.TPflash()", "fluid.initProperties()",
-        "fluid.getDensity('kg/m3')", "fluid.getZ()", "fluid.getMolarMass('kg/mol')")) {
+        "fluid.setMixingRule(\"classic\")", "ops.TPflash()", "fluid.initProperties()", "fluid.getDensity('kg/m3')",
+        "fluid.getZ()", "fluid.getMolarMass('kg/mol')")) {
       assertTrue(source.contains(token), "Missing flash example token: " + token);
     }
 
@@ -100,9 +100,8 @@ public class EntryPointExamplesDocumentationTest extends NeqSimTest {
 
     for (String token : Arrays.asList("from neqsim import jneqsim", "SystemSrkEos(273.15 + 30, 50.0)",
         "feed.setFlowRate(10000, \"kg/hr\")", "Separator(\"HP Separator\", feed)",
-        "Compressor(\"Gas Compressor\", separator.getGasOutStream())",
-        "compressor.setOutletPressure(80.0, \"bara\")", "process.run()",
-        "compressor.getPower('kW')")) {
+        "Compressor(\"Gas Compressor\", separator.getGasOutStream())", "compressor.setOutletPressure(80.0, \"bara\")",
+        "process.run()", "compressor.getPower('kW')")) {
       assertTrue(source.contains(token), "Missing process example token: " + token);
     }
 
