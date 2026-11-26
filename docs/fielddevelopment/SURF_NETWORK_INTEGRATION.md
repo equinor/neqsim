@@ -326,22 +326,38 @@ uniform mesh and leave omitted branches unchanged. Flat legacy terrain is conver
 route; non-flat legacy section-indexed terrain fails closed and must first be expressed as physical cell faces.
 The symmetric profile-difference API interpolates both results onto the other mesh and normalizes the largest
 absolute discrepancy by the largest magnitude present in either case.
+For an equally refined three-grid sequence, `getSpatialConvergenceReport` additionally requires identical outer
+steps and branch-subcycle maps, unchanged physical length, increasing cell counts and one constant grid ratio.
+It reports the two normalized adjacent-grid discrepancies and classifies the result as `MONOTONIC`,
+`NON_MONOTONIC` or `ROUND_OFF_LIMITED`. A positive observed order and safety-factored fine-grid convergence index
+are published only for `MONOTONIC`; the other statuses retain `NaN` for the index rather than manufacturing an
+error estimate. Unequal grid ratios or time-integration changes fail closed as confounded studies.
 
 ```java
 Map<String, Integer> eightCells = new LinkedHashMap<String, Integer>();
 Map<String, Integer> twelveCells = new LinkedHashMap<String, Integer>();
+Map<String, Integer> eighteenCells = new LinkedHashMap<String, Integer>();
 for (String branch : network.getBranchNames()) {
   eightCells.put(branch, Integer.valueOf(8));
   twelveCells.put(branch, Integer.valueOf(12));
+  eighteenCells.put(branch, Integer.valueOf(18));
 }
 TwoFluidPipeNetworkRefinementStudy.Result spatial =
     new TwoFluidPipeNetworkRefinementStudy(network)
         .addConfiguration("eight cells", 0.0005, null, eightCells)
         .addConfiguration("twelve cells", 0.0005, null, twelveCells)
+        .addConfiguration("eighteen cells", 0.0005, null, eighteenCells)
         .run(0.001);
 double pressureDifference = spatial.getMaximumNormalizedBranchProfileDifference(
     "eight cells", "twelve cells", "export riser",
     TwoFluidPipeNetworkRefinementStudy.ProfileQuantity.PRESSURE);
+TwoFluidPipeNetworkRefinementStudy.SpatialConvergenceReport convergence =
+    spatial.getSpatialConvergenceReport(
+        "eight cells", "twelve cells", "eighteen cells", "export riser",
+        TwoFluidPipeNetworkRefinementStudy.ProfileQuantity.PRESSURE);
+if (!convergence.isMonotonicallyConvergent()) {
+  throw new IllegalStateException("No defensible three-grid pressure error estimate");
+}
 ```
 
 The slow acceptance test covers a direct tieback, a two-junction daisy chain, two finite conservative
@@ -358,8 +374,28 @@ branch-order-independent pressure, temperature and composition without relaxing 
 tolerance. These four-cell synthetic fixtures qualify the replay and numerical conservation contract
 only. Their 25% nearby-pressure screen is not a convergence rate, field error band or time-step
 recommendation. The 8/12-cell screen demonstrates the spatial-replay and common-position comparison contract;
-its broad 50% profile guard is not a field error band or mesh recommendation. Longer representative field
-trajectories, topology-specific convergence-rate evidence and independent field/commercial comparisons remain open.
+its broad 50% profile guard is not a field error band or mesh recommendation.
+
+The follow-on 8/12/18-cell test uses a constant 1.5 grid ratio on separate 5 km production and injection routes
+with explicit terrain. It deliberately records both resolved and unresolved quantities:
+
+| Route and quantity | 8/12 normalized difference | 12/18 normalized difference | Status |
+| --- | ---: | ---: | --- |
+| Production pressure | 0.208659 | 0.208704 | `NON_MONOTONIC` |
+| Production temperature | 9.4369e-5 | 6.2906e-5 | `MONOTONIC` |
+| Production liquid holdup | 0.023700 | 0.020177 | `MONOTONIC` |
+| Production gas velocity | 8.0016e-4 | 5.8019e-4 | `MONOTONIC` |
+| Production liquid velocity | 0.023721 | 0.018833 | `MONOTONIC` |
+| Injection pressure | 0.162180 | 0.161855 | `MONOTONIC` |
+| Injection temperature | 2.8565e-4 | 1.9274e-4 | `MONOTONIC` |
+| Injection liquid holdup | 0.005012 | 0.010971 | `NON_MONOTONIC` |
+| Injection gas velocity | 0.002415 | 0.004702 | `NON_MONOTONIC` |
+| Injection liquid velocity | 0.005562 | 0.011426 | `NON_MONOTONIC` |
+
+These results are topology-specific numerical diagnostics at a 1 ms endpoint, not field-duration mesh independence,
+a universal discretization order or a physical error band. The non-monotonic pressure/holdup/velocity results are
+retained as blockers, not tuned away. Broader closure, fluid and operating-envelope studies plus independent
+field/commercial comparisons remain open.
 
 ## Typed field and equipment identity
 
@@ -1152,8 +1188,9 @@ second transition detector or interpret a heuristic `OPTIMAL` status as operatin
    conservation and complete position-aware profiles while varying outer step, subcycles and explicit branch meshes.
    Its multi-template
    case uses a three-incident algebraic PLEM, with a retained donor-convergence regression and no
-   relaxed conservation tolerance. Next complete longer representative field trajectories,
-   topology-specific convergence rates and independent field/commercial comparisons; only then
+   relaxed conservation tolerance. Longer production/injection trajectories now retain topology- and
+   quantity-specific three-grid statuses without claiming unresolved sequences converged. Next broaden closure,
+   fluid and operating-envelope coverage and add independent field/commercial comparisons; only then
    consider asynchronous multirate boundary coupling. Enable dynamics only within the quantitatively
    tested scope.
 4. Add reviewed Java/Python builders, agent/MCP routes (#3153) and DEXPI identity export

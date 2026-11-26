@@ -45,7 +45,7 @@ replace a requested rigorous stage with a screening surrogate without stating th
 | GAP-style well network: IPR + VLP correlation or VFPPROD table, gas lift at valve depth | `neqsim-pipeline-and-terminal-networks` | `LoopedPipeNetwork.TubingModel`, `addTubingVfp`, `calculateGasLiftResponse` |
 | Delivery quality (CO2, Wobbe, RVP) along a network | `neqsim-pipeline-and-terminal-networks` | `NetworkQualitySpecification`, `NetworkQualityEvaluator` |
 | Same-topology Beggs-Brill/two-fluid comparison and controlled steady-to-transient rate step | `neqsim-pipeline-and-terminal-networks` | `FieldNetworkTopology`, `NetworkHydraulicModelComparison` |
-| Conservative multi-branch time-step, subcycle and spatial-mesh refinement | `neqsim-pipeline-and-terminal-networks` | `TwoFluidPipeNetwork`, `TwoFluidPipeNetworkRefinementStudy` |
+| Conservative multi-branch time-step, subcycle, spatial-mesh and three-grid convergence status | `neqsim-pipeline-and-terminal-networks` | `TwoFluidPipeNetwork`, `TwoFluidPipeNetworkRefinementStudy` |
 | Gas linepack, transient network response | `neqsim-pipeline-and-terminal-networks` | `TransientGasNetwork`, `GasLinepackState` |
 | Terminal tanks, cargo nominations, crude parcels | `neqsim-pipeline-and-terminal-networks` | `OilNetworkSchedule`, `CargoNomination` |
 | Well deliverability, gas-lift allocation, well-test fit | `neqsim-integrated-production-and-lifecycle` | `IntegratedProductionModel`, `GasLiftNetworkOptimizer`, `WellTestMatcher` |
