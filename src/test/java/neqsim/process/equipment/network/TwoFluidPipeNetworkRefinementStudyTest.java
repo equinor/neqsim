@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Tag;
@@ -12,6 +13,8 @@ import neqsim.process.equipment.network.TwoFluidPipeNetworkRefinementStudy.Branc
 import neqsim.process.equipment.network.TwoFluidPipeNetworkRefinementStudy.CaseResult;
 import neqsim.process.equipment.network.TwoFluidPipeNetworkRefinementStudy.ProfileQuantity;
 import neqsim.process.equipment.network.TwoFluidPipeNetworkRefinementStudy.Result;
+import neqsim.process.equipment.network.TwoFluidPipeNetworkRefinementStudy.SpatialConvergenceReport;
+import neqsim.process.equipment.network.TwoFluidPipeNetworkRefinementStudy.SpatialConvergenceStatus;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.pipeline.UpstreamCompressibleVolume;
 import neqsim.process.equipment.stream.Stream;
@@ -64,6 +67,34 @@ class TwoFluidPipeNetworkRefinementStudyTest {
     }
     assertEquals(4, network.getPipe("export riser").getNumberOfSections());
     assertEquals(0.0, network.getSimulationTimeSeconds(), 0.0);
+  }
+
+  /** Quantify three-grid convergence on longer production and injection trajectories. */
+  @Test
+  void reportsLongTrajectorySpatialConvergence() {
+    assertLongTrajectoryConvergence(createLongProductionTieback(), "long production flowline",
+        EnumSet.of(ProfileQuantity.TEMPERATURE, ProfileQuantity.LIQUID_HOLDUP, ProfileQuantity.GAS_VELOCITY,
+            ProfileQuantity.LIQUID_VELOCITY));
+    assertLongTrajectoryConvergence(createLongInjectionTieback(), "long injection flowline",
+        EnumSet.of(ProfileQuantity.PRESSURE, ProfileQuantity.TEMPERATURE));
+  }
+
+  /** Reject three-grid estimates that also change time integration or use unequal grid ratios. */
+  @Test
+  void rejectsConfoundedSpatialConvergenceSequences() {
+    TwoFluidPipeNetwork network = createDirectTieback();
+    Map<String, Integer> subcycles = uniformSubcycles(network, 2);
+    Result result = new TwoFluidPipeNetworkRefinementStudy(network)
+        .addConfiguration("eight cells", 0.001, subcycles, uniformSectionCounts(network, 8))
+        .addConfiguration("twelve cells", 0.001, subcycles, uniformSectionCounts(network, 12))
+        .addConfiguration("sixteen cells", 0.001, subcycles, uniformSectionCounts(network, 16))
+        .addConfiguration("eighteen cells", 0.001, subcycles, uniformSectionCounts(network, 18))
+        .addConfiguration("different step", 0.0005, subcycles, uniformSectionCounts(network, 18)).run(0.001);
+
+    assertThrows(IllegalArgumentException.class, () -> result.getSpatialConvergenceReport("eight cells", "twelve cells",
+        "sixteen cells", "tieback", ProfileQuantity.PRESSURE));
+    assertThrows(IllegalArgumentException.class, () -> result.getSpatialConvergenceReport("eight cells", "twelve cells",
+        "different step", "tieback", ProfileQuantity.PRESSURE));
   }
 
   /** Reject invalid configurations without changing the captured network. */
@@ -126,6 +157,44 @@ class TwoFluidPipeNetworkRefinementStudyTest {
       assertTrue(Double.isFinite(caseResult.getMaximumJunctionResidual()));
       for (String branchName : network.getBranchNames()) {
         assertPhysicalProfile(caseResult.getBranchProfile(branchName));
+      }
+    }
+    assertEquals(0.0, network.getSimulationTimeSeconds(), 0.0);
+  }
+
+  /**
+   * Run one equally refined 8/12/18-cell sequence and check its convergence receipt.
+   *
+   * @param network unadvanced long-route topology
+   * @param branchName compared branch
+   * @param expectedMonotonic quantities expected to have a positive observed order
+   */
+  private static void assertLongTrajectoryConvergence(TwoFluidPipeNetwork network, String branchName,
+      EnumSet<ProfileQuantity> expectedMonotonic) {
+    Map<String, Integer> subcycles = uniformSubcycles(network, 2);
+    Result result = new TwoFluidPipeNetworkRefinementStudy(network)
+        .addConfiguration("eight cells", 0.0005, subcycles, uniformSectionCounts(network, 8))
+        .addConfiguration("twelve cells", 0.0005, subcycles, uniformSectionCounts(network, 12))
+        .addConfiguration("eighteen cells", 0.0005, subcycles, uniformSectionCounts(network, 18)).run(0.001);
+
+    for (ProfileQuantity quantity : ProfileQuantity.values()) {
+      SpatialConvergenceReport report = result.getSpatialConvergenceReport("eight cells", "twelve cells",
+          "eighteen cells", branchName, quantity);
+      assertEquals(8, report.getCoarseSections());
+      assertEquals(12, report.getMediumSections());
+      assertEquals(18, report.getFineSections());
+      assertEquals(1.5, report.getRefinementRatio(), 1.0e-12);
+      if (expectedMonotonic.contains(quantity)) {
+        assertEquals(SpatialConvergenceStatus.MONOTONIC, report.getStatus(), branchName + " " + quantity);
+        assertTrue(report.isMonotonicallyConvergent());
+        assertTrue(report.getCoarseMediumDifference() > report.getMediumFineDifference());
+        assertTrue(report.getObservedOrder() > 0.0);
+        assertTrue(report.getFineGridConvergenceIndex() >= 0.0);
+      } else {
+        assertEquals(SpatialConvergenceStatus.NON_MONOTONIC, report.getStatus(), branchName + " " + quantity);
+        assertTrue(!report.isMonotonicallyConvergent());
+        assertTrue(report.getObservedOrder() <= 0.0);
+        assertTrue(Double.isNaN(report.getFineGridConvergenceIndex()));
       }
     }
     assertEquals(0.0, network.getSimulationTimeSeconds(), 0.0);
@@ -274,6 +343,34 @@ class TwoFluidPipeNetworkRefinementStudyTest {
   }
 
   /**
+   * Create a 5 km production route with explicit falling terrain.
+   *
+   * @return unadvanced long production topology
+   */
+  private static TwoFluidPipeNetwork createLongProductionTieback() {
+    TwoFluidPipeNetwork network = new TwoFluidPipeNetwork("long production refinement");
+    network.addFixedPressureNode("production tree", 85.0e5, createFluid(0.94, 0.06));
+    network.addFixedPressureNode("host separator", 50.0e5, createFluid(0.94, 0.06));
+    network.addPipe("long production flowline", "production tree", "host separator", createPipe(
+        "long production flowline", 0.94, 0.06, 5000.0, 0.25, 4.0, new double[] {0.0, -40.0, -100.0, -160.0, -200.0}));
+    return network;
+  }
+
+  /**
+   * Create a 5 km gas-injection route with explicit rising terrain toward the well.
+   *
+   * @return unadvanced long injection topology
+   */
+  private static TwoFluidPipeNetwork createLongInjectionTieback() {
+    TwoFluidPipeNetwork network = new TwoFluidPipeNetwork("long injection refinement");
+    network.addFixedPressureNode("injection host", 110.0e5, createFluid(0.99, 0.01));
+    network.addFixedPressureNode("injection tree", 70.0e5, createFluid(0.99, 0.01));
+    network.addPipe("long injection flowline", "injection host", "injection tree", createPipe("long injection flowline",
+        0.99, 0.01, 5000.0, 0.20, 3.0, new double[] {0.0, 30.0, 70.0, 120.0, 180.0}));
+    return network;
+  }
+
+  /**
    * Create one short four-cell pipe.
    *
    * @param name pipe name
@@ -282,15 +379,32 @@ class TwoFluidPipeNetworkRefinementStudyTest {
    * @return configured pipe
    */
   private static TwoFluidPipe createPipe(String name, double methane, double heptane) {
+    return createPipe(name, methane, heptane, 50.0, 0.20, 2.0, new double[5]);
+  }
+
+  /**
+   * Create one four-cell pipe with explicit physical geometry.
+   *
+   * @param name pipe name
+   * @param methane methane mole fraction
+   * @param heptane heptane mole fraction
+   * @param lengthM branch length in m
+   * @param diameterM internal diameter in m
+   * @param massFlowKgS feed mass flow in kg/s
+   * @param cellFaceElevationM elevation at the five cell faces in m
+   * @return configured pipe
+   */
+  private static TwoFluidPipe createPipe(String name, double methane, double heptane, double lengthM, double diameterM,
+      double massFlowKgS, double[] cellFaceElevationM) {
     SystemInterface fluid = createFluid(methane, heptane);
     Stream feed = new Stream(name + " feed", fluid);
-    feed.setFlowRate(2.0, "kg/sec");
+    feed.setFlowRate(massFlowKgS, "kg/sec");
     feed.run();
     TwoFluidPipe pipe = new TwoFluidPipe(name, feed);
-    pipe.setLength(50.0);
-    pipe.setDiameter(0.20);
+    pipe.setLength(lengthM);
+    pipe.setDiameter(diameterM);
     pipe.setNumberOfSections(4);
-    pipe.setCellFaceElevationProfile(new double[5]);
+    pipe.setCellFaceElevationProfile(cellFaceElevationM);
     return pipe;
   }
 

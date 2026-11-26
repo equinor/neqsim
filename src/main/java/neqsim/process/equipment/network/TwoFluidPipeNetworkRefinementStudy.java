@@ -34,6 +34,9 @@ import neqsim.process.equipment.pipeline.TwoFluidPipe;
 public final class TwoFluidPipeNetworkRefinementStudy implements Serializable {
   private static final long serialVersionUID = 1000L;
   private static final double INTEGER_TOLERANCE = 1.0e-10;
+  private static final double GRID_RATIO_TOLERANCE = 1.0e-10;
+  private static final double GRID_ROUNDOFF_THRESHOLD = 1.0e-10;
+  private static final double GRID_CONVERGENCE_SAFETY_FACTOR = 1.25;
   private final byte[] networkSnapshot;
   private final Set<String> nodeNames;
   private final Set<String> branchNames;
@@ -51,6 +54,16 @@ public final class TwoFluidPipeNetworkRefinementStudy implements Serializable {
     GAS_VELOCITY,
     /** Liquid phase velocity in m/s. */
     LIQUID_VELOCITY
+  }
+
+  /** Classification of an equally refined three-grid profile sequence. */
+  public enum SpatialConvergenceStatus {
+    /** Both discrepancies are resolved and decrease toward the finest grid. */
+    MONOTONIC,
+    /** Both discrepancies are resolved but do not decrease toward the finest grid. */
+    NON_MONOTONIC,
+    /** At least one normalized discrepancy is too small to identify a defensible order. */
+    ROUND_OFF_LIMITED
   }
 
   /**
@@ -510,6 +523,94 @@ public final class TwoFluidPipeNetworkRefinementStudy implements Serializable {
     }
 
     /**
+     * Quantify monotonic three-grid spatial convergence for one branch quantity.
+     *
+     * <p>
+     * The three cases must differ only in spatial resolution: outer time steps and explicit branch-subcycle maps must
+     * match, branch lengths must be unchanged, section counts must increase, and the two refinement ratios must be
+     * equal. The receipt uses symmetric common-position maximum discrepancies, an observed order
+     * {@code p = ln(e_coarse-medium / e_medium-fine) / ln(r)}, and the conventional three-grid fine-grid convergence
+     * index {@code 1.25 e_medium-fine / (r^p - 1)}. Non-monotonic and roundoff-limited sequences remain explicit
+     * receipts with no finite convergence index, so callers cannot mistake them for accepted error estimates.
+     * </p>
+     *
+     * @param coarseName coarsest-mesh case
+     * @param mediumName intermediate-mesh case
+     * @param fineName finest-mesh case
+     * @param branchName branch to compare
+     * @param quantity profile quantity
+     * @return immutable three-grid convergence receipt
+     * @throws IllegalArgumentException if cases are confounded, grids are not equally refined or discrepancies are not
+     * finite
+     */
+    public SpatialConvergenceReport getSpatialConvergenceReport(String coarseName, String mediumName, String fineName,
+        String branchName, ProfileQuantity quantity) {
+      CaseResult coarseCase = getCase(coarseName);
+      CaseResult mediumCase = getCase(mediumName);
+      CaseResult fineCase = getCase(fineName);
+      if (coarseCase == mediumCase || mediumCase == fineCase || coarseCase == fineCase) {
+        throw new IllegalArgumentException("Spatial convergence requires three distinct cases");
+      }
+      if (Double.compare(coarseCase.getOuterTimeStepSeconds(), mediumCase.getOuterTimeStepSeconds()) != 0
+          || Double.compare(mediumCase.getOuterTimeStepSeconds(), fineCase.getOuterTimeStepSeconds()) != 0
+          || !coarseCase.getBranchSubcycles().equals(mediumCase.getBranchSubcycles())
+          || !mediumCase.getBranchSubcycles().equals(fineCase.getBranchSubcycles())) {
+        throw new IllegalArgumentException(
+            "Spatial convergence cases must use identical outer time steps and branch subcycles");
+      }
+      BranchProfile coarse = coarseCase.getBranchProfile(branchName);
+      BranchProfile medium = mediumCase.getBranchProfile(branchName);
+      BranchProfile fine = fineCase.getBranchProfile(branchName);
+      int coarseSections = coarse.positionM.length;
+      int mediumSections = medium.positionM.length;
+      int fineSections = fine.positionM.length;
+      if (coarseSections >= mediumSections || mediumSections >= fineSections) {
+        throw new IllegalArgumentException("Spatial convergence section counts must increase from coarse to fine");
+      }
+      double coarseLength = sum(coarse.cellLengthM);
+      double mediumLength = sum(medium.cellLengthM);
+      double fineLength = sum(fine.cellLengthM);
+      double lengthScale = Math.max(coarseLength, Math.max(mediumLength, fineLength));
+      if (Math.abs(coarseLength - mediumLength) > GRID_RATIO_TOLERANCE * lengthScale
+          || Math.abs(mediumLength - fineLength) > GRID_RATIO_TOLERANCE * lengthScale) {
+        throw new IllegalArgumentException("Spatial convergence cases must preserve branch length");
+      }
+      double coarseMediumRatio = (coarseLength / coarseSections) / (mediumLength / mediumSections);
+      double mediumFineRatio = (mediumLength / mediumSections) / (fineLength / fineSections);
+      double ratioScale = Math.max(coarseMediumRatio, mediumFineRatio);
+      if (coarseMediumRatio <= 1.0 || mediumFineRatio <= 1.0
+          || Math.abs(coarseMediumRatio - mediumFineRatio) > GRID_RATIO_TOLERANCE * ratioScale) {
+        throw new IllegalArgumentException(
+            "Spatial convergence requires one constant refinement ratio greater than one");
+      }
+      double scale = maximumMagnitude(coarse.values(quantity), medium.values(quantity), fine.values(quantity));
+      double coarseMediumDifference = maximumAbsoluteDifference(coarse, medium, quantity) / scale;
+      double mediumFineDifference = maximumAbsoluteDifference(medium, fine, quantity) / scale;
+      if (!Double.isFinite(coarseMediumDifference) || !Double.isFinite(mediumFineDifference)
+          || coarseMediumDifference < 0.0 || mediumFineDifference < 0.0) {
+        throw new IllegalArgumentException("Spatial convergence discrepancies must be finite and non-negative");
+      }
+      SpatialConvergenceStatus status;
+      double observedOrder = Double.NaN;
+      double fineGridConvergenceIndex = Double.NaN;
+      if (coarseMediumDifference <= GRID_ROUNDOFF_THRESHOLD || mediumFineDifference <= GRID_ROUNDOFF_THRESHOLD) {
+        status = SpatialConvergenceStatus.ROUND_OFF_LIMITED;
+      } else {
+        observedOrder = Math.log(coarseMediumDifference / mediumFineDifference) / Math.log(coarseMediumRatio);
+        if (Double.isFinite(observedOrder) && observedOrder > 0.0) {
+          double denominator = Math.pow(coarseMediumRatio, observedOrder) - 1.0;
+          fineGridConvergenceIndex = GRID_CONVERGENCE_SAFETY_FACTOR * mediumFineDifference / denominator;
+          status = SpatialConvergenceStatus.MONOTONIC;
+        } else {
+          status = SpatialConvergenceStatus.NON_MONOTONIC;
+        }
+      }
+      return new SpatialConvergenceReport(coarseName, mediumName, fineName, branchName, quantity, coarseSections,
+          mediumSections, fineSections, coarseMediumRatio, coarseMediumDifference, mediumFineDifference, observedOrder,
+          fineGridConvergenceIndex, status);
+    }
+
+    /**
      * Calculate a symmetric maximum normalized profile difference.
      *
      * @param first first profile
@@ -535,6 +636,53 @@ public final class TwoFluidPipeNetworkRefinementStudy implements Serializable {
     }
 
     /**
+     * Return the largest absolute value across profile arrays.
+     *
+     * @param profiles profile arrays
+     * @return positive finite-or-roundoff scale
+     */
+    private static double maximumMagnitude(double[]... profiles) {
+      double scale = 1.0e-30;
+      for (double[] profile : profiles) {
+        for (double value : profile) {
+          scale = Math.max(scale, Math.abs(value));
+        }
+      }
+      return scale;
+    }
+
+    /**
+     * Calculate the symmetric common-position maximum absolute discrepancy.
+     *
+     * @param first first profile
+     * @param second second profile
+     * @param quantity requested quantity
+     * @return maximum absolute discrepancy
+     */
+    private static double maximumAbsoluteDifference(BranchProfile first, BranchProfile second,
+        ProfileQuantity quantity) {
+      double[] firstValues = first.values(quantity);
+      double[] secondValues = second.values(quantity);
+      double maximum = directionalMaximumDifference(first.positionM, firstValues, second.positionM, secondValues);
+      return Math.max(maximum,
+          directionalMaximumDifference(second.positionM, secondValues, first.positionM, firstValues));
+    }
+
+    /**
+     * Sum one finite physical-length array.
+     *
+     * @param values values to sum
+     * @return arithmetic sum
+     */
+    private static double sum(double[] values) {
+      double total = 0.0;
+      for (double value : values) {
+        total += value;
+      }
+      return total;
+    }
+
+    /**
      * Interpolate a source profile at every target position and return the maximum absolute difference.
      *
      * @param sourcePositions source cell-centre positions
@@ -551,6 +699,204 @@ public final class TwoFluidPipeNetworkRefinementStudy implements Serializable {
             Math.abs(interpolate(sourcePositions, sourceValues, targetPositions[index]) - targetValues[index]));
       }
       return maximum;
+    }
+  }
+
+  /**
+   * Immutable three-grid spatial-convergence receipt for one branch quantity.
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  public static final class SpatialConvergenceReport implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String coarseName;
+    private final String mediumName;
+    private final String fineName;
+    private final String branchName;
+    private final ProfileQuantity quantity;
+    private final int coarseSections;
+    private final int mediumSections;
+    private final int fineSections;
+    private final double refinementRatio;
+    private final double coarseMediumDifference;
+    private final double mediumFineDifference;
+    private final double observedOrder;
+    private final double fineGridConvergenceIndex;
+    private final SpatialConvergenceStatus status;
+
+    /**
+     * Create one immutable convergence receipt.
+     *
+     * @param coarseName coarsest case name
+     * @param mediumName intermediate case name
+     * @param fineName finest case name
+     * @param branchName compared branch name
+     * @param quantity compared quantity
+     * @param coarseSections coarsest section count
+     * @param mediumSections intermediate section count
+     * @param fineSections finest section count
+     * @param refinementRatio constant grid refinement ratio
+     * @param coarseMediumDifference normalized coarse-to-medium discrepancy
+     * @param mediumFineDifference normalized medium-to-fine discrepancy
+     * @param observedOrder observed order, or {@link Double#NaN}
+     * @param fineGridConvergenceIndex safety-factored index, or {@link Double#NaN}
+     * @param status explicit convergence classification
+     */
+    private SpatialConvergenceReport(String coarseName, String mediumName, String fineName, String branchName,
+        ProfileQuantity quantity, int coarseSections, int mediumSections, int fineSections, double refinementRatio,
+        double coarseMediumDifference, double mediumFineDifference, double observedOrder,
+        double fineGridConvergenceIndex, SpatialConvergenceStatus status) {
+      this.coarseName = coarseName;
+      this.mediumName = mediumName;
+      this.fineName = fineName;
+      this.branchName = branchName;
+      this.quantity = quantity;
+      this.coarseSections = coarseSections;
+      this.mediumSections = mediumSections;
+      this.fineSections = fineSections;
+      this.refinementRatio = refinementRatio;
+      this.coarseMediumDifference = coarseMediumDifference;
+      this.mediumFineDifference = mediumFineDifference;
+      this.observedOrder = observedOrder;
+      this.fineGridConvergenceIndex = fineGridConvergenceIndex;
+      this.status = status;
+    }
+
+    /**
+     * Get the coarsest case name.
+     *
+     * @return coarsest case name
+     */
+    public String getCoarseName() {
+      return coarseName;
+    }
+
+    /**
+     * Get the intermediate case name.
+     *
+     * @return intermediate case name
+     */
+    public String getMediumName() {
+      return mediumName;
+    }
+
+    /**
+     * Get the finest case name.
+     *
+     * @return finest case name
+     */
+    public String getFineName() {
+      return fineName;
+    }
+
+    /**
+     * Get the compared branch name.
+     *
+     * @return compared branch name
+     */
+    public String getBranchName() {
+      return branchName;
+    }
+
+    /**
+     * Get the compared profile quantity.
+     *
+     * @return compared profile quantity
+     */
+    public ProfileQuantity getQuantity() {
+      return quantity;
+    }
+
+    /**
+     * Get the coarsest section count.
+     *
+     * @return coarsest section count
+     */
+    public int getCoarseSections() {
+      return coarseSections;
+    }
+
+    /**
+     * Get the intermediate section count.
+     *
+     * @return intermediate section count
+     */
+    public int getMediumSections() {
+      return mediumSections;
+    }
+
+    /**
+     * Get the finest section count.
+     *
+     * @return finest section count
+     */
+    public int getFineSections() {
+      return fineSections;
+    }
+
+    /**
+     * Get the constant grid refinement ratio.
+     *
+     * @return constant grid refinement ratio
+     */
+    public double getRefinementRatio() {
+      return refinementRatio;
+    }
+
+    /**
+     * Get the normalized coarse-to-medium discrepancy.
+     *
+     * @return normalized coarse-to-medium discrepancy
+     */
+    public double getCoarseMediumDifference() {
+      return coarseMediumDifference;
+    }
+
+    /**
+     * Get the normalized medium-to-fine discrepancy.
+     *
+     * @return normalized medium-to-fine discrepancy
+     */
+    public double getMediumFineDifference() {
+      return mediumFineDifference;
+    }
+
+    /**
+     * Get the observed convergence order.
+     *
+     * @return positive order for monotonic convergence, negative/zero for non-monotonic behavior or {@link Double#NaN}
+     * when roundoff-limited
+     */
+    public double getObservedOrder() {
+      return observedOrder;
+    }
+
+    /**
+     * Get the safety-factored normalized fine-grid convergence index.
+     *
+     * @return finite index only for monotonic convergence, otherwise {@link Double#NaN}
+     */
+    public double getFineGridConvergenceIndex() {
+      return fineGridConvergenceIndex;
+    }
+
+    /**
+     * Get the explicit convergence classification.
+     *
+     * @return convergence status
+     */
+    public SpatialConvergenceStatus getStatus() {
+      return status;
+    }
+
+    /**
+     * Report whether a positive observed order and finite convergence index are available.
+     *
+     * @return true only for monotonic convergence
+     */
+    public boolean isMonotonicallyConvergent() {
+      return status == SpatialConvergenceStatus.MONOTONIC;
     }
   }
 
