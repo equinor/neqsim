@@ -46,6 +46,16 @@ public class OlgaWellGenkeyExporterGuideDocumentationTest extends neqsim.NeqSimT
         StandardCharsets.UTF_8);
 
     assertTrue(guide.startsWith("---\ntitle: Export a well as OLGA GENKEY text"));
+    assertFalse(Pattern.compile("(?m)^#\\s+").matcher(guide).find(),
+        "The front-matter title must not be repeated as a rendered H1");
+    for (String sourceContract : Arrays.asList(
+        "../../src/main/java/neqsim/process/fielddevelopment/olga/OlgaWellGenkeyExporter.java",
+        "../../src/main/java/neqsim/process/fielddevelopment/olga/SyntheticWellTrajectory.java",
+        "../../src/main/java/neqsim/process/equipment/reservoir/InflowPerformance.java",
+        "../../src/test/java/neqsim/documentation/OlgaWellGenkeyExporterGuideDocumentationTest.java",
+        "./mvnw -Dtest=OlgaWellGenkeyExporterGuideDocumentationTest test")) {
+      assertTrue(guide.contains(sourceContract), "Missing guide source contract: " + sourceContract);
+    }
     assertTrue(guide.contains("format generator, not an OLGA simulator"));
     assertTrue(guide.contains("licensed OLGA installation"));
     assertTrue(guide.contains("not field data or recommended defaults"));
