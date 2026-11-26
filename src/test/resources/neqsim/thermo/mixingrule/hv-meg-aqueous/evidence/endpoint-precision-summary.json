@@ -1,0 +1,58 @@
+{
+  "false/2": {
+    "cold_phases": 2.0,
+    "cold_endpoint_relative": 0.2831338727372741,
+    "cold_logf": 3.7163034940722392e-09,
+    "cold_balance": 0.0,
+    "cold_norm": 4.440892098500626e-16,
+    "cold_beta": 0.610905792394944,
+    "polished_endpoint_relative": 0.28313386824058573,
+    "polished_logf": 6.938227770116523e-12,
+    "polished_balance": 4.884981308350689e-15,
+    "polished_norm": 1.1102230246251565e-16,
+    "polished_beta": 0.6109057910241779,
+    "max_G_change": 3.4861002973229915e-14
+  },
+  "false/4": {
+    "cold_phases": 2.0,
+    "cold_endpoint_relative": 3.6021030602739756e-09,
+    "cold_logf": 4.9133087719166035e-09,
+    "cold_balance": 0.0,
+    "cold_norm": 4.440892098500626e-16,
+    "cold_beta": 0.5000000017784973,
+    "polished_endpoint_relative": 7.131388812808837e-10,
+    "polished_logf": 6.095124405192295e-14,
+    "polished_balance": 7.355227538141662e-16,
+    "polished_norm": 2.220446049250313e-16,
+    "polished_beta": 0.500000000415741,
+    "max_G_change": 1.1268763699945339e-14
+  },
+  "true/2": {
+    "cold_phases": 2.0,
+    "cold_endpoint_relative": 4.1790768623428676e-09,
+    "cold_logf": 8.994419657563528e-10,
+    "cold_balance": 0.0,
+    "cold_norm": 3.3306690738754696e-16,
+    "cold_beta": 0.5000000020582438,
+    "polished_endpoint_relative": 1.034846208725071e-09,
+    "polished_logf": 6.949996134153721e-14,
+    "polished_balance": 5.273559366969494e-16,
+    "polished_norm": 1.1102230246251565e-16,
+    "polished_beta": 0.5000000005874824,
+    "max_G_change": 1.5210055437364645e-14
+  },
+  "true/4": {
+    "cold_phases": 2.0,
+    "cold_endpoint_relative": 8.710489218799466e-09,
+    "cold_logf": 9.51395555755462e-09,
+    "cold_balance": 2.4424906541753444e-15,
+    "cold_norm": 3.3306690738754696e-16,
+    "cold_beta": 0.5000000036070223,
+    "polished_endpoint_relative": 6.82630840742604e-10,
+    "polished_logf": 7.294165271787545e-14,
+    "polished_balance": 7.771561172376096e-16,
+    "polished_norm": 2.220446049250313e-16,
+    "polished_beta": 0.5000000003995473,
+    "max_G_change": 3.164135620181696e-14
+  }
+}

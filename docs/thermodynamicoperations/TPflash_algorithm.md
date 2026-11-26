@@ -3080,3 +3080,21 @@ elapsed and thread CPU time, p95 latency, allocated bytes where supported, and n
 snapshots for both unchanged and changed states. Compare identical harnesses and JVM settings
 against an exact baseline in alternating fresh JVMs. Timing is diagnostic, never a CI assertion;
 failed numerical states must remain visible and cannot count as successful faster flashes.
+
+
+## Enhanced ordinary trial order
+
+When enhanced or automatic-LLE filtering is applicable, ordinary trial phases are
+visited in the order selected by the homogeneous reference: vapor then liquid for
+a liquid reference, liquid then vapor for a gas reference. A descending-only loop
+previously skipped both trials for a liquid reference. The repair preserves the
+legacy traversal and tangent-plane reset compatibility policy; it is not blanket
+qualification of legacy/default discovery or global stability.
+
+`FlashStabilityTrialOrderTest` requires actual trial iterations for both reference
+orders. `HuronVidalAqueousMegPressureAssessmentTest` additionally checks the cold
+water/MEG tie-line endpoint, all native thermodynamic identities and numerical
+derivatives, distinct stable roots, component balance and fugacity equality.
+The linked [source assessment](../../src/test/resources/neqsim/thermo/mixingrule/hv-meg-aqueous/README.md)
+separates physical pressure errors from numerical closure. Do not loosen tolerances,
+force phases or refit interactions to conceal a failed discovery calculation.
