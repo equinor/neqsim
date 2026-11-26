@@ -17,11 +17,14 @@ import neqsim.process.equipment.network.FieldNetworkTopology.Service;
 import neqsim.process.equipment.network.LoopedPipeNetwork.NetworkPipe;
 import neqsim.process.equipment.network.LoopedPipeNetwork.PipeModelType;
 import neqsim.process.equipment.network.NetworkHydraulicModelComparison.EdgeComparison;
+import neqsim.process.equipment.network.NetworkHydraulicModelComparison.HydraulicSpatialConvergenceReport;
 import neqsim.process.equipment.network.NetworkHydraulicModelComparison.MeshSensitivityResult;
 import neqsim.process.equipment.network.NetworkHydraulicModelComparison.ModelProfiles;
 import neqsim.process.equipment.network.NetworkHydraulicModelComparison.Result;
 import neqsim.process.equipment.network.NetworkHydraulicModelComparison.TransientTimeStepResult;
 import neqsim.process.equipment.network.NetworkHydraulicModelComparison.TransientTimeStepSensitivityResult;
+import neqsim.process.equipment.network.TwoFluidPipeNetworkRefinementStudy.ProfileQuantity;
+import neqsim.process.equipment.network.TwoFluidPipeNetworkRefinementStudy.SpatialConvergenceStatus;
 import neqsim.process.equipment.pipeline.TwoFluidConservativeEnergyReport;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.pipeline.TwoFluidMassBalanceReport;
@@ -224,9 +227,9 @@ class NetworkHydraulicModelComparisonTest {
     FieldNetworkTopology topology = topology(2.0);
     NetworkPipe originalFlowline = topology.getHydraulicNetwork().getPipe("flowline");
     MeshSensitivityResult sensitivity = new NetworkHydraulicModelComparison(topology)
-        .compareMeshSensitivity(Arrays.asList("flowline"), Arrays.asList(4, 8, 10), UUID.randomUUID());
+        .compareMeshSensitivity(Arrays.asList("flowline"), Arrays.asList(4, 6, 9), UUID.randomUUID());
 
-    assertEquals(new HashSet<Integer>(Arrays.asList(4, 8, 10)), sensitivity.getSegmentCounts());
+    assertEquals(new HashSet<Integer>(Arrays.asList(4, 6, 9)), sensitivity.getSegmentCounts());
     assertEquals(8, originalFlowline.getMultiphaseSegments());
     assertEquals("NOT_RUN", originalFlowline.getHydraulicModelStatus());
     for (int segments : sensitivity.getSegmentCounts()) {
@@ -246,13 +249,34 @@ class NetworkHydraulicModelComparisonTest {
     }
 
     EdgeComparison coarse = sensitivity.getResult(4).getEdgeComparison("flowline");
-    EdgeComparison fine = sensitivity.getResult(10).getEdgeComparison("flowline");
+    EdgeComparison fine = sensitivity.getResult(9).getEdgeComparison("flowline");
     assertTrue(relativeChange(fine.getBeggsBrillPressureDropPa(), coarse.getBeggsBrillPressureDropPa()) < 0.5);
     assertTrue(relativeChange(fine.getTwoFluidPressureDropPa(), coarse.getTwoFluidPressureDropPa()) < 0.5);
     assertTrue(Math.abs(fine.getBeggsBrillProfiles().getAverageLiquidHoldup()
         - coarse.getBeggsBrillProfiles().getAverageLiquidHoldup()) < 0.2);
     assertTrue(Math.abs(fine.getTwoFluidProfiles().getAverageLiquidHoldup()
         - coarse.getTwoFluidProfiles().getAverageLiquidHoldup()) < 0.2);
+
+    for (PipeModelType modelType : Arrays.asList(PipeModelType.BEGGS_BRILL, PipeModelType.TWO_FLUID)) {
+      for (ProfileQuantity quantity : ProfileQuantity.values()) {
+        HydraulicSpatialConvergenceReport report = sensitivity.getSpatialConvergenceReport(4, 6, 9, "flowline",
+            modelType, quantity);
+        SpatialConvergenceStatus expectedStatus = modelType == PipeModelType.BEGGS_BRILL
+            || quantity == ProfileQuantity.PRESSURE ? SpatialConvergenceStatus.NON_MONOTONIC
+                : SpatialConvergenceStatus.MONOTONIC;
+        assertEquals(expectedStatus, report.getStatus());
+        assertThreeGridReceipt(sensitivity, "flowline", modelType, quantity);
+      }
+    }
+
+    assertThrows(IllegalArgumentException.class, () -> sensitivity.getSpatialConvergenceReport(6, 4, 9, "flowline",
+        PipeModelType.BEGGS_BRILL, ProfileQuantity.PRESSURE));
+    assertThrows(IllegalArgumentException.class, () -> sensitivity.getSpatialConvergenceReport(4, 6, 8, "flowline",
+        PipeModelType.BEGGS_BRILL, ProfileQuantity.PRESSURE));
+    assertThrows(IllegalArgumentException.class, () -> sensitivity.getSpatialConvergenceReport(4, 6, 9, "flowline",
+        PipeModelType.DARCY_WEISBACH, ProfileQuantity.PRESSURE));
+    assertThrows(IllegalArgumentException.class, () -> sensitivity.getSpatialConvergenceReport(4, 6, 9, "missing",
+        PipeModelType.BEGGS_BRILL, ProfileQuantity.PRESSURE));
   }
 
   /** Controlled rate steps retain conservation evidence and a common horizon at each outer time step. */
@@ -298,8 +322,9 @@ class NetworkHydraulicModelComparisonTest {
   void comparesInjectionTopologyAndInitializesRateStep() {
     FieldNetworkTopology topology = injectionTopology(1.0);
     LoopedPipeNetwork original = topology.getHydraulicNetwork();
-    Result steady = new NetworkHydraulicModelComparison(topology).compare(Arrays.asList("injection-flowline"),
-        UUID.randomUUID());
+    MeshSensitivityResult mesh = new NetworkHydraulicModelComparison(topology)
+        .compareMeshSensitivity(Arrays.asList("injection-flowline"), Arrays.asList(4, 6, 9), UUID.randomUUID());
+    Result steady = mesh.getResult(6);
     EdgeComparison edge = steady.getEdgeComparison("injection-flowline");
     assertEquals(1.0, edge.getBeggsBrillFlowRateKgS(), 1.0e-6);
     assertEquals(1.0, edge.getTwoFluidFlowRateKgS(), 1.0e-6);
@@ -307,6 +332,11 @@ class NetworkHydraulicModelComparisonTest {
     assertProfilesPhysical(edge.getTwoFluidProfiles());
     assertEquals(PipeModelType.DARCY_WEISBACH, original.getEffectiveHydraulicModelType("injection-flowline"));
     assertEquals("NOT_RUN", original.getPipe("injection-flowline").getHydraulicModelStatus());
+    for (PipeModelType modelType : Arrays.asList(PipeModelType.BEGGS_BRILL, PipeModelType.TWO_FLUID)) {
+      for (ProfileQuantity quantity : ProfileQuantity.values()) {
+        assertThreeGridReceipt(mesh, "injection-flowline", modelType, quantity);
+      }
+    }
 
     TransientTimeStepSensitivityResult sensitivity = steady.compareTransientRateStep("injection-flowline", 0.99, 2.0e-6,
         Arrays.asList(1.0e-6, 2.0e-6), UUID.randomUUID());
@@ -393,6 +423,47 @@ class NetworkHydraulicModelComparisonTest {
     for (double velocity : profiles.getLiquidSuperficialVelocityMs()) {
       assertTrue(Double.isFinite(velocity));
       assertTrue(velocity >= 0.0);
+    }
+  }
+
+  /**
+   * Verify a fail-closed three-grid receipt for one hydraulic model quantity.
+   *
+   * @param sensitivity evaluated mesh family
+   * @param edgeId canonical edge identifier
+   * @param modelType hydraulic model
+   * @param quantity profile quantity
+   */
+  private void assertThreeGridReceipt(MeshSensitivityResult sensitivity, String edgeId, PipeModelType modelType,
+      ProfileQuantity quantity) {
+    HydraulicSpatialConvergenceReport report = sensitivity.getSpatialConvergenceReport(4, 6, 9, edgeId, modelType,
+        quantity);
+    assertEquals(edgeId, report.getEdgeId());
+    assertEquals(modelType, report.getModelType());
+    assertEquals(quantity, report.getQuantity());
+    assertEquals(4, report.getCoarseSegments());
+    assertEquals(6, report.getMediumSegments());
+    assertEquals(9, report.getFineSegments());
+    assertEquals(1.5, report.getRefinementRatio(), 0.0);
+    assertTrue(Double.isFinite(report.getCoarseMediumDifference()));
+    assertTrue(Double.isFinite(report.getMediumFineDifference()));
+    assertTrue(report.getCoarseMediumDifference() >= 0.0);
+    assertTrue(report.getMediumFineDifference() >= 0.0);
+    if (report.getStatus() == SpatialConvergenceStatus.MONOTONIC) {
+      assertTrue(report.isMonotonicallyConvergent());
+      assertTrue(report.getObservedOrder() > 0.0);
+      assertTrue(Double.isFinite(report.getFineGridConvergenceIndex()));
+      assertTrue(report.getFineGridConvergenceIndex() >= 0.0);
+    } else {
+      assertFalse(report.isMonotonicallyConvergent());
+      assertTrue(Double.isNaN(report.getFineGridConvergenceIndex()));
+      if (report.getStatus() == SpatialConvergenceStatus.ROUND_OFF_LIMITED) {
+        assertTrue(Double.isNaN(report.getObservedOrder()));
+      } else {
+        assertEquals(SpatialConvergenceStatus.NON_MONOTONIC, report.getStatus());
+        assertTrue(Double.isFinite(report.getObservedOrder()));
+        assertTrue(report.getObservedOrder() <= 0.0);
+      }
     }
   }
 

@@ -13,6 +13,8 @@ import org.apache.commons.lang3.SerializationUtils;
 import neqsim.process.equipment.network.LoopedPipeNetwork.NetworkPipe.HydraulicProfile;
 import neqsim.process.equipment.network.LoopedPipeNetwork.NetworkPipe;
 import neqsim.process.equipment.network.LoopedPipeNetwork.PipeModelType;
+import neqsim.process.equipment.network.TwoFluidPipeNetworkRefinementStudy.ProfileQuantity;
+import neqsim.process.equipment.network.TwoFluidPipeNetworkRefinementStudy.SpatialConvergenceStatus;
 import neqsim.process.equipment.pipeline.TwoFluidComponentConservationReport;
 import neqsim.process.equipment.pipeline.TwoFluidConservativeEnergyReport;
 import neqsim.process.equipment.pipeline.TwoFluidMassBalanceReport;
@@ -41,6 +43,10 @@ import neqsim.thermo.system.SystemInterface;
  * @version 1.0
  */
 public final class NetworkHydraulicModelComparison {
+  private static final double GRID_RATIO_TOLERANCE = 1.0e-10;
+  private static final double GRID_ROUNDOFF_THRESHOLD = 1.0e-10;
+  private static final double GRID_CONVERGENCE_SAFETY_FACTOR = 1.25;
+
   /** Immutable normalized profile evidence for one hydraulic model. */
   public static final class ModelProfiles {
     private final double[] positionM;
@@ -162,6 +168,29 @@ public final class NetworkHydraulicModelComparison {
     public double getAverageLiquidSuperficialVelocityMs() {
       return distanceWeightedAverage(cellLengthM, liquidSuperficialVelocityMs);
     }
+
+    /**
+     * Select one normalized profile quantity.
+     *
+     * @param quantity requested quantity
+     * @return owned immutable profile array
+     */
+    private double[] values(ProfileQuantity quantity) {
+      switch (quantity) {
+      case PRESSURE:
+        return pressurePa;
+      case TEMPERATURE:
+        return temperatureK;
+      case LIQUID_HOLDUP:
+        return liquidHoldup;
+      case GAS_VELOCITY:
+        return gasSuperficialVelocityMs;
+      case LIQUID_VELOCITY:
+        return liquidSuperficialVelocityMs;
+      default:
+        throw new IllegalArgumentException("Unsupported profile quantity " + quantity);
+      }
+    }
   }
 
   /**
@@ -204,6 +233,233 @@ public final class NetworkHydraulicModelComparison {
         throw new IllegalArgumentException("Segment count " + segmentCount + " was not evaluated");
       }
       return result;
+    }
+
+    /**
+     * Quantify three-grid convergence for one hydraulic model, edge and profile quantity.
+     *
+     * <p>
+     * The requested segment counts must increase with one constant refinement ratio. The comparison uses the same
+     * symmetric common-position maximum discrepancy as {@link TwoFluidPipeNetworkRefinementStudy}: each profile is
+     * interpolated onto the other grid and the larger discrepancy is normalized by the largest magnitude across all
+     * three profiles. A fine-grid convergence index is published only for a resolved monotonic sequence.
+     * </p>
+     *
+     * @param coarseSegments coarsest segment count
+     * @param mediumSegments intermediate segment count
+     * @param fineSegments finest segment count
+     * @param edgeId canonical compared edge identifier
+     * @param modelType either {@link PipeModelType#BEGGS_BRILL} or {@link PipeModelType#TWO_FLUID}
+     * @param quantity profile quantity
+     * @return immutable three-grid convergence receipt
+     * @throws IllegalArgumentException when a mesh is missing, ratios are unequal, the model is unsupported or the
+     * profiles are invalid
+     */
+    public HydraulicSpatialConvergenceReport getSpatialConvergenceReport(int coarseSegments, int mediumSegments,
+        int fineSegments, String edgeId, PipeModelType modelType, ProfileQuantity quantity) {
+      if (edgeId == null || edgeId.trim().isEmpty()) {
+        throw new IllegalArgumentException("Spatial convergence requires a canonical edge identifier");
+      }
+      if (modelType == null || quantity == null) {
+        throw new IllegalArgumentException("Spatial convergence requires a hydraulic model and profile quantity");
+      }
+      if (coarseSegments >= mediumSegments || mediumSegments >= fineSegments) {
+        throw new IllegalArgumentException("Spatial convergence segment counts must increase from coarse to fine");
+      }
+      double coarseMediumRatio = (double) mediumSegments / coarseSegments;
+      double mediumFineRatio = (double) fineSegments / mediumSegments;
+      double ratioScale = Math.max(coarseMediumRatio, mediumFineRatio);
+      if (coarseMediumRatio <= 1.0 || mediumFineRatio <= 1.0
+          || Math.abs(coarseMediumRatio - mediumFineRatio) > GRID_RATIO_TOLERANCE * ratioScale) {
+        throw new IllegalArgumentException(
+            "Spatial convergence requires one constant refinement ratio greater than one");
+      }
+      ModelProfiles coarse = getProfiles(getResult(coarseSegments), edgeId, modelType);
+      ModelProfiles medium = getProfiles(getResult(mediumSegments), edgeId, modelType);
+      ModelProfiles fine = getProfiles(getResult(fineSegments), edgeId, modelType);
+      validateCommonLength(coarse, medium, fine);
+      double scale = maximumMagnitude(coarse.values(quantity), medium.values(quantity), fine.values(quantity));
+      double coarseMediumDifference = maximumAbsoluteDifference(coarse, medium, quantity) / scale;
+      double mediumFineDifference = maximumAbsoluteDifference(medium, fine, quantity) / scale;
+      if (!Double.isFinite(coarseMediumDifference) || !Double.isFinite(mediumFineDifference)
+          || coarseMediumDifference < 0.0 || mediumFineDifference < 0.0) {
+        throw new IllegalArgumentException("Spatial convergence discrepancies must be finite and non-negative");
+      }
+      SpatialConvergenceStatus status;
+      double observedOrder = Double.NaN;
+      double fineGridConvergenceIndex = Double.NaN;
+      if (coarseMediumDifference <= GRID_ROUNDOFF_THRESHOLD || mediumFineDifference <= GRID_ROUNDOFF_THRESHOLD) {
+        status = SpatialConvergenceStatus.ROUND_OFF_LIMITED;
+      } else {
+        observedOrder = Math.log(coarseMediumDifference / mediumFineDifference) / Math.log(coarseMediumRatio);
+        if (Double.isFinite(observedOrder) && observedOrder > 0.0) {
+          double denominator = Math.pow(coarseMediumRatio, observedOrder) - 1.0;
+          fineGridConvergenceIndex = GRID_CONVERGENCE_SAFETY_FACTOR * mediumFineDifference / denominator;
+          status = SpatialConvergenceStatus.MONOTONIC;
+        } else {
+          status = SpatialConvergenceStatus.NON_MONOTONIC;
+        }
+      }
+      return new HydraulicSpatialConvergenceReport(edgeId, modelType, quantity, coarseSegments, mediumSegments,
+          fineSegments, coarseMediumRatio, coarseMediumDifference, mediumFineDifference, observedOrder,
+          fineGridConvergenceIndex, status);
+    }
+
+    /**
+     * Select normalized profiles for one accepted model result.
+     *
+     * @param result accepted mesh result
+     * @param edgeId canonical edge identifier
+     * @param modelType requested hydraulic model
+     * @return normalized profiles
+     */
+    private static ModelProfiles getProfiles(Result result, String edgeId, PipeModelType modelType) {
+      EdgeComparison edge = result.getEdgeComparison(edgeId);
+      if (modelType == PipeModelType.BEGGS_BRILL) {
+        return edge.getBeggsBrillProfiles();
+      }
+      if (modelType == PipeModelType.TWO_FLUID) {
+        return edge.getTwoFluidProfiles();
+      }
+      throw new IllegalArgumentException("Spatial convergence supports only Beggs-Brill and two-fluid profiles");
+    }
+
+    /**
+     * Require the three profile grids to represent one unchanged physical edge length.
+     *
+     * @param coarse coarsest profile
+     * @param medium intermediate profile
+     * @param fine finest profile
+     */
+    private static void validateCommonLength(ModelProfiles coarse, ModelProfiles medium, ModelProfiles fine) {
+      double coarseLength = sum(coarse.cellLengthM);
+      double mediumLength = sum(medium.cellLengthM);
+      double fineLength = sum(fine.cellLengthM);
+      double scale = Math.max(coarseLength, Math.max(mediumLength, fineLength));
+      if (!(scale > 0.0) || Math.abs(coarseLength - mediumLength) > GRID_RATIO_TOLERANCE * scale
+          || Math.abs(mediumLength - fineLength) > GRID_RATIO_TOLERANCE * scale) {
+        throw new IllegalArgumentException("Spatial convergence profiles must preserve one positive edge length");
+      }
+    }
+  }
+
+  /**
+   * Immutable three-grid convergence evidence for one same-topology hydraulic model profile.
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  public static final class HydraulicSpatialConvergenceReport {
+    private final String edgeId;
+    private final PipeModelType modelType;
+    private final ProfileQuantity quantity;
+    private final int coarseSegments;
+    private final int mediumSegments;
+    private final int fineSegments;
+    private final double refinementRatio;
+    private final double coarseMediumDifference;
+    private final double mediumFineDifference;
+    private final double observedOrder;
+    private final double fineGridConvergenceIndex;
+    private final SpatialConvergenceStatus status;
+
+    /**
+     * Create one immutable hydraulic spatial-convergence receipt.
+     *
+     * @param edgeId canonical edge identifier
+     * @param modelType compared hydraulic model
+     * @param quantity compared profile quantity
+     * @param coarseSegments coarsest segment count
+     * @param mediumSegments intermediate segment count
+     * @param fineSegments finest segment count
+     * @param refinementRatio constant grid refinement ratio
+     * @param coarseMediumDifference normalized coarse-to-medium discrepancy
+     * @param mediumFineDifference normalized medium-to-fine discrepancy
+     * @param observedOrder observed order, or {@link Double#NaN}
+     * @param fineGridConvergenceIndex safety-factored fine-grid index, or {@link Double#NaN}
+     * @param status explicit convergence classification
+     */
+    private HydraulicSpatialConvergenceReport(String edgeId, PipeModelType modelType, ProfileQuantity quantity,
+        int coarseSegments, int mediumSegments, int fineSegments, double refinementRatio, double coarseMediumDifference,
+        double mediumFineDifference, double observedOrder, double fineGridConvergenceIndex,
+        SpatialConvergenceStatus status) {
+      this.edgeId = edgeId;
+      this.modelType = modelType;
+      this.quantity = quantity;
+      this.coarseSegments = coarseSegments;
+      this.mediumSegments = mediumSegments;
+      this.fineSegments = fineSegments;
+      this.refinementRatio = refinementRatio;
+      this.coarseMediumDifference = coarseMediumDifference;
+      this.mediumFineDifference = mediumFineDifference;
+      this.observedOrder = observedOrder;
+      this.fineGridConvergenceIndex = fineGridConvergenceIndex;
+      this.status = status;
+    }
+
+    /** @return canonical compared edge identifier */
+    public String getEdgeId() {
+      return edgeId;
+    }
+
+    /** @return compared hydraulic model */
+    public PipeModelType getModelType() {
+      return modelType;
+    }
+
+    /** @return compared profile quantity */
+    public ProfileQuantity getQuantity() {
+      return quantity;
+    }
+
+    /** @return coarsest segment count */
+    public int getCoarseSegments() {
+      return coarseSegments;
+    }
+
+    /** @return intermediate segment count */
+    public int getMediumSegments() {
+      return mediumSegments;
+    }
+
+    /** @return finest segment count */
+    public int getFineSegments() {
+      return fineSegments;
+    }
+
+    /** @return constant grid refinement ratio */
+    public double getRefinementRatio() {
+      return refinementRatio;
+    }
+
+    /** @return normalized coarse-to-medium discrepancy */
+    public double getCoarseMediumDifference() {
+      return coarseMediumDifference;
+    }
+
+    /** @return normalized medium-to-fine discrepancy */
+    public double getMediumFineDifference() {
+      return mediumFineDifference;
+    }
+
+    /** @return observed convergence order, or {@link Double#NaN} */
+    public double getObservedOrder() {
+      return observedOrder;
+    }
+
+    /** @return safety-factored fine-grid convergence index, or {@link Double#NaN} */
+    public double getFineGridConvergenceIndex() {
+      return fineGridConvergenceIndex;
+    }
+
+    /** @return explicit convergence status */
+    public SpatialConvergenceStatus getStatus() {
+      return status;
+    }
+
+    /** @return true only for a resolved positive-order sequence */
+    public boolean isMonotonicallyConvergent() {
+      return status == SpatialConvergenceStatus.MONOTONIC;
     }
   }
 
@@ -981,6 +1237,99 @@ public final class NetworkHydraulicModelComparison {
       totalLength += cellLengthM[index];
     }
     return totalLength > 0.0 ? weightedTotal / totalLength : Double.NaN;
+  }
+
+  /**
+   * Return the largest absolute value across one or more profile arrays.
+   *
+   * @param profiles profile arrays
+   * @return positive finite-or-roundoff scale
+   */
+  private static double maximumMagnitude(double[]... profiles) {
+    double scale = 1.0e-30;
+    for (double[] profile : profiles) {
+      for (double value : profile) {
+        scale = Math.max(scale, Math.abs(value));
+      }
+    }
+    return scale;
+  }
+
+  /**
+   * Calculate the symmetric common-position maximum absolute discrepancy.
+   *
+   * @param first first profile
+   * @param second second profile
+   * @param quantity requested quantity
+   * @return maximum absolute discrepancy
+   */
+  private static double maximumAbsoluteDifference(ModelProfiles first, ModelProfiles second, ProfileQuantity quantity) {
+    double[] firstValues = first.values(quantity);
+    double[] secondValues = second.values(quantity);
+    double maximum = directionalMaximumDifference(first.positionM, firstValues, second.positionM, secondValues);
+    return Math.max(maximum,
+        directionalMaximumDifference(second.positionM, secondValues, first.positionM, firstValues));
+  }
+
+  /**
+   * Interpolate one source profile at every target position and return the maximum discrepancy.
+   *
+   * @param sourcePositions source cell-centre positions
+   * @param sourceValues source values
+   * @param targetPositions target cell-centre positions
+   * @param targetValues target values
+   * @return maximum absolute interpolated discrepancy
+   */
+  private static double directionalMaximumDifference(double[] sourcePositions, double[] sourceValues,
+      double[] targetPositions, double[] targetValues) {
+    double maximum = 0.0;
+    for (int index = 0; index < targetPositions.length; index++) {
+      maximum = Math.max(maximum,
+          Math.abs(interpolate(sourcePositions, sourceValues, targetPositions[index]) - targetValues[index]));
+    }
+    return maximum;
+  }
+
+  /**
+   * Linearly interpolate one non-empty monotonic cell-centre profile.
+   *
+   * @param positions source positions in m
+   * @param values source values
+   * @param target target position in m
+   * @return interpolated value with endpoint extrapolation by nearest sample
+   */
+  private static double interpolate(double[] positions, double[] values, double target) {
+    if (positions.length == 0 || positions.length != values.length) {
+      throw new IllegalArgumentException("Hydraulic profile positions and values must be non-empty and aligned");
+    }
+    if (target <= positions[0]) {
+      return values[0];
+    }
+    int lastIndex = positions.length - 1;
+    if (target >= positions[lastIndex]) {
+      return values[lastIndex];
+    }
+    int upper = 1;
+    while (positions[upper] < target) {
+      upper++;
+    }
+    int lower = upper - 1;
+    double fraction = (target - positions[lower]) / (positions[upper] - positions[lower]);
+    return values[lower] + fraction * (values[upper] - values[lower]);
+  }
+
+  /**
+   * Sum one finite profile array.
+   *
+   * @param values values to sum
+   * @return arithmetic sum
+   */
+  private static double sum(double[] values) {
+    double total = 0.0;
+    for (double value : values) {
+      total += value;
+    }
+    return total;
   }
 
   /**
