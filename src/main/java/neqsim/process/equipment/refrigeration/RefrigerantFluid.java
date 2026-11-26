@@ -7,7 +7,7 @@ import java.util.Map;
 import neqsim.thermo.system.SystemAmmoniaEos;
 import neqsim.thermo.system.SystemGERG2008Eos;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemPrEos;
+import neqsim.thermo.system.SystemPrMathiasCopeman;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -23,8 +23,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <p>
  * {@link #of(String)} selects the equation of state measured to reproduce the saturation pressure and latent heat of
  * each refrigerant best: the dedicated reference equation for ammonia, GERG-2008 for carbon dioxide and Peng-Robinson
- * for hydrocarbons and halocarbons. ASHRAE designations such as {@code R717} or {@code R290} are accepted. Use
- * {@link #of(String, SystemInterface)} to supply another model.
+ * with the Mathias-Copeman temperature function for hydrocarbons and halocarbons. Components without Mathias-Copeman
+ * parameters in the database fall back to the standard Peng-Robinson temperature function. ASHRAE designations such as
+ * {@code R717} or {@code R290} are accepted. Use {@link #of(String, SystemInterface)} to supply another model.
  * </p>
  *
  * <p>
@@ -158,7 +159,7 @@ public class RefrigerantFluid implements Serializable {
       fluid.createDatabase(true);
       fluid.setMixingRule(2);
     } else {
-      fluid = new SystemPrEos(273.15, 1.0);
+      fluid = new SystemPrMathiasCopeman(273.15, 1.0);
       fluid.addComponent(component, 1.0);
       fluid.createDatabase(true);
       fluid.setMixingRule(2);
@@ -253,17 +254,27 @@ public class RefrigerantFluid implements Serializable {
     }
     double slope = 5.373 * (1.0 + acentricFactor);
     double temperature = criticalTemperature / (1.0 - Math.log(pressure / criticalPressure) / slope);
+    // Secant iteration on ln(p) against 1/T, where the saturation line is nearly straight.
+    double dLnPdInvT = -slope * criticalTemperature;
+    double previousInvT = Double.NaN;
+    double previousError = Double.NaN;
     for (int i = 0; i < MAX_ITERATIONS; i++) {
-      temperature = Math.min(temperature, 0.9995 * criticalTemperature);
-      double calculated = saturationPressureUncached(temperature);
-      double error = Math.log(calculated / pressure);
+      temperature = Math.max(0.3 * criticalTemperature, Math.min(temperature, 0.9995 * criticalTemperature));
+      double invT = 1.0 / temperature;
+      double error = Math.log(saturationPressureUncached(temperature) / pressure);
       if (Math.abs(error) < 1.0e-9) {
         saturationTemperatureCache.put(key, Double.valueOf(temperature));
         return temperature;
       }
-      // d ln(p) / d (1/T) is nearly constant; estimate it from the Wilson form and correct 1/T.
-      double dLnPdInvT = -slope * criticalTemperature;
-      temperature = 1.0 / (1.0 / temperature - error / dLnPdInvT);
+      if (!Double.isNaN(previousInvT) && Math.abs(error - previousError) > 1.0e-14) {
+        double secant = (error - previousError) / (invT - previousInvT);
+        if (secant < 0.0) {
+          dLnPdInvT = secant;
+        }
+      }
+      previousInvT = invT;
+      previousError = error;
+      temperature = 1.0 / (invT - error / dLnPdInvT);
     }
     throw new IllegalStateException("saturation temperature of " + name + " did not converge at " + pressure + " bara");
   }
@@ -417,6 +428,12 @@ public class RefrigerantFluid implements Serializable {
     double vaporValue = value(saturated[1], enthalpyTarget);
     if (target >= liquidValue && target <= vaporValue) {
       double quality = (target - liquidValue) / (vaporValue - liquidValue);
+      // A state built from saturation properties lands on the line only to round-off; snap it.
+      if (quality > 1.0 - 1.0e-6) {
+        return saturated[1];
+      } else if (quality < 1.0e-6) {
+        return saturated[0];
+      }
       double specificVolume = (1.0 - quality) / saturated[0].getDensity() + quality / saturated[1].getDensity();
       return new RefrigerantState(pressure, saturationTemperature,
           saturated[0].getEnthalpy() + quality * (saturated[1].getEnthalpy() - saturated[0].getEnthalpy()),
@@ -527,9 +544,21 @@ public class RefrigerantFluid implements Serializable {
     double pressure = saturationPressureUncached(temperature);
     RefrigerantState liquid = flashRaw(pressure * (1.0 + SATURATION_PRESSURE_OFFSET), temperature, 0.0);
     RefrigerantState vapor = flashRaw(pressure * (1.0 - SATURATION_PRESSURE_OFFSET), temperature, 1.0);
-    if (!(vapor.getEnthalpy() > liquid.getEnthalpy()) || !(liquid.getDensity() > vapor.getDensity())) {
+    // Two flashes that land in the same phase differ only by the 0.1 % pressure step, far less than 0.5 % in density.
+    if (!(vapor.getEnthalpy() > liquid.getEnthalpy()) || !(vapor.getDensity() < 0.995 * liquid.getDensity())) {
       throw new IllegalStateException("the " + modelName + " model does not resolve separate liquid and vapour phases"
           + " for " + name + " at " + temperature + " K; choose another equation of state");
+    }
+    // Liquid and vapour must have the same Gibbs energy at saturation. The two states sit 0.05 % in pressure on each
+    // side of the line, which accounts for about 0.001 in reduced units; a larger difference means that the
+    // bubble-point flash of this model returned a pressure that is not the saturation pressure.
+    double gibbsDifference = (vapor.getEnthalpy() - temperature * vapor.getEntropy())
+        - (liquid.getEnthalpy() - temperature * liquid.getEntropy());
+    double reducedDifference = gibbsDifference * vapor.getDensity() / (pressure * 1.0e5);
+    if (Math.abs(reducedDifference) > 0.01) {
+      throw new IllegalStateException("the " + modelName + " model returned " + pressure + " bara as the saturation "
+          + "pressure of " + name + " at " + temperature + " K, but liquid and vapour are not in equilibrium there"
+          + " (reduced Gibbs energy difference " + reducedDifference + "); choose another equation of state");
     }
     RefrigerantState[] states = new RefrigerantState[] {
         new RefrigerantState(pressure, temperature, liquid.getEnthalpy(), liquid.getEntropy(), liquid.getDensity(),

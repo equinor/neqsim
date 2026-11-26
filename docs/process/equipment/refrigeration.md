@@ -32,8 +32,8 @@ refrigerant equation of state; nothing is scaled from a Carnot reference.
 `RefrigerationSystem.getCarnotFraction()` returns the value to pass to
 `RefrigerationCycle.setCycleEfficiency` when the screening model has to reproduce a rigorous cycle.
 Measured on 2026-11-26 for a single-stage cycle at -35 C evaporating, 35 C condensing and 0.75
-isentropic efficiency: propane 0.515, propene 0.518, R134a 0.523, ammonia 0.554. A flash economizer
-at the geometric-mean pressure raises these to 0.611, 0.607, 0.618 and 0.579. The screening default
+isentropic efficiency: propane 0.514, propene 0.518, R134a 0.520, ammonia 0.554. A flash economizer
+at the geometric-mean pressure raises these to 0.611, 0.607, 0.617 and 0.579. The screening default
 of 0.55 therefore fits a single-stage cycle and is conservative for an economized one.
 
 ## What the cycle contains
@@ -118,8 +118,8 @@ String json = refrigeration.toJson();
 
 Result: 5192 kW of chilling (1911 kW at 0 C, 3280 kW at -30 C) needs 1827 kW of shaft power, a COP
 of 2.84, with 70.7 t/h of propane circulating and 7019 kW rejected to 604 t/h of cooling water. The
-MP stage takes 1242 kW at 7126 m3/h suction volume and the LP stage 585 kW at 9003 m3/h. Without the
-flash vessels (`EconomizerType.NONE`) the same duty needs 2099 kW.
+MP stage takes 1241 kW at 7146 m3/h suction volume and the LP stage 586 kW at 9043 m3/h. Without the
+flash vessels (`EconomizerType.NONE`) the same duty needs 2100 kW.
 
 Changing a chiller outlet temperature and running the process again moves the level temperature,
 the duty and the compressor power together.
@@ -219,35 +219,66 @@ equipment it serves.
 ## Refrigerants and property accuracy
 
 `setRefrigerant(name)` accepts a NeqSim component name or an ASHRAE designation (R717, R744, R290,
-R1270, R1150, R170, R600, R600a, R134a, R12) and selects the equation of state. The choice rests on
-this measurement of saturation pressure and latent heat against NIST reference data, made on
-2026-11-26:
+R1270, R1150, R170, R600, R600a, R134a, R12) and selects the equation of state:
 
-| Refrigerant | Model selected | Point | Saturation pressure error | Latent heat error |
-|-------------|----------------|-------|---------------------------|-------------------|
-| Ammonia | `SystemAmmoniaEos` (reference equation) | -33.3 C, 30 C | below 0.1 % | below 0.1 % |
-| Ammonia | Peng-Robinson, for comparison | -33.3 C, 30 C | +1.1 %, +0.6 % | +1.1 %, +3.1 % |
-| CO2 | `SystemGERG2008Eos` | -40 C, -20 C | below 0.1 % | below 0.1 % |
-| CO2 | Peng-Robinson, for comparison | -40 C, -20 C | -1.6 %, -1.2 % | +0.9 %, +1.6 % |
-| Propane | Peng-Robinson | -40 C, 30 C | +0.4 %, +0.1 % | -0.3 %, +0.6 % |
-| Propane | SRK, for comparison | -40 C, 30 C | -0.8 %, +1.2 % | +1.5 %, +1.2 % |
-| R134a | Peng-Robinson | -26.1 C, 30 C | -0.5 %, +0.1 % | +0.9 %, +2.7 % |
+| Refrigerant | Model selected |
+|-------------|----------------|
+| Ammonia | `SystemAmmoniaEos`, the reference equation |
+| CO2 | `SystemGERG2008Eos` |
+| All others | `SystemPrMathiasCopeman`: Peng-Robinson with the Mathias-Copeman temperature function. A component without Mathias-Copeman parameters in the database (propene, ethylene, R12) gets the standard Peng-Robinson function |
 
-Peng-Robinson with the ammonia ideal-gas heat capacity in the database also gives an isentropic
-discharge temperature 11 K too low for ammonia (25.6 C against 36.8 C for a threefold compression
-from saturation at 1.013 bara), which is the second reason for the reference equation.
+The choice rests on this measurement of 2026-11-26. Errors are in saturation pressure and latent
+heat. The yardstick is NIST saturation data, the Tillner-Roth and Baehr (1994) vapour-pressure
+equation for R134a, and for ammonia the reference equation at 220 to 380 K.
+
+| Refrigerant | Points | Selected model | Plain Peng-Robinson, for comparison |
+|-------------|--------|----------------|-------------------------------------|
+| Ammonia | -33.3 C, 30 C | below 0.1 %, below 0.1 % | up to +1.3 %, up to +4 % |
+| CO2 | -40 C, -20 C | below 0.1 %, below 0.1 % | up to -1.6 %, up to +1.6 % |
+| Propane | -40, 0, 30, 50 C | within 0.5 %, within 0.7 % | within 0.4 % and 0.6 % here, but +2.2 % in pressure at -70 C |
+| Isobutane | -11.8 C | 0.0 %, +0.2 % | +2.1 %, -1.2 % |
+| n-Butane, ethane | boiling point | within 0.5 %, within 0.5 % | within 0.7 %, within 0.4 % |
+| R134a | -40, -26.1, 0, 30, 60 C | within 0.3 %, +0.6 to +2.0 % | within 0.6 %, -0.2 to +2.3 % |
+| R12 | -29.8, 0, 30 C | within 0.5 %, +0.1 % at the boiling point | same model |
+| Propene | -47.6 C, 30 C | +0.7 %, +0.1 % in pressure; -0.7 % in latent heat | same model |
+| Ethylene | -103.8 C | +1.5 %, -1.2 % | same model |
+
+A cubic equation with a fitted temperature function still carries its vapour-volume error into the
+latent heat. That is the 2 % for R134a above 0 C, and for ammonia it reaches +4.5 % with 3 % low
+vapour density, which is why ammonia uses the reference equation.
 
 The ideal R134a cycle between 0.14 and 0.8 MPa in Cengel and Boles has a COP of 3.97; the model
 reproduces it within 3 %.
 
-`RefrigerantFluid.of(name, fluid)` wraps any single-component NeqSim fluid when another model is
-wanted, for example GERG-2008 for propane. A model that does not resolve separate liquid and vapour
-phases for the pure fluid is rejected with an explanation.
+### Database parameters corrected for refrigerants
 
-R134a and R12 had no ideal-gas heat capacity coefficients in the component database, so any
-compressor calculation with them failed. They now carry the McLinden (1989) polynomial for R134a,
-within 0.5 % of the Tillner-Roth and Baehr reference between 250 and 400 K, and the Reid, Prausnitz
-and Poling polynomial for R12.
+These corrections are in the component database and apply to every NeqSim model that reads the
+parameter, not only to refrigeration.
+
+| Component | Parameter | Before | Now |
+|-----------|-----------|--------|-----|
+| Ammonia | Ideal-gas heat capacity | 16 % high at 200 K, 25 % at 300 K, 42 % at 500 K | Poling, Prausnitz and O'Connell polynomial, within 0.4 % of the reference equation from 200 to 500 K and of JANAF at 1000 K |
+| Ammonia | Mathias-Copeman parameters for SRK (`SystemSrkMathiasCopeman`, `SystemPsrkEos`) | The published PSRK constants of methanol; saturation pressure 70 % low | Fitted to the reference equation, within 0.3 % from 220 to 380 K |
+| Ammonia | Mathias-Copeman parameters for Peng-Robinson | Saturation pressure 76 % low | Fitted to the reference equation, within 0.2 % from 220 to 380 K |
+| R134a | Critical temperature, critical pressure, acentric factor, molar mass, boiling point | 100.85 C, 40.7 bara, 0.332, 102.0, -26.55 C | 101.06 C, 40.593 bara, 0.32684, 102.032, -26.07 C |
+| R134a | Mathias-Copeman parameters for SRK and Peng-Robinson | SRK: the PSRK constants of CO2, pressure 38 % high. Peng-Robinson: none | Fitted to the Tillner-Roth and Baehr equation, within 0.5 % from 215 to 360 K |
+| R134a, R12 | Ideal-gas heat capacity | All zero; compressor calculations failed | McLinden (1989) for R134a, within 0.5 % of the Tillner-Roth and Baehr value from 250 to 400 K; Reid, Prausnitz and Poling for R12 |
+| R12 | Critical temperature, critical pressure, acentric factor, molar mass, boiling point | 111.85 C, 41.4 bara, 0.176, 121.0, -30.15 C | 111.97 C, 41.361 bara, 0.17948, 120.913, -29.75 C |
+| R12 | Mathias-Copeman parameters for SRK | The PSRK constants of CO2 | Removed; the standard SRK temperature function applies |
+
+Results for ammonia with a cubic or CPA equation of state change with the heat-capacity
+correction: enthalpies, heat duties and compressor discharge temperatures. The ammonia critical
+constants are unchanged, because the CPA parameters were fitted with them.
+
+### Supplying another model
+
+`RefrigerantFluid.of(name, fluid)` wraps any single-component NeqSim fluid. The saturation states
+it returns are checked: liquid and vapour must be distinct phases with equal Gibbs energy. A model
+that fails is rejected with an explanation. This matters for GERG-2008 with propane, ethane, the
+butanes and nitrogen, where the NeqSim bubble-point flash returns a wrong pressure at high reduced
+temperature (21.5 bara for propane at 314 K, where the saturation pressure is 14.3 bara). GERG-2008
+agrees with the fitted Peng-Robinson model within 0.2 % for CO2 between 0.70 and 0.95 of the
+critical temperature, and is correct for propane at 0 C.
 
 ## Results
 

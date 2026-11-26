@@ -115,16 +115,23 @@ List<String> warnings = ref.getWarnings(); // loads colder than their level allo
 | Calibrate the screening model | `cycle.setCycleEfficiency(ref.getCarnotFraction())` |
 
 **Refrigerant model.** `setRefrigerant(name)` picks the equation of state; do not swap it without a
-reason. Measured against NIST saturation data on 2026-11-26 (saturation pressure / latent heat
-error): ammonia with `SystemAmmoniaEos` below 0.1 % (Peng-Robinson up to +1.1 % / +3.1 % and an
-isentropic discharge temperature 11 K low); CO2 with `SystemGERG2008Eos` below 0.1 % (Peng-Robinson
--1.6 % / +1.6 %); propane with Peng-Robinson within 0.4 % / 0.6 % (SRK 1.2 % / 1.5 %); R134a with
-Peng-Robinson within 0.5 % / 2.7 %. Another single-component model goes in through
-`RefrigerantFluid.of(name, fluid)`.
+reason: `SystemAmmoniaEos` for ammonia, `SystemGERG2008Eos` for CO2, `SystemPrMathiasCopeman` for
+the rest. Measured on 2026-11-26 against NIST saturation data and the Tillner-Roth and Baehr R134a
+equation (saturation pressure / latent heat error): ammonia and CO2 below 0.1 %; propane, ethane and
+the butanes within 0.5 % / 0.7 % (plain Peng-Robinson is +2.1 % for isobutane at its boiling point);
+R134a within 0.3 % / 2.0 %; R12 within 0.5 %; propene +0.7 % and ethylene +1.5 % at the boiling
+point (no Mathias-Copeman parameters, standard Peng-Robinson function). Another single-component
+model goes in through `RefrigerantFluid.of(name, fluid)` and is rejected when its saturation states
+are not in equilibrium, as GERG-2008 is for propane at 41 C.
+
+**Ammonia with a cubic or CPA model.** The database ideal-gas heat capacity of ammonia was 16 to
+42 % high until 2026-11-26, and its SRK and Peng-Robinson Mathias-Copeman parameters gave saturation
+pressures 70 % low. Both are corrected; ammonia heat duties and discharge temperatures calculated
+before that date with SRK, PR or CPA are not comparable.
 
 **Carnot fraction.** Measured the same day at -35 C / 35 C and 0.75 isentropic efficiency:
-single-stage propane 0.515, propene 0.518, R134a 0.523, ammonia 0.554; with a geometric-mean flash
-economizer 0.611, 0.607, 0.618, 0.579. Use these, not a guess, for `RefrigerationCycle`.
+single-stage propane 0.514, propene 0.518, R134a 0.520, ammonia 0.554; with a geometric-mean flash
+economizer 0.611, 0.607, 0.617, 0.579. Use these, not a guess, for `RefrigerationCycle`.
 
 ## NitrogenSystem
 

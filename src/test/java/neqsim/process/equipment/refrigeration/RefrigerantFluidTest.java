@@ -45,17 +45,65 @@ class RefrigerantFluidTest {
   }
 
   @Test
-  void pengRobinsonReproducesHydrocarbonSaturationData() {
-    assertSaturation("propane", -40.0, 1.110, 423.3, 0.01, 0.01);
-    assertSaturation("propane", 30.0, 10.79, 326.6, 0.01, 0.01);
-    assertSaturation("propene", -47.62, 1.013, 439.0, 0.02, 0.02);
-    assertSaturation("ethylene", -103.7, 1.013, 482.4, 0.02, 0.02);
+  void mathiasCopemanPengRobinsonReproducesHydrocarbonSaturationData() {
+    assertSaturation("propane", -40.0, 1.110, 423.3, 0.006, 0.008);
+    assertSaturation("propane", 0.0, 4.745, 374.9, 0.006, 0.008);
+    assertSaturation("propane", 30.0, 10.79, 326.6, 0.006, 0.008);
+    assertSaturation("i-butane", -11.75, 1.013, 365.1, 0.006, 0.008);
+    assertSaturation("n-butane", -0.49, 1.013, 385.7, 0.006, 0.008);
+    assertSaturation("ethane", -88.58, 1.013, 489.4, 0.006, 0.008);
+    // No Mathias-Copeman parameters in the database: standard Peng-Robinson temperature function.
+    assertSaturation("propene", -47.62, 1.013, 439.0, 0.01, 0.01);
+    assertSaturation("ethylene", -103.77, 1.013, 482.4, 0.02, 0.015);
   }
 
   @Test
-  void pengRobinsonReproducesR134aWithinThreePercent() {
-    assertSaturation("R134a", -26.07, 1.013, 217.0, 0.01, 0.03);
-    assertSaturation("R134a", 30.0, 7.702, 173.1, 0.01, 0.03);
+  void mathiasCopemanPengRobinsonReproducesHalocarbonSaturationData() {
+    // R134a: Tillner-Roth and Baehr (1994) saturation pressures; latent heat is limited by the cubic vapour volume.
+    assertSaturation("R134a", -40.0, 0.5121, 225.9, 0.005, 0.01);
+    assertSaturation("R134a", -26.07, 1.013, 217.0, 0.005, 0.01);
+    assertSaturation("R134a", 0.0, 2.928, 198.6, 0.005, 0.02);
+    assertSaturation("R134a", 30.0, 7.702, 173.1, 0.005, 0.025);
+    assertSaturation("R134a", 60.0, 16.82, 139.1, 0.005, 0.025);
+    assertSaturation("R12", -29.75, 1.013, 165.2, 0.006, 0.01);
+    RefrigerantFluid r12 = RefrigerantFluid.of("R12");
+    assertEquals(3.086, r12.getSaturationPressure(273.15), 0.006 * 3.086);
+    assertEquals(7.449, r12.getSaturationPressure(303.15), 0.006 * 7.449);
+  }
+
+  @Test
+  void ammoniaCubicParametersFollowTheReferenceEquation() {
+    RefrigerantFluid reference = RefrigerantFluid.of("ammonia");
+    for (String model : new String[] {"PR-MC", "SRK-MC", "PSRK"}) {
+      SystemInterface fluid = "PR-MC".equals(model) ? new neqsim.thermo.system.SystemPrMathiasCopeman(273.15, 1.0)
+          : "SRK-MC".equals(model) ? new neqsim.thermo.system.SystemSrkMathiasCopeman(273.15, 1.0)
+              : new neqsim.thermo.system.SystemPsrkEos(273.15, 1.0);
+      fluid.addComponent("ammonia", 1.0);
+      fluid.createDatabase(true);
+      fluid.setMixingRule(2);
+      RefrigerantFluid cubic = RefrigerantFluid.of("ammonia " + model, fluid);
+      for (double temperature = 220.0; temperature <= 380.0; temperature += 40.0) {
+        double expected = reference.getSaturationPressure(temperature);
+        assertEquals(expected, cubic.getSaturationPressure(temperature), 0.005 * expected,
+            model + " ammonia saturation pressure at " + temperature + " K");
+      }
+    }
+    // Ideal-gas heat capacity of ammonia: 35.6 J/(mol K) at 300 K, 41.9 at 500 K and 56.5 at 1000 K (JANAF).
+    assertEquals(35.6, idealGasCp("ammonia", 300.0), 0.3);
+    assertEquals(41.9, idealGasCp("ammonia", 500.0), 0.3);
+    assertEquals(56.5, idealGasCp("ammonia", 1000.0), 0.5);
+  }
+
+  @Test
+  void aModelWhoseBubblePointIsNotAnEquilibriumIsRejected() {
+    // The GERG-2008 bubble-point flash returns 21.5 bara for propane at 314 K where the saturation pressure is 14.3.
+    SystemInterface gerg = new neqsim.thermo.system.SystemGERG2008Eos(273.15, 1.0);
+    gerg.addComponent("propane", 1.0);
+    gerg.createDatabase(true);
+    gerg.setMixingRule(2);
+    final RefrigerantFluid fluid = RefrigerantFluid.of("propane GERG-2008", gerg);
+    assertEquals(4.745, fluid.getSaturationPressure(273.15), 0.01);
+    assertThrows(IllegalStateException.class, () -> fluid.getSaturationPressure(318.15));
   }
 
   @Test
@@ -114,22 +162,23 @@ class RefrigerantFluidTest {
   @Test
   void halocarbonsHaveIdealGasHeatCapacity() {
     // R134a ideal-gas cp is 85.4 J/(mol K) at 300 K (Tillner-Roth and Baehr 1994); R12 is 72.6 J/(mol K).
-    assertEquals(85.4, idealGasCp("R134a"), 0.5);
-    assertEquals(72.6, idealGasCp("R12"), 0.5);
+    assertEquals(85.4, idealGasCp("R134a", 300.0), 0.5);
+    assertEquals(72.6, idealGasCp("R12", 300.0), 0.5);
   }
 
   /**
-   * Gets the ideal-gas heat capacity of a component at 300 K.
+   * Gets the ideal-gas heat capacity of a component.
    *
    * @param component component name
+   * @param temperature temperature in K
    * @return heat capacity in J/(mol K)
    */
-  private static double idealGasCp(String component) {
+  private static double idealGasCp(String component, double temperature) {
     SystemInterface fluid = new SystemSrkEos(300.0, 1.0);
     fluid.addComponent(component, 1.0);
     fluid.createDatabase(true);
     fluid.setMixingRule(2);
-    return fluid.getPhase(0).getComponent(0).getCp0(300.0);
+    return fluid.getPhase(0).getComponent(0).getCp0(temperature);
   }
 
   @Test
