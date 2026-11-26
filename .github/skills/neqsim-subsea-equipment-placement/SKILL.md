@@ -1,7 +1,7 @@
 ---
 name: neqsim-subsea-equipment-placement
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Constraint-based siting of subsea equipment and routes (drill centres, templates, manifolds, PLETs, tie-ins): screens and ranks sites against clearances, existing lines and crossings, exclusion zones, seabed slope, fishing exposure and well reach, and checks the route. USE WHEN: a tie-back or SURF study must decide where equipment goes, or defend a placement against map data, standards and installation constraints."
 last_verified: "2026-11-24"
 requires:
@@ -159,6 +159,13 @@ Verified by `tests/test_limits.py`.
 ## Limitations
 
 Screening geometry on straight segments in a local frame: no obstacle-avoiding routing, no geohazard interpretation, no foundation, structural, dropped-object or trawl-load calculation, no installation or vessel analysis, no anti-collision, no probabilistic fishing or ship-impact assessment. Map data may be restricted, incomplete or shifted. The ranking weights are declared assumptions. Hand-offs: `neqsim-seabed-protection-screening` (burial, rock, crossings design scope), `neqsim-pipe-route-profile` (profiles), `neqsim-erd-reach-screening` and `neqsim-well-trajectory-anticollision` (wells), `neqsim-surf-design-study` (hydraulics and design checks), specialists for geotechnical, geohazard, installation and fishing-interaction work.
+
+## References
+
+- DNV-ST-F101, Submarine pipeline systems (route selection, survey, installation).
+- DNV-RP-F105, F109, F110, F114: free span, on-bottom stability, global buckling, pipe-soil interaction.
+- ISO 13628-1, Subsea production systems, general requirements and recommendations.
+- NORSOK U-001, Subsea production systems.
 
 ## Illustrating the result
 

@@ -1,7 +1,7 @@
 ---
 name: neqsim-seabed-protection-screening
 calculation_basis: "hybrid"
-version: "0.1.0"
+version: "1.0.0"
 description: "Trenching, burial and rock-dump screening from route and map-layer data. Samples substrate, fishing intensity, ice scour and no-rock zones; finds crossings; selects protection by segment; estimates cover, rock quantities, supports, durations and a burial hand-off to NeqSim cooldown models. USE WHEN: early flow-assurance, SURF or tie-back studies need protection scope, burial thermal effects or rock quantities before detailed DNV assessments and contractor estimates."
 last_verified: "2026-11-06"
 requires:
@@ -252,7 +252,8 @@ read by the enterprise agents and supply the same GeoJSON layers to this skill.
 - Companion skills: `neqsim-pipeline-survey-processing`, `neqsim-pipe-route-profile`,
   `neqsim-bathymetry-profile-screening`, `neqsim-surf-field-layout-design`,
   `neqsim-surf-cooldown-screening`, `neqsim-hydrate-margin-check`,
-  `neqsim-subsea-layout-geometry`
+  `neqsim-subsea-layout-geometry`, `neqsim-open-marine-constraints` (open fishing-effort,
+  protected-area, wind and grid layers for the route)
 - NeqSim thermal handoff: `neqsim.fluidmechanics.geometrydefinitions.surrounding.PipeSurroundingEnvironment`,
   `neqsim.process.equipment.pipeline.PipeLineInterface` (`setBuried`, `setBurialDepth`,
   `setSoilConductivity`)

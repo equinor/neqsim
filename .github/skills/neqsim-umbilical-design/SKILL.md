@@ -1,7 +1,7 @@
 ---
 name: neqsim-umbilical-design
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Subsea umbilical sizing and drawings with the NeqSim umbilical physics: tube wall, cross-section and weights, armour from catenary tension, chemical and hydraulic line friction and response, power cable with charging current, design checks, figures and study hand-off. USE WHEN: a SURF or tie-back task needs an umbilical sized and drawn instead of a cost-library line item, or chemical injection, hydraulic response, power step-out or bend radius must be answered."
 last_verified: "2026-11-13"
 requires:

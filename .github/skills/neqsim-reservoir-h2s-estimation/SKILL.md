@@ -15,7 +15,7 @@ requires:
 
 H2S decides material selection (sour service), gas treatment and whether a gas meets the sales specification. In sandstone reservoirs it is not an accident of the source rock: pyrite and an iron-bearing carbonate hold it at a mineral equilibrium that depends on temperature and CO2. That makes H2S predictable before a well is drilled, provided the reservoir belongs to the setting the buffer describes; how closely is what the calibration of this skill measures on your own wells. This skill turns that into a number with a stated range and a report.
 
-For the chemistry of the buffer itself, the thermochemistry and the stability checks, see `neqsim-reservoir-h2s-mineral-buffer`. For H2S that forms later where seawater is injected, see `neqsim-reservoir-souring-correlation`. For converting a separator-gas reading to wellstream H2S, see `neqsim-h2s-phase-partitioning`.
+For the chemistry of the buffer itself, the thermochemistry and the stability checks, see `neqsim-reservoir-h2s-mineral-buffer`. For H2S that forms later where seawater is injected, see `neqsim-reservoir-souring-correlation`. For converting a separator-gas reading to wellstream H2S, see `neqsim-h2s-phase-partitioning`. For what the resulting H2S changes in materials, detection, consequence, flare and export gas, see `neqsim-h2s-safety-impact`.
 
 ## When to Use
 
