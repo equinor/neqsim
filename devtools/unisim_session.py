@@ -378,7 +378,7 @@ class UniSimSession:
             for record in list(self._open):
                 self._close_record(record)
             if self.app is not None:
-                _safe(self.app.Quit)
+                _safe(lambda: self.app.Quit())  # a dead proxy fails on the lookup too
         finally:
             if deadline is not None:
                 deadline.cancel()
@@ -490,7 +490,7 @@ class UniSimSession:
         try:
             case.Close(False)
         except Exception:  # noqa: BLE001
-            _safe(case.Close)
+            _safe(lambda: case.Close())
         self._open.remove(record)
         entry = record["entry"]
         if entry is not None:

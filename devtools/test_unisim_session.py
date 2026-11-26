@@ -179,6 +179,43 @@ def test_limit_ends_own_process_and_raises_once():
     session.close()  # the timeout was already raised once
 
 
+def test_close_survives_a_dead_com_proxy():
+    session, app, killed = make_session([set(), {42}])
+    session.start()
+
+    class DeadApp(App):
+        @property
+        def Quit(self):  # on a dead proxy the lookup itself fails
+            raise Exception("The RPC server is unavailable.")
+    app.__class__ = DeadApp
+    session.close()
+    assert killed == [42] and session.app is None and session.watchdog is None
+
+
+def test_watchdog_never_presses_yes_and_only_sees_own_dialogs(monkeypatch):
+    import types
+    import unisim_session
+    # hwnd: (class, text, pid, children)
+    windows = {1: ("#32770", "Save?", 42, [11, 12]), 11: ("Button", "&Yes", 42, []),
+               12: ("Button", "&No", 42, []), 2: ("#32770", "Other", 99, [21]),
+               21: ("Button", "OK", 99, []), 3: ("#32770", "Overwrite?", 42, [31]),
+               31: ("Button", "Yes", 42, [])}
+    posted = []
+    gui = types.SimpleNamespace(
+        EnumWindows=lambda cb, acc: [cb(h, acc) for h in (1, 2, 3)],
+        EnumChildWindows=lambda h, cb, acc: [cb(c, acc) for c in windows[h][3]],
+        IsWindowVisible=lambda h: True, GetClassName=lambda h: windows[h][0],
+        GetWindowText=lambda h: windows[h][1], PostMessage=lambda h, msg, *a: posted.append((h, msg)))
+    monkeypatch.setitem(sys.modules, "win32gui", gui)
+    monkeypatch.setitem(sys.modules, "win32con", types.SimpleNamespace(BM_CLICK="click", WM_CLOSE="close"))
+    monkeypatch.setitem(sys.modules, "win32process", types.SimpleNamespace(
+        GetWindowThreadProcessId=lambda h: (0, windows[h][2])))
+    assert unisim_session._dialogs({42}) == [1, 3]
+    assert unisim_session.dismiss(1)["action"] == "pressed no"
+    assert unisim_session.dismiss(3)["action"] == "WM_CLOSE"
+    assert posted == [(12, "click"), (3, "close")]
+
+
 def test_reader_closes_its_session_after_a_timeout(tmp_path):
     from unisim_reader import UniSimReader
     source = tmp_path / "plant.usc"
