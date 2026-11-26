@@ -77,7 +77,32 @@ class TwoFluidUnsplitTengesdalPreparationTest {
   @EnabledIfSystemProperty(named = "neqsim.unsplit.tengesdal.tracked-force-long-qualification", matches = "true")
   @Test
   void trackedSubcellForceLongIntervalMustCompleteConservatively() {
-    verifyTrackedSubcellForces(16, 0.1, 180.0);
+    TwoFluidPipe pipe = createPipe(16);
+    pipe.setBlendInclinedAnnularSlugTransitions(true);
+    pipe.setSignedDonorTransportEnabled(true);
+    pipe.setSlugTrackingMode(TwoFluidPipe.SlugTrackingMode.CONSERVATIVE_LAGRANGIAN);
+    pipe.configureLagrangianSlugTracking(false, true, false);
+    LiquidAccumulationTracker.SlugCharacteristics characteristics =
+        new LiquidAccumulationTracker.SlugCharacteristics();
+    characteristics.tailPosition = 18.0;
+    characteristics.frontPosition = 24.0;
+    characteristics.length = characteristics.frontPosition - characteristics.tailPosition;
+    characteristics.holdup = 0.9;
+    characteristics.volume =
+        characteristics.length * pipe.getSectionSnapshots()[0].getArea() * characteristics.holdup;
+    LagrangianSlugTracker.SlugBubbleUnit original = pipe.getLagrangianSlugTracker()
+        .initializeTerrainSlug(characteristics, pipe.getSectionSnapshots());
+    assertTrue(original != null);
+    pipe.getLagrangianSlugTracker().setEnableTerrainSlugGeneration(false);
+    pipe.setSharedSlugForceBalanceEnabled(true);
+    pipe.setConservativeSlugForceIntegrationEnabled(true);
+    UnsplitTransientSolver solver = new UnsplitTransientSolver();
+    solver.setRelativeTolerance(1.0e-9);
+    solver.setTimeIntegrationMethod(UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER);
+    pipe.setUnsplitTransientSolver(solver, 0.1);
+
+    pipe.runTransient(180.0, UUID.nameUUIDFromBytes(
+        "tracked-force-tengesdal:16:0.1:180.0".getBytes(StandardCharsets.UTF_8)));
   }
 
   @Tag("slow")
