@@ -4,6 +4,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import static neqsim.util.util.ArrayUtils.copyMatrixArray;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations.TransactionalEvaluation;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
@@ -83,7 +84,8 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
 
   private final TwoFluidConservationEquations equations;
   private final TwoFluidSection[] acceptedTemplates;
-  private final boolean[] conservativeSlugReconstructionActivity;
+  private boolean[] conservativeSlugReconstructionActivity;
+  private double latestEvaluationTime = Double.NaN;
   private final double spatialStep;
   private final PhaseDensityModel densityModel;
   private final ActiveSetController activeSetController;
@@ -234,7 +236,16 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
   @Override
   public synchronized boolean updateActiveSet(double[][] state, double[] pressure) {
     validateShape(state, pressure, "active-set");
-    return activeSetController.update(copyMatrixArray(state), pressure.clone());
+    boolean changed = activeSetController.update(copyMatrixArray(state), pressure.clone());
+    if (Double.isFinite(latestEvaluationTime)) {
+      boolean[] activity = equations
+          .classifyConservativeSlugReconstructionActivity(createTrialSections(state, pressure, latestEvaluationTime));
+      if (!Arrays.equals(conservativeSlugReconstructionActivity, activity)) {
+        conservativeSlugReconstructionActivity = activity;
+        changed = true;
+      }
+    }
+    return changed;
   }
 
   @Override
@@ -249,6 +260,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     if (outletPressureFixed && (!(outletPressure > 0.0) || !Double.isFinite(outletPressure))) {
       throw new IllegalArgumentException("A fixed outlet pressure must be positive and finite");
     }
+    latestEvaluationTime = time;
 
     TwoFluidSection[] trialSections = createTrialSections(state, pressure, time);
 
