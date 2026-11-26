@@ -23,6 +23,15 @@ import neqsim.process.equipment.pipeline.twophasepipe.numerics.TwoFluidUnsplitMo
 import org.junit.jupiter.api.Test;
 
 class TwoFluidUnsplitIntegratorTest {
+  @Test
+  void localNonlinearToleranceStopsAtScaledRoundoffFloor() {
+    assertEquals(256.0 * Math.ulp(1.0),
+        TwoFluidUnsplitIntegrator.localSolveTolerance(1.0e-9, 1.0e-8, 3.90625e-4, 180.0), 0.0);
+    assertEquals(1.0e-15,
+        TwoFluidUnsplitIntegrator.localSolveTolerance(1.0e-15, 1.0e-8, 3.90625e-4, 180.0), 0.0);
+    assertEquals(1.0e-9, TwoFluidUnsplitIntegrator.localSolveTolerance(1.0e-9, 1.0e-8, 180.0, 180.0), 0.0);
+  }
+
 
   @Test
   void signedLedgerAccumulationRetainsLowOrderTransport() {

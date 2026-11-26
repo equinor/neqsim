@@ -33,6 +33,7 @@ import neqsim.process.equipment.pipeline.twophasepipe.numerics.TwoFluidUnsplitMo
  */
 public final class TwoFluidUnsplitIntegrator {
   private static final double INTERVAL_RESIDUAL_BUDGET_FRACTION = 0.25;
+  private static final double MINIMUM_SCALED_NONLINEAR_TOLERANCE = 256.0 * Math.ulp(1.0);
   private final TwoFluidConservationEquations equations;
   private final PhaseDensityModel densityModel;
   private final UnsplitTransientSolver solver;
@@ -226,8 +227,8 @@ public final class TwoFluidUnsplitIntegrator {
         pressure[cell] = local[cell].getPressure();
         area[cell] = local[cell].getArea();
       }
-      double localTolerance = Math.min(solver.getRelativeTolerance(),
-          INTERVAL_RESIDUAL_BUDGET_FRACTION * relativeTolerance * dt / duration);
+      double localTolerance =
+          localSolveTolerance(solver.getRelativeTolerance(), relativeTolerance, dt, duration);
       UnsplitTransientSolver.Result candidate = solver.solveWithTolerance(state, pressure, area, dt, time,
           outletPressure, outletPressureFixed, adapter, localTolerance);
       evaluations += candidate.getModelEvaluations();
@@ -254,6 +255,29 @@ public final class TwoFluidUnsplitIntegrator {
     }
     return new PreparedInterval(prepared, initial, startTime, endTime, rejected, evaluations, relativeTolerance,
         localSlugTracker);
+  }
+
+  /**
+   * Keep a scaled nonlinear stopping tolerance above double-precision residual noise.
+   *
+   * <p>
+   * The duration-weighted budget remains the preferred tolerance. Its value can fall below the reproducible numerical
+   * floor after repeated subdivision of a long interval, where line search cannot distinguish further descent. The
+   * configured solver tolerance remains an absolute upper bound, and every accepted endpoint still passes the
+   * independent step and complete-interval conservation checks.
+   * </p>
+   *
+   * @param configuredTolerance configured solver tolerance
+   * @param verificationTolerance complete-interval verification tolerance
+   * @param timeStep attempted substep duration in s
+   * @param duration complete interval duration in s
+   * @return bounded local nonlinear tolerance
+   */
+  static double localSolveTolerance(double configuredTolerance, double verificationTolerance, double timeStep,
+      double duration) {
+    double durationWeighted =
+        INTERVAL_RESIDUAL_BUDGET_FRACTION * verificationTolerance * timeStep / duration;
+    return Math.min(configuredTolerance, Math.max(MINIMUM_SCALED_NONLINEAR_TOLERANCE, durationWeighted));
   }
 
   /** Install the current accepted marker geometry without advancing it. */
