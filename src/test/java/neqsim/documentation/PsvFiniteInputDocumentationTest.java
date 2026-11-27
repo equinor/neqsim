@@ -49,35 +49,19 @@ class PsvFiniteInputDocumentationTest {
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertTrue(compiler != null, "A JDK is required for the literal documentation example");
     StringWriter diagnostics = new StringWriter();
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
       assertTrue(
-          compiler.getTask(
-              diagnostics,
-              manager,
-              null,
-              Arrays.asList(
-                  "-source",
-                  "8",
-                  "-target",
-                  "8",
-                  "-classpath",
-                  System.getProperty("java.class.path"),
-                  "-d",
+          compiler.getTask(diagnostics, manager, null,
+              Arrays.asList("-source", "8", "-target", "8", "-classpath", System.getProperty("java.class.path"), "-d",
                   directory.toString()),
-              null,
-              manager.getJavaFileObjects(file.toFile()))
-              .call(),
+              null, manager.getJavaFileObjects(file.toFile())).call(),
           diagnostics.toString());
     }
 
-    try (URLClassLoader loader =
-        new URLClassLoader(new URL[] {directory.toUri().toURL()}, getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {directory.toUri().toURL()},
+        getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
-      loader
-          .loadClass("PsvFiniteInputExample")
-          .getMethod("main", String[].class)
-          .invoke(null, (Object) new String[0]);
+      loader.loadClass("PsvFiniteInputExample").getMethod("main", String[].class).invoke(null, (Object) new String[0]);
     }
   }
 }
