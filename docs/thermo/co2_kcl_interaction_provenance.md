@@ -1569,3 +1569,91 @@ neutral-neutral-ion topology and coefficient law remain unselected pending a
 source-separated bounded fit, covariance/sensitivity analysis, Furst double-counting
 audit and the frozen mixed-brine/hydrate/control transfers. No production equation,
 parameter, tolerance or empirical temperature offset changes in this increment.
+
+## Source-family loading-kernel discrimination (2026-11-27)
+
+The complete Kamps series now supplies a source-separated test of the two smallest
+degree-one excess-Helmholtz loading topologies. Let
+
+$$
+D=M_{\mathrm{w}}n_{\mathrm{w}}
+$$
+
+be the final aqueous-water mass convention already used by the Kamps reproducer,
+and let $n_0$, $n_+$ and $n_-$ denote molecular CO2, K+ and Cl- amounts. The tested
+linear-salt, neutral-neutral-ion-mean topology is
+
+$$
+\frac{A^E_L}{RT}=L(T)\frac{n_0^2(n_+ + n_-)}{2D^2},
+\qquad
+\frac{\mu^E_{0,L}}{RT}=2L(T)m_0m_s
+$$
+
+for a 1:1 salt. The higher-order neutral-neutral-salt-pair alternative is
+
+$$
+\frac{A^E_Z}{RT}=Z(T)\frac{n_0^2n_+n_-}{D^3},
+\qquad
+\frac{\mu^E_{0,Z}}{RT}=2Z(T)m_0m_s^2.
+$$
+
+Both total-energy expressions are homogeneous of degree one in all amounts. Both
+neutral-CO2 chemical-potential increments vanish as $m_0\rightarrow0$, so the
+existing Onda dilute-limit ion coefficients and the pure-water CO2 reference are
+unchanged. Coefficient units are those implied by the stated molality convention;
+no database parameter or production equation is assigned these diagnostic values.
+The alternative temperature law is
+
+$$
+C(T)=C_{\mathrm{ref}}+C_{1/T}\left(\frac{298.15\ \mathrm{K}}{T}-1\right).
+$$
+
+Before fitting, the approximately 2 mol/kg KCl family was declared calibration and
+the approximately 4 mol/kg family holdout; the reciprocal split was also evaluated.
+Within every temperature/salt block the predictor and current-model log-solubility
+residual are centered, so one nuisance intercept per block is removed and only the
+observed loading shape is fitted. The seven block intercepts are still counted in
+the residual degrees of freedom and AICc for each source family. This uses 45
+LOW-family and 53 HIGH-family positive-
+loading states over 313.1--433.1 K, 0.0334--1.0197 mol/kg CO2 and 4.084--93.95 bar
+total pressure. Table A.24 and all independent hydrate families remain untouched
+holdouts.
+
+For the constant linear-salt topology, LOW-family calibration gives
+$L=0.00833721\pm0.00142717$: centered log-RMSE falls from `0.00984184` to
+`0.00709842`, and no-refit transfer to HIGH changes `0.00971997` to `0.00952677`
+with 27/53 point residuals improved. Reciprocal HIGH-family calibration gives
+$L=0.00426356\pm0.00070000$: calibration changes `0.00971997` to `0.00719623`,
+and LOW-family holdout changes `0.00984184` to `0.00784110` with 31/45 improved.
+The two estimates differ by more than two pooled standard errors. One universal
+linear-salt coefficient is therefore not supported by these two concentration
+families.
+
+The inverse-temperature coefficient is unresolved in both splits. LOW calibration
+gives $L_{1/T}=0.0128487\pm0.0171579$ and worsens AICc from `-425.309` to
+`-422.862`; its HIGH holdout also regresses to `0.00999965`. HIGH calibration gives
+$L_{1/T}=-0.00307805\pm0.00787742$ and worsens AICc from `-503.752` to
+`-501.023`. The constant law is retained for comparison, with no inferred
+temperature coefficient.
+
+The constant quadratic salt-pair loading topology is less transferable. LOW
+calibration gives $Z=0.00424241\pm0.00072360$, but its HIGH holdout RMSE worsens
+from `0.00971997` to `0.0209887`, with only 10/53 points improved. HIGH calibration
+gives $Z=0.00105468\pm0.00017374$ and transfers to LOW at `0.00874932`, still worse
+than the corresponding linear-salt transfer. Adding inverse-temperature terms does
+not resolve either topology.
+
+**Disposition.** This is model-form evidence for the linear-salt loading direction,
+but not a qualified formulation or parameter update. With only two KCl concentration
+families, a combined linear-plus-quadratic salt dependence could interpolate both
+families but cannot be independently identified and validated. The precise missing
+evidence is a third compatible, loading-resolved KCl concentration family: two
+families may then identify concentration dependence while one remains frozen as a
+source-family holdout. Until that evidence exists, the current aqueous formulation
+and parameters remain unchanged. The owning issue remains #4234 under campaign
+#3144; acceptance requires source-separated calibration/holdout improvement,
+parameter identifiability and covariance, analytic and finite-difference derivative
+closure, the existing Furst double-counting audit, convergence and timing
+non-regression, and transfer to Table A.24 plus independent hydrate and adjacent-salt
+controls. No empirical temperature offset, invented parameter or relaxed tolerance
+is introduced.

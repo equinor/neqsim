@@ -57,7 +57,7 @@ ASSESSMENTS = (
      "co2-kcl-kamps2007-independent-transfer-assessment.csv", 18,
      "co2_kcl_solubility_kamps2007_thermoml.csv"),
     ("KClCO2Kamps2007LoadingTrendAssessmentTest",
-     "co2-kcl-kamps2007-loading-trend-assessment.csv", 116,
+     "co2-kcl-kamps2007-loading-trend-assessment.csv", 124,
      "co2_kcl_solubility_kamps2007_thermoml.csv"),
     ("KClCO2Kamps2007FurstLoadingSensitivityAssessmentTest",
      "co2-kcl-kamps2007-furst-loading-sensitivity-assessment.csv", 144,
