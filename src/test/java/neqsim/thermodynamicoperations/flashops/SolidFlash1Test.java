@@ -11,6 +11,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -148,6 +149,27 @@ public class SolidFlash1Test extends neqsim.NeqSimTest {
     assertEquals(300.0, source.getTemperature());
     assertEquals(60.0, source.getPressure());
     assertFalse(source.doSolidPhaseCheck());
+  }
+
+  @Test
+  void saturatedSulfurGasCanBeReflashedAfterCompleteSolidCapture() {
+    SystemInterface feed = new SystemPrEos(308.15, 9.0);
+    feed.addComponent("methane", 0.979);
+    feed.addComponent("H2S", 0.02);
+    feed.addComponent("S8", 0.001);
+    feed.setMixingRule("classic");
+    feed.setMultiPhaseCheck(true);
+    feed.setSolidPhaseCheck("S8");
+    new ThermodynamicOperations(feed).TPSolidflash();
+    assertTrue(feed.hasPhaseType(PhaseType.SOLID));
+    SystemInterface gas = feed.phaseToSystem("gas");
+    double sulfurMoles = gas.getComponent("S8").getNumberOfmoles();
+    gas.setMultiPhaseCheck(true);
+    gas.setSolidPhaseCheck("S8");
+    new ThermodynamicOperations(gas).TPSolidflash();
+    assertTrue(gas.hasPhaseType(PhaseType.GAS));
+    assertEquals(sulfurMoles, gas.getComponent("S8").getNumberOfmoles(), 1e-14);
+    assertConserved(gas);
   }
 
   @Test

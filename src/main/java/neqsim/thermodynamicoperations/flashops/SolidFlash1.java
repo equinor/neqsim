@@ -27,6 +27,7 @@ public class SolidFlash1 extends TPflash {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SolidFlash1.class);
   private static final LinearAlgebraOperations ALGEBRA = new EjmlLinearAlgebra();
+  private static final double SINGLE_FLUID_FUGACITY_TOLERANCE = 1.0e-10;
 
   // SystemInterface clonedSystem;
   boolean multiPhaseTest = false;
@@ -417,6 +418,10 @@ public class SolidFlash1 extends TPflash {
       return;
     }
     if (system.getNumberOfPhases() - solidsNumber == 1) {
+      if (removeIncipientSolidAtFluidBoundary()) {
+        system.init(1);
+        return;
+      }
       solveSingleFluidPhase();
       system.init(1);
       return;
@@ -455,6 +460,42 @@ public class SolidFlash1 extends TPflash {
       solveSingleFluidPhase();
     }
     system.init(1);
+  }
+
+  /**
+   * Retains the original fluid-only state at an incipient solid boundary.
+   *
+   * <p>
+   * A fluid-only flash can predict a positive solid amount from roundoff at saturation, for example after complete
+   * capture of precipitated sulfur. A solid below the phase-fraction resolution is unnecessary only if the original
+   * fluid root also satisfies the existing fugacity tolerance. Do not apply this test to a retained trial root after
+   * the multiphase beta solve.
+   * </p>
+   *
+   * @return true if an incipient solid was removed without changing the overall inventory
+   */
+  private boolean removeIncipientSolidAtFluidBoundary() {
+    if (totalSolidFrac > phaseFractionMinimumLimit) {
+      return false;
+    }
+    PhaseInterface fluid = system.getPhase(0);
+    PhaseInterface solid = system.getPhase(1);
+    double feedFraction = fluid.getComponent(solidIndex).getz();
+    double solidCoefficient = solid.getComponent(solidIndex).fugcoef(solid);
+    double residual = Math.log(feedFraction * fluid.getComponent(solidIndex).getFugacityCoefficient()
+        / solidCoefficient);
+    if (!Double.isFinite(residual) || Math.abs(residual) > SINGLE_FLUID_FUGACITY_TOLERANCE) {
+      return false;
+    }
+    system.setBeta(1, 0.0);
+    system.removePhaseKeepTotalComposition(1);
+    system.setBeta(0, 1.0);
+    for (int component = 0; component < system.getNumberOfComponents(); component++) {
+      fluid.getComponent(component).setx(fluid.getComponent(component).getz());
+    }
+    solidsNumber = 0;
+    totalSolidFrac = 0.0;
+    return true;
   }
 
   /**
@@ -500,7 +541,6 @@ public class SolidFlash1 extends TPflash {
    */
   private void solveSingleFluidPhase() {
     final int maxIterations = 100;
-    final double fugacityTolerance = 1.0e-10;
     final double compositionTolerance = 1.0e-12;
     double solidFeedFraction = system.getPhase(0).getComponent(solidIndex).getz();
     double lowerMoleFraction = Math.max(phaseFractionMinimumLimit, compositionTolerance);
@@ -520,7 +560,7 @@ public class SolidFlash1 extends TPflash {
       if (!Double.isFinite(middleResidual)) {
         throw new IllegalStateException("Nonfinite single-fluid solid fugacity residual");
       }
-      if (Math.abs(middleResidual) <= fugacityTolerance) {
+      if (Math.abs(middleResidual) <= SINGLE_FLUID_FUGACITY_TOLERANCE) {
         return;
       }
       if (upperMoleFraction - lowerMoleFraction <= compositionTolerance) {

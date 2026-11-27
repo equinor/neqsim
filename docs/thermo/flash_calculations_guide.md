@@ -1234,7 +1234,10 @@ from the non-solid component inventory. This path preserves every non-solid comp
 gives the same conservative result when the calculation starts from a warm initialized
 source clone. It remains a one-pure-solid equilibrium model; the calculation does not
 represent simultaneous solids, particle transport or precipitation kinetics.
-If a fluid-root transition creates a discontinuous fugacity bracket, the flash throws
+At the original single-fluid saturation boundary, an incipient solid below the existing
+phase-fraction resolution is omitted only when the selected-component fugacity also
+closes within the existing solver tolerance. This preserves the fluid inventory after
+complete removal of precipitated solid. If a fluid-root transition creates a discontinuous fugacity bracket, the flash throws
 instead of returning a component-deficient or fugacity-unclosed state.
 
 The empirical `ComponentSolid` model excludes methane using a large fugacity
