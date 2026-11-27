@@ -621,6 +621,15 @@ public class Compressor extends TwoPortEquipment
     return pressure;
   }
 
+  /**
+   * Gets the unit in which the outlet pressure set point was specified.
+   *
+   * @return the pressure unit of {@link #getOutletPressure()}, for example "bara" or "barg"
+   */
+  public String getOutletPressureUnit() {
+    return pressureUnit;
+  }
+
   /** {@inheritDoc} */
   @Override
   public double getEnergy() {

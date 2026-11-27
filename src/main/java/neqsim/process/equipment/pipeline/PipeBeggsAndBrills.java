@@ -957,6 +957,24 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     this.runConstantSurfaceTemperature = true;
   }
 
+  /**
+   * Gets the constant surface (outer ambient) temperature used for heat transfer.
+   *
+   * @return the constant surface temperature in Kelvin
+   */
+  public double getConstantSurfaceTemperature() {
+    return constantSurfaceTemperature;
+  }
+
+  /**
+   * Checks whether heat transfer towards a constant surface temperature is active.
+   *
+   * @return true if a constant surface temperature, a U-value or a non-isothermal heat transfer mode has been set
+   */
+  public boolean isRunConstantSurfaceTemperature() {
+    return runConstantSurfaceTemperature;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void setConstantSurfaceTemperature(double temperature) {

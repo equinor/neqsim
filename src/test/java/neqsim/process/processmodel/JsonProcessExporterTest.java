@@ -28,8 +28,10 @@ import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.splitter.ComponentSplitter;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.AccelerationMethod;
 import neqsim.process.equipment.util.Calculator;
 import neqsim.process.equipment.util.Recycle;
@@ -1148,5 +1150,183 @@ class JsonProcessExporterTest {
     SimulationResult result = ProcessSystem.fromJsonAndRun(json);
     assertTrue(result.isSuccess(),
         "CPA process with zero-mole components should rebuild without error: " + result.toJson());
+  }
+
+  @Test
+  void testRecycleTearStreamSurvivesRoundTrip() {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 25.0, 20.0);
+    fluid.addComponent("methane", 0.8);
+    fluid.addComponent("n-heptane", 0.2);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(100.0, "kg/hr");
+    Stream seed = new Stream("tear seed", fluid.clone());
+    seed.setFlowRate(1.0, "kg/hr");
+    Mixer mixer = new Mixer("inlet mixer");
+    mixer.addStream(feed);
+    mixer.addStream(seed);
+    Separator separator = new Separator("separator", mixer.getOutletStream());
+    Recycle recycle = new Recycle("liquid recycle");
+    recycle.addStream(separator.getLiquidOutStream());
+    recycle.setOutletStream(seed);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(seed);
+    process.add(mixer);
+    process.add(separator);
+    process.add(recycle);
+    process.run();
+
+    String json = process.toJson();
+    assertTrue(json.contains("\"outlet\": \"tear seed\""), "Recycle should export its tear stream");
+
+    ProcessSystem rebuilt = ProcessSystem.fromJsonAndRun(json).getProcessSystem();
+    assertSame(rebuilt.getUnit("tear seed"), ((Recycle) rebuilt.getUnit("liquid recycle")).getOutletStream());
+  }
+
+  @Test
+  void testBeggsAndBrillsHeatTransferSurvivesRoundTrip() {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 80.0, 60.0);
+    fluid.addComponent("methane", 0.9);
+    fluid.addComponent("n-heptane", 0.1);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(20000.0, "kg/hr");
+    feed.setTemperature(80.0, "C");
+    feed.setPressure(60.0, "bara");
+    PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("pipe", feed);
+    pipe.setLength(5000.0);
+    pipe.setDiameter(0.3);
+    pipe.setElevation(0.0);
+    pipe.setNumberOfIncrements(10);
+    pipe.setConstantSurfaceTemperature(5.0, "C");
+    pipe.setHeatTransferCoefficient(10.0);
+    pipe.setInsulation(0.05, 0.04);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(pipe);
+    process.run();
+    double outletTemperature = pipe.getOutletStream().getTemperature("K");
+    assertTrue(outletTemperature < 273.15 + 70.0, "the pipe should lose heat to the surroundings");
+
+    ProcessSystem rebuilt = ProcessSystem.fromJsonAndRun(process.toJson()).getProcessSystem();
+    PipeBeggsAndBrills rebuiltPipe = (PipeBeggsAndBrills) rebuilt.getUnit("pipe");
+    assertEquals(pipe.getHeatTransferMode(), rebuiltPipe.getHeatTransferMode());
+    assertEquals(278.15, rebuiltPipe.getConstantSurfaceTemperature(), 1e-9);
+    assertEquals(0.05, rebuiltPipe.getInsulationThickness(), 1e-12);
+    assertEquals(outletTemperature, rebuiltPipe.getOutletStream().getTemperature("K"), 1e-3);
+  }
+
+  @Test
+  void testOutletStreamAddedAsUnitStaysConnected() {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 25.0, 20.0);
+    fluid.addComponent("methane", 0.9);
+    fluid.addComponent("ethane", 0.1);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    Heater heater = new Heater("heater", feed);
+    heater.setOutTemperature(273.15 + 60.0);
+    StreamInterface product = heater.getOutletStream();
+    product.setName("product");
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(heater);
+    process.add(product);
+    process.run();
+
+    String json = process.toJson();
+    assertTrue(json.contains("\"outletOf\": \"heater.outlet\""), "The product stream should be exported as an alias");
+
+    ProcessSystem rebuilt = ProcessSystem.fromJsonAndRun(json).getProcessSystem();
+    Stream rebuiltFeed = (Stream) rebuilt.getUnit("feed");
+    rebuiltFeed.setFlowRate(2000.0, "kg/hr");
+    rebuilt.run();
+    assertEquals(2000.0, ((StreamInterface) rebuilt.getUnit("product")).getFlowRate("kg/hr"), 1e-6);
+  }
+
+  @Test
+  void testDistillationColumnLayoutSurvivesRoundTrip() {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 40.0, 10.0);
+    fluid.addComponent("propane", 0.4);
+    fluid.addComponent("n-butane", 0.3);
+    fluid.addComponent("n-pentane", 0.3);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("column feed", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    DistillationColumn column = new DistillationColumn("column", 6, true, true);
+    column.addFeedStream(feed, 3);
+    column.setTopPressure(9.0);
+    column.setBottomPressure(9.5);
+    column.getCondenser().setOutletTemperature(273.15 + 20.0);
+    column.getReboiler().setOutletTemperature(273.15 + 110.0);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(column);
+
+    ProcessSystem rebuilt = ProcessSystem.fromJsonAndRun(process.toJson()).getProcessSystem();
+    DistillationColumn rebuiltColumn = (DistillationColumn) rebuilt.getUnit("column");
+    assertEquals(column.getNumberOfTrays(), rebuiltColumn.getNumberOfTrays());
+    assertEquals(3, rebuiltColumn.getFeedTrayNumber("column feed"));
+    assertEquals(9.0, rebuiltColumn.getTopPressure(), 1e-12);
+    assertEquals(273.15 + 20.0, rebuiltColumn.getCondenser().getOutletTemperature(), 1e-9);
+    assertEquals(273.15 + 110.0, rebuiltColumn.getReboiler().getOutletTemperature(), 1e-9);
+  }
+
+  @Test
+  void testComponentSplitterFactorsAreKeyedByComponentName() {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 30.0, 20.0);
+    fluid.addComponent("methane", 0.7);
+    fluid.addComponent("water", 0.1);
+    fluid.addComponent("ethane", 0.2);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    ComponentSplitter splitter = new ComponentSplitter("dryer", feed);
+    splitter.setSplitFactors(new double[] {1.0, 0.02, 1.0});
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(splitter);
+    process.run();
+
+    JsonObject properties = null;
+    JsonArray units = JsonParser.parseString(process.toJson()).getAsJsonObject().getAsJsonArray("process");
+    for (int i = 0; i < units.size(); i++) {
+      if ("dryer".equals(units.get(i).getAsJsonObject().get("name").getAsString())) {
+        properties = units.get(i).getAsJsonObject().getAsJsonObject("properties");
+      }
+    }
+    assertNotNull(properties);
+    assertEquals(0.02, properties.getAsJsonObject("componentSplitFactors").get("water").getAsDouble(), 1e-12);
+  }
+
+  @Test
+  void testCalculatorWithCustomMethodIsNotExported() {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 30.0, 20.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(100.0, "kg/hr");
+    Calculator calculator = new Calculator("custom calculator");
+    calculator.addInputVariable(feed);
+    calculator.setOutputVariable(feed);
+    calculator.setCalculationMethod(() -> {
+    });
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(calculator);
+
+    assertTrue(!process.toJson().contains("custom calculator"));
   }
 }

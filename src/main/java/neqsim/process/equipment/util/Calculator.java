@@ -302,6 +302,16 @@ public class Calculator extends ProcessEquipmentBaseClass {
     antiSurgeSplitter.setCalculationIdentifier(id);
   }
 
+  /**
+   * Checks whether this calculator runs a user supplied calculation method (a lambda or callback) instead of one of the
+   * built-in calculations. Such a method cannot be serialized.
+   *
+   * @return true if a custom calculation method has been set
+   */
+  public boolean hasCustomCalculationMethod() {
+    return simpleCalculationMethod != null || calculationMethod != null;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
