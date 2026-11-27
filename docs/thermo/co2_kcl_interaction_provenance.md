@@ -1470,3 +1470,48 @@ derivative/Furst double-counting checks. No database parameter, residual-Helmhol
 term, hydrate equation, solver tolerance or empirical temperature offset changes in
 this diagnostic. Table A.24 mixed brine and Dholabhai/Burgass hydrate data remain
 frozen downstream holdouts.
+
+## Complete Kamps loading trend and matched-layer decomposition (2026-11-27)
+
+The 14-point median-loading transfer does not by itself establish whether the
+remaining error is constant within a temperature/salt block. The complete positive-
+loading ThermoML series was therefore evaluated without fitting any Kamps value:
+98 positive-CO2 states in 14 nominal-temperature/KCl-family blocks. The four zero-
+CO2 records remain source vapor-pressure controls and are excluded from logarithmic
+residuals.
+
+For each block, the baseline and frozen-candidate residuals were regressed only
+against the source CO2 molality. Ten of 14 baseline slopes exceed two slope standard
+errors. The salt-only candidate leaves the same ten slopes resolved because its
+temperature/KCl correction is effectively a block shift. Baseline residual spans are
+`0.0154` to `0.0583` log units. The within-block model water-activity spans are only
+`0.00410` to `0.01460`, while the model CO2 fugacity-to-total-pressure ratio spans
+`0.0758` to `0.3777`. Consequently, aggregate median-state RMSE improvement is not
+sufficient evidence for activation: pressure/loading dependence is a separately
+identifiable missing response.
+
+The 14 frozen median-loading states also use matched no-salt model states at the same
+temperature and total pressure. The exact model identity is
+
+$$
+\ln\!\left(\frac{x_{\mathrm{CO_2,brine}}}{x_{\mathrm{CO_2,water}}}\right)
+=\ln\!\left(\frac{f_{\mathrm{CO_2,brine}}}{f_{\mathrm{CO_2,water}}}\right)
+-\ln\!\left(\frac{(f/x)_{\mathrm{brine}}}{(f/x)_{\mathrm{water}}}\right).
+$$
+
+Its maximum numerical closure residual is `2.22e-16`. Across all 14 states, the
+mean log dissolved-CO2 ratio is `-0.212476`, the mean guest-fugacity contribution is
+only `+0.005817`, and the mean effective aqueous $f/x$ contribution is `+0.218293`.
+The mean absolute guest contribution is 2.66% of the mean absolute effective-$f/x$
+contribution. KCl lowers modeled water activity in all states; the mean brine-minus-
+water change is `-0.0902704` (`-0.0602469` near 2 mol/kg and `-0.120294` near
+4 mol/kg).
+
+**Disposition.** The material salting-out response is owned by the aqueous effective-
+$f/x$ layer, not by guest fugacity, but a temperature/KCl-only residual term cannot
+remove the independently resolved loading trends. The smallest defensible next model
+test must add a thermodynamically consistent CO2-loading dependence (or demonstrate
+that the existing Furst/eCPA loading response is misparameterized), with analytic
+composition and temperature derivatives and a joint double-counting audit. No
+coefficient is fitted or activated here. Table A.24 and independent hydrate families
+remain source/family holdouts.

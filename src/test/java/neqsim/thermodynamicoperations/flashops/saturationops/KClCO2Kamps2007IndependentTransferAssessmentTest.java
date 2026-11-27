@@ -46,6 +46,10 @@ class KClCO2Kamps2007IndependentTransferAssessmentTest {
     Summary aggregate = new Summary();
     int selected = 0;
     int baselineUnderpredicted = 0;
+    double maximumDecompositionIdentityResidual = 0.0;
+    double absoluteGuestFugacityContribution = 0.0;
+    double absoluteEffectiveFOverXContribution = 0.0;
+    int waterActivityDecreases = 0;
     for (SourcePoint point : source) {
       if (!point.transferHoldout) {
         continue;
@@ -58,10 +62,14 @@ class KClCO2Kamps2007IndependentTransferAssessmentTest {
           0.0, point.temperatureK, point.totalPressureKpa / 1000.0, 0.0, 0.0);
       KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result model = KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest
           .calculate(reference, 10.0);
+      KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result pureWater = KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest
+          .calculate(reference.withoutSalt(), model.co2FeedMoles);
       double correction = correctionAt(point.temperatureK, point.kclMolality);
       double baselineResidual = Math.log(model.co2Molality / point.co2Molality);
       double candidateResidual = baselineResidual - correction;
       double candidateMolality = model.co2Molality * Math.exp(-correction);
+      double logGuestFugacityRatio = Math.log(model.co2FugacityBara / pureWater.co2FugacityBara);
+      double logEffectiveFOverXRatio = Math.log(model.effectiveFOverXBara() / pureWater.effectiveFOverXBara());
       if (baselineResidual < 0.0) {
         baselineUnderpredicted++;
       }
@@ -69,7 +77,17 @@ class KClCO2Kamps2007IndependentTransferAssessmentTest {
       family.add(baselineResidual, candidateResidual);
       aggregate.add(baselineResidual, candidateResidual);
       rows.add(pointRow(point, model.co2Molality, candidateMolality, model.waterActivity, baselineResidual, correction,
-          candidateResidual));
+          candidateResidual, pureWater.co2Molality, pureWater.waterActivity,
+          Math.log(model.molecularMolePercent / pureWater.molecularMolePercent), logGuestFugacityRatio,
+          logEffectiveFOverXRatio, model.decompositionIdentityResidual(pureWater),
+          model.waterActivity - pureWater.waterActivity));
+      maximumDecompositionIdentityResidual = Math.max(maximumDecompositionIdentityResidual,
+          Math.abs(model.decompositionIdentityResidual(pureWater)));
+      absoluteGuestFugacityContribution += Math.abs(logGuestFugacityRatio);
+      absoluteEffectiveFOverXContribution += Math.abs(logEffectiveFOverXRatio);
+      if (model.waterActivity < pureWater.waterActivity) {
+        waterActivityDecreases++;
+      }
     }
     rows.add(summaryRow("SUMMARY-LOW-KCL", low, "all_low_kcl_states_improve"));
     rows.add(summaryRow("SUMMARY-HIGH-KCL", high, "high_kcl_temperature_curvature_overcorrects_blocks_activation"));
@@ -83,6 +101,10 @@ class KClCO2Kamps2007IndependentTransferAssessmentTest {
     assertEquals(7, low.improvedCount, "candidate improves every low-KCl state");
     assertEquals(2, high.improvedCount, "candidate improves high KCl only at 313 and 333 K");
     assertEquals(9, aggregate.improvedCount, "nine of fourteen independent transfer states improve");
+    assertTrue(maximumDecompositionIdentityResidual < 1.0e-12, "matched pure-water decomposition identity");
+    assertEquals(14, waterActivityDecreases, "KCl lowers water activity in every selected state");
+    assertTrue(absoluteGuestFugacityContribution / absoluteEffectiveFOverXContribution < 0.05,
+        "aqueous effective-f/x response dominates the matched guest-fugacity contribution");
     assertTrue(low.candidateRmse() < low.baselineRmse(), "low-KCl transfer RMSE improves");
     assertTrue(high.candidateRmse() > high.baselineRmse(), "high-KCl transfer RMSE worsens");
     assertTrue(aggregate.candidateRmse() < aggregate.baselineRmse(), "aggregate transfer RMSE improves");
@@ -96,7 +118,7 @@ class KClCO2Kamps2007IndependentTransferAssessmentTest {
   }
 
   /** Loads all 102 source-pinned ThermoML KCl records. */
-  private static List<SourcePoint> loadSource() throws Exception {
+  static List<SourcePoint> loadSource() throws Exception {
     InputStream stream = KClCO2Kamps2007IndependentTransferAssessmentTest.class.getResourceAsStream(RESOURCE);
     assertNotNull(stream, RESOURCE);
     List<SourcePoint> points = new ArrayList<SourcePoint>();
@@ -116,7 +138,7 @@ class KClCO2Kamps2007IndependentTransferAssessmentTest {
   }
 
   /** Evaluates the frozen source-minus-model log-activity candidate. */
-  private static double correctionAt(double temperatureK, double molality) {
+  static double correctionAt(double temperatureK, double molality) {
     double q = REFERENCE_TEMPERATURE_K / temperatureK - 1.0;
     return (LAMBDA_REFERENCE + LAMBDA_INVERSE_TEMPERATURE * q) * molality
         + ZETA_INVERSE_TEMPERATURE * q * molality * molality;
@@ -131,7 +153,9 @@ class KClCO2Kamps2007IndependentTransferAssessmentTest {
         + "candidate_correction,candidate_log_residual,improved,summary_count,summary_improved_count,"
         + "summary_baseline_bias,summary_baseline_rmse,summary_candidate_bias,summary_candidate_rmse,"
         + "summary_candidate_max_abs,lambda_ref,lambda_ref_se,lambda_invT,lambda_invT_se,zeta_invT,"
-        + "zeta_invT_se,disposition";
+        + "zeta_invT_se,matched_pure_water_co2_molality,matched_pure_water_activity,log_dissolved_ratio,"
+        + "log_guest_fugacity_ratio,log_effective_f_over_x_ratio,decomposition_identity_residual,"
+        + "water_activity_delta,disposition";
   }
 
   /** Formats the immutable He-Morse fit provenance. */
@@ -139,17 +163,21 @@ class KClCO2Kamps2007IndependentTransferAssessmentTest {
     return row("PARAMETER_SOURCE", "HE-MORSE-FIT", null, null, null, null, null, null, null, null, null, null, null,
         null, null, null, null, null, null, null, null, null, null, LAMBDA_REFERENCE, LAMBDA_REFERENCE_STANDARD_ERROR,
         LAMBDA_INVERSE_TEMPERATURE, LAMBDA_INVERSE_TEMPERATURE_STANDARD_ERROR, ZETA_INVERSE_TEMPERATURE,
-        ZETA_INVERSE_TEMPERATURE_STANDARD_ERROR, "fixed_from_he_morse_no_kamps_refit");
+        ZETA_INVERSE_TEMPERATURE_STANDARD_ERROR, null, null, null, null, null, null, null,
+        "fixed_from_he_morse_no_kamps_refit");
   }
 
   /** Formats one independent Kamps transfer state. */
   private static String pointRow(SourcePoint point, double modelMolality, double candidateMolality,
-      double waterActivity, double baselineResidual, double correction, double candidateResidual) {
+      double waterActivity, double baselineResidual, double correction, double candidateResidual,
+      double pureWaterMolality, double pureWaterActivity, double logDissolvedRatio, double logGuestFugacityRatio,
+      double logEffectiveFOverXRatio, double decompositionIdentityResidual, double waterActivityDelta) {
     return row("HOLDOUT", point.pointId, point.nominalTemperatureK, point.temperatureK, point.kclLevel,
         point.kclMolality, point.co2Molality, point.totalPressureKpa, point.pressureUncertaintyKpa, modelMolality,
         candidateMolality, waterActivity, baselineResidual, correction, candidateResidual,
         Math.abs(candidateResidual) < Math.abs(baselineResidual), null, null, null, null, null, null, null, null, null,
-        null, null, null, null,
+        null, null, null, null, pureWaterMolality, pureWaterActivity, logDissolvedRatio, logGuestFugacityRatio,
+        logEffectiveFOverXRatio, decompositionIdentityResidual, waterActivityDelta,
         "LOW".equals(point.kclLevel) ? "independent_low_kcl_holdout" : "independent_high_kcl_holdout");
   }
 
@@ -157,7 +185,8 @@ class KClCO2Kamps2007IndependentTransferAssessmentTest {
   private static String summaryRow(String pointId, Summary summary, String disposition) {
     return row("SUMMARY", pointId, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
         summary.count, summary.improvedCount, summary.baselineBias(), summary.baselineRmse(), summary.candidateBias(),
-        summary.candidateRmse(), summary.candidateMaxAbsoluteResidual, null, null, null, null, null, null, disposition);
+        summary.candidateRmse(), summary.candidateMaxAbsoluteResidual, null, null, null, null, null, null, null, null,
+        null, null, null, null, null, disposition);
   }
 
   /** Converts values to one locale-independent CSV row. */
@@ -170,16 +199,16 @@ class KClCO2Kamps2007IndependentTransferAssessmentTest {
   }
 
   /** One source record and its frozen source-only selection metadata. */
-  private static final class SourcePoint {
-    private final String pointId;
-    private final double temperatureK;
-    private final double kclMolality;
-    private final double co2Molality;
-    private final double totalPressureKpa;
-    private final double pressureUncertaintyKpa;
-    private final double nominalTemperatureK;
-    private final String kclLevel;
-    private final boolean transferHoldout;
+  static final class SourcePoint {
+    final String pointId;
+    final double temperatureK;
+    final double kclMolality;
+    final double co2Molality;
+    final double totalPressureKpa;
+    final double pressureUncertaintyKpa;
+    final double nominalTemperatureK;
+    final String kclLevel;
+    final boolean transferHoldout;
 
     /** Creates an immutable source record. */
     private SourcePoint(String pointId, double temperatureK, double kclMolality, double co2Molality,
