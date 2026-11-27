@@ -1,7 +1,7 @@
 ---
 name: neqsim-flow-assurance
 description: "Flow assurance patterns for NeqSim. USE WHEN: predicting hydrate, wax, asphaltene, CO2/H2S corrosion (NORSOK M-506), mineral scale and brine mixing, valve scale drift and remediation, sulfur S8 deposition, metal-loss screening, pipeline hydraulics, DNV-RP-F109/F105/F104/F110/F114 screening, water hammer, slug flow, thermal analysis or inhibitor dosing. Code patterns plus the governing standards for every threat."
-last_verified: "2026-11-25"
+last_verified: "2026-11-27"
 ---
 
 # Flow Assurance Analysis with NeqSim
@@ -35,6 +35,10 @@ both 180 and 600 s, checking complete publication, zero rejected attempts, phase
 positive finite pressure, through-flow and inventories, and no more than 15% pressure,
 through-flow or inventory spread from 16/0.1. Completion and an enforced sign alone are not physical
 qualification.
+The tracking-enabled unsplit path freezes one flow-regime/transition-weight active set within a
+Jacobian and line search, refreshes it after an accepted Newton iterate, and re-verifies the unchanged
+conservative endpoint equations. Whole-step regime lagging, relaxed tolerances or extra timestep
+halving are not substitutes for this ownership.
 
 > A complete study report with pipeline drawings (route, profiles, hydrate margin, threat matrix,
 > validation) is produced by `neqsim flow-assurance-report` — see the

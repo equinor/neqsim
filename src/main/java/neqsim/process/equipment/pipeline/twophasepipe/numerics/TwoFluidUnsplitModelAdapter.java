@@ -4,6 +4,9 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import static neqsim.util.util.ArrayUtils.copyMatrixArray;
 
 import java.io.Serializable;
+import java.util.Map;
+import java.util.Objects;
+import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations.TransactionalEvaluation;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
@@ -88,6 +91,9 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
   private final ActiveSetController activeSetController;
   private final double pressureInterpolationTimeScale;
   private final boolean conservativeFrictionSplitEnabled;
+  private final boolean regimeActiveSetEnabled;
+  private final TwoFluidSection[] activeRegimeTemplates;
+  private double latestEvaluationTime;
 
   /**
    * Create a transactional adapter.
@@ -144,7 +150,26 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
       double spatialStep, PhaseDensityModel densityModel, double pressureInterpolationTimeScale,
       boolean conservativeFrictionSplitEnabled) {
     this(equations, acceptedTemplates, spatialStep, densityModel, SMOOTH_ACTIVE_SET, pressureInterpolationTimeScale,
-        conservativeFrictionSplitEnabled);
+        conservativeFrictionSplitEnabled, false);
+  }
+
+  /**
+   * Create an adapter with optional active-set ownership of flow-regime choices.
+   *
+   * @param equations configured finite-volume operator
+   * @param acceptedTemplates accepted section state used as the trial template
+   * @param spatialStep representative cell size in m
+   * @param densityModel pressure-dependent phase density model
+   * @param pressureInterpolationTimeScale zero to disable, or the temporal end-state weight times the attempted step
+   * @param conservativeFrictionSplitEnabled true to integrate passive friction after the transport solve
+   * @param regimeActiveSetEnabled true to freeze regime choices within a Jacobian and refresh them between accepted
+   * Newton iterates
+   */
+  public TwoFluidUnsplitModelAdapter(TwoFluidConservationEquations equations, TwoFluidSection[] acceptedTemplates,
+      double spatialStep, PhaseDensityModel densityModel, double pressureInterpolationTimeScale,
+      boolean conservativeFrictionSplitEnabled, boolean regimeActiveSetEnabled) {
+    this(equations, acceptedTemplates, spatialStep, densityModel, SMOOTH_ACTIVE_SET, pressureInterpolationTimeScale,
+        conservativeFrictionSplitEnabled, regimeActiveSetEnabled);
   }
 
   /**
@@ -181,6 +206,28 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
   public TwoFluidUnsplitModelAdapter(TwoFluidConservationEquations equations, TwoFluidSection[] acceptedTemplates,
       double spatialStep, PhaseDensityModel densityModel, ActiveSetController activeSetController,
       double pressureInterpolationTimeScale, boolean conservativeFrictionSplitEnabled) {
+    this(equations, acceptedTemplates, spatialStep, densityModel, activeSetController, pressureInterpolationTimeScale,
+        conservativeFrictionSplitEnabled, false);
+  }
+
+  /**
+   * Create a transactional adapter with explicit active choices and optional regime ownership.
+   *
+   * @param equations configured finite-volume operator
+   * @param acceptedTemplates accepted section state used as the trial template
+   * @param spatialStep representative cell size in m
+   * @param densityModel pressure-dependent phase density model
+   * @param activeSetController donor and phase-presence active-set owner
+   * @param pressureInterpolationTimeScale zero to disable, or the temporal end-state weight times the attempted step
+   * @param conservativeFrictionSplitEnabled true to remove friction from the nonlinear transport residual and apply the
+   * conservative passive source after transport convergence
+   * @param regimeActiveSetEnabled true to freeze regime choices within a Jacobian and refresh them between accepted
+   * Newton iterates
+   */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The integrator and adapter share the configured operator and synchronize transactional probes on that operator")
+  public TwoFluidUnsplitModelAdapter(TwoFluidConservationEquations equations, TwoFluidSection[] acceptedTemplates,
+      double spatialStep, PhaseDensityModel densityModel, ActiveSetController activeSetController,
+      double pressureInterpolationTimeScale, boolean conservativeFrictionSplitEnabled, boolean regimeActiveSetEnabled) {
     if (equations == null || densityModel == null) {
       throw new IllegalArgumentException("Equations and density model cannot be null");
     }
@@ -215,6 +262,17 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     this.activeSetController = activeSetController;
     this.pressureInterpolationTimeScale = pressureInterpolationTimeScale;
     this.conservativeFrictionSplitEnabled = conservativeFrictionSplitEnabled;
+    this.regimeActiveSetEnabled = regimeActiveSetEnabled;
+    this.activeRegimeTemplates = regimeActiveSetEnabled ? cloneSections(this.acceptedTemplates) : null;
+    if (regimeActiveSetEnabled) {
+      synchronized (equations) {
+        for (TwoFluidSection section : activeRegimeTemplates) {
+          if (section.getFlowRegime() == null) {
+            equations.getFlowRegimeDetector().classify(section);
+          }
+        }
+      }
+    }
   }
 
   @Override
@@ -231,7 +289,11 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
   @Override
   public synchronized boolean updateActiveSet(double[][] state, double[] pressure) {
     validateShape(state, pressure, "active-set");
-    return activeSetController.update(copyMatrixArray(state), pressure.clone());
+    boolean changed = activeSetController.update(copyMatrixArray(state), pressure.clone());
+    if (regimeActiveSetEnabled) {
+      changed |= updateRegimeChoices(state, pressure);
+    }
+    return changed;
   }
 
   @Override
@@ -247,6 +309,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
       throw new IllegalArgumentException("A fixed outlet pressure must be positive and finite");
     }
 
+    latestEvaluationTime = time;
     TwoFluidSection[] trialSections = createTrialSections(state, pressure, time);
 
     double[][] closureDensities = new double[PHASE_COUNT][trialSections.length];
@@ -266,7 +329,9 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
         equations.setOutletBoundaryPressure(outletPressureFixed ? outletPressure : Double.NaN);
         equations.setPressureInterpolationTimeScale(pressureInterpolationTimeScale);
         equations.setConservativeFrictionEnabled(conservativeFrictionSplitEnabled);
-        transport = equations.evaluateTransactional(trialSections, spatialStep);
+        transport = regimeActiveSetEnabled
+            ? equations.evaluateTransactionalWithFrozenRegimes(trialSections, spatialStep)
+            : equations.evaluateTransactional(trialSections, spatialStep);
       } finally {
         equations.setOutletBoundaryPressure(savedOutletPressure);
         equations.setPressureInterpolationTimeScale(savedInterpolationTimeScale);
@@ -350,6 +415,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
       endpoint[cell].setPressure(endpointPressure[cell]);
       endpoint[cell].setConservativeEndpoint(endpointState[cell], relativeTolerance);
     }
+    applyActiveRegimeChoices(endpoint);
 
     TransactionalEvaluation evaluation;
     synchronized (equations) {
@@ -361,7 +427,8 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
         equations.setOutletBoundaryPressure(outletPressureFixed ? outletPressure : Double.NaN);
         equations.setPressureInterpolationTimeScale(pressureInterpolationTimeScale);
         equations.setConservativeFrictionEnabled(conservativeFrictionSplitEnabled);
-        evaluation = equations.evaluateTransactional(midpoint, spatialStep);
+        evaluation = regimeActiveSetEnabled ? equations.evaluateTransactionalWithFrozenRegimes(midpoint, spatialStep)
+            : equations.evaluateTransactional(midpoint, spatialStep);
       } finally {
         equations.setOutletBoundaryPressure(savedOutletPressure);
         equations.setPressureInterpolationTimeScale(savedInterpolationTimeScale);
@@ -591,6 +658,20 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
    * @return independent sections for face and source evaluation
    */
   private TwoFluidSection[] createTrialSections(double[][] state, double[] pressure, double time) {
+    return createTrialSections(state, pressure, time, true);
+  }
+
+  /**
+   * Build trial sections and optionally install the current regime active set.
+   *
+   * @param state selected-time conservative variables
+   * @param pressure selected-time pressures in Pa
+   * @param time coefficient evaluation time in seconds
+   * @param applyFrozenRegimes true to install the current active regime choices
+   * @return independent sections for closure evaluation
+   */
+  private TwoFluidSection[] createTrialSections(double[][] state, double[] pressure, double time,
+      boolean applyFrozenRegimes) {
     TwoFluidSection[] trial = cloneSections(acceptedTemplates);
     double[][] transportState = state.clone();
     for (int cell = 0; cell < trial.length; cell++) {
@@ -608,7 +689,51 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
       }
     }
     equations.applyState(trial, transportState);
+    if (regimeActiveSetEnabled && applyFrozenRegimes) {
+      applyActiveRegimeChoices(trial);
+    }
     return trial;
+  }
+
+  /**
+   * Refresh the regime active set from one accepted Newton iterate.
+   *
+   * @param state selected-time conservative state
+   * @param pressure selected-time pressure in Pa
+   * @return true when at least one dominant regime or blend weight changed
+   */
+  private boolean updateRegimeChoices(double[][] state, double[] pressure) {
+    TwoFluidSection[] classified = createTrialSections(state, pressure, latestEvaluationTime, false);
+    boolean changed = false;
+    synchronized (equations) {
+      for (int cell = 0; cell < classified.length; cell++) {
+        equations.getFlowRegimeDetector().classify(classified[cell]);
+        FlowRegime regime = classified[cell].getFlowRegime();
+        Map<FlowRegime, Double> weights = classified[cell].getRegimeWeights();
+        if (regime != activeRegimeTemplates[cell].getFlowRegime()
+            || !Objects.equals(weights, activeRegimeTemplates[cell].getRegimeWeights())) {
+          changed = true;
+          activeRegimeTemplates[cell].setFlowRegime(regime);
+          activeRegimeTemplates[cell].setRegimeWeights(weights);
+        }
+      }
+    }
+    return changed;
+  }
+
+  /**
+   * Install the currently accepted dominant regimes and blend weights on trial sections.
+   *
+   * @param sections trial or endpoint sections
+   */
+  private void applyActiveRegimeChoices(TwoFluidSection[] sections) {
+    if (!regimeActiveSetEnabled) {
+      return;
+    }
+    for (int cell = 0; cell < sections.length; cell++) {
+      sections[cell].setFlowRegime(activeRegimeTemplates[cell].getFlowRegime());
+      sections[cell].setRegimeWeights(activeRegimeTemplates[cell].getRegimeWeights());
+    }
   }
 
   private static void installDensities(TwoFluidSection section, double[] densities) {

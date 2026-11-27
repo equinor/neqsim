@@ -219,7 +219,7 @@ public final class TwoFluidUnsplitIntegrator {
       synchronizeSlugGeometry(localSlugTracker);
       TwoFluidUnsplitModelAdapter adapter = new TwoFluidUnsplitModelAdapter(equations, local, spatialStep, densityModel,
           interpolationTimeScale,
-          !pressureInterpolationEnabled && !equations.isConservativeSlugForceIntegrationEnabled());
+          !pressureInterpolationEnabled && !equations.isConservativeSlugForceIntegrationEnabled(), allowNewtonRestart);
       double[][] state = new double[local.length][];
       double[] pressure = new double[local.length];
       double[] area = new double[local.length];
