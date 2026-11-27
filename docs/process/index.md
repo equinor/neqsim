@@ -10,6 +10,7 @@ description: "Documentation for NeqSim's process simulation capabilities includi
 - [Safety Shutdown acoustic valve travel](../wiki/water_hammer_implementation.md#safety-shutdown-with-prescribed-actual-valve-travel): absolute liquid capacity, prescribed actual travel, conservative cell inventory and analytical evidence limits.
 
 - [Two-fluid pipeline model](TWOFLUIDPIPE_MODEL.md): steady closures, transient qualification and configuration.
+- [Compositional line-pack pipe](compositional-linepack-pipe.md): retrograde condensation, depressurisation and dew-point-guarded restart of long gas/condensate lines.
 - [Experimental pressure-driven pig mechanics](pig-motion): prescribed-pressure mechanics with explicit coupling limits.
 
 ## Residual film after pigging

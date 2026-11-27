@@ -184,7 +184,7 @@ class KClCO2SourceMatchedSaltEffectAssessmentTest {
   }
 
   /** Finds a same-temperature pure-water source bracket without extrapolation. */
-  private static SourceInterpolation interpolateSourceWater(
+  static SourceInterpolation interpolateSourceWater(
       KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Reference target,
       List<KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Reference> candidates) {
     KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Reference lower = null;
@@ -215,7 +215,7 @@ class KClCO2SourceMatchedSaltEffectAssessmentTest {
   }
 
   /** Converts anhydrous KCl mass fraction to source-basis molality. */
-  private static double kclMolality(double massFractionPercent) {
+  static double kclMolality(double massFractionPercent) {
     return massFractionPercent / (100.0 - massFractionPercent) / KCL_MOLAR_MASS_KG_PER_MOL;
   }
 
@@ -229,13 +229,13 @@ class KClCO2SourceMatchedSaltEffectAssessmentTest {
   }
 
   /** Holds one source-water interpolation and its form sensitivity. */
-  private static final class SourceInterpolation {
-    private final String lowerPointId;
-    private final String upperPointId;
-    private final double fraction;
-    private final double linearMolePercent;
-    private final double logMolePercent;
-    private final double logSensitivity;
+  static final class SourceInterpolation {
+    final String lowerPointId;
+    final String upperPointId;
+    final double fraction;
+    final double linearMolePercent;
+    final double logMolePercent;
+    final double logSensitivity;
 
     /** Creates one immutable source interpolation. */
     private SourceInterpolation(String lowerPointId, String upperPointId, double fraction, double linearMolePercent,

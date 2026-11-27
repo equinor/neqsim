@@ -1,7 +1,7 @@
 ---
 name: neqsim-dynamic-simulation
 description: "Dynamic simulation guidance for NeqSim. USE WHEN: running transient simulations, modeling startup/shutdown, tuning PID controllers, analyzing pressure/level dynamics, performing blowdown/depressurization, or setting up measurement devices and control loops. Covers runTransient, DynamicProcessHelper, controller tuning, and dynamic equipment configuration."
-last_verified: "2026-11-25"
+last_verified: "2026-11-27"
 ---
 
 # Dynamic Simulation Guidance
@@ -34,7 +34,10 @@ reconstructed body/film friction source; ordinary friction remains owned by untr
 the accepted ledger records the passive momentum impulse. The default 0.1 s 16/24-cell startup matrix
 checks rollback, mass closure and time-step refinement. Run the opt-in tracking-enabled five-second
 16/0.1, 16/0.05 and 24/0.05 matrix as the next hosted numerical gate before any 180/600 s or
-settled-cycle claim. Completion and an enforced sign alone do not promote the experimental gate.
+settled-cycle claim. After it passes, run the same three discretizations over both 180 and 600 s.
+Require whole-interval publication without rejected nonlinear attempts, phase conservation, positive
+finite pressure, through-flow and inventories, and the declared 15% pressure/through-flow/inventory
+spread bound. Completion and an enforced sign alone do not promote the experimental gate.
 
 ## Extend the existing unit operation
 
@@ -1002,6 +1005,10 @@ Minimum result keys: `max_pressure_bara`, `max_level_m`, `min_temperature_C`,
 `peak_flare_flow_kg_s`, `time_to_alarm_s`, and `time_to_new_steady_state_s`.
 
 ## Depressurization / Blowdown
+
+For long gas or gas-condensate export lines (hours to days, retrograde condensation, restart delivery
+policy) use `CompositionalLinePackPipe.runTransient(dt, id)` with `DewPointGuardedOutletController`; see
+`neqsim-flow-assurance` section 4 and [the docs](../../../docs/process/compositional-linepack-pipe.md).
 
 ```java
 // For vessel depressurization, use the safety/depressuring agent

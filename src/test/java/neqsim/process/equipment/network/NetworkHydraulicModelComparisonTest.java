@@ -279,6 +279,26 @@ class NetworkHydraulicModelComparisonTest {
         PipeModelType.BEGGS_BRILL, ProfileQuantity.PRESSURE));
   }
 
+  /** Localize every mesh discrepancy at two nearby rate/diameter operating points. */
+  @Test
+  void localizesSpatialDiscrepanciesAcrossOperatingEnvelope() {
+    double[] ratesKgS = new double[] {1.5, 2.5};
+    double[] diametersM = new double[] {0.25, 0.35};
+    for (int caseIndex = 0; caseIndex < ratesKgS.length; caseIndex++) {
+      FieldNetworkTopology topology = topology(ratesKgS[caseIndex]);
+      topology.getHydraulicNetwork().getPipe("flowline").setDiameter(diametersM[caseIndex]);
+      MeshSensitivityResult sensitivity = new NetworkHydraulicModelComparison(topology)
+          .compareMeshSensitivity(Arrays.asList("flowline"), Arrays.asList(4, 6, 9), UUID.randomUUID());
+      for (PipeModelType modelType : Arrays.asList(PipeModelType.BEGGS_BRILL, PipeModelType.TWO_FLUID)) {
+        for (ProfileQuantity quantity : ProfileQuantity.values()) {
+          HydraulicSpatialConvergenceReport report = sensitivity.getSpatialConvergenceReport(4, 6, 9, "flowline",
+              modelType, quantity);
+          assertLocalizedReceipt(report, 20000.0);
+        }
+      }
+    }
+  }
+
   /** Controlled rate steps retain conservation evidence and a common horizon at each outer time step. */
   @Test
   void comparesControlledTransientRateStepTimeSteps() {
@@ -449,6 +469,7 @@ class NetworkHydraulicModelComparisonTest {
     assertTrue(Double.isFinite(report.getMediumFineDifference()));
     assertTrue(report.getCoarseMediumDifference() >= 0.0);
     assertTrue(report.getMediumFineDifference() >= 0.0);
+    assertLocalizedReceipt(report, Double.POSITIVE_INFINITY);
     if (report.getStatus() == SpatialConvergenceStatus.MONOTONIC) {
       assertTrue(report.isMonotonicallyConvergent());
       assertTrue(report.getObservedOrder() > 0.0);
@@ -465,6 +486,29 @@ class NetworkHydraulicModelComparisonTest {
         assertTrue(report.getObservedOrder() <= 0.0);
       }
     }
+  }
+
+  /**
+   * Verify signed discrepancy reconstruction and physical localization.
+   *
+   * @param report convergence receipt
+   * @param maximumPositionM maximum accepted physical position in m
+   */
+  private void assertLocalizedReceipt(HydraulicSpatialConvergenceReport report, double maximumPositionM) {
+    assertTrue(Double.isFinite(report.getNormalizationScale()));
+    assertTrue(report.getNormalizationScale() > 0.0);
+    assertTrue(Double.isFinite(report.getCoarseMediumSignedDifference()));
+    assertTrue(Double.isFinite(report.getMediumFineSignedDifference()));
+    assertEquals(report.getCoarseMediumDifference(),
+        Math.abs(report.getCoarseMediumSignedDifference()) / report.getNormalizationScale(), 1.0e-15);
+    assertEquals(report.getMediumFineDifference(),
+        Math.abs(report.getMediumFineSignedDifference()) / report.getNormalizationScale(), 1.0e-15);
+    assertTrue(Double.isFinite(report.getCoarseMediumMaximumDifferencePositionM()));
+    assertTrue(Double.isFinite(report.getMediumFineMaximumDifferencePositionM()));
+    assertTrue(report.getCoarseMediumMaximumDifferencePositionM() >= 0.0);
+    assertTrue(report.getMediumFineMaximumDifferencePositionM() >= 0.0);
+    assertTrue(report.getCoarseMediumMaximumDifferencePositionM() <= maximumPositionM);
+    assertTrue(report.getMediumFineMaximumDifferencePositionM() <= maximumPositionM);
   }
 
   /**

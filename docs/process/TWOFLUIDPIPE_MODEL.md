@@ -60,7 +60,13 @@ Tengesdal startup probe uses this configuration at 16 cells with 0.1 and 0.05 s 
 An opt-in tracking-enabled five-second gate now repeats the same 16/0.1, 16/0.05 and
 24/0.05 mesh/time-step matrix with the accepted marker and subcell-force owner. It must
 complete conservatively before any tracking-enabled 180/600 s publication or experimental-cycle
-claim; an enforced sign or a short startup alone is not qualification.
+claim; an enforced sign or a short startup alone is not qualification. The subsequent numerical
+gate repeats those three discretizations over both 180 and 600 s. Every run must publish the whole
+interval without rejected nonlinear attempts, retain positive finite pressure and phase inventories,
+close each phase balance, and sustain positive cumulative through-flow. Inlet pressure, cumulative
+outlet mass, and final gas and combined-liquid inventories must remain within a predeclared 15% spread
+from the 16-cell/0.1 s result. This is a numerical seeded-marker gate, not experimental severe-slugging
+qualification.
 
 The earlier 65.163 kPa inlet-pressure amplitude is below
 the unchanged 68.6 kPa lower bound; the unchanged liquid-trough detector finds no

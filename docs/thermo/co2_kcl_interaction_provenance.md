@@ -1365,3 +1365,207 @@ same-source dense states are holdouts. Table A.24, Dholabhai/Burgass hydrate,
 NaCl/CaCl2/MgCl2, Archer water activity, Yasunishi-Yoshida and pure-water
 controls remain frozen. No production parameter, equation, tolerance, hydrate
 model or empirical temperature offset changes in this diagnostic.
+
+
+## Smooth residual-law candidate and frozen high-temperature disposition (2026-11-26)
+
+The next dependency gate fits the **source-minus-current-model** KCl response rather than
+reusing a total source activity coefficient.  On the He-Morse molality convention, define
+
+$$
+q(T) = \frac{298.15\ \mathrm{K}}{T} - 1
+$$
+
+and the dimensionless residual log-activity candidate
+
+$$
+g(T,m_{\mathrm{KCl}}) =
+\left(\lambda_{\mathrm{ref}} + \lambda_{1/T} q(T)\right)m_{\mathrm{KCl}}
++ \zeta_{1/T}q(T)m_{\mathrm{KCl}}^2.
+$$
+
+This form is a diagnostic candidate, not an active production term.  It is fitted to the
+26 He-Morse states after evaluating a matched current-model pure-water state at each
+temperature and CO2 partial pressure.  The retained three-parameter fit is full rank,
+has condition number 31.7646, calibration log-RMSE 0.0212144 and AICc -193.269.  Its
+coefficients (estimate +/- one standard error) are:
+
+| coefficient | estimate | standard error |
+|---|---:|---:|
+| $\lambda_{\mathrm{ref}}$ | -0.00975624 | 0.00229335 |
+| $\lambda_{1/T}$ | +0.432860 | 0.0486611 |
+| $\zeta_{1/T}$ | -0.0922848 | 0.0118244 |
+
+The largest absolute parameter correlation is 0.923475.  Adding an independent
+reference-temperature quadratic coefficient produces AICc -193.164 and an unscaled
+condition number 173.112; retaining five temperature-specific linear coefficients
+produces AICc -191.221.  The smaller law therefore preserves the supported temperature
+dependence without the unsupported parameters.  The zero residual curvature at
+298.15 K applies only to the source-minus-model increment; it does not assert zero
+total KCl/CO2 source curvature.
+
+No-refit transfer to the seven bracketed 323.15 K Mousavi-Chapoy-Burgass states
+improves every point: log-RMSE 0.104833 to 0.0501344, bias +0.104176 to
++0.0479878 and maximum absolute residual 0.124556 to 0.0759640.  The six
+373.15 K states are outside the He-Morse calibration range and remain an
+extrapolative holdout.  Aggregate log-RMSE improves from 0.0777317 to 0.0474229,
+but the bias crosses from +0.0721812 to -0.0373790 and only four of six points
+improve.  That local and aggregate over-correction blocks activation.
+
+**Disposition.**  No database parameter, residual-Helmholtz term, hydrate equation,
+solver tolerance or empirical temperature offset changes.  The smallest defensible
+next implementation is an opt-in, zero-default residual-Helmholtz prototype with the
+three coefficients above, complete composition and temperature derivatives, an
+explicit salt-level gauge, and the calibrated validity range 273.15--363.15 K.
+Activation requires derivative/finite-difference closure, a Furst double-counting
+audit, bounded covariance/sensitivity, and independent in-range high-temperature KCl
+data.  Table A.24, Dholabhai/Burgass hydrate families, NaCl/CaCl2/MgCl2, Archer water
+activity, Yasunishi-Yoshida and pure-water controls remain frozen holdouts or adjacent
+controls.
+
+## Independent Kamps total-pressure transfer (2026-11-27)
+
+Kamps et al. (2007), DOI `10.1021/je060430q`, supplies the independent
+single-salt check required above. The complete 102-row KCl ThermoML dataset is
+retained with its exact source checksum and semantics in the
+[benchmark notes](../../src/test/resources/data/chemistry_benchmarks/co2_kcl_solubility_kamps2007_thermoml.md).
+The reported property is closed-cell **total equilibrium pressure**, not CO2
+partial pressure. `KClCO2Kamps2007IndependentTransferAssessmentTest` therefore
+imposes the source total pressure and explicit KCl molality on the same one-kilogram
+final-aqueous-water basis used by the dense-brine reproducer; water vapor, gas
+composition and CO2 fugacity remain model outputs.
+
+Fourteen states were frozen before model evaluation by selecting the lower median
+positive CO2 loading in each source temperature and low/high KCl block. No Kamps
+value is fitted. For a direct-solubility residual
+
+$$
+r=\ln(m_{\mathrm{CO_2},model}/m_{\mathrm{CO_2},source}),
+$$
+
+the source-minus-model log-activity candidate implies
+
+$$
+m_{candidate}=m_{model}\exp[-g(T,m_{\mathrm{KCl}})],\qquad
+r_{candidate}=r-g.
+$$
+
+The current model underpredicts twelve of fourteen selected source states. In the
+approximately 2 mol/kg KCl family, all seven temperatures improve: log-RMSE falls
+from `0.154698` to `0.0391160`, signed bias from `-0.150819` to `-0.0372877`, and
+candidate maximum absolute residual is `0.0632243`. In the approximately 4 mol/kg
+family, only the 313 and 333 K states improve. Log-RMSE worsens from `0.0346649` to
+`0.0847042`, bias crosses from `-0.0196903` to `+0.0677462`, and maximum absolute
+residual reaches `0.150368` at 433.05 K. Aggregate log-RMSE improves from `0.112101`
+to `0.0659730`, but the family-specific failure blocks activation.
+
+This independent result localizes the remaining discrepancy: the fitted
+temperature-dependent quadratic term is too strong at about 4 mol/kg above
+333 K, while the same law remains directionally useful around 2 mol/kg through
+433 K. A single smooth three-parameter law is therefore not yet a defensible
+production formulation across both concentration families. The next candidate must
+alter or bound the high-molality temperature curvature and be refitted only on a
+declared calibration partition, with independent source-family holdouts and full
+derivative/Furst double-counting checks. No database parameter, residual-Helmholtz
+term, hydrate equation, solver tolerance or empirical temperature offset changes in
+this diagnostic. Table A.24 mixed brine and Dholabhai/Burgass hydrate data remain
+frozen downstream holdouts.
+
+## Complete Kamps loading trend and matched-layer decomposition (2026-11-27)
+
+The 14-point median-loading transfer does not by itself establish whether the
+remaining error is constant within a temperature/salt block. The complete positive-
+loading ThermoML series was therefore evaluated without fitting any Kamps value:
+98 positive-CO2 states in 14 nominal-temperature/KCl-family blocks. The four zero-
+CO2 records remain source vapor-pressure controls and are excluded from logarithmic
+residuals.
+
+For each block, the baseline and frozen-candidate residuals were regressed only
+against the source CO2 molality. Ten of 14 baseline slopes exceed two slope standard
+errors. The salt-only candidate leaves the same ten slopes resolved because its
+temperature/KCl correction is effectively a block shift. Baseline residual spans are
+`0.0154` to `0.0583` log units. The within-block model water-activity spans are only
+`0.00410` to `0.01460`, while the model CO2 fugacity-to-total-pressure ratio spans
+`0.0758` to `0.3777`. Consequently, aggregate median-state RMSE improvement is not
+sufficient evidence for activation: pressure/loading dependence is a separately
+identifiable missing response.
+
+The 14 frozen median-loading states also use matched no-salt model states at the same
+temperature and total pressure. The exact model identity is
+
+$$
+\ln\!\left(\frac{x_{\mathrm{CO_2,brine}}}{x_{\mathrm{CO_2,water}}}\right)
+=\ln\!\left(\frac{f_{\mathrm{CO_2,brine}}}{f_{\mathrm{CO_2,water}}}\right)
+-\ln\!\left(\frac{(f/x)_{\mathrm{brine}}}{(f/x)_{\mathrm{water}}}\right).
+$$
+
+Its maximum numerical closure residual is `2.22e-16`. Across all 14 states, the
+mean log dissolved-CO2 ratio is `-0.212476`, the mean guest-fugacity contribution is
+only `+0.005817`, and the mean effective aqueous $f/x$ contribution is `+0.218293`.
+The mean absolute guest contribution is 2.66% of the mean absolute effective-$f/x$
+contribution. KCl lowers modeled water activity in all states; the mean brine-minus-
+water change is `-0.0902704` (`-0.0602469` near 2 mol/kg and `-0.120294` near
+4 mol/kg).
+
+**Disposition.** The material salting-out response is owned by the aqueous effective-
+$f/x$ layer, not by guest fugacity, but a temperature/KCl-only residual term cannot
+remove the independently resolved loading trends. The smallest defensible next model
+test must add a thermodynamically consistent CO2-loading dependence (or demonstrate
+that the existing Furst/eCPA loading response is misparameterized), with analytic
+composition and temperature derivatives and a joint double-counting audit. No
+coefficient is fitted or activated here. Table A.24 and independent hydrate families
+remain source/family holdouts.
+
+## Existing Furst loading-shape sensitivity (2026-11-27)
+
+\`KClCO2Kamps2007FurstLoadingSensitivityAssessmentTest\` tests the first alternative
+in the preceding disposition: whether the already active CO2-ion Furst block has the
+right loading shape but the wrong magnitude. Before any model evaluation, the lowest,
+median and highest positive CO2 loading are selected in each of the 14 Kamps
+temperature/KCl-family blocks. The resulting 42-state design is evaluated at
+
+$$
+W_{\mathrm{CO_2},i}^{(k)}(T;\lambda_F)
+=\lambda_F W_{\mathrm{CO_2},i}^{(k)}(T),
+\qquad \lambda_F\in\{0,\ 0.5,\ 1\},\quad k\in\{0,1,2\}.
+$$
+
+Scale one is the production default reconstructed against the Onda et al. (1970)
+298.15 K KCl correlation. The two lower scales are ablation and midpoint
+form-sensitivity controls, not candidate parameters: changing the complete block
+does not preserve that independent dilute-limit anchor. The four zero-CO2 Kamps rows
+remain source controls. No Kamps value is fitted, and Table A.24 and hydrate evidence
+remain untouched holdouts.
+
+All 42 default-scale states converge. The ablated scale also converges for all 42
+states. The midpoint converges for 41 states; \`KAMPS-094\` is rejected by the existing
+component-inventory gate with residual \`7.25042\`, rather than being admitted by a
+looser tolerance. Across the selected states, the log-residual RMSE and bias are:
+
+| Furst scale | Converged states | Log-RMSE | Signed bias |
+|---:|---:|---:|---:|
+| 0.0 | 42/42 | 0.725885 | +0.657444 |
+| 0.5 | 41/42 | 0.345381 | +0.292062 |
+| 1.0 | 42/42 | 0.113743 | -0.0877234 |
+
+For each block, endpoint interpolation estimates the scale that would make the
+selected residual slope against source CO2 molality zero. Only two of 14 estimates
+lie in the tested interval. Every low-KCl block requires extrapolation above one:
+\`1.22350\` to \`2.26392\`, with family mean \`1.53685\`. The high-KCl estimates range from
+\`0.639988\` to \`1.46743\`, with only the 333.15 K and 353.15 K blocks bounded and a
+family mean of \`1.17557\`. The overall range is \`0.639988\` to \`2.26392\`; median
+\`1.33566\`. Except for the block containing the rejected midpoint, the midpoint-slope
+departure from endpoint-linear interpolation is at most \`0.00212\`, so the family
+incompatibility is not an artifact of strong scale nonlinearity.
+
+**Disposition.** A single existing Furst-block rescale is rejected as a parameter
+update. It cannot remove the loading trend across both families inside the tested
+range, and any non-default value would also break the independently sourced Onda
+anchor. The result is model-form evidence: the next aqueous candidate must introduce
+a loading-dependent contribution that vanishes in the neutral-CO2 dilute limit,
+preserves the anchored salt coefficient there, and is derived from a degree-one
+excess Helmholtz energy with complete amount and temperature derivatives. Its exact
+neutral-neutral-ion topology and coefficient law remain unselected pending a
+source-separated bounded fit, covariance/sensitivity analysis, Furst double-counting
+audit and the frozen mixed-brine/hydrate/control transfers. No production equation,
+parameter, tolerance or empirical temperature offset changes in this increment.
