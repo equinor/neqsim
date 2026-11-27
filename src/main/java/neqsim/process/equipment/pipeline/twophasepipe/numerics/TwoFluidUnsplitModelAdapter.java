@@ -93,6 +93,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
   private final boolean conservativeFrictionSplitEnabled;
   private final boolean regimeActiveSetEnabled;
   private final TwoFluidSection[] activeRegimeTemplates;
+  private final TwoFluidSection[] pendingRegimeTemplates;
   private double latestEvaluationTime;
 
   /**
@@ -202,7 +203,6 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
    * @param conservativeFrictionSplitEnabled true to remove friction from the nonlinear transport residual and apply the
    * conservative passive source once after transport convergence
    */
-  @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The integrator and adapter share the configured operator and synchronize transactional probes on that operator")
   public TwoFluidUnsplitModelAdapter(TwoFluidConservationEquations equations, TwoFluidSection[] acceptedTemplates,
       double spatialStep, PhaseDensityModel densityModel, ActiveSetController activeSetController,
       double pressureInterpolationTimeScale, boolean conservativeFrictionSplitEnabled) {
@@ -264,12 +264,16 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     this.conservativeFrictionSplitEnabled = conservativeFrictionSplitEnabled;
     this.regimeActiveSetEnabled = regimeActiveSetEnabled;
     this.activeRegimeTemplates = regimeActiveSetEnabled ? cloneSections(this.acceptedTemplates) : null;
+    this.pendingRegimeTemplates = regimeActiveSetEnabled ? cloneSections(this.acceptedTemplates) : null;
     if (regimeActiveSetEnabled) {
       synchronized (equations) {
-        for (TwoFluidSection section : activeRegimeTemplates) {
+        for (int cell = 0; cell < activeRegimeTemplates.length; cell++) {
+          TwoFluidSection section = activeRegimeTemplates[cell];
           if (section.getFlowRegime() == null) {
             equations.getFlowRegimeDetector().classify(section);
           }
+          pendingRegimeTemplates[cell].setFlowRegime(section.getFlowRegime());
+          pendingRegimeTemplates[cell].setRegimeWeights(section.getRegimeWeights());
         }
       }
     }
@@ -278,6 +282,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
   @Override
   public synchronized void beginLinearization(double[][] state, double[] pressure) {
     validateShape(state, pressure, "linearization");
+    applyPendingRegimeChoices();
     activeSetController.beginLinearization(copyMatrixArray(state), pressure.clone());
   }
 
@@ -291,7 +296,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     validateShape(state, pressure, "active-set");
     boolean changed = activeSetController.update(copyMatrixArray(state), pressure.clone());
     if (regimeActiveSetEnabled) {
-      changed |= updateRegimeChoices(state, pressure);
+      updateRegimeChoices(state, pressure);
     }
     return changed;
   }
@@ -700,7 +705,8 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
    *
    * @param state selected-time conservative state
    * @param pressure selected-time pressure in Pa
-   * @return true when at least one dominant regime or blend weight changed
+   * @return true when at least one dominant regime or blend weight changed; the adapter deliberately does not expose
+   * this as a donor/presence fixed-point change because the refreshed choice belongs to the next linearization
    */
   private boolean updateRegimeChoices(double[][] state, double[] pressure) {
     TwoFluidSection[] classified = createTrialSections(state, pressure, latestEvaluationTime, false);
@@ -710,11 +716,11 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
         equations.getFlowRegimeDetector().classify(classified[cell]);
         FlowRegime regime = classified[cell].getFlowRegime();
         Map<FlowRegime, Double> weights = classified[cell].getRegimeWeights();
-        if (regime != activeRegimeTemplates[cell].getFlowRegime()
-            || !Objects.equals(weights, activeRegimeTemplates[cell].getRegimeWeights())) {
+        if (regime != pendingRegimeTemplates[cell].getFlowRegime()
+            || !Objects.equals(weights, pendingRegimeTemplates[cell].getRegimeWeights())) {
           changed = true;
-          activeRegimeTemplates[cell].setFlowRegime(regime);
-          activeRegimeTemplates[cell].setRegimeWeights(weights);
+          pendingRegimeTemplates[cell].setFlowRegime(regime);
+          pendingRegimeTemplates[cell].setRegimeWeights(weights);
         }
       }
     }
@@ -733,6 +739,17 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     for (int cell = 0; cell < sections.length; cell++) {
       sections[cell].setFlowRegime(activeRegimeTemplates[cell].getFlowRegime());
       sections[cell].setRegimeWeights(activeRegimeTemplates[cell].getRegimeWeights());
+    }
+  }
+
+  /** Activate the regime choices staged by the last accepted Newton iterate. */
+  private void applyPendingRegimeChoices() {
+    if (!regimeActiveSetEnabled) {
+      return;
+    }
+    for (int cell = 0; cell < activeRegimeTemplates.length; cell++) {
+      activeRegimeTemplates[cell].setFlowRegime(pendingRegimeTemplates[cell].getFlowRegime());
+      activeRegimeTemplates[cell].setRegimeWeights(pendingRegimeTemplates[cell].getRegimeWeights());
     }
   }
 
