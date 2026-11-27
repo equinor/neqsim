@@ -203,7 +203,6 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
    * @param conservativeFrictionSplitEnabled true to remove friction from the nonlinear transport residual and apply the
    * conservative passive source once after transport convergence
    */
-  @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The integrator and adapter share the configured operator and synchronize transactional probes on that operator")
   public TwoFluidUnsplitModelAdapter(TwoFluidConservationEquations equations, TwoFluidSection[] acceptedTemplates,
       double spatialStep, PhaseDensityModel densityModel, ActiveSetController activeSetController,
       double pressureInterpolationTimeScale, boolean conservativeFrictionSplitEnabled) {
