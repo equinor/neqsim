@@ -710,6 +710,44 @@ class UnsplitTransientSolverTest {
     assertEquals(0.0, state[0][3], 0.0);
   }
 
+  /** An opposite-sided momentum probe can recover descent at a cusp after the bounded restart. */
+  @Test
+  void oppositeMomentumProbeRecoversOriginalResidualAfterRestart() {
+    double[][] state = filledState(1);
+    double[] pressure = {5.0e6};
+    UnsplitTransientSolver.Model model = (trial, trialPressure, closureState, closurePressure, time, outletPressure,
+        outletPressureFixed) -> {
+      double q = trial[0][3];
+      double[][] rates = new double[1][6];
+      if (q < 0.0) {
+        rates[0][3] = 2.0 * q - 3.0;
+      } else if (q < 1.0e-5) {
+        rates[0][3] = 1.0;
+      } else if (q < 1.0) {
+        rates[0][3] = 2.0 * q - 2.5;
+      } else if (q < 1.0001) {
+        rates[0][3] = -0.5;
+      } else {
+        rates[0][3] = 2.5;
+      }
+      return new UnsplitTransientSolver.Evaluation(rates, pressureDependentDensities(closurePressure));
+    };
+    UnsplitTransientSolver solver = new UnsplitTransientSolver();
+    solver.setTimeIntegrationMethod(UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER);
+    double[] areas = unitAreas(1);
+    UnsplitTransientSolver.Result original = solver.solve(state, pressure, areas, 1.0, 0.0, Double.NaN, false, model);
+    assertEquals(UnsplitTransientSolver.TerminationReason.LINE_SEARCH_FAILED, original.getTerminationReason());
+
+    UnsplitTransientSolver.Result recovered = solver.solveWithTolerance(state, pressure, areas, 1.0, 0.0, Double.NaN,
+        false, model, solver.getRelativeTolerance(), true);
+
+    assertTrue(recovered.isConverged());
+    assertEquals(2.5, recovered.getState()[0][3], solver.getRelativeTolerance());
+    assertTrue(recovered.getMaximumScaledResidual() <= solver.getRelativeTolerance());
+    assertTrue(recovered.getIterations() <= solver.getMaximumIterations());
+    assertEquals(0.0, state[0][3], 0.0);
+  }
+
   @Test
   void reportsExhaustedNewtonBudgetWithItsFinalAdmissibleIterate() {
     double[][] state = filledState(1);
