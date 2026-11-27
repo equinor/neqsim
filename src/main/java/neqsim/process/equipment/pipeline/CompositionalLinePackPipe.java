@@ -1233,9 +1233,13 @@ public class CompositionalLinePackPipe extends Pipeline {
         entrained = Math.max(0.0, Math.min(1.0, entrained));
       }
       entrainedFraction[j] = entrained;
-      int gasUp = outlet ? n - 1 : (mf >= 0 ? left : right);
+      int gasUp = mf >= 0 ? left : right;
+      int donor = uL >= 0 ? left : right;
+      if (outlet) {
+        gasUp = n - 1;
+        donor = left;
+      }
       // film
-      int donor = outlet ? left : (uL >= 0 ? left : right);
       liquidOut += moveLiquid(j, donor, gasUp, (1.0 - entrained) * liquidDensity[donor] * holdup[donor] * area * uL,
           outlet ? mf : Double.POSITIVE_INFINITY, dt, fk, fe, outlet);
       // droplets travel with the gas
