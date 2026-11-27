@@ -279,8 +279,13 @@ public final class NetworkHydraulicModelComparison {
       ModelProfiles fine = getProfiles(getResult(fineSegments), edgeId, modelType);
       validateCommonLength(coarse, medium, fine);
       double scale = maximumMagnitude(coarse.values(quantity), medium.values(quantity), fine.values(quantity));
-      double coarseMediumDifference = maximumAbsoluteDifference(coarse, medium, quantity) / scale;
-      double mediumFineDifference = maximumAbsoluteDifference(medium, fine, quantity) / scale;
+      if (!Double.isFinite(scale) || scale <= 0.0) {
+        throw new IllegalArgumentException("Spatial convergence normalization scale must be finite and positive");
+      }
+      MaximumDifference coarseMediumMaximum = maximumDifference(coarse, medium, quantity);
+      MaximumDifference mediumFineMaximum = maximumDifference(medium, fine, quantity);
+      double coarseMediumDifference = coarseMediumMaximum.absoluteDifference / scale;
+      double mediumFineDifference = mediumFineMaximum.absoluteDifference / scale;
       if (!Double.isFinite(coarseMediumDifference) || !Double.isFinite(mediumFineDifference)
           || coarseMediumDifference < 0.0 || mediumFineDifference < 0.0) {
         throw new IllegalArgumentException("Spatial convergence discrepancies must be finite and non-negative");
@@ -301,8 +306,9 @@ public final class NetworkHydraulicModelComparison {
         }
       }
       return new HydraulicSpatialConvergenceReport(edgeId, modelType, quantity, coarseSegments, mediumSegments,
-          fineSegments, coarseMediumRatio, coarseMediumDifference, mediumFineDifference, observedOrder,
-          fineGridConvergenceIndex, status);
+          fineSegments, coarseMediumRatio, scale, coarseMediumDifference, coarseMediumMaximum.signedDifference,
+          coarseMediumMaximum.positionM, mediumFineDifference, mediumFineMaximum.signedDifference,
+          mediumFineMaximum.positionM, observedOrder, fineGridConvergenceIndex, status);
     }
 
     /**
@@ -357,8 +363,13 @@ public final class NetworkHydraulicModelComparison {
     private final int mediumSegments;
     private final int fineSegments;
     private final double refinementRatio;
+    private final double normalizationScale;
     private final double coarseMediumDifference;
+    private final double coarseMediumSignedDifference;
+    private final double coarseMediumMaximumDifferencePositionM;
     private final double mediumFineDifference;
+    private final double mediumFineSignedDifference;
+    private final double mediumFineMaximumDifferencePositionM;
     private final double observedOrder;
     private final double fineGridConvergenceIndex;
     private final SpatialConvergenceStatus status;
@@ -373,15 +384,22 @@ public final class NetworkHydraulicModelComparison {
      * @param mediumSegments intermediate segment count
      * @param fineSegments finest segment count
      * @param refinementRatio constant grid refinement ratio
+     * @param normalizationScale maximum absolute quantity magnitude across all three profiles
      * @param coarseMediumDifference normalized coarse-to-medium discrepancy
+     * @param coarseMediumSignedDifference signed coarse-minus-medium discrepancy in quantity units at its maximum
+     * @param coarseMediumMaximumDifferencePositionM position of maximum coarse-to-medium discrepancy in m
      * @param mediumFineDifference normalized medium-to-fine discrepancy
+     * @param mediumFineSignedDifference signed medium-minus-fine discrepancy in quantity units at its maximum
+     * @param mediumFineMaximumDifferencePositionM position of maximum medium-to-fine discrepancy in m
      * @param observedOrder observed order, or {@link Double#NaN}
      * @param fineGridConvergenceIndex safety-factored fine-grid index, or {@link Double#NaN}
      * @param status explicit convergence classification
      */
     private HydraulicSpatialConvergenceReport(String edgeId, PipeModelType modelType, ProfileQuantity quantity,
-        int coarseSegments, int mediumSegments, int fineSegments, double refinementRatio, double coarseMediumDifference,
-        double mediumFineDifference, double observedOrder, double fineGridConvergenceIndex,
+        int coarseSegments, int mediumSegments, int fineSegments, double refinementRatio, double normalizationScale,
+        double coarseMediumDifference, double coarseMediumSignedDifference,
+        double coarseMediumMaximumDifferencePositionM, double mediumFineDifference, double mediumFineSignedDifference,
+        double mediumFineMaximumDifferencePositionM, double observedOrder, double fineGridConvergenceIndex,
         SpatialConvergenceStatus status) {
       this.edgeId = edgeId;
       this.modelType = modelType;
@@ -390,8 +408,13 @@ public final class NetworkHydraulicModelComparison {
       this.mediumSegments = mediumSegments;
       this.fineSegments = fineSegments;
       this.refinementRatio = refinementRatio;
+      this.normalizationScale = normalizationScale;
       this.coarseMediumDifference = coarseMediumDifference;
+      this.coarseMediumSignedDifference = coarseMediumSignedDifference;
+      this.coarseMediumMaximumDifferencePositionM = coarseMediumMaximumDifferencePositionM;
       this.mediumFineDifference = mediumFineDifference;
+      this.mediumFineSignedDifference = mediumFineSignedDifference;
+      this.mediumFineMaximumDifferencePositionM = mediumFineMaximumDifferencePositionM;
       this.observedOrder = observedOrder;
       this.fineGridConvergenceIndex = fineGridConvergenceIndex;
       this.status = status;
@@ -432,14 +455,39 @@ public final class NetworkHydraulicModelComparison {
       return refinementRatio;
     }
 
+    /** @return maximum absolute quantity magnitude used to normalize both discrepancies */
+    public double getNormalizationScale() {
+      return normalizationScale;
+    }
+
     /** @return normalized coarse-to-medium discrepancy */
     public double getCoarseMediumDifference() {
       return coarseMediumDifference;
     }
 
+    /** @return signed coarse-minus-medium discrepancy in quantity units at the reported maximum */
+    public double getCoarseMediumSignedDifference() {
+      return coarseMediumSignedDifference;
+    }
+
+    /** @return position of maximum coarse-to-medium discrepancy in m */
+    public double getCoarseMediumMaximumDifferencePositionM() {
+      return coarseMediumMaximumDifferencePositionM;
+    }
+
     /** @return normalized medium-to-fine discrepancy */
     public double getMediumFineDifference() {
       return mediumFineDifference;
+    }
+
+    /** @return signed medium-minus-fine discrepancy in quantity units at the reported maximum */
+    public double getMediumFineSignedDifference() {
+      return mediumFineSignedDifference;
+    }
+
+    /** @return position of maximum medium-to-fine discrepancy in m */
+    public double getMediumFineMaximumDifferencePositionM() {
+      return mediumFineMaximumDifferencePositionM;
     }
 
     /** @return observed convergence order, or {@link Double#NaN} */
@@ -1261,14 +1309,16 @@ public final class NetworkHydraulicModelComparison {
    * @param first first profile
    * @param second second profile
    * @param quantity requested quantity
-   * @return maximum absolute discrepancy
+   * @return maximum signed and absolute discrepancy with its physical position
    */
-  private static double maximumAbsoluteDifference(ModelProfiles first, ModelProfiles second, ProfileQuantity quantity) {
+  private static MaximumDifference maximumDifference(ModelProfiles first, ModelProfiles second,
+      ProfileQuantity quantity) {
     double[] firstValues = first.values(quantity);
     double[] secondValues = second.values(quantity);
-    double maximum = directionalMaximumDifference(first.positionM, firstValues, second.positionM, secondValues);
-    return Math.max(maximum,
-        directionalMaximumDifference(second.positionM, secondValues, first.positionM, firstValues));
+    MaximumDifference maximum = directionalMaximumDifference(first.positionM, firstValues, second.positionM,
+        secondValues, true);
+    return maximum.selectLarger(
+        directionalMaximumDifference(second.positionM, secondValues, first.positionM, firstValues, false));
   }
 
   /**
@@ -1278,16 +1328,61 @@ public final class NetworkHydraulicModelComparison {
    * @param sourceValues source values
    * @param targetPositions target cell-centre positions
    * @param targetValues target values
-   * @return maximum absolute interpolated discrepancy
+   * @param sourceIsFirst whether source values belong to the first profile in the signed first-minus-second convention
+   * @return maximum signed and absolute interpolated discrepancy with its physical position
    */
-  private static double directionalMaximumDifference(double[] sourcePositions, double[] sourceValues,
-      double[] targetPositions, double[] targetValues) {
-    double maximum = 0.0;
+  private static MaximumDifference directionalMaximumDifference(double[] sourcePositions, double[] sourceValues,
+      double[] targetPositions, double[] targetValues, boolean sourceIsFirst) {
+    if (sourcePositions.length == 0 || sourcePositions.length != sourceValues.length || targetPositions.length == 0
+        || targetPositions.length != targetValues.length) {
+      throw new IllegalArgumentException("Hydraulic profile positions and values must be non-empty and aligned");
+    }
+    MaximumDifference maximum = new MaximumDifference(0.0, targetPositions[0]);
     for (int index = 0; index < targetPositions.length; index++) {
-      maximum = Math.max(maximum,
-          Math.abs(interpolate(sourcePositions, sourceValues, targetPositions[index]) - targetValues[index]));
+      double interpolatedDifference = interpolate(sourcePositions, sourceValues, targetPositions[index])
+          - targetValues[index];
+      double signedDifference = sourceIsFirst ? interpolatedDifference : -interpolatedDifference;
+      maximum = maximum.selectLarger(new MaximumDifference(signedDifference, targetPositions[index]));
     }
     return maximum;
+  }
+
+  /**
+   * Immutable maximum profile discrepancy with a consistent first-minus-second sign convention.
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  private static final class MaximumDifference {
+    private final double absoluteDifference;
+    private final double signedDifference;
+    private final double positionM;
+
+    /**
+     * Create one discrepancy candidate.
+     *
+     * @param signedDifference signed first-minus-second discrepancy in quantity units
+     * @param positionM physical comparison position in m
+     */
+    private MaximumDifference(double signedDifference, double positionM) {
+      this.absoluteDifference = Math.abs(signedDifference);
+      this.signedDifference = signedDifference;
+      this.positionM = positionM;
+    }
+
+    /**
+     * Select the larger discrepancy, breaking exact ties by the upstream-most position.
+     *
+     * @param candidate competing discrepancy
+     * @return selected immutable discrepancy
+     */
+    private MaximumDifference selectLarger(MaximumDifference candidate) {
+      if (candidate.absoluteDifference > absoluteDifference
+          || (candidate.absoluteDifference == absoluteDifference && candidate.positionM < positionM)) {
+        return candidate;
+      }
+      return this;
+    }
   }
 
   /**
