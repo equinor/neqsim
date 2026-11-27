@@ -416,6 +416,11 @@ public class SolidFlash1 extends TPflash {
       system.init(1);
       return;
     }
+    if (system.getNumberOfPhases() - solidsNumber == 1) {
+      solveSingleFluidPhase();
+      system.init(1);
+      return;
+    }
     // if (system.getPhase(0).getNumberOfComponents() <= 2) {
     // solvebeta1();
     // }else{
@@ -437,6 +442,7 @@ public class SolidFlash1 extends TPflash {
        */
     } while (Math.abs((beta - oldBeta) / beta) > 1e-6 && iter < 20);
 
+    boolean retainedCarrierPhase = retainCarrierPhaseIfAllDeactivated();
     for (int i = system.getNumberOfPhases() - solidsNumber - 1; i >= 0; i--) {
       if (FluidPhaseActiveDescriptors[i] == 0) {
         int removedPhaseIndex = system.getPhaseIndex(i);
@@ -445,7 +451,116 @@ public class SolidFlash1 extends TPflash {
         system.setPhaseIndex(system.getNumberOfPhases(), removedPhaseIndex);
       }
     }
+    if (retainedCarrierPhase && system.getNumberOfPhases() - solidsNumber == 1) {
+      solveSingleFluidPhase();
+    }
     system.init(1);
+  }
+
+  /**
+   * Retains one fluid storage root when the general beta solve deactivates every carrier phase.
+   *
+   * <p>
+   * The retained root is the one with the largest trial beta. The one-fluid bracketed solve then replaces its trial
+   * composition and beta with the component-conservative equilibrium solution.
+   * </p>
+   *
+   * @return true when a carrier phase had to be retained
+   */
+  private boolean retainCarrierPhaseIfAllDeactivated() {
+    int retainedPhase = -1;
+    double largestBeta = Double.NEGATIVE_INFINITY;
+    for (int phase = 0; phase < system.getNumberOfPhases() - solidsNumber; phase++) {
+      if (FluidPhaseActiveDescriptors[phase] == 1) {
+        return false;
+      }
+      if (system.getBeta(phase) > largestBeta) {
+        largestBeta = system.getBeta(phase);
+        retainedPhase = phase;
+      }
+    }
+    if (retainedPhase < 0) {
+      throw new IllegalStateException("Solid equilibrium has no fluid carrier phase");
+    }
+    FluidPhaseActiveDescriptors[retainedPhase] = 1;
+    return true;
+  }
+
+  /**
+   * Solves one fluid phase in equilibrium with one selected pure solid.
+   *
+   * <p>
+   * The general multiphase beta Newton system becomes rank deficient when only one fluid phase remains. In that case
+   * the pure-solid fugacity equality fixes the selected component mole fraction in the fluid, while the non-solid feed
+   * inventory fixes the fluid beta. Solving those two relations directly prevents the last carrier phase from being
+   * deactivated and preserves every non-solid component.
+   * </p>
+   *
+   * @throws IllegalStateException if the one-fluid-phase equilibrium is nonphysical or does not converge
+   */
+  private void solveSingleFluidPhase() {
+    final int maxIterations = 100;
+    final double fugacityTolerance = 1.0e-10;
+    final double compositionTolerance = 1.0e-12;
+    double solidFeedFraction = system.getPhase(0).getComponent(solidIndex).getz();
+    double lowerMoleFraction = Math.max(phaseFractionMinimumLimit, compositionTolerance);
+    double upperMargin = Math.max(compositionTolerance, 100.0 * phaseFractionMinimumLimit * (1.0 - solidFeedFraction));
+    double upperMoleFraction = solidFeedFraction - upperMargin;
+    if (upperMoleFraction <= lowerMoleFraction) {
+      throw new IllegalStateException("Selected solid inventory is below the one-fluid equilibrium resolution");
+    }
+    double lowerResidual = setSingleFluidState(lowerMoleFraction, solidFeedFraction);
+    double upperResidual = setSingleFluidState(upperMoleFraction, solidFeedFraction);
+    if (!Double.isFinite(lowerResidual) || !Double.isFinite(upperResidual) || lowerResidual * upperResidual > 0.0) {
+      throw new IllegalStateException("Single-fluid solid equilibrium is not bracketed");
+    }
+    for (int iteration = 0; iteration < maxIterations; iteration++) {
+      double middleMoleFraction = 0.5 * (lowerMoleFraction + upperMoleFraction);
+      double middleResidual = setSingleFluidState(middleMoleFraction, solidFeedFraction);
+      if (!Double.isFinite(middleResidual)) {
+        throw new IllegalStateException("Nonfinite single-fluid solid fugacity residual");
+      }
+      if (Math.abs(middleResidual) <= fugacityTolerance) {
+        return;
+      }
+      if (upperMoleFraction - lowerMoleFraction <= compositionTolerance) {
+        throw new IllegalStateException("Single-fluid solid fugacity root is discontinuous");
+      }
+      if (lowerResidual * middleResidual <= 0.0) {
+        upperMoleFraction = middleMoleFraction;
+      } else {
+        lowerMoleFraction = middleMoleFraction;
+        lowerResidual = middleResidual;
+      }
+    }
+    throw new IllegalStateException("Single-fluid solid equilibrium did not converge");
+  }
+
+  /**
+   * Applies a component-conservative one-fluid/one-solid trial and returns its fugacity residual.
+   *
+   * @param solidFluidMoleFraction selected-solid component mole fraction in the fluid phase
+   * @param solidFeedFraction selected-solid component overall mole fraction
+   * @return logarithmic selected-component fugacity residual
+   */
+  private double setSingleFluidState(double solidFluidMoleFraction, double solidFeedFraction) {
+    double fluidBeta = (1.0 - solidFeedFraction) / (1.0 - solidFluidMoleFraction);
+    if (!Double.isFinite(fluidBeta) || fluidBeta <= phaseFractionMinimumLimit
+        || fluidBeta >= 1.0 - phaseFractionMinimumLimit) {
+      throw new IllegalStateException("Invalid single-fluid solid equilibrium phase fraction");
+    }
+    system.setBeta(0, fluidBeta);
+    system.setBeta(1, 1.0 - fluidBeta);
+    for (int component = 0; component < system.getNumberOfComponents(); component++) {
+      double moleFraction = component == solidIndex ? solidFluidMoleFraction
+          : system.getPhase(0).getComponent(component).getz() / fluidBeta;
+      system.getPhase(0).getComponent(component).setx(moleFraction);
+    }
+    system.init(1);
+    double solidFugacityCoefficient = system.getPhase(PhaseType.SOLID).getComponent(solidIndex)
+        .getFugacityCoefficient();
+    double fluidFugacityCoefficient = system.getPhase(0).getComponent(solidIndex).getFugacityCoefficient();
+    return Math.log(solidFluidMoleFraction * fluidFugacityCoefficient / solidFugacityCoefficient);
   }
 
   /**

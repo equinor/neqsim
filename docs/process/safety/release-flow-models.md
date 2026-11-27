@@ -614,6 +614,10 @@ These are applicability controls, not solid-bearing release physics or experimen
 qualification. Candidate screening is limited by the component data and hydrate model available
 to the selected NeqSim thermodynamic system. Turning off solid checks on the caller does not
 disable the defensive assessment or establish absence of solids outside the checked stations.
+The selected-component flash conserves non-solid component inventory when precipitation collapses
+the fluid split to one carrier phase, including defensive clones of initialized process states.
+This removes an initialization-path-dependent screening defect; it does not add mixture-solid
+source physics or make a solid-bearing release result usable.
 
 The HEM manifest also retains one independent experimental accuracy case without converting it
 into qualification. Table 1 of Witlox et al., *Journal of Hazardous Materials* 142 (2007)

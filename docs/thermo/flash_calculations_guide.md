@@ -1228,6 +1228,15 @@ precipitating candidates with `UnsupportedOperationException` before adding a so
 phase. See the [sulfur precipitation guide](../chemicalreactions/sulfur_deposition_analysis.md#2-tpsolidflash--sulfur-solubility-and-precipitation)
 for a selected-S8 example and component-balance checks.
 
+When precipitation leaves one fluid carrier phase, `SolidFlash1` solves the selected
+component fugacity equality with a bracketed scalar solve and obtains the fluid fraction
+from the non-solid component inventory. This path preserves every non-solid component and
+gives the same conservative result when the calculation starts from a warm initialized
+source clone. It remains a one-pure-solid equilibrium model; the calculation does not
+represent simultaneous solids, particle transport or precipitation kinetics.
+If a fluid-root transition creates a discontinuous fugacity bracket, the flash throws
+instead of returning a component-deficient or fugacity-unclosed state.
+
 The empirical `ComponentSolid` model excludes methane using a large fugacity
 coefficient (`1e30`). The returned coefficient and stored coefficient are identical,
 so selecting methane cannot introduce an artificial zero-fugacity solid or destroy
