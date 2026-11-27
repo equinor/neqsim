@@ -236,9 +236,10 @@ guarded restart from 200 bara; 2026-11-27):
   two-fluid transient holds 930 t (max holdup 1.7 %), or 1,104 t (2.5 %) without entrainment.
 - With the default frozen composition `TwoFluidPipe` finds no liquid there; enable mass transfer for this
   kind of check.
-- Mesh, 50 to 100 sections: liquid through the outlet in blowdown changes 2.3 %, peak liquid 3.3 %, time
-  to rated flow 7 %, and the outlet-opening time 15 % (14.9 to 17.5 h). The opening time depends on when the
-  last section dries and is the least converged quantity.
+- Mesh (50 / 100 / 200 sections): liquid through the outlet in blowdown 1,204 / 1,177 / 1,178 t; peak liquid
+  2,111 / 2,182 / 2,216 t; outlet opens 14.9 / 17.5 / 18.4 h; rated flow at 28.6 / 26.6 / 24.1 h. From 100 to
+  200 sections the liquid quantities change by 1.6 % or less. The opening time changes 5 % and the time to
+  rated flow 9 %, so treat the restart timings as accurate to about 10 %.
 - Pressure drop: `TwoFluidPipe` steady initialisation gives 176.2 bara inlet for the pre-shutdown flow
   against 180.0 bara here (2 %), and 193.5 against 196.3 bara for the restart delivery state (1.4 %).
 
