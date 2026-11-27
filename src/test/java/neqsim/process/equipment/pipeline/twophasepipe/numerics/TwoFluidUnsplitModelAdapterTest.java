@@ -253,7 +253,7 @@ class TwoFluidUnsplitModelAdapterTest {
         (cell, conservativeState, cellPressure, time) -> new double[] {40.0, 700.0, 1000.0}, controller);
 
     adapter.beginLinearization(state, pressure);
-    assertTrue(adapter.updateActiveSet(state, pressure));
+    assertFalse(adapter.updateActiveSet(state, pressure));
     adapter.endLinearization();
 
     assertEquals(1, calls[0]);

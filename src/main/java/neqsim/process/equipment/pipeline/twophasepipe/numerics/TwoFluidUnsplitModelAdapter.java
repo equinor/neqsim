@@ -291,7 +291,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     validateShape(state, pressure, "active-set");
     boolean changed = activeSetController.update(copyMatrixArray(state), pressure.clone());
     if (regimeActiveSetEnabled) {
-      changed |= updateRegimeChoices(state, pressure);
+      updateRegimeChoices(state, pressure);
     }
     return changed;
   }
@@ -700,7 +700,8 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
    *
    * @param state selected-time conservative state
    * @param pressure selected-time pressure in Pa
-   * @return true when at least one dominant regime or blend weight changed
+   * @return true when at least one dominant regime or blend weight changed; the adapter deliberately does not expose
+   * this as a donor/presence fixed-point change because the refreshed choice belongs to the next linearization
    */
   private boolean updateRegimeChoices(double[][] state, double[] pressure) {
     TwoFluidSection[] classified = createTrialSections(state, pressure, latestEvaluationTime, false);
