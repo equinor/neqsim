@@ -243,16 +243,16 @@ def test_main_landing_routes_to_compressor_guide() -> None:
 def test_thermo_landing_routes_to_cryogenic_eos_validation() -> None:
     text = THERMO_LANDING_PAGE.read_text(encoding="utf-8")
     targets = _link_targets(text)
-    explicit_source = "cryogenic_eos_validation.md"
-    target = DOCS / "thermo" / explicit_source
+    published_route = "cryogenic_eos_validation"
+    target = DOCS / "thermo" / f"{published_route}.md"
 
-    assert targets.count(explicit_source) == 1
-    assert explicit_source[:-3] not in targets
+    assert targets.count(published_route) == 1
+    assert f"{published_route}.md" not in targets
     assert target.is_file()
 
     matching_lines = [
         line for line in _without_fenced_code(text).splitlines()
-        if f"]({explicit_source})" in line
+        if f"]({published_route})" in line
     ]
     assert len(matching_lines) == 1
     description = matching_lines[0].lower()
