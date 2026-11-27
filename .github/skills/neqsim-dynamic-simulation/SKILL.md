@@ -38,6 +38,10 @@ settled-cycle claim. After it passes, run the same three discretizations over bo
 Require whole-interval publication without rejected nonlinear attempts, phase conservation, positive
 finite pressure, through-flow and inventories, and the declared 15% pressure/through-flow/inventory
 spread bound. Completion and an enforced sign alone do not promote the experimental gate.
+For the tracking-enabled unsplit path, retain one flow-regime/transition-weight active set within each
+Jacobian and line search, refresh it only after an accepted Newton iterate, and require endpoint
+verification against the unchanged conservative operator. Do not replace this with whole-step regime
+lagging or a looser residual tolerance.
 
 ## Extend the existing unit operation
 

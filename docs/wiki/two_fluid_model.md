@@ -77,6 +77,11 @@ pressure, through-flow and phase inventories, plus at most 15% spread in inlet p
 outlet mass and final gas/liquid inventory relative to 16 cells/0.1 s. Passing that seeded-marker gate
 does not establish spontaneous or experimentally correct severe slugging.
 
+The tracking-enabled unsplit solver owns flow-regime selection as a bounded active set: one regime
+and transition-weight set is retained through each Jacobian and line search, then refreshed after an
+accepted Newton iterate. Endpoint preparation still re-evaluates the unchanged conservative operator,
+so this is nonlinear-solver ownership rather than a fitted closure or a relaxed conservation gate.
+
 The earlier 65.163 kPa inlet-pressure amplitude is below
 the unchanged 68.6 kPa lower bound; the unchanged liquid-trough detector finds no
 completed cycle intervals, and pressure limits still activate. Do not use these

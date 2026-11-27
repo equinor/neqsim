@@ -35,6 +35,10 @@ both 180 and 600 s, checking complete publication, zero rejected attempts, phase
 positive finite pressure, through-flow and inventories, and no more than 15% pressure,
 through-flow or inventory spread from 16/0.1. Completion and an enforced sign alone are not physical
 qualification.
+The tracking-enabled unsplit path freezes one flow-regime/transition-weight active set within a
+Jacobian and line search, refreshes it after an accepted Newton iterate, and re-verifies the unchanged
+conservative endpoint equations. Whole-step regime lagging, relaxed tolerances or extra timestep
+halving are not substitutes for this ownership.
 
 > A complete study report with pipeline drawings (route, profiles, hydrate margin, threat matrix,
 > validation) is produced by `neqsim flow-assurance-report` — see the

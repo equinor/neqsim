@@ -68,6 +68,13 @@ outlet mass, and final gas and combined-liquid inventories must remain within a 
 from the 16-cell/0.1 s result. This is a numerical seeded-marker gate, not experimental severe-slugging
 qualification.
 
+For the tracking-enabled unsplit path, flow-regime selection is now a bounded nonlinear active set.
+Each finite-difference Jacobian and its line search retain one dominant regime and transition-weight
+set, then refresh those choices after an accepted Newton iterate. The converged endpoint is still
+verified against the same conservative flux/source equations; this removes regime-switch noise from
+one linearization without lagging the regime for a complete time step or changing any acceptance
+tolerance.
+
 The earlier 65.163 kPa inlet-pressure amplitude is below
 the unchanged 68.6 kPa lower bound; the unchanged liquid-trough detector finds no
 completed cycle intervals, and pressure limits still activate. Do not use these
