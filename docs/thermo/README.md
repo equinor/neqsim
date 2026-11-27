@@ -68,7 +68,7 @@ thermo/
 - [Empirical Solid Fugacity References](empirical_solid_fugacity): Liquid and sublimation-pressure reference choices, density units, domain checks, and solid-selection behavior.
 - [Mathematical Models](mathematical_models): Equations of state, activity-coefficient formulations, and transport correlations available in NeqSim.
 - [GERG-2008 and EOS-CG](gerg2008_eoscg): Detailed guide to the reference equations of state for natural gas and CCS applications.
-- [Cryogenic EOS Validation](cryogenic_eos_validation.md): Source-labelled Leachman hydrogen and GERG-2008 LNG regression cases, pressure and fugacity closure, derivative checks, measured-density comparisons, and explicit validation boundaries.
+- [Cryogenic EOS Validation](cryogenic_eos_validation): Source-labelled Leachman hydrogen and GERG-2008 LNG regression cases, pressure and fugacity closure, derivative checks, measured-density comparisons, and explicit validation boundaries.
 - [EOS-CG CO2/SO2 Mixture](eoscg_co2_so2): Executable mixture flash with phase densities, pressure closure, component balances, and a bounded numerical validation range.
 
 ### Acid Gas and Sour Fluid Modeling
