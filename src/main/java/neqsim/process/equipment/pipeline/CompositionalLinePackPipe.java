@@ -348,7 +348,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @param model liquid transport model
    */
-  public void setLiquidTransportModel(LiquidTransportModel model) {
+  public synchronized void setLiquidTransportModel(LiquidTransportModel model) {
     if (model == null) {
       throw new IllegalArgumentException("liquid transport model must not be null");
     }
@@ -361,7 +361,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @return liquid transport model
    */
-  public LiquidTransportModel getLiquidTransportModel() {
+  public synchronized LiquidTransportModel getLiquidTransportModel() {
     return liquidTransportModel;
   }
 
@@ -370,7 +370,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @param enabled true to let entrained droplets travel with the gas
    */
-  public void setEntrainmentEnabled(boolean enabled) {
+  public synchronized void setEntrainmentEnabled(boolean enabled) {
     this.entrainmentEnabled = enabled;
   }
 
@@ -1480,7 +1480,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @return liquid velocity per face in m/s; index 0 is the inlet face
    */
-  public double[] getLiquidFaceVelocityProfile() {
+  public synchronized double[] getLiquidFaceVelocityProfile() {
     return liquidFaceVelocity == null ? new double[0] : liquidFaceVelocity.clone();
   }
 
@@ -1489,7 +1489,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @return entrained fraction per face, 0-1
    */
-  public double[] getEntrainedFractionProfile() {
+  public synchronized double[] getEntrainedFractionProfile() {
     return entrainedFraction == null ? new double[0] : entrainedFraction.clone();
   }
 
