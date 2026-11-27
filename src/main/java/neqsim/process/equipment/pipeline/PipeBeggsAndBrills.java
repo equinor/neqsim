@@ -661,9 +661,9 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
 
   // Flag to run isothermal calculations
   private boolean runAdiabatic = true;
-  private boolean runConstantSurfaceTemperature = false;
+  private volatile boolean runConstantSurfaceTemperature = false;
 
-  private double constantSurfaceTemperature = 288.15;
+  private volatile double constantSurfaceTemperature = 288.15;
 
   /**
    * Formation (geothermal) temperature gradient in K/m. When set to a positive value, the surface temperature varies
