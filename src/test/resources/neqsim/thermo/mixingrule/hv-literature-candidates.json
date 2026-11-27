@@ -873,5 +873,34 @@
     "contract": "HuronVidalPhasePureRequestTest; existing selected-pair ThermodynamicModelTest/clone/workspace suites; atomic benchmark receipt guards",
     "parameter_changes": "None. Existing directed tuples, EOS/pure-alpha conventions, provenance, ranges, staged status and defaults remain unchanged.",
     "next_dependency": "Resolve the measured Java17 small-PR latency before any storage-reuse adoption. Physical profile work independently requires compatible pure controls, source inputs and bidirectional holdouts."
+  },
+  "aqueous_MEG_pressure_assessment": {
+    "doi": "10.11322/tjsrae.6.183",
+    "table": "Table1, printed184",
+    "resource": "hv-meg-aqueous/",
+    "rows": 42,
+    "mixture_rows": 36,
+    "pure_water_controls": 6,
+    "basis": "Liquid MEG mass percent; Celsius; absolute Torr; total equilibrium pressure, not vapor composition or pure-MEG pressure",
+    "holdout": "Whole source frozen before new candidate selection; historical-fit lineage independence unresolved",
+    "numerical_scope": "Enhanced-stability ordinary SRK/PR rules2/4; asserted native ThermodynamicModelTest checks, history/order, balanced tie-line numerical feed; no measured-feed interpretation",
+    "source_only_control": "Body equation6 minus sign reproduces table; abstract plus and OCR loss of -4.82C rejected",
+    "unfiltered_pressure_AARD_percent": {
+      "SRK_rule2": 19.227302457429214,
+      "SRK_rule4": 27.15912495625997,
+      "PR_rule2": 13.060241123842191,
+      "PR_rule4": 16.935562723059657
+    },
+    "pure_water_AARD_percent": {
+      "SRK_ordinary": 23.03416665460425,
+      "PR_ordinary": 13.78544830628934,
+      "SRK_existing2017Twu": 1.045474242487323,
+      "PR_existing2017Twu": 0.9380713516898694
+    },
+    "adoption": "Existing source-paired Twu water assessed on pure-only controls; no mixture tuple transfer, fit or default activation",
+    "metastable_control": "SRK rule2 row28: locally stable source liquid has a negative alternate-liquid TPD and a lower-G cold split. Raw error retained in unfiltered AARD; not qualified physical equilibrium or proven global stability. Nearby263.32K instead finds a higher-G stationary branch; physical/global discovery remains unqualified under2937.",
+    "endpoint_precision": "First cold discovery must meet closure; detached native beta refinement preserves phase set/Gibbs. Strict endpoint checks apply to all other source states. No solver or derivative tolerance relaxed.",
+    "uncertainty": "Instrument .05Torr/.05K; about1mass-percentage-point composition; author broader apparatus pressure error .15Torr. No coverage factor/distribution supplied; notU95",
+    "remaining": "Original source pure inputs/compatible tuples, lowT pureMEG, independent bidirectional inhibitor partition and hydrate/ice/brine/extrapolation qualification remain open"
   }
 }

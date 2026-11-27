@@ -1267,3 +1267,39 @@ reference limits, errors and commands. This confirms implementation under the
 declared pure inputs; it does not activate parameters or establish source-author
 reproduction, bidirectional partition accuracy, solid/hydrate equilibrium or
 mixture extrapolation.
+
+
+## Aqueous-MEG pressure and stability qualification
+
+The [Fujita/Kikuchi primary assessment](../../src/test/resources/neqsim/thermo/mixingrule/hv-meg-aqueous/README.md)
+retains 36 aqueous-MEG total pressures and six pure-water controls, with literal
+mass-percent/Torr units and reported apparatus errors. Source abstract/OCR sign
+errors are recorded separately. These are not pure-MEG or inhibitor-partition data.
+
+`HuronVidalAqueousMegPressureAssessmentTest` uses unchanged ordinary SRK/PR inputs,
+matched classical/HV rules and explicitly enhanced stability for constructed
+numerical tie-line feeds. The test asserts native fugacity/derivative identities,
+normalization, balance and distinct stable roots across repeated/changed/order
+states; it does not turn physical disagreement into a passing tolerance.
+
+The source reveals a numerical prerequisite: enhanced/LLE stability trial order
+must visit both index directions. `FlashStabilityTrialOrderTest` checks actual
+iterations for both homogeneous roots. Legacy traversal/reset remains unchanged;
+use this bounded qualification rather than infer global phase stability.
+
+On the 2026-11-26 assessment, ordinary HV mixture-pressure AARD is 27.16% SRK and
+16.94% PR, while pure-water controls already have 23.03% and 13.79% error.
+Existing EOS-specific 2017 Twu water inputs reduce pure-only AARD to 1.05%/0.94%
+without fitting; they are not silently transferred to an inhibitor parameter set.
+The fixture reports baseline and source-paired pure-only controls separately.
+Complete source conventions, low-T pure-MEG pressure, source-family holdouts and
+both-direction partition remain prerequisites for parameter/formulation adoption.
+No default, interaction tuple or alpha function is globally retuned.
+
+The classical SRK control at 263.12 K and 40.9 mass percent MEG has a
+metastable bubble branch: an alternative cold split lowers G/(nRT) by about
+2.47e-6. Its pressure remains in the unfiltered error report with an explicit
+metastability disposition, rather than being certified as physical equilibrium.
+The HV states recover the bubble endpoints after detached native precision
+refinement. The first cold discovery must already satisfy the equilibrium and
+balance gates; refinement cannot conceal a missing phase.

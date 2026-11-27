@@ -1,0 +1,10 @@
+{
+  "version": "14.4.0",
+  "runtime": "Java21",
+  "exit": 0,
+  "findings_by_severity": {
+    "warning": 35199
+  },
+  "config": ".config/checkstyle_neqsim.xml",
+  "note": "Existing warning-level findings retained; no severity threshold, baseline or configuration changed."
+}

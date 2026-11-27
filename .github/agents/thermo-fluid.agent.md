@@ -1,5 +1,6 @@
 ---
 name: thermo-fluid
+last_verified: "2026-11-26"
 description: Creates NeqSim thermodynamic fluids, selects EOS and mixing rules (SRK, PR, CPA, Huron Vidal, NRTL), and runs flashes and PT phase envelopes. Handles oil characterization, polar systems, multiphase checks, phase stability, dew/bubble curves and critical points. Selects physical-property models for density, viscosity, thermal conductivity, binary/effective diffusion and gas-oil-water interfacial tension, with phase guards and validation.
 required_skills:
 - neqsim-cooling-water
@@ -242,3 +243,15 @@ for fixed-salinity seawater. Record salinity in g/kg solution and the property
 validity range; a `WATER` physical-property package alone does not select IF97
 enthalpy. Pass supply/return states, model/version, duties and balance residuals
 between `@thermo-fluid`, `@process-model` and `@utility-design`.
+
+
+## Enhanced stability and aqueous-MEG evidence boundary
+
+The 2026-11-26 cold water/MEG assessment requires enhanced ordinary stability
+trials to visit both reference-root orders. `FlashStabilityTrialOrderTest` checks
+that iterations actually execute; `HuronVidalAqueousMegPressureAssessmentTest`
+checks the resolved tie-line and measured total pressures. Legacy traversal/reset
+remains unchanged. Follow the [initialization guidance](../skills/neqsim-thermodynamic-initialization/SKILL.md#enhanced-stability-trial-order-qualification)
+and [source assessment](../../src/test/resources/neqsim/thermo/mixingrule/hv-meg-aqueous/README.md).
+Do not equate numerical closure with measured inhibitor accuracy or silently
+transfer a source-paired pure-water alpha into a differently fitted inhibitor tuple.
