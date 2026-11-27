@@ -40,6 +40,11 @@ import neqsim.util.validation.ValidationResult;
  * otherwise.
  * </p>
  *
+ * <p>
+ * Simulation, configuration and profile access defined by this class synchronize on the pipe. Configure inherited
+ * geometry and connected streams before running the simulation.
+ * </p>
+ *
  * @author NeqSim development team
  * @version 1.0
  */
@@ -227,7 +232,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @param sections number of sections, at least 1
    */
-  public void setNumberOfSections(int sections) {
+  public synchronized void setNumberOfSections(int sections) {
     if (sections < 1) {
       throw new IllegalArgumentException("numberOfSections must be at least 1");
     }
@@ -240,7 +245,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @return number of sections
    */
-  public int getNumberOfSections() {
+  public synchronized int getNumberOfSections() {
     return numberOfSections;
   }
 
@@ -249,7 +254,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @param elevations section-centre elevations in m; length must equal the number of sections
    */
-  public void setSectionElevations(double[] elevations) {
+  public synchronized void setSectionElevations(double[] elevations) {
     this.sectionElevations = elevations == null ? null : elevations.clone();
     this.initialized = false;
   }
@@ -260,7 +265,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    * @param chainageM chainage of the profile points in m (increasing, from the inlet)
    * @param elevationM elevation of the profile points in m
    */
-  public void setElevationProfileFromPoints(double[] chainageM, double[] elevationM) {
+  public synchronized void setElevationProfileFromPoints(double[] chainageM, double[] elevationM) {
     if (chainageM == null || elevationM == null || chainageM.length != elevationM.length || chainageM.length < 2) {
       throw new IllegalArgumentException("chainage and elevation arrays must have equal length of at least 2");
     }
@@ -291,7 +296,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @param enabled true to include the wall heat capacity (default)
    */
-  public void setWallHeatCapacityEnabled(boolean enabled) {
+  public synchronized void setWallHeatCapacityEnabled(boolean enabled) {
     this.wallHeatCapacityEnabled = enabled;
     this.initialized = false;
   }
@@ -301,7 +306,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @param slip 0 transports gas only (condensate immobile), 1 transports the mixture without slip
    */
-  public void setLiquidSlipFactor(double slip) {
+  public synchronized void setLiquidSlipFactor(double slip) {
     if (slip < 0.0 || slip > 1.0) {
       throw new IllegalArgumentException("liquid slip factor must be between 0 and 1");
     }
@@ -313,7 +318,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @return slip factor between 0 and 1
    */
-  public double getLiquidSlipFactor() {
+  public synchronized double getLiquidSlipFactor() {
     return liquidSlipFactor;
   }
 
@@ -323,7 +328,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @param velocity drift velocity in m/s
    */
-  public void setLiquidGravityDriftVelocity(double velocity) {
+  public synchronized void setLiquidGravityDriftVelocity(double velocity) {
     this.liquidGravityDriftVelocity = Math.max(0.0, velocity);
   }
 
@@ -332,7 +337,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @param cfl CFL number
    */
-  public void setCflNumber(double cfl) {
+  public synchronized void setCflNumber(double cfl) {
     if (cfl <= 0.0 || cfl > 1.0) {
       throw new IllegalArgumentException("CFL number must be in (0, 1]");
     }
@@ -344,7 +349,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @param seconds maximum time step in s
    */
-  public void setMaxTimeStep(double seconds) {
+  public synchronized void setMaxTimeStep(double seconds) {
     this.maxTimeStep = seconds;
   }
 
@@ -356,7 +361,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    * @param pressureNearBar pressure tolerance near or inside the two-phase region, bar
    * @param temperatureNearK temperature tolerance near or inside the two-phase region, K
    */
-  public void setFlashRefreshTolerances(double pressureBar, double temperatureK, double pressureNearBar,
+  public synchronized void setFlashRefreshTolerances(double pressureBar, double temperatureK, double pressureNearBar,
       double temperatureNearK) {
     this.refreshPressureTolerance = pressureBar;
     this.refreshTemperatureTolerance = temperatureK;
@@ -369,7 +374,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @param kgPerSecond outlet mass flow in kg/s (0 closes the outlet)
    */
-  public void setOutletMassFlowRate(double kgPerSecond) {
+  public synchronized void setOutletMassFlowRate(double kgPerSecond) {
     this.outletMassFlowRate = Math.max(0.0, kgPerSecond);
   }
 
@@ -378,7 +383,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @return outlet mass flow in kg/s
    */
-  public double getOutletMassFlowRate() {
+  public synchronized double getOutletMassFlowRate() {
     return outletMassFlowRate;
   }
 
@@ -387,7 +392,7 @@ public class CompositionalLinePackPipe extends Pipeline {
   /**
    * Allocates arrays and geometry from the current configuration and inlet stream.
    */
-  private void allocate() {
+  private synchronized void allocate() {
     if (inStream == null || inStream.getThermoSystem() == null) {
       throw new IllegalStateException("CompositionalLinePackPipe '" + getName() + "' needs an inlet stream");
     }
@@ -498,7 +503,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    * @param pressureBara pressure in bara
    * @param temperatureK temperature in kelvin
    */
-  public void initializeUniform(double pressureBara, double temperatureK) {
+  public synchronized void initializeUniform(double pressureBara, double temperatureK) {
     allocate();
     double[] z = inletMoleFractions();
     for (int i = 0; i < numberOfSections; i++) {
@@ -515,7 +520,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    * @param id calculation identifier
    */
   @Override
-  public void run(UUID id) {
+  public synchronized void run(UUID id) {
     allocate();
     double mdot = Math.max(0.0, inStream.getFlowRate("kg/sec"));
     double gs = mdot / area;
@@ -555,7 +560,9 @@ public class CompositionalLinePackPipe extends Pipeline {
    * @return dp/dx in bar/m
    */
   private double steadyGradient(double[] z, double p, double t, double gs, double slope) {
-    flash(z, p, t, true);
+    flash(z, p, t);
+    work.initPhysicalProperties("density");
+    work.initPhysicalProperties("viscosity");
     double rho = work.getDensity("kg/m3");
     double mu = work.getViscosity("kg/msec");
     return (-frictionFactor(gs * getDiameter() / mu) * gs * gs / (2 * getDiameter() * rho) - rho * GRAVITY * slope)
@@ -571,7 +578,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    * @param t temperature in K
    */
   private void setSectionFromPressureTemperature(int i, double[] z, double p, double t) {
-    double[] r = flash(z, p, t, false);
+    double[] r = flash(z, p, t);
     double n = sectionVolume / r[0];
     for (int k = 0; k < nc; k++) {
       mass[i][k] = n * z[k] * molarMass[k];
@@ -580,12 +587,12 @@ public class CompositionalLinePackPipe extends Pipeline {
         + sectionMass(i) * GRAVITY * elevation(i);
     jacobian(i, z, p, t, r);
     jacobianAge[i] = 0;
-    flash(z, p, t, true);
+    flash(z, p, t);
     store(i, z, p, t, true);
   }
 
   /** Records the initial inventories and resets cumulative counters. */
-  private void finishInitialisation() {
+  private synchronized void finishInitialisation() {
     initialMass = totalMass();
     initialEnergy = totalEnergy();
     for (int k = 0; k < nc; k++) {
@@ -625,10 +632,9 @@ public class CompositionalLinePackPipe extends Pipeline {
    * @param z mole fractions
    * @param p pressure in bara
    * @param t temperature in K
-   * @param full true to also evaluate derivatives and transport properties
    * @return {molar volume m3/mol, molar internal energy J/mol, specific enthalpy J/kg, number of phases}
    */
-  private double[] flash(double[] z, double p, double t, boolean full) {
+  private synchronized double[] flash(double[] z, double p, double t) {
     if (workOps == null) {
       workOps = new ThermodynamicOperations(work);
     }
@@ -640,12 +646,7 @@ public class CompositionalLinePackPipe extends Pipeline {
         work.setTemperature(t * (1 + 1e-5 * attempt));
         work.setPressure(p * (1 + 1e-4 * attempt));
         workOps.TPflash();
-        if (full) {
-          work.init(3);
-          work.initPhysicalProperties();
-        } else {
-          work.init(2);
-        }
+        work.init(2);
         double nt = work.getTotalNumberOfMoles();
         double v = work.getVolume("m3") / nt;
         if (Double.isNaN(v) || v <= 0) {
@@ -672,8 +673,8 @@ public class CompositionalLinePackPipe extends Pipeline {
   private void jacobian(int i, double[] z, double p, double t, double[] r) {
     double dp = 0.02;
     double dt = 0.02;
-    double[] rp = flash(z, p + dp, t, false);
-    double[] rt = flash(z, p, t + dt, false);
+    double[] rp = flash(z, p + dp, t);
+    double[] rt = flash(z, p, t + dt);
     dvdP[i] = (rp[0] - r[0]) / dp;
     dudP[i] = (rp[1] - r[1]) / dp;
     dhdP[i] = (rp[2] - r[2]) / dp;
@@ -758,7 +759,7 @@ public class CompositionalLinePackPipe extends Pipeline {
     for (int it = 0; it < 12; it++) {
       p = Math.max(p, 1.0);
       t = Math.max(t, 150.0);
-      r = flash(z, p, t, false);
+      r = flash(z, p, t);
       double e1 = vt - r[0];
       double e2 = internal - n * r[1] - wallHeatCapacity * (t - WALL_REFERENCE_TEMPERATURE);
       if (Math.abs(e1) / vt < 1e-6 && Math.abs(e2) < n * 0.05 + wallHeatCapacity * 5e-5) {
@@ -787,16 +788,14 @@ public class CompositionalLinePackPipe extends Pipeline {
     }
     if (!converged) {
       logger.warn("{}: section {} state recovery did not converge at {} bara, {} K", getName(), i, p, t);
-      r = flash(z, p, t, false);
+      r = flash(z, p, t);
     }
     jacobianAge[i]++;
     boolean full = force || time - propertyTime[i] > 1800 || ((int) r[3]) != oldPhases;
+    store(i, z, p, t, full);
     if (full) {
-      work.init(3);
-      work.initPhysicalProperties();
       propertyTime[i] = time;
     }
-    store(i, z, p, t, full);
   }
 
   /**
@@ -806,9 +805,15 @@ public class CompositionalLinePackPipe extends Pipeline {
    * @param z mole fractions
    * @param p pressure in bara
    * @param t temperature in K
-   * @param full whether transport properties were evaluated
+   * @param full whether to refresh sound speed and viscosity
    */
   private void store(int i, double[] z, double p, double t, boolean full) {
+    work.init(full ? 3 : 2);
+    if (full) {
+      work.initPhysicalProperties();
+    } else {
+      work.initPhysicalProperties("density");
+    }
     double nt = work.getTotalNumberOfMoles();
     pressure[i] = p;
     temperature[i] = t;
@@ -962,7 +967,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    * @param id calculation identifier
    */
   @Override
-  public void runTransient(double dt, UUID id) {
+  public synchronized void runTransient(double dt, UUID id) {
     if (!initialized) {
       run(id);
     }
@@ -976,11 +981,11 @@ public class CompositionalLinePackPipe extends Pipeline {
   }
 
   /** Reads inlet composition, mass flow and enthalpy from the inlet stream. */
-  private void readInletBoundary() {
+  private synchronized void readInletBoundary() {
     inletMassFlowRate = Math.max(0.0, inStream.getFlowRate("kg/sec"));
     double[] z = inletMoleFractions();
     inletMassFraction = moleToMass(z);
-    double[] r = flash(z, inStream.getPressure(), inStream.getTemperature(), false);
+    double[] r = flash(z, inStream.getPressure(), inStream.getTemperature());
     inletEnthalpy = r[2];
   }
 
@@ -989,7 +994,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @return time step in s
    */
-  private double stableTimeStep() {
+  private synchronized double stableTimeStep() {
     double dt = maxTimeStep;
     for (int i = 0; i < numberOfSections; i++) {
       double v = Math.abs(massFlux[i]) / mixtureDensity[i];
@@ -1008,7 +1013,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @param dt time step in s
    */
-  private void step(double dt) {
+  private synchronized void step(double dt) {
     int n = numberOfSections;
     lastTimeStep = dt;
     for (int j = 1; j < n; j++) {
@@ -1178,7 +1183,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @return mass in kg
    */
-  public double totalMass() {
+  public synchronized double totalMass() {
     double s = 0;
     for (int i = 0; i < numberOfSections; i++) {
       s += sectionMass(i);
@@ -1192,7 +1197,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    * @param unit "kg", "tonnes" or "m3"
    * @return liquid inventory in the requested unit
    */
-  public double getLiquidInventory(String unit) {
+  public synchronized double getLiquidInventory(String unit) {
     double m = 0;
     double v = 0;
     for (int i = 0; i < numberOfSections; i++) {
@@ -1216,7 +1221,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @return count of two-phase sections
    */
-  public int getNumberOfTwoPhaseSections() {
+  public synchronized int getNumberOfTwoPhaseSections() {
     int s = 0;
     for (int i = 0; i < numberOfSections; i++) {
       if (phaseCount[i] > 1) {
@@ -1231,7 +1236,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @return true if the outlet section holds liquid
    */
-  public boolean isOutletSectionTwoPhase() {
+  public synchronized boolean isOutletSectionTwoPhase() {
     return phaseCount[numberOfSections - 1] > 1;
   }
 
@@ -1241,7 +1246,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    * @return pressure profile in bara
    */
   @Override
-  public double[] getPressureProfile() {
+  public synchronized double[] getPressureProfile() {
     return pressure == null ? new double[0] : pressure.clone();
   }
 
@@ -1251,7 +1256,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    * @return temperature profile in K
    */
   @Override
-  public double[] getTemperatureProfile() {
+  public synchronized double[] getTemperatureProfile() {
     return temperature == null ? new double[0] : temperature.clone();
   }
 
@@ -1261,7 +1266,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    * @return liquid volume fraction per section
    */
   @Override
-  public double[] getLiquidHoldupProfile() {
+  public synchronized double[] getLiquidHoldupProfile() {
     double[] h = new double[numberOfSections];
     for (int i = 0; liquidVolume != null && i < numberOfSections; i++) {
       h[i] = liquidVolume[i] / sectionVolume;
@@ -1274,7 +1279,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @return liquid mass per section in kg
    */
-  public double[] getLiquidMassProfile() {
+  public synchronized double[] getLiquidMassProfile() {
     return liquidMass == null ? new double[0] : liquidMass.clone();
   }
 
@@ -1283,7 +1288,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @return positions in m
    */
-  public double[] getPositionProfile() {
+  public synchronized double[] getPositionProfile() {
     double[] x = new double[numberOfSections];
     for (int i = 0; i < numberOfSections; i++) {
       x[i] = (i + 0.5) * getLength() / numberOfSections;
@@ -1297,7 +1302,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    * @param section section index
    * @return mole fractions
    */
-  public double[] getSectionComposition(int section) {
+  public synchronized double[] getSectionComposition(int section) {
     double[] z = new double[nc];
     double n = 0;
     for (int k = 0; k < nc; k++) {
@@ -1315,7 +1320,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @return C3+ in mol%
    */
-  public double getOutletC3PlusMolePercent() {
+  public synchronized double getOutletC3PlusMolePercent() {
     double[] z = massToMole(transportedMassFraction[numberOfSections - 1]);
     double s = 0;
     for (int k = 0; k < nc; k++) {
@@ -1334,7 +1339,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    * @param maxPressureBara upper end of the scan in bara
    * @return dew-point pressure in bara or NaN when the mixture is single phase over the range
    */
-  public double getSectionUpperDewPointPressure(int section, double temperatureK, double maxPressureBara) {
+  public synchronized double getSectionUpperDewPointPressure(int section, double temperatureK, double maxPressureBara) {
     SystemInterface s = work.clone();
     s.setMolarComposition(getSectionComposition(section));
     return RetrogradeDewPointScanner.upperDewPointPressure(s, temperatureK, maxPressureBara);
@@ -1349,7 +1354,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    * @param maxPressureBara upper end of the scan in bara
    * @return dew-point pressure in bara (0 if every mixture is single phase over the range)
    */
-  public double getDownstreamDewPointPressure(int sections, double maxPressureBara) {
+  public synchronized double getDownstreamDewPointPressure(int sections, double maxPressureBara) {
     double m = 0;
     int lastIndex = numberOfSections - 1;
     for (int i = Math.max(0, numberOfSections - sections); i < numberOfSections; i++) {
@@ -1366,7 +1371,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @return time in s
    */
-  public double getSimulationTime() {
+  public synchronized double getSimulationTime() {
     return time;
   }
 
@@ -1375,7 +1380,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @return time step in s
    */
-  public double getLastTimeStep() {
+  public synchronized double getLastTimeStep() {
     return lastTimeStep;
   }
 
@@ -1384,7 +1389,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @return mass in kg
    */
-  public double getCumulativeOutletMass() {
+  public synchronized double getCumulativeOutletMass() {
     return cumulativeOut;
   }
 
@@ -1393,7 +1398,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @return mass in kg
    */
-  public double getCumulativeInletMass() {
+  public synchronized double getCumulativeInletMass() {
     return cumulativeIn;
   }
 
@@ -1402,7 +1407,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @return liquid mass in kg
    */
-  public double getCumulativeOutletLiquidMass() {
+  public synchronized double getCumulativeOutletLiquidMass() {
     return cumulativeLiquidOut;
   }
 
@@ -1411,7 +1416,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @return flash count
    */
-  public long getFlashCount() {
+  public synchronized long getFlashCount() {
     return flashCount;
   }
 
@@ -1421,7 +1426,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @return array of three relative errors
    */
-  public double[] getBalanceErrors() {
+  public synchronized double[] getBalanceErrors() {
     double massError = (totalMass() - (initialMass + cumulativeIn - cumulativeOut)) / initialMass;
     double componentError = 0;
     for (int k = 0; k < nc; k++) {
@@ -1440,7 +1445,7 @@ public class CompositionalLinePackPipe extends Pipeline {
    *
    * @return maximum relative volume residual
    */
-  public double getThermodynamicClosureResidual() {
+  public synchronized double getThermodynamicClosureResidual() {
     double worst = 0;
     for (int i = 0; i < numberOfSections; i++) {
       double[] z = getSectionComposition(i);
@@ -1448,7 +1453,7 @@ public class CompositionalLinePackPipe extends Pipeline {
       for (int k = 0; k < nc; k++) {
         n += mass[i][k] / molarMass[k];
       }
-      double[] r = flash(z, pressure[i], temperature[i], false);
+      double[] r = flash(z, pressure[i], temperature[i]);
       worst = Math.max(worst, Math.abs(sectionVolume - n * r[0]) / sectionVolume);
     }
     return worst;
@@ -1456,7 +1461,7 @@ public class CompositionalLinePackPipe extends Pipeline {
 
   /** {@inheritDoc} */
   @Override
-  public ValidationResult validateSetup() {
+  public synchronized ValidationResult validateSetup() {
     ValidationResult result = super.validateSetup();
     if (getLength() <= 0) {
       result.addError("geometry", "Pipe length must be positive", "Call setLength(metres)");
