@@ -10219,8 +10219,8 @@ public class TwoFluidPipe extends Pipeline {
    *
    * <p>
    * Calculates inventory from conservative mass per length, converted to volume using local liquid density. This
-   * ensures consistency with the solver's mass tracking. Mass units return the summed oil and water mass; an
-   * unrecognised unit is rejected instead of silently returning cubic metres.
+   * ensures consistency with the solver's mass tracking. Mass units return the unclipped conservative oil and water
+   * mass; an unrecognised unit is rejected instead of silently returning cubic metres.
    * </p>
    *
    * @param unit volume unit ("m3", "bbl", "L") or mass unit ("kg", "tonnes")
@@ -10241,10 +10241,10 @@ public class TwoFluidPipe extends Pipeline {
     for (TwoFluidSection sec : sections) {
       // Calculate oil volume from oil mass and oil density
       double oilMass = sec.getOilMassPerLength() * sec.getLength();
-      // Safety check for unreasonable mass values
+      liquidMass += oilMass;
+      // Retain the legacy volume sanity cap, but do not truncate the conservative mass inventory.
       double maxMassPerSection = sec.getArea() * sec.getLength() * 1000.0; // Max: all water
       oilMass = Math.min(oilMass, maxMassPerSection);
-      liquidMass += oilMass;
 
       double rhoO = sec.getOilDensity();
       if (rhoO > 100) {
@@ -10257,8 +10257,8 @@ public class TwoFluidPipe extends Pipeline {
 
       // Calculate water volume from water mass and water density
       double waterMass = sec.getWaterMassPerLength() * sec.getLength();
-      waterMass = Math.min(waterMass, maxMassPerSection);
       liquidMass += waterMass;
+      waterMass = Math.min(waterMass, maxMassPerSection);
 
       double rhoW = sec.getWaterDensity();
       if (rhoW > 100) {
