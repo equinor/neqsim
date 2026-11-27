@@ -1422,3 +1422,51 @@ audit, bounded covariance/sensitivity, and independent in-range high-temperature
 data.  Table A.24, Dholabhai/Burgass hydrate families, NaCl/CaCl2/MgCl2, Archer water
 activity, Yasunishi-Yoshida and pure-water controls remain frozen holdouts or adjacent
 controls.
+
+## Independent Kamps total-pressure transfer (2026-11-27)
+
+Kamps et al. (2007), DOI `10.1021/je060430q`, supplies the independent
+single-salt check required above. The complete 102-row KCl ThermoML dataset is
+retained with its exact source checksum and semantics in the
+[benchmark notes](../../src/test/resources/data/chemistry_benchmarks/co2_kcl_solubility_kamps2007_thermoml.md).
+The reported property is closed-cell **total equilibrium pressure**, not CO2
+partial pressure. `KClCO2Kamps2007IndependentTransferAssessmentTest` therefore
+imposes the source total pressure and explicit KCl molality on the same one-kilogram
+final-aqueous-water basis used by the dense-brine reproducer; water vapor, gas
+composition and CO2 fugacity remain model outputs.
+
+Fourteen states were frozen before model evaluation by selecting the lower median
+positive CO2 loading in each source temperature and low/high KCl block. No Kamps
+value is fitted. For a direct-solubility residual
+
+$$
+r=\ln(m_{\mathrm{CO_2},model}/m_{\mathrm{CO_2},source}),
+$$
+
+the source-minus-model log-activity candidate implies
+
+$$
+m_{candidate}=m_{model}\exp[-g(T,m_{\mathrm{KCl}})],\qquad
+r_{candidate}=r-g.
+$$
+
+The current model underpredicts twelve of fourteen selected source states. In the
+approximately 2 mol/kg KCl family, all seven temperatures improve: log-RMSE falls
+from `0.154698` to `0.0391160`, signed bias from `-0.150819` to `-0.0372877`, and
+candidate maximum absolute residual is `0.0632243`. In the approximately 4 mol/kg
+family, only the 313 and 333 K states improve. Log-RMSE worsens from `0.0346649` to
+`0.0847042`, bias crosses from `-0.0196903` to `+0.0677462`, and maximum absolute
+residual reaches `0.150368` at 433.05 K. Aggregate log-RMSE improves from `0.112101`
+to `0.0659730`, but the family-specific failure blocks activation.
+
+This independent result localizes the remaining discrepancy: the fitted
+temperature-dependent quadratic term is too strong at about 4 mol/kg above
+333 K, while the same law remains directionally useful around 2 mol/kg through
+433 K. A single smooth three-parameter law is therefore not yet a defensible
+production formulation across both concentration families. The next candidate must
+alter or bound the high-molality temperature curvature and be refitted only on a
+declared calibration partition, with independent source-family holdouts and full
+derivative/Furst double-counting checks. No database parameter, residual-Helmholtz
+term, hydrate equation, solver tolerance or empirical temperature offset changes in
+this diagnostic. Table A.24 mixed brine and Dholabhai/Burgass hydrate data remain
+frozen downstream holdouts.
