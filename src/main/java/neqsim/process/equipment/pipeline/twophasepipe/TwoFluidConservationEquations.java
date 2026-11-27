@@ -1626,7 +1626,7 @@ public class TwoFluidConservationEquations implements Serializable {
     DiagnosticSnapshot saved = new DiagnosticSnapshot();
     try {
       outletBackflowClamped = false;
-      double[][] rates = calcRHS(sections, dx, classifyFlowRegimes);
+      double[][] rates = classifyFlowRegimes ? calcRHS(sections, dx) : calcRHS(sections, dx, false);
       return new TransactionalEvaluation(rates, lastMassBalanceRate, lastPhaseMassFaceFluxes, lastEnergyFaceFluxes,
           lastBoundaryPhaseMomentumFluxes, lastBoundaryPhasePressureForces, lastDirectionalPhaseFaceFluxes,
           lastPhaseMassSourcesPerLength, lastMomentumSourceForcesPerLength,
