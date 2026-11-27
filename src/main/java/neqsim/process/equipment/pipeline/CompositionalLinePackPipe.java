@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.pipeline.twophasepipe.EntrainmentDeposition;
+import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -68,6 +70,22 @@ public class CompositionalLinePackPipe extends Pipeline {
   private double steelDensity = 7850.0;
   /** Steel specific heat in J/(kg K). */
   private double steelHeatCapacity = 500.0;
+
+  /** How the equilibrium liquid is transported. */
+  public enum LiquidTransportModel {
+    /** Bounding treatment: slip factor 0 (liquid immobile) to 1 (no slip), optional downhill drift. */
+    BOUNDED_SLIP,
+    /**
+     * Liquid velocity from the stratified two-fluid force balance (pressure gradient, wall friction, interfacial drag,
+     * gravity and level gradient) with droplet entrainment when the stratified layer is unstable.
+     */
+    STRATIFIED_TWO_FLUID
+  }
+
+  /** Liquid transport model. */
+  private LiquidTransportModel liquidTransportModel = LiquidTransportModel.BOUNDED_SLIP;
+  /** Whether droplet entrainment is included in the two-fluid liquid transport. */
+  private boolean entrainmentEnabled = true;
   /** Liquid slip factor (0 gas-only transport, 1 no-slip mixture). */
   private double liquidSlipFactor = 0.0;
   /** Gravity drift velocity of condensate at a slope of 1e-3, m/s (0 disables drift). */
@@ -170,6 +188,18 @@ public class CompositionalLinePackPipe extends Pipeline {
   private double[] liquidEnthalpy;
   /** Liquid drained since the last flash, kg. */
   private double[] drained;
+  /** Gas-phase density, kg/m3. */
+  private double[] gasDensity;
+  /** Liquid-phase viscosity, Pa s. */
+  private double[] liquidViscosity;
+  /** Gas-liquid interfacial tension, N/m. */
+  private double[] interfacialTension;
+  /** Liquid film velocity at each face from the last step, m/s. */
+  private double[] liquidFaceVelocity;
+  /** Entrained liquid fraction at each face from the last step. */
+  private double[] entrainedFraction;
+  /** Entrainment closure (created on demand). */
+  private transient EntrainmentDeposition entrainment;
   /** Transported mass fractions. */
   private double[][] transportedMassFraction;
   /** Liquid mass fractions. */
@@ -314,6 +344,37 @@ public class CompositionalLinePackPipe extends Pipeline {
   }
 
   /**
+   * Selects how the equilibrium liquid is transported (default {@link LiquidTransportModel#BOUNDED_SLIP}).
+   *
+   * @param model liquid transport model
+   */
+  public void setLiquidTransportModel(LiquidTransportModel model) {
+    if (model == null) {
+      throw new IllegalArgumentException("liquid transport model must not be null");
+    }
+    this.liquidTransportModel = model;
+    this.initialized = false;
+  }
+
+  /**
+   * Returns the liquid transport model.
+   *
+   * @return liquid transport model
+   */
+  public LiquidTransportModel getLiquidTransportModel() {
+    return liquidTransportModel;
+  }
+
+  /**
+   * Includes or excludes droplet entrainment in the two-fluid liquid transport (default included).
+   *
+   * @param enabled true to let entrained droplets travel with the gas
+   */
+  public void setEntrainmentEnabled(boolean enabled) {
+    this.entrainmentEnabled = enabled;
+  }
+
+  /**
    * Returns the liquid slip factor.
    *
    * @return slip factor between 0 and 1
@@ -455,6 +516,11 @@ public class CompositionalLinePackPipe extends Pipeline {
     transportedEnthalpy = new double[n];
     liquidEnthalpy = new double[n];
     drained = new double[n];
+    gasDensity = new double[n];
+    liquidViscosity = new double[n];
+    interfacialTension = new double[n];
+    liquidFaceVelocity = new double[n + 1];
+    entrainedFraction = new double[n + 1];
     transportedMassFraction = new double[n][nc];
     liquidMassFraction = new double[n][nc];
     gasMoleFraction = new double[n][nc];
@@ -856,6 +922,12 @@ public class CompositionalLinePackPipe extends Pipeline {
       soundSpeed[i] = work.getPhase(ig).getSoundSpeed();
       viscosity[i] = work.getPhase(ig).getViscosity("kg/msec");
     }
+    double slipFactor = liquidTransportModel == LiquidTransportModel.STRATIFIED_TWO_FLUID ? 0.0 : liquidSlipFactor;
+    gasDensity[i] = il >= 0 ? work.getPhase(ig).getDensity("kg/m3") : work.getMolarMass() / flashMolarVolume[i];
+    if (full && il >= 0) {
+      liquidViscosity[i] = work.getPhase(il).getViscosity("kg/msec");
+      interfacialTension[i] = work.getInterphaseProperties().getSurfaceTension(ig, il);
+    }
     if (il >= 0) {
       double gm = work.getPhase(ig).getNumberOfMolesInPhase() * work.getPhase(ig).getMolarMass();
       double lm = work.getPhase(il).getNumberOfMolesInPhase() * work.getPhase(il).getMolarMass();
@@ -872,11 +944,11 @@ public class CompositionalLinePackPipe extends Pipeline {
       }
       double[] wgk = moleToMass(gasMoleFraction[i]);
       double[] wlk = moleToMass(liquidMoleFractions[i]);
-      double den = wg + liquidSlipFactor * wl;
+      double den = wg + slipFactor * wl;
       for (int k = 0; k < nc; k++) {
-        transportedMassFraction[i][k] = (wg * wgk[k] + liquidSlipFactor * wl * wlk[k]) / den;
+        transportedMassFraction[i][k] = (wg * wgk[k] + slipFactor * wl * wlk[k]) / den;
       }
-      transportedEnthalpy[i] = (wg * hG + liquidSlipFactor * wl * hL) / den;
+      transportedEnthalpy[i] = (wg * hG + slipFactor * wl * hL) / den;
       liquidEnthalpy[i] = hL;
       System.arraycopy(wlk, 0, liquidMassFraction[i], 0, nc);
     } else {
@@ -1055,7 +1127,10 @@ public class CompositionalLinePackPipe extends Pipeline {
       }
       fe[j] = mf * (h + GRAVITY * elevation(up));
     }
-    if (liquidGravityDriftVelocity > 0) {
+    double liquidOut = 0.0;
+    if (liquidTransportModel == LiquidTransportModel.STRATIFIED_TWO_FLUID) {
+      liquidOut = addStratifiedLiquidTransport(dt, fk, fe);
+    } else if (liquidGravityDriftVelocity > 0) {
       addGravityDrift(dt, fk, fe);
     }
     double ambient = surfaceTemperature;
@@ -1075,7 +1150,9 @@ public class CompositionalLinePackPipe extends Pipeline {
     cumulativeOut += dt * massFlux[n] * area;
     cumulativeEnergyIn += dt * fe[0];
     cumulativeEnergyOut += dt * fe[n];
-    if (massFlux[n] > 0 && phaseCount[n - 1] > 1 && liquidSlipFactor > 0) {
+    cumulativeLiquidOut += dt * liquidOut;
+    if (liquidTransportModel == LiquidTransportModel.BOUNDED_SLIP && massFlux[n] > 0 && phaseCount[n - 1] > 1
+        && liquidSlipFactor > 0) {
       double wl = liquidMass[n - 1] / sectionMass(n - 1);
       cumulativeLiquidOut += dt * massFlux[n] * area * liquidSlipFactor * wl / (1 - wl + liquidSlipFactor * wl);
     }
@@ -1088,6 +1165,117 @@ public class CompositionalLinePackPipe extends Pipeline {
       }
       mixtureDensity[i] = sectionMass(i) / sectionVolume;
     }
+  }
+
+  /**
+   * Replaces part of the gas-composition face flow with liquid moving at its own velocity. The total face mass flow
+   * stays the one from the mixture momentum equation; the liquid film moves at the velocity from
+   * {@link StratifiedLiquidMomentum} and, where the stratified layer is unstable, an entrained fraction moves with the
+   * gas.
+   *
+   * @param dt time step in s
+   * @param fk component mass fluxes (modified)
+   * @param fe energy fluxes (modified)
+   * @return liquid mass flow leaving through the outlet, kg/s
+   */
+  private double addStratifiedLiquidTransport(double dt, double[][] fk, double[] fe) {
+    int n = numberOfSections;
+    double diameter = getDiameter();
+    double liquidOut = 0.0;
+    double[] holdup = new double[n];
+    double[] level = new double[n];
+    for (int i = 0; i < n; i++) {
+      double available = liquidMass[i] - drained[i];
+      holdup[i] = phaseCount[i] > 1 && available > 0 ? Math.min(0.999, available / liquidDensity[i] / sectionVolume)
+          : 0.0;
+      level[i] = StratifiedLiquidMomentum.liquidLevel(holdup[i], diameter);
+    }
+    for (int j = 1; j <= n; j++) {
+      liquidFaceVelocity[j] = 0.0;
+      entrainedFraction[j] = 0.0;
+      int left = j - 1;
+      int right = Math.min(j, n - 1);
+      boolean outlet = j == n;
+      double faceHoldup = outlet ? holdup[left] : 0.5 * (holdup[left] + holdup[right]);
+      if (!(faceHoldup > 1e-10)) {
+        continue;
+      }
+      double mf = massFlux[j] * area;
+      if (outlet && !(mf > 0)) {
+        continue;
+      }
+      int rich = holdup[left] >= holdup[right] ? left : right;
+      double rhoL = liquidDensity[rich];
+      double muL = liquidViscosity[rich] > 0 ? liquidViscosity[rich] : 3.0e-4;
+      double rhoG = 0.5 * (gasDensity[left] + gasDensity[right]);
+      double muG = Math.max(0.5 * (viscosity[left] + viscosity[right]), 1e-6);
+      double gasVelocity = massFlux[j] / rhoG / (1.0 - faceHoldup);
+      double surfaceGradient;
+      if (outlet) {
+        int prev = Math.max(0, n - 2);
+        surfaceGradient = n > 1 ? (elevation(n - 1) - elevation(prev)) / dx : 0.0;
+      } else {
+        surfaceGradient = (elevation(right) + level[right] - elevation(left) - level[left]) / dx;
+      }
+      double uL = StratifiedLiquidMomentum.liquidVelocity(faceHoldup, diameter, getPipeWallRoughness(), gasVelocity,
+          rhoG, rhoL, muG, muL, surfaceGradient);
+      liquidFaceVelocity[j] = uL;
+      double entrained = 0.0;
+      if (entrainmentEnabled
+          && !StratifiedLiquidMomentum.isStratifiedStable(faceHoldup, diameter, gasVelocity, rhoG, rhoL)) {
+        if (entrainment == null) {
+          entrainment = new EntrainmentDeposition();
+        }
+        double sigma = interfacialTension[rich] > 0 ? interfacialTension[rich] : 5.0e-3;
+        entrained = entrainment.calculate(FlowRegime.ANNULAR, Math.abs(gasVelocity) * (1.0 - faceHoldup),
+            Math.max(Math.abs(uL) * faceHoldup, 1e-9), rhoG, rhoL, muG, muL, sigma, diameter,
+            faceHoldup).entrainmentFraction;
+        entrained = Math.max(0.0, Math.min(1.0, entrained));
+      }
+      entrainedFraction[j] = entrained;
+      int gasUp = outlet ? n - 1 : (mf >= 0 ? left : right);
+      // film
+      int donor = outlet ? left : (uL >= 0 ? left : right);
+      liquidOut += moveLiquid(j, donor, gasUp, (1.0 - entrained) * liquidDensity[donor] * holdup[donor] * area * uL,
+          outlet ? mf : Double.POSITIVE_INFINITY, dt, fk, fe, outlet);
+      // droplets travel with the gas
+      if (entrained > 0) {
+        liquidOut += moveLiquid(j, gasUp, gasUp, entrained * liquidDensity[gasUp] * holdup[gasUp] * area * gasVelocity,
+            outlet ? mf : Double.POSITIVE_INFINITY, dt, fk, fe, outlet);
+      }
+    }
+    return liquidOut;
+  }
+
+  /**
+   * Moves liquid across a face in place of the same mass of gas-composition flow.
+   *
+   * @param face face index
+   * @param donor section the liquid leaves
+   * @param gasUp section whose gas composition the face flow otherwise carries
+   * @param liquidFlow signed liquid mass flow in +x, kg/s
+   * @param cap upper limit on the magnitude, kg/s
+   * @param dt time step in s
+   * @param fk component mass fluxes (modified)
+   * @param fe energy fluxes (modified)
+   * @param outlet whether the face is the outlet (only positive flow leaves)
+   * @return liquid mass flow through the outlet face, kg/s (0 for interior faces)
+   */
+  private double moveLiquid(int face, int donor, int gasUp, double liquidFlow, double cap, double dt, double[][] fk,
+      double[] fe, boolean outlet) {
+    double available = liquidMass[donor] - drained[donor];
+    if (phaseCount[donor] < 2 || !(available > 0) || liquidFlow == 0 || (outlet && liquidFlow < 0)) {
+      return 0.0;
+    }
+    double magnitude = Math.min(Math.min(Math.abs(liquidFlow), 0.5 * available / dt), cap);
+    double flow = Math.signum(liquidFlow) * magnitude;
+    for (int k = 0; k < nc; k++) {
+      fk[face][k] += flow * (liquidMassFraction[donor][k] - transportedMassFraction[gasUp][k]);
+    }
+    fe[face] += flow * (liquidEnthalpy[donor] + GRAVITY * elevation(donor) - transportedEnthalpyNow(gasUp)
+        - GRAVITY * elevation(gasUp));
+    drained[donor] += magnitude * dt;
+    return outlet ? magnitude : 0.0;
   }
 
   /**
@@ -1281,6 +1469,24 @@ public class CompositionalLinePackPipe extends Pipeline {
    */
   public synchronized double[] getLiquidMassProfile() {
     return liquidMass == null ? new double[0] : liquidMass.clone();
+  }
+
+  /**
+   * Returns the liquid film velocity at every face from the last step (two-fluid liquid transport only).
+   *
+   * @return liquid velocity per face in m/s; index 0 is the inlet face
+   */
+  public double[] getLiquidFaceVelocityProfile() {
+    return liquidFaceVelocity == null ? new double[0] : liquidFaceVelocity.clone();
+  }
+
+  /**
+   * Returns the entrained liquid fraction at every face from the last step (two-fluid liquid transport only).
+   *
+   * @return entrained fraction per face, 0-1
+   */
+  public double[] getEntrainedFractionProfile() {
+    return entrainedFraction == null ? new double[0] : entrainedFraction.clone();
   }
 
   /**

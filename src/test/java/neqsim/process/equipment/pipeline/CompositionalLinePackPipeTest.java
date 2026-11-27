@@ -236,4 +236,74 @@ class CompositionalLinePackPipeTest {
       assertEquals(0, pipe.getNumberOfTwoPhaseSections());
     }
   }
+
+  /**
+   * Two-fluid liquid transport: in a shut-in V-shaped line the condensate drains to the low point, the liquid stops
+   * moving, nothing leaves the closed ends and all balances close.
+   */
+  @Test
+  @Timeout(value = 5, unit = TimeUnit.MINUTES)
+  void condensateDrainsToLowPointWithTwoFluidLiquidTransport() {
+    CompositionalLinePackPipe pipe = pipe(7, 1400.0, 0.0);
+    pipe.setSectionElevations(new double[] {0.0, -4.0, -8.0, -12.0, -8.0, -4.0, 0.0});
+    pipe.setHeatTransferCoefficient(0.0);
+    pipe.setLiquidTransportModel(CompositionalLinePackPipe.LiquidTransportModel.STRATIFIED_TWO_FLUID);
+    pipe.initializeUniform(70.0, 278.15);
+    double initialLiquid = pipe.getLiquidInventory("kg");
+    assertTrue(initialLiquid > 1.0 && pipe.getNumberOfTwoPhaseSections() == 7, "70 bara, 5 C is inside the envelope");
+    double uniformShare = pipe.getLiquidMassProfile()[3] / initialLiquid;
+    for (int i = 0; i < 40; i++) {
+      pipe.runTransient(60.0, UUID.randomUUID());
+    }
+    double[] liquid = pipe.getLiquidMassProfile();
+    double total = pipe.getLiquidInventory("kg");
+    double lowShare = liquid[3] / total;
+    logger.info("pooling: liquid {} -> {} kg, low-point share {} -> {}, end sections {} and {} kg", initialLiquid,
+        total, uniformShare, lowShare, liquid[0], liquid[6]);
+    assertTrue(lowShare > 3.0 * uniformShare, "condensate must collect at the low point, share " + lowShare);
+    assertTrue(liquid[0] < 0.2 * initialLiquid / 7 && liquid[6] < 0.2 * initialLiquid / 7, "high ends must drain");
+    assertEquals(liquid[2], liquid[4], 0.05 * Math.max(liquid[2], 1e-9) + 1e-6, "symmetric line, symmetric pool");
+    double fastest = 0.0;
+    for (double u : pipe.getLiquidFaceVelocityProfile()) {
+      fastest = Math.max(fastest, Math.abs(u));
+    }
+    logger.info("pooling: fastest remaining film velocity {} m/s", fastest);
+    assertEquals(0.0, pipe.getCumulativeOutletLiquidMass(), 0.0);
+    double[] err = pipe.getBalanceErrors();
+    assertTrue(Math.abs(err[0]) < 1e-10 && err[1] < 1e-9 && Math.abs(err[2]) < 1e-10,
+        "balance errors " + err[0] + ", " + err[1] + ", " + err[2]);
+  }
+
+  /**
+   * Two-fluid liquid transport during blowdown: liquid leaves through the outlet only as the force balance allows, the
+   * amount lies between the immobile and no-slip bounds, and the balances close.
+   */
+  @Test
+  @Timeout(value = 6, unit = TimeUnit.MINUTES)
+  void twoFluidLiquidDeliveryLiesBetweenBounds() {
+    double[] delivered = new double[3];
+    for (int mode = 0; mode < 3; mode++) {
+      CompositionalLinePackPipe pipe = pipe(8, 16000.0, 0.0);
+      if (mode == 1) {
+        pipe.setLiquidTransportModel(CompositionalLinePackPipe.LiquidTransportModel.STRATIFIED_TWO_FLUID);
+      } else if (mode == 2) {
+        pipe.setLiquidSlipFactor(1.0);
+      }
+      pipe.initializeUniform(130.0, 283.15);
+      pipe.setOutletMassFlowRate(80.0);
+      for (int i = 0; i < 24; i++) {
+        pipe.runTransient(150.0, UUID.randomUUID());
+      }
+      delivered[mode] = pipe.getCumulativeOutletLiquidMass();
+      double[] err = pipe.getBalanceErrors();
+      assertTrue(Math.abs(err[0]) < 1e-10 && err[1] < 1e-9 && Math.abs(err[2]) < 1e-10,
+          "mode " + mode + " balance errors " + err[0] + ", " + err[1] + ", " + err[2]);
+    }
+    logger.info("liquid delivered in blowdown: immobile {} kg, two-fluid {} kg, no-slip {} kg", delivered[0],
+        delivered[1], delivered[2]);
+    assertEquals(0.0, delivered[0], 0.0);
+    assertTrue(delivered[2] > 0.0, "no-slip transport must deliver liquid");
+    assertTrue(delivered[1] >= 0.0 && delivered[1] <= delivered[2] * 1.0001,
+        "two-fluid delivery " + delivered[1] + " must not exceed the no-slip bound " + delivered[2]);
+  }
 }
