@@ -29,6 +29,7 @@ import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.network.PipeFlowNetwork;
 import neqsim.process.equipment.network.WellFlowlineNetwork;
 import neqsim.process.equipment.pipeline.AdiabaticPipe;
+import neqsim.process.equipment.pipeline.CompositionalLinePackPipe;
 import neqsim.process.equipment.pipeline.MultiphasePipe;
 import neqsim.process.equipment.pipeline.OnePhasePipeLine;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
@@ -171,9 +172,9 @@ public final class DynamicCapabilityResolver {
     }
 
     if (isOneOf(type, OnePhasePipeLine.class, TwoFluidPipe.class, TransientPipe.class, WaterHammerPipe.class,
-        Pipeline.class, MultiphasePipe.class, PipeBeggsAndBrills.class, DistillationColumn.class, AdsorptionBed.class,
-        MercuryRemovalBed.class, PipeFlowNetwork.class, WellFlowlineNetwork.class, IdealGasPipeDecompression.class,
-        RealGasPipeDecompression.class)) {
+        Pipeline.class, CompositionalLinePackPipe.class, MultiphasePipe.class, PipeBeggsAndBrills.class,
+        DistillationColumn.class, AdsorptionBed.class, MercuryRemovalBed.class, PipeFlowNetwork.class,
+        WellFlowlineNetwork.class, IdealGasPipeDecompression.class, RealGasPipeDecompression.class)) {
       return DynamicCapability.DYNAMIC_DISTRIBUTED;
     }
 
