@@ -13,6 +13,10 @@ gas and gas-condensate export lines over hours to days. Typical uses:
 - holding below the cricondenbar;
 - packing and restart.
 
+The standard transient capability resolver classifies this model as `DYNAMIC_DISTRIBUTED` because it owns
+section-level component mass and energy state. This classification describes state ownership, not independent
+physical qualification, rollback support or suitability for severe-slugging transients.
+
 It answers where and when retrograde condensate forms, how much there is, whether it revaporises, and
 whether the gas delivered at the receiving end is single phase. Its two-fluid liquid transport predicts how stratified films and pools move. It does not resolve slug
 flow or annular films; use [TwoFluidPipe](TWOFLUIDPIPE_MODEL.md) for a flowing steady state in those
