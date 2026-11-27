@@ -531,7 +531,7 @@ public final class UnsplitTransientSolver implements Serializable {
    * @param model transactional spatial model
    * @param solveTolerance positive scaled tolerance bounded by the configured tolerance
    * @param allowNewtonRestart whether the cell-only solve may restart once from its first admissible trial after a
-   * failed line search
+   * failed line search, with one additional opposite-sided momentum Jacobian retry if descent remains blocked
    * @return nonlinear result subject to the same residual and active-set gates
    */
   Result solveWithTolerance(double[][] previousState, double[] previousPressure, double[] cellAreas, double timeStep,
@@ -554,6 +554,8 @@ public final class UnsplitTransientSolver implements Serializable {
     int iterations = 0;
     double minimumAcceptedStep = 1.0;
     boolean restartAvailable = allowNewtonRestart;
+    boolean oppositeProbeAvailable = allowNewtonRestart;
+    boolean oppositeMomentumProbe = false;
     ResidualEvaluation current = evaluateResidual(previousState, previousPressure, state, pressure, cellAreas, timeStep,
         startTime, outletPressure, outletPressureFixed, countedModel, timeWeight);
     ActiveSetEvaluation refreshed = refreshActiveSet(previousState, previousPressure, state, pressure, cellAreas,
@@ -572,8 +574,10 @@ public final class UnsplitTransientSolver implements Serializable {
             outletPressure, outletPressureFixed, countedModel, timeWeight);
         residualNorm = maximumAbsolute(current.residual);
         jacobian = approximateJacobian(previousState, previousPressure, state, pressure, cellAreas, variableScale,
-            current, timeStep, startTime, outletPressure, outletPressureFixed, countedModel, timeWeight);
+            current, timeStep, startTime, outletPressure, outletPressureFixed, countedModel, timeWeight,
+            oppositeMomentumProbe);
       }
+      oppositeMomentumProbe = false;
 
       double[] rightHandSide = new double[current.residual.length];
       for (int row = 0; row < rightHandSide.length; row++) {
@@ -620,6 +624,14 @@ public final class UnsplitTransientSolver implements Serializable {
       }
       if (!accepted) {
         if (restart == null) {
+          if (oppositeProbeAvailable && iterations < maximumIterations) {
+            // A forward momentum perturbation can straddle a discontinuous flow-regime boundary.
+            // Retry the same iterate once with the opposite one-sided momentum Jacobian. The original
+            // residual, descent test, iteration budget and independent conservation gates remain unchanged.
+            oppositeProbeAvailable = false;
+            oppositeMomentumProbe = true;
+            continue;
+          }
           terminationReason = TerminationReason.LINE_SEARCH_FAILED;
           break;
         }
@@ -1178,7 +1190,7 @@ public final class UnsplitTransientSolver implements Serializable {
           startTime, outletPressure, outletPressureFixed, model, timeWeight);
       return approximateJacobian(previousState, previousPressure, candidateState, candidatePressure, cellAreas,
           createVariableScale(previousState, previousPressure), base, timeStep, startTime, outletPressure,
-          outletPressureFixed, model, timeWeight);
+          outletPressureFixed, model, timeWeight, false);
     }
   }
 
@@ -1238,7 +1250,8 @@ public final class UnsplitTransientSolver implements Serializable {
 
   private double[][] approximateJacobian(double[][] previousState, double[] previousPressure, double[][] candidateState,
       double[] candidatePressure, double[] cellAreas, double[] variableScale, ResidualEvaluation base, double timeStep,
-      double startTime, double outletPressure, boolean outletPressureFixed, Model model, double timeWeight) {
+      double startTime, double outletPressure, boolean outletPressureFixed, Model model, double timeWeight,
+      boolean oppositeMomentumProbe) {
     int cellCount = previousState.length;
     int dimension = cellCount * BLOCK_SIZE;
     int colorCount = 2 * cellStencilHalfWidth + 1;
@@ -1254,9 +1267,11 @@ public final class UnsplitTransientSolver implements Serializable {
           int column = cell * BLOCK_SIZE + variable;
           double increment = finiteDifferenceIncrement(base.midpointState[cell], variable, variableScale[column]);
           if (variable < CONSERVATIVE_VARIABLE_COUNT) {
-            perturbedState[cell][variable] += increment;
+            boolean reverse = oppositeMomentumProbe && variable >= PHASE_COUNT;
+            perturbedState[cell][variable] += reverse ? -increment : increment;
             if (perturbedState[cell][variable] == candidateState[cell][variable]) {
-              perturbedState[cell][variable] = Math.nextUp(candidateState[cell][variable]);
+              perturbedState[cell][variable] = reverse ? Math.nextDown(candidateState[cell][variable])
+                  : Math.nextUp(candidateState[cell][variable]);
             }
             increments[cell] = perturbedState[cell][variable] - candidateState[cell][variable];
           } else {
