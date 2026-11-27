@@ -4,12 +4,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.lang.reflect.Field;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -175,6 +177,30 @@ class CompositionalLinePackPipeTest {
     feed.run();
     TwoFluidPipe tf = new TwoFluidPipe("tf", feed);
     assertThrows(IllegalArgumentException.class, () -> tf.getLiquidInventory("kg/m3"));
+  }
+
+  /**
+   * Mass reporting must retain the conservative inventory of dense brine instead of applying a freshwater volume cap.
+   *
+   * @throws ReflectiveOperationException if the controlled section fixture cannot be installed
+   */
+  @Test
+  void twoFluidPipeLiquidMassIncludesDenseBrine() throws ReflectiveOperationException {
+    Stream feed = new Stream("feed", richGas());
+    TwoFluidPipe tf = new TwoFluidPipe("tf", feed);
+    TwoFluidSection section = new TwoFluidSection(0.0, 100.0, 0.5, 0.0);
+    section.setOilMassPerLength(0.0);
+    section.setWaterDensity(1200.0);
+    section.setWaterMassPerLength(0.95 * section.getArea() * section.getWaterDensity());
+    Field field = TwoFluidPipe.class.getDeclaredField("sections");
+    field.setAccessible(true);
+    field.set(tf, new TwoFluidSection[] {section});
+
+    double mass = section.getWaterMassPerLength() * section.getLength();
+    assertTrue(mass > 1000.0 * section.getArea() * section.getLength());
+    assertEquals(mass, tf.getLiquidInventory("kg"), 1e-9);
+    assertEquals(mass / 1000.0, tf.getLiquidInventory("tonnes"), 1e-12);
+    assertEquals(mass / 1000.0, tf.getLiquidInventory("t"), 1e-12);
   }
 
   /** The example in docs/process/compositional-linepack-pipe.md, verbatim. */
