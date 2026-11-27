@@ -1515,3 +1515,57 @@ that the existing Furst/eCPA loading response is misparameterized), with analyti
 composition and temperature derivatives and a joint double-counting audit. No
 coefficient is fitted or activated here. Table A.24 and independent hydrate families
 remain source/family holdouts.
+
+## Existing Furst loading-shape sensitivity (2026-11-27)
+
+\`KClCO2Kamps2007FurstLoadingSensitivityAssessmentTest\` tests the first alternative
+in the preceding disposition: whether the already active CO2-ion Furst block has the
+right loading shape but the wrong magnitude. Before any model evaluation, the lowest,
+median and highest positive CO2 loading are selected in each of the 14 Kamps
+temperature/KCl-family blocks. The resulting 42-state design is evaluated at
+
+$$
+W_{\mathrm{CO_2},i}^{(k)}(T;\lambda_F)
+=\lambda_F W_{\mathrm{CO_2},i}^{(k)}(T),
+\qquad \lambda_F\in\{0,\ 0.5,\ 1\},\quad k\in\{0,1,2\}.
+$$
+
+Scale one is the production default reconstructed against the Onda et al. (1970)
+298.15 K KCl correlation. The two lower scales are ablation and midpoint
+form-sensitivity controls, not candidate parameters: changing the complete block
+does not preserve that independent dilute-limit anchor. The four zero-CO2 Kamps rows
+remain source controls. No Kamps value is fitted, and Table A.24 and hydrate evidence
+remain untouched holdouts.
+
+All 42 default-scale states converge. The ablated scale also converges for all 42
+states. The midpoint converges for 41 states; \`KAMPS-094\` is rejected by the existing
+component-inventory gate with residual \`7.25042\`, rather than being admitted by a
+looser tolerance. Across the selected states, the log-residual RMSE and bias are:
+
+| Furst scale | Converged states | Log-RMSE | Signed bias |
+|---:|---:|---:|---:|
+| 0.0 | 42/42 | 0.725885 | +0.657444 |
+| 0.5 | 41/42 | 0.345381 | +0.292062 |
+| 1.0 | 42/42 | 0.113743 | -0.0877234 |
+
+For each block, endpoint interpolation estimates the scale that would make the
+selected residual slope against source CO2 molality zero. Only two of 14 estimates
+lie in the tested interval. Every low-KCl block requires extrapolation above one:
+\`1.22350\` to \`2.26392\`, with family mean \`1.53685\`. The high-KCl estimates range from
+\`0.639988\` to \`1.46743\`, with only the 333.15 K and 353.15 K blocks bounded and a
+family mean of \`1.17557\`. The overall range is \`0.639988\` to \`2.26392\`; median
+\`1.33566\`. Except for the block containing the rejected midpoint, the midpoint-slope
+departure from endpoint-linear interpolation is at most \`0.00212\`, so the family
+incompatibility is not an artifact of strong scale nonlinearity.
+
+**Disposition.** A single existing Furst-block rescale is rejected as a parameter
+update. It cannot remove the loading trend across both families inside the tested
+range, and any non-default value would also break the independently sourced Onda
+anchor. The result is model-form evidence: the next aqueous candidate must introduce
+a loading-dependent contribution that vanishes in the neutral-CO2 dilute limit,
+preserves the anchored salt coefficient there, and is derived from a degree-one
+excess Helmholtz energy with complete amount and temperature derivatives. Its exact
+neutral-neutral-ion topology and coefficient law remain unselected pending a
+source-separated bounded fit, covariance/sensitivity analysis, Furst double-counting
+audit and the frozen mixed-brine/hydrate/control transfers. No production equation,
+parameter, tolerance or empirical temperature offset changes in this increment.

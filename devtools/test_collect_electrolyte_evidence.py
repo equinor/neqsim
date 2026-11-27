@@ -108,11 +108,11 @@ class ElectrolyteEvidenceTest(unittest.TestCase):
         manifest, errors = self.collect(selected)
         self.assertEqual(errors, [])
         self.assertTrue(manifest["selected_evidence_complete"])
-        self.assertEqual(manifest["selected_assessment_count"], 25)
+        self.assertEqual(manifest["selected_assessment_count"], 26)
         self.assertEqual([item["data_rows"] for item in manifest["assessments"]],
-                         [28, 10, 26, 20, 26, 78, 36, 16, 44, 18, 116, 18, 34, 48, 84, 7, 7,
+                         [28, 10, 26, 20, 26, 78, 36, 16, 44, 18, 116, 144, 18, 34, 48, 84, 7, 7,
                           6, 12, 57, 7, 10, 13, 110, 110])
-        self.assertEqual(sum(item["data_rows"] for item in manifest["assessments"]), 941)
+        self.assertEqual(sum(item["data_rows"] for item in manifest["assessments"]), 1085)
         assessments = {item["producer"]: item for item in manifest["assessments"]}
         archer = assessments[evidence.PACKAGE + "KClWaterActivityReferenceAssessmentTest"]
         self.assertEqual(archer["fixture"]["basis"], "inline reference values")
@@ -187,6 +187,18 @@ class ElectrolyteEvidenceTest(unittest.TestCase):
             item["output"],
             "co2-kcl-kamps2007-loading-trend-assessment.csv")
         self.assertEqual(item["data_rows"], 116)
+        self.assertEqual((self.output / item["output"]).read_bytes(), source.read_bytes())
+        self.assertEqual(
+            item["fixture"],
+            self.fixture_digest("co2_kcl_solubility_kamps2007_thermoml.csv"))
+
+    def test_kamps_furst_loading_sensitivity_retains_thermoml_source(self):
+        item, source = self.collect_assessment(
+            "KClCO2Kamps2007FurstLoadingSensitivityAssessmentTest")
+        self.assertEqual(
+            item["output"],
+            "co2-kcl-kamps2007-furst-loading-sensitivity-assessment.csv")
+        self.assertEqual(item["data_rows"], 144)
         self.assertEqual((self.output / item["output"]).read_bytes(), source.read_bytes())
         self.assertEqual(
             item["fixture"],
