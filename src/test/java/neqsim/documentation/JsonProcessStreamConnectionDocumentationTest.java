@@ -57,7 +57,7 @@ public class JsonProcessStreamConnectionDocumentationTest extends neqsim.NeqSimT
     assertTrue(guide.contains("A `Stream` without `inlet` or `inlets` is a standalone source."));
     assertTrue(guide.contains("It keeps that outlet's live fluid identity"));
     assertTrue(guide.contains("does not replace those wiring fields"));
-    assertTrue(builder.contains("return unitDef.has(\"inlet\") || unitDef.has(\"inlets\");"));
+    assertTrue(builder.contains("return unitDef.has(\"inlet\") || unitDef.has(\"inlets\") || unitDef.has(\"outletOf\");"));
     assertTrue(builder.contains("wireInletStream(equipment, stream);"));
   }
 
