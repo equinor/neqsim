@@ -108,11 +108,11 @@ class ElectrolyteEvidenceTest(unittest.TestCase):
         manifest, errors = self.collect(selected)
         self.assertEqual(errors, [])
         self.assertTrue(manifest["selected_evidence_complete"])
-        self.assertEqual(manifest["selected_assessment_count"], 26)
+        self.assertEqual(manifest["selected_assessment_count"], 27)
         self.assertEqual([item["data_rows"] for item in manifest["assessments"]],
-                         [28, 10, 26, 20, 26, 78, 36, 16, 44, 18, 124, 144, 18, 34, 48, 84, 7, 7,
+                         [28, 10, 26, 20, 26, 29, 78, 36, 16, 44, 18, 124, 144, 18, 34, 48, 84, 7, 7,
                           6, 12, 57, 7, 10, 13, 110, 110])
-        self.assertEqual(sum(item["data_rows"] for item in manifest["assessments"]), 1093)
+        self.assertEqual(sum(item["data_rows"] for item in manifest["assessments"]), 1122)
         assessments = {item["producer"]: item for item in manifest["assessments"]}
         archer = assessments[evidence.PACKAGE + "KClWaterActivityReferenceAssessmentTest"]
         self.assertEqual(archer["fixture"]["basis"], "inline reference values")
@@ -143,6 +143,15 @@ class ElectrolyteEvidenceTest(unittest.TestCase):
     def test_transfer_assessment_hashes_independent_dense_kcl_fixture(self):
         item, _ = self.collect_assessment("KClCO2SaltPairTransferAssessmentTest")
         self.assertEqual(item["data_rows"], 13)
+        self.assertEqual(
+            item["fixture"],
+            self.fixture_digest("co2_kcl_solubility_mousavi_chapoy_burgass2024.csv"))
+
+    def test_mousavi_loading_kernel_retains_frozen_concentration_split(self):
+        item, source = self.collect_assessment("KClCO2MousaviLoadingKernelAssessmentTest")
+        self.assertEqual(item["output"], "co2-kcl-mousavi-loading-kernel-assessment.csv")
+        self.assertEqual(item["data_rows"], 29)
+        self.assertEqual((self.output / item["output"]).read_bytes(), source.read_bytes())
         self.assertEqual(
             item["fixture"],
             self.fixture_digest("co2_kcl_solubility_mousavi_chapoy_burgass2024.csv"))
