@@ -6459,7 +6459,7 @@ public class ProcessSystem extends SimulationBaseClass {
     private final double capturedTimeStep = timeStep;
     private final int capturedTimeStepNumber = timeStepNumber;
     private final UUID capturedCalculationIdentifier = getCalculationIdentifier();
-    private final MeasurementHistory capturedMeasurementHistory = measurementHistory.copy();
+    private final MeasurementHistory capturedMeasurementHistory = measurementHistory;
     private final Boolean capturedRecordMeasurementHistory = recordMeasurementHistory;
     private final double capturedPreviousTotalMass = previousTotalMass;
     private final double capturedMassBalanceError = massBalanceError;
@@ -6489,6 +6489,7 @@ public class ProcessSystem extends SimulationBaseClass {
       for (TransientParticipantCheckpoint checkpoint : participantCheckpoints) {
         this.allowedEventStateIdentities.add(checkpoint.stateIdentity);
       }
+      capturedMeasurementHistory.beginCheckpoint();
     }
 
     /** {@inheritDoc} */
@@ -6517,6 +6518,7 @@ public class ProcessSystem extends SimulationBaseClass {
           }
           throw validationFailure;
         }
+        capturedMeasurementHistory.commitCheckpoint();
         status = Status.COMMITTED;
         activeTransientStepTransaction = null;
       }
@@ -6561,7 +6563,8 @@ public class ProcessSystem extends SimulationBaseClass {
           timeStep = capturedTimeStep;
           timeStepNumber = capturedTimeStepNumber;
           setCalculationIdentifier(capturedCalculationIdentifier);
-          measurementHistory = capturedMeasurementHistory.copy();
+          capturedMeasurementHistory.rollbackCheckpoint();
+          measurementHistory = capturedMeasurementHistory;
           recordMeasurementHistory = capturedRecordMeasurementHistory;
           previousTotalMass = capturedPreviousTotalMass;
           massBalanceError = capturedMassBalanceError;
@@ -8528,18 +8531,58 @@ public class ProcessSystem extends SimulationBaseClass {
     private static final long serialVersionUID = 1L;
     private int maxSize;
     private Deque<String[]> entries = new LinkedList<>();
+    /** Rows are owned by this history. Only original rows evicted during an open trial need saving. */
+    private transient List<String[]> evictedRows;
+    private transient int retainedCheckpointRows;
+    private transient int checkpointCapacity;
+
+    /** Marks the current prefix. Appending a row to an unbounded history requires no snapshot copy. */
+    private void beginCheckpoint() {
+      retainedCheckpointRows = entries.size();
+      checkpointCapacity = maxSize;
+      evictedRows = new ArrayList<>();
+    }
+
+    /** Releases any original rows removed during an accepted trial. */
+    private void commitCheckpoint() {
+      evictedRows = null;
+    }
+
+    /** Discards trial appends and reinstates the original prefix and capacity. */
+    private void rollbackCheckpoint() {
+      while (entries.size() > retainedCheckpointRows) {
+        entries.removeLast();
+      }
+      for (int i = evictedRows.size() - 1; i >= 0; i--) {
+        entries.addFirst(evictedRows.get(i));
+      }
+      maxSize = checkpointCapacity;
+      commitCheckpoint();
+    }
+
+    /** Removes the oldest entry, retaining it for rollback if it predates the trial. */
+    private void evictFirst() {
+      String[] row = entries.removeFirst();
+      if (evictedRows != null && retainedCheckpointRows > 0) {
+        evictedRows.add(row);
+        retainedCheckpointRows--;
+      }
+    }
 
     void add(String[] entry) {
       if (entry == null) {
         throw new IllegalArgumentException("History entry cannot be null");
       }
       if (maxSize > 0 && entries.size() >= maxSize) {
-        entries.removeFirst();
+        evictFirst();
       }
       entries.addLast(Arrays.copyOf(entry, entry.length));
     }
 
     void clear() {
+      while (evictedRows != null && retainedCheckpointRows > 0) {
+        evictFirst();
+      }
       entries.clear();
     }
 
@@ -8555,7 +8598,7 @@ public class ProcessSystem extends SimulationBaseClass {
       this.maxSize = maxSize;
       if (maxSize > 0) {
         while (entries.size() > maxSize) {
-          entries.removeFirst();
+          evictFirst();
         }
       }
     }

@@ -27,6 +27,31 @@ public class PhaseGEUnifacUMRPRUTest {
     Assertions.assertEquals(2, p.getNumberOfComponents());
   }
 
+  /** Preserve the release benchmark's three-phase equilibrium and caloric derivatives on repeated flashes. */
+  @Test
+  void hydrocarbonWaterBenchmarkRetainsAqueousPhaseAndCaloricProperties() {
+    SystemInterface fluid = new SystemUMRPRUMCEos(268.15, 10.0);
+    String[] names = {"CO2", "nitrogen", "methane", "propane", "i-butane", "n-butane", "i-pentane", "n-pentane",
+        "n-hexane", "water"};
+    double[] moles = {2.1, 1.16, 26.19, 15.77, 1.83, 4.05, 1.85, 2.45, 40.6, 40.6};
+    for (int i = 0; i < names.length; i++) {
+      fluid.addComponent(names[i], moles[i]);
+    }
+    fluid.setMultiPhaseCheck(true);
+    fluid.setMixingRule("HV", "UNIFAC_UMRPRU");
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    for (int i = 0; i < 3; i++) {
+      operations.TPflash();
+      fluid.initProperties();
+      // Numerical references from the 3.30.0 release on benchmark suite B16.
+      Assertions.assertEquals(3, fluid.getNumberOfPhases());
+      Assertions.assertEquals(0.29644087, fluid.getPhase(PhaseType.AQUEOUS).getBeta(), 2.0e-6);
+      Assertions.assertEquals(0.00204059, fluid.getPhase(PhaseType.OIL).getComponent("water").getx(), 2.0e-7);
+      Assertions.assertEquals(-3752581.15, fluid.getEnthalpy(), 1.0);
+      Assertions.assertEquals(15283.0431, fluid.getCp(), 0.05);
+    }
+  }
+
   /**
    * Flash methane with 2 mol% water at 25 C and 70 bara.
    *

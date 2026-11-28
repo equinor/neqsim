@@ -1,76 +1,171 @@
 ---
 title: "Mathematical Models in NeqSim"
-description: "Overview of NeqSim thermodynamic and transport models, their governing equations, common applications, and model-selection considerations."
+description: "Source-verified overview of NeqSim thermodynamic and transport model families, mixing-rule selection, initialization boundaries, and validation responsibilities."
+keywords: "NeqSim, equation of state, SRK, Peng-Robinson, CPA, GERG-2008, EOS-CG, mixing rule, thermodynamic model"
 ---
 
-NeqSim bundles several thermodynamic and transport models so you can switch between correlations without rewriting system setup code. The sections below summarize the most commonly used options and when to consider them.
+NeqSim separates the thermodynamic model, its mixture rule, phase-equilibrium operations, and
+transport-property correlations. Select each layer explicitly and validate it for the intended
+components, phase topology, temperature, pressure, and composition. A class being available does
+not establish accuracy for a particular engineering case.
 
-## Equations of State (EoS)
+## Cubic equations of state
 
-NeqSim primarily uses cubic equations of state of the general form:
+NeqSim's cubic equations of state can be written in the general form
 
-$$
-P = \frac{RT}{v - b} - \frac{a(T)}{(v + \epsilon b)(v + \sigma b)}
-$$
+$$P=\frac{RT}{v-b}-\frac{a(T)}{(v+\epsilon b)(v+\sigma b)}$$
 
-where $P$ is pressure, $T$ is temperature, $v$ is molar volume, $R$ is the gas constant, and $a(T), b$ are the energy and co-volume parameters.
+where $P$ is absolute pressure, $T$ is temperature, $v$ is molar volume, $R$ is the gas constant,
+$a(T)$ is the temperature-dependent attraction parameter, and $b$ is the co-volume parameter.
 
-### Supported Families
+Common families include:
 
-- **Peng–Robinson (PR) family** ($\epsilon = 1 - \sqrt{2}, \sigma = 1 + \sqrt{2}$):
-  Standard PR (`SystemPrEos`), volume-corrected variants (Peneloux), and tuned versions such as the Søreide–Whitson model for sour service. Suitable for general gas/condensate and light-oil systems.
+- **Peng-Robinson (PR):** `SystemPrEos` and related volume-corrected or alpha-function variants.
+  These are widely used for hydrocarbon gas, condensate, and oil systems.
+- **Soave-Redlich-Kwong (SRK):** `SystemSrkEos` and its specialized variants. SRK remains a
+  common gas-processing baseline.
+- **Cubic-Plus-Association (CPA):** cubic models with an association contribution for
+  hydrogen-bonding systems. CPA requires its model-compatible mixing rule and parameter coverage.
+- **Model-specific cubic hybrids:** Huron-Vidal, Wong-Sandler, UMR-PRU, and Søreide-Whitson
+  workflows add model-specific liquid-phase or aqueous-mixture behavior.
 
-- **Soave–Redlich–Kwong (SRK) family** ($\epsilon = 0, \sigma = 1$):
-  Core SRK (`SystemSrkEos`), SRK-Twu, and CPA-SRK for associating fluids such as water and glycols.
+Do not choose a model from the family name alone. Confirm component coverage, mixture parameters,
+caloric behavior, and phase-equilibrium evidence against the operating envelope.
 
-- **Cubic-Plus-Association (CPA)**:
-  Adds an association term to the SRK or PR equation to represent hydrogen bonding:
-  
-  $$
-  P = P_{\text{cubic}} - \frac{1}{2} RT \rho \sum_i x_i \sum_{A_i} \left( 1 - X_{A_i} \right) \frac{\partial \ln g}{\partial v}
-  $$
-  
-  where $X_{A_i}$ is the fraction of site A on molecule i not bonded to other active sites.
+## Complete Java 8 model-selection example
 
-- **Activity-coefficient hybrids**:
-  Huron–Vidal and Wong–Sandler mixing rules combine cubic EoS with excess-Gibbs models ($G^E$) for improved liquid-phase behavior.
+The program below selects SRK and the database-backed classic mixing rule by enum name, performs a
+TP flash, initializes properties, and checks the configured rule and resulting state.
 
-### Selecting an EoS
+<!-- mathematical-models-example: cubic-eos-selection -->
 ```java
-SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
-fluid.addComponent("methane", 0.9);
-fluid.addComponent("n-heptane", 0.1);
-fluid.setMixingRule(2); // 2 = Huron–Vidal; use 1 for classical van der Waals
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.thermo.mixingrule.EosMixingRuleType;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
+
+public final class MathematicalModelsQuickStart {
+  private static final Logger logger =
+      LogManager.getLogger(MathematicalModelsQuickStart.class);
+
+  private MathematicalModelsQuickStart() {}
+
+  public static void main(String[] args) {
+    SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("n-heptane", 0.10);
+    fluid.setMixingRule(EosMixingRuleType.CLASSIC);
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.TPflash();
+    fluid.initProperties();
+
+    double densityKgM3 = fluid.getDensity("kg/m3");
+    assert fluid.getMixingRule() == EosMixingRuleType.CLASSIC;
+    assert fluid.getNumberOfPhases() >= 1;
+    assert Double.isFinite(densityKgM3);
+    assert densityKgM3 > 0.0;
+
+    logger.info(
+        "Model: {}, mixing rule: {}, phases: {}, density: {} kg/m3",
+        fluid.getModelName(),
+        fluid.getMixingRule(),
+        fluid.getNumberOfPhases(),
+        densityKgM3);
+  }
+}
 ```
-Use `SystemSrkCPAstatoil` or `SystemSrkCPAs` when hydrogen bonding is important, and prefer PR variants for high-pressure gas processing.
 
-### Reference Equations of State (Helmholtz Energy)
+The literal fence is compiled with Java 8 source/target, run with assertions, and owned by
+[`MathematicalModelsDocumentationTest`](../../src/test/java/neqsim/documentation/MathematicalModelsDocumentationTest.java).
+Run the focused regression with
+`./mvnw -Dtest=MathematicalModelsDocumentationTest test`.
 
-For high-accuracy applications involving natural gas or CCS mixtures, NeqSim supports multi-parameter equations of state explicit in the Helmholtz free energy:
+## Select the mixture rule independently
 
-- **GERG-2008** (`SystemGERG2008Eos`): The ISO 20765-2 standard for natural gas.
-- **EOS-CG** (`SystemEOSCGEos`): An extension of GERG-2008 for combustion gases and CCS mixtures (including impurities like SO2, NO, NO2).
+The system class selects the thermodynamic model. The mixing rule determines how mixture
+parameters and excess-Gibbs contributions are assembled. Prefer `EosMixingRuleType` names over
+legacy integers:
 
-See the [GERG-2008 and EOS-CG guide](gerg2008_eoscg) for details.
+| Enum | Legacy value | Meaning |
+|---|---:|---|
+| `NO` | 1 | Classic cubic rule with every binary interaction parameter set to zero |
+| `CLASSIC` | 2 | Classic cubic rule with binary interaction parameters from the NeqSim database |
+| `CLASSIC_HV` | 3 | Huron-Vidal rule with database parameters |
+| `HV` | 4 | Huron-Vidal rule including the temperature-dependent HVDijT term |
+| `WS` | 5 | Wong-Sandler rule |
+| `CPA_MIX` | 7 | Classic CPA mixture rule with CPA binary interaction parameters |
+| `CLASSIC_T_CPA` | 9 | Temperature-dependent CPA binary interaction parameters |
+| `CLASSIC_TX_CPA` | 10 | Temperature- and composition-dependent CPA interaction parameters |
+| `SOREIDE_WHITSON` | 11 | Søreide-Whitson aqueous-gas mixture rule |
 
-## Activity-Coefficient Models
-NeqSim provides NRTL/UNIQUAC/UNIFAC variants for non-ideal liquid mixtures. They can be used directly for gamma-phi flashes or combined with cubic EoS via Wong–Sandler mixing rules.
+Legacy value 2 is **not** Huron-Vidal, and legacy value 1 is **not** the database-backed classic
+rule. Likewise, value 4 selects `HV`, not Wong-Sandler. Named enums make these distinctions
+reviewable and avoid silently changing the intended thermodynamics.
 
-```java
-SystemInterface fluid = new SystemFurstElectrolyteEos(298.15, 1.0);
-fluid.addComponent("water", 1.0);
-fluid.addComponent("ethanol", 1.0);
-fluid.setMixingRule(4); // enables Wong–Sandler (NRTL) coupling
-```
-Load binary-interaction parameters via `mixingRuleName` or by reading custom datasets to align with lab data.
+Some system families impose additional compatibility requirements. CPA-family and UMR-PRU
+workflows must use the rule documented for that model; a numerically valid but incompatible rule
+can return a physically misleading state. See the
+[Mixing Rules Guide](mixing_rules_guide) and
+[Fluid Creation Guide](fluid_creation_guide) for current model-specific setup.
 
-## Hydrate and Solid Models
-For hydrate prediction, enable `hydrateCheck(true)` and select a hydrate model (`CPA`-based or classical van der Waals–Platteeuw) depending on accuracy and speed requirements. Wax precipitation can be modeled using solid-phase enabled systems (e.g., PR with solid checks) and tuned heavy-end characterizations.
+## Reference Helmholtz equations
 
-## Transport and Physical Property Correlations
-- **Viscosity**: Low-pressure correlations (e.g., Chung) and high-pressure gas correlations plus heavy-oil extensions. CPA fluids can include association corrections for viscosity.
-- **Thermal conductivity**: Dense-phase corrections layered on dilute-gas references.
-- **Surface tension**: Parachor correlations tied to component critical properties.
-- **Diffusion and mass transfer**: Fickian diffusion coefficients and film models for unit operations.
+Reference equations use multiparameter Helmholtz-energy formulations rather than a cubic
+pressure-explicit form:
 
-Choose property packages that match the flow regime: cubic EoS with corresponding-state transport for gas processing, CPA with association corrections for aqueous systems, and heavy-oil tuned correlations for late-life reservoirs.
+- **GERG-2008** (`SystemGERG2008Eos`) targets covered natural-gas mixtures.
+- **EOS-CG** (`SystemEOSCGEos`) extends the covered mixture space for combustion-gas and
+  carbon-capture applications.
+
+These models have explicit component and validity boundaries. See
+[GERG-2008 and EOS-CG](gerg2008_eoscg) and the
+[Cryogenic EOS Validation](cryogenic_eos_validation) guide for source-labelled regression
+evidence and limitations.
+
+## Activity-coefficient and electrolyte models
+
+NRTL, UNIQUAC, UNIFAC, Huron-Vidal, Wong-Sandler, and electrolyte formulations are not
+interchangeable labels. Their standard states, parameters, and supported phase-equilibrium
+workflows differ. Configure the intended system class and its compatible rule, then verify that
+the required components and interactions are present.
+
+Use the [Electrolyte CPA Model](ElectrolyteCPAModel),
+[Pitzer Parameter Provenance](pitzer_parameter_provenance), and
+[Electrolyte Phase Boundaries](electrolyte_phase_boundaries) guides for supported aqueous and
+electrolyte workflows. Do not infer electrolyte accuracy from a successful hydrocarbon flash.
+
+## Hydrate and solid models
+
+Hydrate and solid calculations require explicit phase/model setup and dedicated operations.
+Separate hydrate structure, inhibitor, and reference-state assumptions from the underlying fluid
+equation of state. Start with the [Hydrate Models Guide](hydrate_models),
+[Empirical Solid Fugacity References](empirical_solid_fugacity), and
+[Solid Helmholtz Models](solid_helmholtz_models).
+
+## Transport-property boundary
+
+A thermodynamic model establishes equilibrium and thermodynamic state functions. Viscosity,
+thermal conductivity, diffusion, and interfacial tension use separate property models. After the
+applicable flash, initialize the required properties before reading them. Model selection for
+transport properties does not replace the equilibrium calculation.
+
+See [Physical Property Calculations](physical_properties) and the maintained
+[physical-properties package guide](../physical_properties/README).
+
+## Engineering validation
+
+For a design or operating calculation, record:
+
+1. thermodynamic system class and mixing rule;
+2. component and binary-parameter coverage;
+3. temperature, pressure, composition, and phase-topology range;
+4. property initialization and unit basis;
+5. convergence, material, energy, pressure, and fugacity closure where applicable; and
+6. comparison with representative measurements or a traceable reference.
+
+A converged flash is numerical evidence, not model qualification. Preserve the model's documented
+validity boundary and escalate unsupported compositions or phase regimes instead of tuning
+parameters silently.
