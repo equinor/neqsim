@@ -1,7 +1,7 @@
 ---
 name: neqsim-dynamic-simulation
 description: "Dynamic simulation guidance for NeqSim. USE WHEN: running transient simulations, modeling startup/shutdown, tuning PID controllers, analyzing pressure/level dynamics, performing blowdown/depressurization, or setting up measurement devices and control loops. Covers runTransient, DynamicProcessHelper, controller tuning, and dynamic equipment configuration."
-last_verified: "2026-11-25"
+last_verified: "2026-11-27"
 ---
 
 # Dynamic Simulation Guidance
@@ -1002,6 +1002,10 @@ Minimum result keys: `max_pressure_bara`, `max_level_m`, `min_temperature_C`,
 `peak_flare_flow_kg_s`, `time_to_alarm_s`, and `time_to_new_steady_state_s`.
 
 ## Depressurization / Blowdown
+
+For long gas or gas-condensate export lines (hours to days, retrograde condensation, restart delivery
+policy) use `CompositionalLinePackPipe.runTransient(dt, id)` with `DewPointGuardedOutletController`; see
+`neqsim-flow-assurance` section 4 and [the docs](../../../docs/process/compositional-linepack-pipe.md).
 
 ```java
 // For vessel depressurization, use the safety/depressuring agent

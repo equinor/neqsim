@@ -28,6 +28,7 @@ import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.network.PipeFlowNetwork;
 import neqsim.process.equipment.network.WellFlowlineNetwork;
 import neqsim.process.equipment.pipeline.AdiabaticPipe;
+import neqsim.process.equipment.pipeline.CompositionalLinePackPipe;
 import neqsim.process.equipment.pipeline.MultiphasePipe;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.pipeline.Pipeline;
@@ -103,8 +104,9 @@ public class DynamicCapabilityBuiltInInventoryTest extends neqsim.NeqSimTest {
         VesselDepressurization.class, MountainCavern.class, Electrolyzer.class, ReleaseInventory.class,
         NonEquilibriumReleaseInventory.class, LevelControlValve.class, PressureControlValve.class);
     assertCapability(DynamicCapability.DYNAMIC_DISTRIBUTED, DistillationColumn.class, AdsorptionBed.class,
-        MercuryRemovalBed.class, Pipeline.class, MultiphasePipe.class, PipeBeggsAndBrills.class, PipeFlowNetwork.class,
-        WellFlowlineNetwork.class, IdealGasPipeDecompression.class, RealGasPipeDecompression.class);
+        MercuryRemovalBed.class, Pipeline.class, CompositionalLinePackPipe.class, MultiphasePipe.class,
+        PipeBeggsAndBrills.class, PipeFlowNetwork.class, WellFlowlineNetwork.class, IdealGasPipeDecompression.class,
+        RealGasPipeDecompression.class);
     assertCapability(DynamicCapability.BOUNDARY_DYNAMIC, IronSulfideOxidationSource.class);
   }
 
