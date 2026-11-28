@@ -126,10 +126,20 @@ class FilmInterphaseTransferAqueousTest {
       assertTrue(moved > 0.0, label);
       double oilWidth = result.getInterfaceWidthsMetres()[0];
       double aqueousWidth = result.getAqueousInterfaceWidthsMetres()[0];
-      // The widths differ by the volume ratio only when both liquids see the same interface.
-      double volumeRatio = cell.sections[0].getWaterHoldup() / cell.sections[0].getOilHoldup();
-      assertTrue(aqueousWidth > 0.0 && aqueousWidth < 0.05 * Math.PI * DIAMETER, label + " aqueous width");
-      assertTrue(aqueousWidth / oilWidth < 10.0 * volumeRatio / (1.0 + volumeRatio) * Math.PI * DIAMETER, label);
+      double aqueousShare = cell.sections[0].getWaterHoldup()
+          / (cell.sections[0].getWaterHoldup() + cell.sections[0].getOilHoldup());
+      int water = index(cell, "water");
+      double[][][] target = cell.transport.createEquilibriumRelaxationSourceRates(cell.equilibrium(), cell.sections,
+          1.0);
+      if (target[0][2][water] < 0.0) {
+        // Water evaporates from the surface of the aqueous phase only: its share of the liquid volume.
+        assertTrue(aqueousWidth > 0.0 && aqueousWidth <= 1.01 * aqueousShare * Math.PI * DIAMETER,
+            label + " aqueous width " + aqueousWidth);
+        assertTrue(aqueousWidth < 0.05 * oilWidth, label + " aqueous " + aqueousWidth + " m, oil " + oilWidth + " m");
+      } else {
+        // Water condenses on any surface: the whole wall.
+        assertEquals(Math.PI * DIAMETER * Math.sqrt(cell.sections[0].getGasHoldup()), aqueousWidth, 1.0e-12, label);
+      }
       assertTrue(Double.isFinite(result.getLiquidLiquidRatesKgPerMetreSecond()[0]), label);
       if (state[0] < 100.0) {
         assertTrue(result.getFogRatesKgPerMetreSecond()[0] > 0.0, label + " hydrocarbon fog");

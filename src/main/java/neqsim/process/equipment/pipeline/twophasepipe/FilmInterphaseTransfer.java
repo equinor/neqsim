@@ -54,10 +54,11 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  * <ul>
  * <li>Gas with oil, with an aqueous phase (water, glycols, alcohols; no ions), or with both. Each liquid has its own
- * film with the gas, solved at its own holdup and speed. Two liquids share the interface in proportion to their volume.
- * Where a component must leave one liquid and enter the other, the smaller of the two amounts passes directly between
- * the liquids with the liquid-liquid relaxation time (default 30 s); no liquid-liquid coefficient is calculated. A
- * fluid with water needs an equation of state that describes it, for example CPA with the multiphase check on.</li>
+ * film with the gas, solved at its own holdup and speed. A liquid evaporates from its own surface only, so two liquids
+ * share the interface in proportion to their volume; net condensation into a liquid sees the whole interface. Where a
+ * component must leave one liquid and enter the other, the smaller of the two amounts passes directly between the
+ * liquids with the liquid-liquid relaxation time (default 30 s); no liquid-liquid coefficient is calculated. A fluid
+ * with water needs an equation of state that describes it, for example CPA with the multiphase check on.</li>
  * <li>One temperature per cell. The interface temperature is solved, but gas and oil share the cell temperature, so the
  * conservative total-energy equation owns the latent heat.</li>
  * <li>Interface width: the stratified chord, or the gas-core perimeter in annular and mist flow. With wall condensation
@@ -1096,11 +1097,14 @@ public final class FilmInterphaseTransfer implements Serializable {
     double[] flux = cachedMassFluxKgPerSquareMetreSecond[cell][liquid];
     double netFlux = sum(flux);
     boolean condensing = transferLaw == TransferLaw.FILM_FLUX ? netFlux > 0.0 : sum(target) > 0.0;
-    // Two liquids share the interface in proportion to their volume; droplets carry their own surface.
+    // A liquid evaporates from its own surface only: two liquids share the interface in proportion to their volume.
+    // A vapour condenses on any surface, so net condensation into a liquid sees the whole interface. Droplets carry
+    // their own surface.
+    double ownShare = condensing ? 1.0 : share;
     double dispersedArea = cachedDispersedAreaSquareMetresPerMetre[cell][liquid];
     double width = interfaceAreaFactor
-        * (dispersedArea > 0.0 ? dispersedArea * (cachedDispersedLiquid[cell][liquid] ? 1.0 : share)
-            : interfaceWidth(section, condensing) * share);
+        * (dispersedArea > 0.0 ? dispersedArea * (cachedDispersedLiquid[cell][liquid] ? 1.0 : ownShare)
+            : interfaceWidth(section, condensing) * ownShare);
     work.widths[liquid][cell] = width;
     double gasMoles = 0.0;
     double liquidMoles = 0.0;

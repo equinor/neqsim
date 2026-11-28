@@ -192,9 +192,10 @@ phases. Use an equation of state that describes water and glycols, for example C
 
 - **Each liquid has its own film with the gas**, solved at its own holdup and speed. The coupled film solver
   accepts a gas/aqueous pair and any molecular component.
-- **Interface share.** Two liquids share the gas-liquid interface in proportion to their volume. A small aqueous
-  phase beside a larger condensate layer therefore exchanges slowly with the gas, as it does under a floating oil
-  layer.
+- **Interface share.** A liquid evaporates from its own surface only: two liquids share the gas-liquid interface
+  in proportion to their volume, so a small aqueous phase beside a larger condensate layer dries out slowly, as it
+  does under a floating oil layer. A vapour condenses on any surface: net condensation into a liquid sees the
+  whole interface.
 - **Bulk split in all directions.** The gas is flashed alone and can shed hydrocarbon fog, aqueous fog or both; the
   oil can shed vapour and free water; the aqueous phase can shed dissolved gas.
 - **Hygroscopic absorption needs the interface.** A gas in equilibrium with a glycol solution is below the dew
