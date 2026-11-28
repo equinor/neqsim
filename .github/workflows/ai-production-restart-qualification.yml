@@ -20,6 +20,7 @@ on:
       - 'docs/process/H2S_scavenger_guide.md'
       - 'docs/thermo/gerg2008_eoscg.md'
       - 'src/test/java/neqsim/thermo/util/gerg/NeqSimGERG2008HeavyEndsTest.java'
+      - 'src/test/java/neqsim/documentation/GergEoscgDocumentationTest.java'
       - 'docs/test_h2s_scavenger_documentation.py'
       - 'src/test/java/neqsim/documentation/H2SScavengerDocumentationTest.java'
       - '.github/workflows/ai-production-restart-qualification.yml'
@@ -213,6 +214,7 @@ jobs:
           java-version: '21'
           cache: maven
       - name: Restore only the frozen master reconstruction in this disposable checkout
+        id: restore_control
         shell: bash
         run: |
           git fetch --depth=1 origin 963e2f57d641ab35088be5a3b274eafeb4cd9281
@@ -223,12 +225,27 @@ jobs:
         run: |
           mkdir -p target/restart-qualification-logs
           ./mvnw -B -ntp -Dtest=TwoFluidPipeUnsplitRunTest#movingSlugFilmCouplingIsStableAcrossMeshAndTimeStepRefinement test 2>&1 | tee target/restart-qualification-logs/pre-precision-control.log
-      - name: Retain control log
+      - name: Run identical five-second tracked-force matrix on control
+        if: ${{ !cancelled() && steps.restore_control.outcome == 'success' }}
+        shell: bash
+        run: |
+          ./mvnw -B -ntp -Dtest=TwoFluidUnsplitTengesdalPreparationTest#fiveSecondTrackedSubcellForceRiserQualificationMustCompleteTheWholeInterval -Dgroups=slow -DexcludedTestGroups= -Dneqsim.unsplit.tengesdal.tracked-force-qualification=true test 2>&1 | tee target/restart-qualification-logs/control-5s.log
+      - name: Run identical 180-second tracked-force matrix on control
+        if: ${{ !cancelled() && steps.restore_control.outcome == 'success' }}
+        shell: bash
+        run: |
+          ./mvnw -B -ntp -Dtest=TwoFluidUnsplitTengesdalPreparationTest#trackedSubcellForceLongIntervalMustCompleteConservatively -Dgroups=slow -DexcludedTestGroups= -Dneqsim.unsplit.tengesdal.tracked-force-long-qualification=true test 2>&1 | tee target/restart-qualification-logs/control-180s.log
+      - name: Run identical 600-second tracked-force matrix on control
+        if: ${{ !cancelled() && steps.restore_control.outcome == 'success' }}
+        shell: bash
+        run: |
+          ./mvnw -B -ntp -Dtest=TwoFluidUnsplitTengesdalPreparationTest#trackedSubcellForceSustainedIntervalMustCompleteConservatively -Dgroups=slow -DexcludedTestGroups= -Dneqsim.unsplit.tengesdal.tracked-force-sustained-qualification=true test 2>&1 | tee target/restart-qualification-logs/control-600s.log
+      - name: Retain control logs
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: slug-precision-control-${{ github.run_attempt }}
-          path: target/restart-qualification-logs/pre-precision-control.log
+          path: target/restart-qualification-logs/*.log
           if-no-files-found: error
 
   gerg-heavy-ends:
@@ -242,4 +259,4 @@ jobs:
           java-version: '21'
           cache: maven
       - name: Qualify combined GERG heavy-end mapping and molar-mass lumping
-        run: ./mvnw -B -ntp -Dtest=NeqSimGERG2008HeavyEndsTest test
+        run: ./mvnw -B -ntp -Dtest=NeqSimGERG2008HeavyEndsTest,GergEoscgDocumentationTest test
