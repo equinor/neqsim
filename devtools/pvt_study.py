@@ -71,14 +71,10 @@ def code_identity():
             for path in sorted(directory.rglob("*")):
                 if path.is_file():
                     hashes[str(path.relative_to(ROOT))] = hashlib.sha256(path.read_bytes()).hexdigest()
-    jars = [path for path in (ROOT / "target").glob("neqsim-*.jar")
-            if not any(marker in path.name for marker in ("-sources", "-javadoc", "original-"))]
-    classpath_file = ROOT / "target/neqsim-dev-classpath.txt"
-    if jars:
-        dependencies = [sorted(jars)[-1]]
-    elif classpath_file.exists():
-        dependencies = [Path(p) for p in classpath_file.read_text(encoding="utf-8").strip().split(os.pathsep) if p]
-    elif not (ROOT / "pom.xml").exists():
+    if (ROOT / "pom.xml").exists():
+        from neqsim_dev_setup import _build_dependency_classpath
+        dependencies = [Path(p) for p in _build_dependency_classpath(ROOT)]
+    else:
         # Match the installed-toolkit fallback without starting or importing a JVM.
         configured = os.environ.get("NEQSIM_JAR")
         location = Path(configured) if configured else None
@@ -89,8 +85,6 @@ def code_identity():
             if specification and specification.submodule_search_locations:
                 for package_root in specification.submodule_search_locations:
                     dependencies.extend(sorted((Path(package_root) / "lib").glob("*.jar")))
-    else:
-        dependencies = []
     for index, path in enumerate(dependencies):
         if not path.is_file():
             raise PVTStudyError("runtime dependency is unavailable: %s" % path.name)

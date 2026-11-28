@@ -75,11 +75,11 @@ fluid.setMixingRule("classic")
 
 1. **`target/classes/`** — your latest compiled `.class` files
 2. **`src/main/resources/`** — database files, CSV data, component tables
-3. **`target/neqsim-*.jar`** — the shaded JAR with all third-party dependencies (EJML, Commons Math, etc.)
-   The Maven shade plugin produces this as the main artifact; `original-neqsim-*.jar`, `*-sources.jar`, and `*-javadoc.jar` are excluded automatically.
+3. **Maven runtime dependencies** — resolved into `target/neqsim-dev-classpath.txt`
+   and loaded separately because the main NeqSim JAR is thin.
 
-Because `target/classes/` comes first, any class you recompile immediately
-shadows the version inside the shaded JAR.
+Because `target/classes/` comes first, the JVM uses the latest compiled workspace
+classes. Remove the cached classpath file after changing Maven dependencies.
 
 ### The JVM lifecycle
 
