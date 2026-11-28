@@ -4,8 +4,6 @@ description: Guide to using the H2S scavenger unit operation for modeling chemic
 keywords: "H2S scavenger, triazine, sour gas, chemical treatment, injection rate, process simulation"
 ---
 
-# H2S Scavenger Unit Operation
-
 The `H2SScavenger` class models chemical scavenging of hydrogen sulfide (H2S) from gas streams. Unlike absorption or amine treatment, this unit operation uses empirical correlations based on scavenger type, injection rate, and operating conditions rather than rigorous chemical reaction calculations.
 
 ## Overview
