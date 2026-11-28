@@ -1917,8 +1917,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   /**
    * hydrateFormationTemperature.
    *
-   * @param structure a int
-   * @throws neqsim.util.exception.IsNaNException if any.
+   * @param structure 0 for the legacy ice calculation, 1 for fixed sI or 2 for fixed sII
+   * @throws neqsim.util.exception.IsNaNException if equilibrium cannot be found
    */
   public void hydrateFormationTemperature(int structure) throws IsNaNException {
     if (system instanceof neqsim.thermo.system.SystemPitzer) {
@@ -1928,17 +1928,19 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       runPitzerHydrateFlash(false, structure);
       return;
     }
-    system.setTemperature(273.0 + 1.0);
+    if (structure < 0 || structure > 2) {
+      throw new IllegalArgumentException("Expected 0 (ice), 1 (sI) or 2 (sII)");
+    }
+    system.setTemperature(274.0);
     if (structure == 0) {
       system.setSolidPhaseCheck("water");
       system.setHydrateCheck(true);
       operation = new FreezingPointTemperatureFlash(system);
+      for (int i = 0; i < system.getPhases()[4].getNumberOfComponents(); i++) {
+        ((ComponentHydrate) system.getPhases()[4].getComponent(i)).setHydrateStructure(-1);
+      }
     } else {
-      operation = new HydrateFormationTemperatureFlash(system);
-    }
-
-    for (int i = 0; i < system.getPhase(4).getNumberOfComponents(); i++) {
-      ((ComponentHydrate) system.getPhases()[4].getComponent(i)).setHydrateStructure(structure - 1);
+      operation = new HydrateFormationTemperatureFlash(system, structure);
     }
     if (!isRunAsThread()) {
       getOperation().run();

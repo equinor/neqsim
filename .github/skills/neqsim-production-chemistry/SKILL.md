@@ -220,8 +220,8 @@ ThermodynamicHydrateInhibitorPerformance thi =
     new ThermodynamicHydrateInhibitorPerformance();
 thi.setInhibitorChemistry(ThermodynamicHydrateInhibitorPerformance.InhibitorChemistry.MEG);
 thi.setTargetSubcoolingC(8.0);          // hydrate T minus minimum operating T
-thi.setWaterFlowKgPerHour(1500.0);      // free + condensed water
-thi.setInhibitorPurityWtPct(90.0);      // rich/lean MEG purity
+thi.setWaterFlowKgPerHour(1500.0);      // solvent water only (kg/h)
+thi.setInhibitorPurityWtPct(90.0);      // injected aqueous product wt% active
 thi.setLeanInhibitorWtPctInWater(0.0);  // already present in the water
 thi.evaluate();
 
@@ -235,6 +235,10 @@ double kgHr = thi.getRequiredInjectionKgPerHour();
 > hydrate curve with `SystemSrkCPAstatoil` + `hydrateFormationTemperature()`
 > (`neqsim-flow-assurance`) and use this model for the injection-rate bookkeeping and
 > lean/rich balance.
+
+The flow result is kg/h of commercial aqueous product. Check `injectionFeasible` in the result before
+using the rate. For an anti-agglomerant, use product-specific flow-loop restart observations in
+`AntiAgglomerantQualification`. See the [sizing balance and restart example](../../../docs/chemistry/chemical_compatibility_guide.md#hydrate-inhibitor-sizing-and-restart-evidence).
 
 ### 3.5 Kinetic hydrate inhibitor (KHI) — `KineticHydrateInhibitorPerformance`
 

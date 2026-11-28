@@ -24,6 +24,8 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
   static Logger logger = LogManager.getLogger(HydrateFormationTemperatureFlash.class);
   /** Maximum absolute mole-fraction error accepted for a non-reactive electrolyte fluid. */
   private static final double INVENTORY_TOLERANCE = 1.0e-9;
+  /** 0 for automatic selection, 1 for sI, 2 for sII. */
+  private final int requestedStructure;
   /** Snapshot of the last calculation; null before the first run. */
   private HydrateEquilibriumDiagnostics diagnostics;
   /** Stability evidence from the latest CO2/brine fluid evaluation. */
@@ -42,7 +44,18 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
   public HydrateFormationTemperatureFlash(SystemInterface system) {
+    this(system, 0);
+  }
+
+  /**
+   * Creates a temperature solve restricted to the specified hydrate lattices.
+   * 
+   * @param system fluid system
+   * @param structure 0 for automatic selection, 1 for sI or 2 for sII
+   */
+  public HydrateFormationTemperatureFlash(SystemInterface system, int structure) {
     super(system);
+    requestedStructure = structure;
   }
 
   /**
@@ -67,6 +80,7 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
     validateInput();
     if (system instanceof neqsim.thermo.system.SystemPitzer) {
       PitzerHydrateFlash flash = new PitzerHydrateFlash((neqsim.thermo.system.SystemPitzer) system, false);
+      flash.setStructure(requestedStructure);
       flash.run();
       converged = flash.isConverged();
       lastResidual = -Math.expm1(flash.getResidual());
@@ -80,6 +94,9 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
     system.setMultiPhaseCheck(true);
     SystemInterface input = system.clone();
     try {
+      ComponentHydrate host = (ComponentHydrate) system.getPhases()[4].getComponent("water");
+      host.setHydrateStructure(0);
+      host.setRequestedStructure(requestedStructure);
       runTemperatureIterations();
       if (!converged) {
         restoreComponentInventory(input);
@@ -93,6 +110,7 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
       system.setTemperature(Double.NaN);
       throw ex;
     } finally {
+      ((ComponentHydrate) system.getPhases()[4].getComponent("water")).setRequestedStructure(0);
       system.setMultiPhaseCheck(originalMultiPhaseCheck);
     }
   }
@@ -121,6 +139,9 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
    * @throws IllegalArgumentException if pressure, initial temperature or the amount of water is invalid
    */
   private void validateInput() {
+    if (requestedStructure < 0 || requestedStructure > 2) {
+      throw new IllegalArgumentException("Hydrate structure must be 0 (automatic), 1 or 2");
+    }
     if (!Double.isFinite(system.getPressure()) || !(system.getPressure() > 0.0)) {
       throw new IllegalArgumentException("Hydrate temperature requires positive finite absolute pressure");
     }
@@ -620,7 +641,7 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
    * @param pressure the pressure in bara
    * @return true when the equilibrium condition is reproduced from a clean phase split
    */
-  private static boolean reproducesEquilibrium(SystemInterface reference, double temperature, double pressure) {
+  private boolean reproducesEquilibrium(SystemInterface reference, double temperature, double pressure) {
     try {
       reference = reference.clone();
       double[] conservedMoles = null;
@@ -633,6 +654,9 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
       reference.setTemperature(temperature);
       reference.setPressure(pressure);
       reference.setHydrateCheck(true);
+      ComponentHydrate host = (ComponentHydrate) reference.getPhases()[4].getComponent("water");
+      host.setHydrateStructure(0);
+      host.setRequestedStructure(requestedStructure);
       reference.setMultiPhaseCheck(true);
       reference.getPhase(4).getComponent("water").setx(1.0);
       if (CO2BrinePhaseEquilibrium.isApplicable(reference)) {

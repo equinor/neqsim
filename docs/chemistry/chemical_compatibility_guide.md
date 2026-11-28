@@ -324,3 +324,49 @@ See the consolidated notebook
 for an end-to-end walkthrough covering compatibility screening, scale-control
 assessment, acid treatment sizing, scavenger sizing, and root-cause analysis on
 a representative incident.
+
+## Hydrate inhibitor sizing and restart evidence
+
+`ThermodynamicHydrateInhibitorPerformance.setWaterFlowKgPerHour` takes solvent water alone.
+The lean concentration and target are active mass percentages of water plus active inhibitor.
+Product purity is the active mass percentage of the injected aqueous product. The screening
+balance assumes both constituents stay in the liquid. Given solvent water flow $W$, feed active
+fraction $x_0$, product fraction $p$ and target $x$, the incoming solution flow is
+$F=W/(1-x_0)$ and the required product rate is $Q=F(x-x_0)/(p-x)$ when makeup is feasible.
+For 1,000 kg/h water, a 20 wt% target requires 250 kg/h neat MEG or 666.67 kg/h of a 50 wt%
+aqueous MEG product. An already-met target gives zero. For a positive requirement and $p \le x$, the getter returns positive infinity and the result map reports `injectionFeasible=false`
+with a null flow. Use a hydrate flash to account for phase partitioning.
+
+An anti-agglomerant record links the commercial LDHI identity and formulation revision to a
+flow-loop observation. The following synthetic tests use a single oil/brine system and restart
+protocol. At 60 bara and 8 K subcooling the slurry flowed after 4 h and blocked after 12 h.
+No observation covers 24 h, a higher water cut, or another formulation.
+
+```java
+import java.util.Arrays;
+import java.util.List;
+import neqsim.process.chemistry.ProductionChemical;
+import neqsim.process.chemistry.ProductionChemical.ChemicalType;
+import neqsim.process.chemistry.hydrate.AntiAgglomerantQualification;
+import neqsim.process.chemistry.hydrate.AntiAgglomerantQualification.Conditions;
+import neqsim.process.chemistry.hydrate.AntiAgglomerantQualification.DoseBasis;
+import neqsim.process.chemistry.hydrate.AntiAgglomerantQualification.Outcome;
+
+// Within a method. Dose is g product/kg water, water cut is vol%, velocity is m/s.
+ProductionChemical product = new ProductionChemical("AA-1", ChemicalType.HYDRATE_INHIBITOR_LDHI);
+DoseBasis basis = DoseBasis.PRODUCT_G_PER_KG_WATER;
+Conditions shortStop = new Conditions("synthetic oil/brine A", "loop-A/ramp-1", basis, 5, 25, 60, 8, 1.2, 4);
+Conditions longStop = new Conditions("synthetic oil/brine A", "loop-A/ramp-1", basis, 5, 25, 60, 8, 1.2, 12);
+Conditions untested = new Conditions("synthetic oil/brine A", "loop-A/ramp-1", basis, 5, 25, 60, 8, 1.2, 24);
+List<AntiAgglomerantQualification> records = Arrays.asList(
+    new AntiAgglomerantQualification(product, "F1", shortStop, Outcome.TRANSPORTABLE_SLURRY, "synthetic:loop-A/run-1"),
+    new AntiAgglomerantQualification(product, "F1", longStop, Outcome.BLOCKED_RESTART, "synthetic:loop-A/run-2"));
+AntiAgglomerantQualification.lookup(records, product, "F1", shortStop).get(0).getOutcome(); // TRANSPORTABLE_SLURRY
+AntiAgglomerantQualification.lookup(records, product, "F1", longStop).get(0).getOutcome();  // BLOCKED_RESTART
+AntiAgglomerantQualification.lookup(records, product, "F1", untested).isEmpty();            // true
+```
+
+Each condition uses exact equality in the declared units. The protocol identifier covers the loop geometry,
+shear history, cooling and restart ramp. Lookup also checks active ingredient, active percentage and carrier.
+An empty list means evidence is missing. Repeated tests at the same point retain all observations.
+The fixture is [HydrateChemicalManagementTest](../../src/test/java/neqsim/process/chemistry/hydrate/HydrateChemicalManagementTest.java).

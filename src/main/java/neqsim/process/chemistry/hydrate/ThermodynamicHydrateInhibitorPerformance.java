@@ -21,7 +21,7 @@ import neqsim.process.chemistry.util.StandardsRegistry.StandardReference;
  * to suppress the hydrate equilibrium temperature by a target {@code dT}. Recommended only for first-pass sizing; for
  * FEED use a NeqSim hydrate flash.</li>
  * <li><strong>Required injection rate</strong> — given the produced-water rate and a target lean/rich split, returns
- * the kg/h of neat inhibitor.</li>
+ * the kg/h of aqueous commercial product. All active and carrier water remain in the aqueous phase.</li>
  * </ol>
  *
  * <p>
@@ -121,7 +121,7 @@ public class ThermodynamicHydrateInhibitorPerformance implements Serializable {
   }
 
   /**
-   * Sets the produced-water flow rate.
+   * Sets the incoming solvent water flow, excluding any dissolved inhibitor.
    *
    * @param kgHr water flow in kg/h
    */
@@ -130,7 +130,7 @@ public class ThermodynamicHydrateInhibitorPerformance implements Serializable {
   }
 
   /**
-   * Sets the purity of the neat inhibitor.
+   * Sets the active mass percentage in the injected product. The balance is water.
    *
    * @param wtPct weight percent active ingredient (0-100)
    */
@@ -142,7 +142,7 @@ public class ThermodynamicHydrateInhibitorPerformance implements Serializable {
    * Sets the lean inhibitor concentration already present in the produced water (e.g. from carry-over of regenerated
    * MEG).
    *
-   * @param wtPct weight percent (0-100)
+   * @param wtPct active mass percent of incoming water plus active inhibitor, in [0, 100)
    */
   public void setLeanInhibitorWtPctInWater(double wtPct) {
     this.leanInhibitorWtPctInWater = wtPct;
@@ -152,25 +152,33 @@ public class ThermodynamicHydrateInhibitorPerformance implements Serializable {
    * Runs the Hammerschmidt screening calculation.
    */
   public void evaluate() {
+    evaluated = false;
     warnings.clear();
+    if (!Double.isFinite(waterFlowKgPerHour) || waterFlowKgPerHour < 0.0 || !Double.isFinite(targetSubcoolingC)
+        || targetSubcoolingC < 0.0 || !Double.isFinite(inhibitorPurityWtPct) || inhibitorPurityWtPct < 0.0
+        || inhibitorPurityWtPct > 100.0 || !Double.isFinite(leanInhibitorWtPctInWater)
+        || leanInhibitorWtPctInWater < 0.0 || leanInhibitorWtPctInWater >= 100.0) {
+      throw new IllegalArgumentException("Invalid solvent flow, subcooling or active mass percentage");
+    }
     double k = chemistry.getHammerschmidtK();
     double mw = chemistry.getMolarMassGmol();
     // Hammerschmidt: dT = K * w / (MW * (100 - w)) ⇒ w = 100 * dT * MW / (K + dT * MW)
-    double w = 100.0 * targetSubcoolingC * mw / (k + targetSubcoolingC * mw);
+    double w = targetSubcoolingC == 0.0 ? 0.0 : 100.0 / (1.0 + k / mw / targetSubcoolingC);
     requiredInhibitorWtPctInWater = w;
     if (w > 60.0) {
       warnings
           .add("Required inhibitor wt% > 60 — Hammerschmidt accuracy degraded; use rigorous" + " NeqSim hydrate flash");
     }
-    if (w <= leanInhibitorWtPctInWater) {
-      warnings.add("Lean carry-over already meets target — no make-up required");
+    if (waterFlowKgPerHour == 0.0 || w <= leanInhibitorWtPctInWater) {
+      requiredInjectionKgPerHour = 0.0;
+      warnings.add("No makeup required");
+    } else if (inhibitorPurityWtPct <= w) {
+      requiredInjectionKgPerHour = Double.POSITIVE_INFINITY;
+      warnings.add("Infeasible: product concentration must exceed the target for a finite makeup rate");
+    } else {
+      double feedSolutionKgHr = waterFlowKgPerHour / (1.0 - leanInhibitorWtPctInWater / 100.0);
+      requiredInjectionKgPerHour = feedSolutionKgHr * (w - leanInhibitorWtPctInWater) / (inhibitorPurityWtPct - w);
     }
-
-    // Mass balance: w*M_total = leanW*M_water + 100*M_pure
-    // M_pure = (w - leanW) * M_water / (100 - w)
-    double makeupPureKgHr = Math.max(0.0,
-        (w - leanInhibitorWtPctInWater) * waterFlowKgPerHour / Math.max(1.0e-3, 100.0 - w));
-    requiredInjectionKgPerHour = makeupPureKgHr / Math.max(1.0e-3, inhibitorPurityWtPct / 100.0);
     evaluated = true;
   }
 
@@ -184,9 +192,9 @@ public class ThermodynamicHydrateInhibitorPerformance implements Serializable {
   }
 
   /**
-   * Returns the required injection rate of the neat product.
+   * Returns the required total aqueous product flow, assuming no active or water partitions out.
    *
-   * @return injection rate in kg/h
+   * @return product flow in kg/h, or positive infinity if no finite addition reaches the target
    */
   public double getRequiredInjectionKgPerHour() {
     return requiredInjectionKgPerHour;
@@ -233,7 +241,10 @@ public class ThermodynamicHydrateInhibitorPerformance implements Serializable {
     map.put("inhibitorPurityWtPct", inhibitorPurityWtPct);
     map.put("leanInhibitorWtPctInWater", leanInhibitorWtPctInWater);
     map.put("requiredInhibitorWtPctInWater", requiredInhibitorWtPctInWater);
-    map.put("requiredInjectionKgPerHour", requiredInjectionKgPerHour);
+    map.put("flowBasis", "kg/h solvent water in; kg/h aqueous product injected; wt% active on water plus active");
+    map.put("injectionFeasible", evaluated ? Double.isFinite(requiredInjectionKgPerHour) : null);
+    map.put("requiredInjectionKgPerHour",
+        Double.isFinite(requiredInjectionKgPerHour) ? requiredInjectionKgPerHour : null);
     map.put("warnings", warnings);
     map.put("standardsApplied", getStandardsApplied());
     return map;
