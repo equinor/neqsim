@@ -2231,8 +2231,37 @@ Guidelines:
 | Section length | Keep `dx = length / sections` small enough to resolve terrain and holdup changes. A low point or riser should span several sections, not one cell. |
 | Time step | Start with 0.5-2 s for compact regression models and 5-60 s for long slow-flow pipelines when adaptive time stepping is enabled. Reduce it for valve closures, slug fronts, or fast pressure waves. |
 | Adaptive stepping | `setEnableAdaptiveTimestepping(true)` is recommended for difficult multiphase transients. It recomputes the stable internal step as velocities and holdups change. |
-| CFL number | `setCflNumber(0.3-0.8)` is typical. Lower values provide more stability margin and temporal resolution; higher values are faster. |
+| CFL number | `setCflNumber(0.3-0.8)` is typical for stability. It also sets the accuracy of slow line-pack transients: see the sensitivity below and repeat a case at half the CFL number before using its flows or liquid amounts. |
 | Settling time | Run until pressure and holdup profiles stop changing or match a new stationary reference. The required physical time scales with pipeline length, flow velocity, compressibility, and liquid inventory. |
+
+**The internal step changes the answer in long line-pack transients (2026-11-28).** A 707 km, 1.01 m rich-gas
+export line (25 cells, conservative-energy transient, 30 s equilibrium relaxation, 60 s reporting interval) was
+blown down, held and repressurised with the same boundary pressures at three CFL numbers:
+
+| Quantity | CFL 0.3 | CFL 0.15 | CFL 0.075 | Line-pack model, 100 sections |
+|----------|---------|----------|-----------|-------------------------------|
+| Internal step (s) | 12 | 6 | 3 | – |
+| Gas out in blowdown (t) | 37,460 | 39,011 | 39,590 | 39,466 |
+| Liquid at end of blowdown (t) | 1,660 | 1,855 | 1,994 | 2,152 |
+| Liquid through the outlet in blowdown (t) | 1,057 | 1,008 | 933 | 1,167 |
+| Liquid at end of 12 h hold (t) | 1,141 | 1,324 | 1,440 | 1,576 |
+| Line free of liquid (h after restart) | 12.8 | 15.2 | 14.8 | 16.5 |
+| Gas supplied in restart (t) | 84,723 | 88,722 | 90,689 | 92,952 |
+| Computer time (min) | 14 | 23 | 44 | – |
+
+- At the same pressures the line carries 4.6 % more gas at CFL 0.15 than at 0.3, and it is not converged at
+  0.075: each halving still adds 2 to 4 %. The flow resistance of the transient depends on the internal step.
+- The results move toward those of `CompositionalLinePackPipe`. Most of the difference reported earlier between
+  the two models on this case was this time-step error.
+- The 50-cell result reported earlier (1,878 t at end of blowdown) has the same internal step as 25 cells at CFL
+  0.15 (1,855 t): what looked like mesh dependence was mostly step dependence.
+- A run can also change its internal step on its own. The step is limited by the fastest wave in any cell, so
+  after a cell has held liquid the step can stay shorter, and two runs that differ only in a transfer closure then
+  differ by 2 to 3 % in gas flow.
+- Halving the reporting interval (60 s to 30 s) at CFL 0.3 changed the gas supplied by 0.5 %: the reporting
+  interval is not the step that matters.
+- The cause in the pressure-momentum coupling has not been identified. Until it is, treat flows and liquid
+  amounts from a long line-pack transient as uncertain by about 10 % at CFL 0.3, and repeat at lower CFL.
 
 For a pressure-boundary step, a compact 300 m regression pipe may settle in a few seconds. A real
 long subsea line can require minutes to hours of simulated time, especially when liquid inventory,

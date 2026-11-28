@@ -566,6 +566,15 @@ public abstract class NonEquilibriumFluidBoundary
   }
 
   /**
+   * Scaled residual below which a coupled film whose line search stalls counts as converged: one hundred times the
+   * convergence requirement, that is 1e-8 in log fugacity and in flux (mol/(m2 s)) and 1e-4 W/m2 in the heat balance.
+   */
+  private static final double STALLED_FILM_RESIDUAL_NORM = 100.0;
+
+  /** Largest change of the logarithm of an interface mole fraction in one coupled Newton step. */
+  private static final double MAXIMUM_LOG_FRACTION_STEP = 2.0;
+
+  /**
    * Solves the existing nonreactive film equations and interface heat balance together.
    *
    * <p>
@@ -588,7 +597,7 @@ public abstract class NonEquilibriumFluidBoundary
       System.arraycopy(uMassTrans.getData(), 0, state, 0, neq);
       state[neq] = interphaseSystem.getTemperature();
       double[] residual = evaluateCoupledFilm(state);
-      for (int iteration = 0; iteration < 50; iteration++) {
+      for (int iteration = 0; iteration < 150; iteration++) {
         double norm = coupledFilmResidualNorm(residual);
         if (norm <= 1.0) {
           return;
@@ -604,6 +613,15 @@ public abstract class NonEquilibriumFluidBoundary
           double[] minusResidual = evaluateCoupledFilm(minus);
           for (int row = 0; row <= neq; row++) {
             jacobian.set(row, column, (plusResidual[row] - minusResidual[row]) / (2.0 * step));
+          }
+        }
+        // Interface mole fractions are updated in their logarithm: the columns become derivatives with respect to
+        // ln x, so a trace component (a glycol in the gas, a hydrocarbon in water) keeps its sign and its relative
+        // accuracy however large the Newton step.
+        int fractionCount = 2 * bulkSystem.getNumberOfComponents();
+        for (int column = 0; column < fractionCount; column++) {
+          for (int row = 0; row <= neq; row++) {
+            jacobian.set(row, column, jacobian.get(row, column) * state[column]);
           }
         }
         DMatrixRMaj rightHandSide = new DMatrixRMaj(neq + 1, 1, true, residual.clone());
@@ -625,10 +643,21 @@ public abstract class NonEquilibriumFluidBoundary
           throw new IllegalStateException("Singular coupled film Jacobian");
         }
         boolean accepted = false;
-        for (double fraction = 1.0; fraction >= 1.0e-8; fraction *= 0.5) {
+        double largestLogStep = 0.0;
+        for (int column = 0; column < fractionCount; column++) {
+          largestLogStep = Math.max(largestLogStep, Math.abs(update.get(column, 0)));
+        }
+        // No interface fraction changes by more than a factor e^2 in one step.
+        double firstFraction = largestLogStep > MAXIMUM_LOG_FRACTION_STEP ? MAXIMUM_LOG_FRACTION_STEP / largestLogStep
+            : 1.0;
+        for (double fraction = firstFraction; fraction >= 1.0e-8 * firstFraction; fraction *= 0.5) {
           double[] candidate = state.clone();
           for (int column = 0; column <= neq; column++) {
-            candidate[column] -= fraction * update.get(column, 0);
+            if (column < fractionCount) {
+              candidate[column] *= Math.exp(-fraction * update.get(column, 0));
+            } else {
+              candidate[column] -= fraction * update.get(column, 0);
+            }
           }
           if (!isCoupledFilmStateAdmissible(candidate)) {
             continue;
@@ -647,6 +676,11 @@ public abstract class NonEquilibriumFluidBoundary
           }
         }
         if (!accepted) {
+          if (norm <= STALLED_FILM_RESIDUAL_NORM) {
+            // No step lowers the residual further: the equations are satisfied to the noise of the equation of state
+            // (an association model solves its site fractions iteratively).
+            return;
+          }
           throw new IllegalStateException("Coupled film line search failed; scaled residual=" + norm);
         }
       }

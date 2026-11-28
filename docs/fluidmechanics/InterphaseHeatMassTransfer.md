@@ -498,6 +498,19 @@ contains no natural convection. Gas at rest keeps the laminar duct limit $Sh = 3
 Interfacial area, film depth and phase appearance still need independent closure
 qualification before predicting seabed pool depletion.
 
+**Gas over an aqueous liquid, and trace components (2026-11-28).** The coupled route
+accepts a gas/aqueous pair as well as gas/oil, and any molecular component (water, glycols,
+alcohols); ions are refused, and so is a bulk that holds oil and aqueous liquid together.
+Interface mole fractions then span nine orders of magnitude (a glycol in the gas, a
+hydrocarbon in the water). The Newton step is therefore taken in the logarithm of the
+interface fractions, limited to a factor $e^2$ per step: a trace component keeps its sign
+and its relative accuracy. With a linear update 4 of 16 gas/water/TEG states (CPA) stopped
+in the line search; with the logarithmic update all 16 converge
+(`CoupledGasAqueousFilmTest`). A line search that stalls with a scaled residual below 100
+(1e-8 in log fugacity and flux, 1e-4 W/m² in heat) is accepted: an association model solves
+its site fractions iteratively and does not reproduce residuals below that. The iteration
+limit is 150.
+
 **Interface start when the bulk is single phase (2026-11-28).** `initInterphaseSystem()`
 flashes the bulk as a whole to start the interface. A liquid evaporating into gas that can
 hold all of it is single phase as a whole, although an interface exists. The start then

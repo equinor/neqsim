@@ -221,6 +221,9 @@ Where the question is how long liquid survives the restart, also run the `TwoFlu
 condensation in a blowdown follows equilibrium through fog formation, but evaporation into the incoming gas is
 limited by the interface, so the equilibrium liquid-free time is a lower estimate. Run it with and without the
 droplet field as bounds on the interfacial area, and report liquid in miscible cells apart from immiscible liquid.
+The same closure handles a small aqueous phase (water and glycol) and three phases. Before quoting flows or liquid
+amounts from a `TwoFluidPipe` line-pack transient, repeat it at half the CFL number: on a 707 km line the results
+changed by 5 to 12 % per halving.
 
 For riser-induced (severe) slugging questions use the two screens described in the
 `neqsim-flow-assurance` skill: `TwoFluidPipe.evaluateSevereSluggingSystem(riserBaseSection)`

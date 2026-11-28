@@ -654,6 +654,10 @@ later. Expect `getFinalMassKg(Phase.OIL) == 0.0` and `SINGLE_PHASE_GAS` once the
 not add a holdup floor or shorten the run to avoid the old "Endpoint primitive values must be
 finite" stop. In annular flow a film thinner than the wall roughness no longer shields the wall
 (gas wall shear on the exposed fraction `1 - delta / roughness`, full dry-wall shear below 1e-10 m).
+Flows and liquid amounts of a long line-pack transient depend on the internal step: on a 707 km line
+the gas supplied in a restart rose 4.7 % from CFL 0.3 to 0.15 and 2.2 % more to 0.075, and liquid at the
+end of blowdown 12 % and 7 %. Always repeat such a case at half the CFL number and report both; the
+reporting interval passed to `runTransient` is not the step that matters.
 Check the gas velocity profile after a fast refill: values near 200 m/s in trace-liquid cells mean
 the friction limits are missing from the build.
 
@@ -668,7 +672,12 @@ point flashes; `setBulkPhaseSplit`, 30 s split time), two stable phases exchange
 and phases that are miscible at first contact mix with the radial turbulent mixing time
 (`CellMode.MISCIBLE`, `setMiscibleMixingTime`). So a blowdown condenses close to equilibrium, while
 evaporation during repressurisation is interface-limited: expect liquid to outlast the equilibrium
-prediction in a refill. Do not switch the bulk split off except to show its effect. Read
+prediction in a refill. Do not switch the bulk split off except to show its effect. The liquid can be oil, an aqueous phase
+(water and glycol carry-over; use CPA with `setMultiPhaseCheck(true)`), or both: each liquid gets its
+own film with the gas, they share the interface by volume, and `getAqueousModes()`,
+`getAqueousCharacteristicTimesSeconds()` and `getLiquidLiquidRatesKgPerMetreSecond()` report the
+aqueous side. A small aqueous phase beside condensate exchanges slowly; glycol absorbs water through
+the interface without fog. Hydrates and ice are not modelled. Read
 `docs/process/non-equilibrium-two-phase-pipe-flow.md` first. Interfacial area is the largest
 uncertainty: run the case twice, with `setDropletField(false)` (default, film interface only) and
 `setDropletField(true)` (entrained droplets, close to equilibrium wherever the gas moves), and

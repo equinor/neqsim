@@ -10004,7 +10004,8 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Select non-equilibrium gas/oil transfer from the multicomponent film model of the fluid-mechanics package.
+   * Select non-equilibrium transfer between gas, oil and aqueous phase from the multicomponent film model of the
+   * fluid-mechanics package.
    *
    * <p>
    * Opt-in. It requires conservative-energy recovery, named-component transport, mass transfer and the Euler

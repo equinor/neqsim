@@ -458,17 +458,20 @@ public class KrishnaStandartFilmModel extends
   @Override
   public void solve() {
     if (coupledMassHeatTransferEnabled) {
+      boolean gasOil = bulkSystem.hasPhaseType("gas") && bulkSystem.hasPhaseType("oil")
+          && !bulkSystem.hasPhaseType("aqueous");
+      boolean gasAqueous = bulkSystem.hasPhaseType("gas") && bulkSystem.hasPhaseType("aqueous")
+          && !bulkSystem.hasPhaseType("oil");
       if (!massTransferCalc || !heatTransferCalc || bulkSystem.isChemicalSystem() || enhancementFactor != null
-          || bulkSystem.getNumberOfPhases() != 2 || !bulkSystem.hasPhaseType("gas") || !bulkSystem.hasPhaseType("oil")
-          || bulkSystem.hasPhaseType("aqueous")) {
-        throw new IllegalStateException("Coupled film requires nonreactive gas/oil with mass and heat enabled");
+          || bulkSystem.getNumberOfPhases() != 2 || !gasOil && !gasAqueous) {
+        throw new IllegalStateException(
+            "Coupled film requires nonreactive gas/oil or gas/aqueous with mass and heat enabled");
       }
-      // Hydrocarbons and inert gases (nitrogen, carbon dioxide, hydrogen sulfide, ...) are molecular, non-associating
-      // species in a gas/oil pair. The film equations do not distinguish them; water, glycols and ions stay excluded.
+      // The film equations hold for any molecular species: hydrocarbons, inert gases, water, glycols and alcohols.
+      // Ions do not cross a gas/liquid interface and electrolyte solutions need their own diffusion model.
       for (int component = 0; component < bulkSystem.getNumberOfComponents(); component++) {
-        if (!bulkSystem.getPhase(0).getComponent(component).isHydrocarbon()
-            && !bulkSystem.getPhase(0).getComponent(component).isInert()) {
-          throw new IllegalStateException("Coupled film currently requires hydrocarbon or inert-gas components");
+        if (bulkSystem.getPhase(0).getComponent(component).getIonicCharge() != 0.0) {
+          throw new IllegalStateException("Coupled film does not accept ionic components");
         }
       }
       solveCoupledMassHeatTransfer();

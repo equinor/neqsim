@@ -95,7 +95,9 @@ the turbulent gas-side coefficients use the Darcy friction factor divided by eig
 were four times too high). When the bulk as a whole is single phase (liquid evaporating
 into gas that can hold all of it) the interface now starts from a tie line of a gas/liquid
 mixture that splits. Above the critical pressure of the gas/liquid mixing line the two are
-miscible and the film has no meaning: test for it before solving. The opt-in
+miscible and the film has no meaning: test for it before solving. The route also accepts a
+gas/aqueous pair (water, glycols; CPA) and updates interface fractions in their logarithm,
+so trace components such as TEG in the gas converge. The opt-in
 `FilmInterphaseTransfer` closure does, and connects the film to the
 transient `TwoFluidPipe` source (skill `neqsim-dynamic-simulation`). The stagnant-liquid
 limit is not validated against pool data and has no natural convection, so do not quote
