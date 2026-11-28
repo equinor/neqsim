@@ -175,17 +175,27 @@ public final class SlugFilmCoupling {
     }
     double[] body = new double[7];
     double[] film = new double[7];
-    // Compute contrasts before scaling by the short film length. Subtracting
-    // two rounded cell-scale inventories would amplify their rounding in the film.
-    double liquidVolumeChange = MathArrays.linearCombination(bodyHoldup, gasVolume, bodyHoldup, liquidVolume, -1.0,
-        liquidVolume);
     double bodyToFilmLengthRatio = fraction / (1.0 - fraction);
     double[] bodyMassChanges = new double[3];
-    for (int phase = 0; phase < 3; phase++) {
-      double relativeChange = phase == 0 ? -liquidVolumeChange / gasVolume : liquidVolumeChange / liquidVolume;
-      bodyMassChanges[phase] = mean[phase] * relativeChange;
-      body[phase] = mean[phase] + bodyMassChanges[phase];
-      film[phase] = mean[phase] - bodyToFilmLengthRatio * bodyMassChanges[phase];
+    // Retain the original mass arithmetic unless subtraction in the film can lose
+    // more than ten binary digits through division by the film length fraction.
+    // This is an arithmetic-conditioning switch, not a flow-regime or solver tolerance.
+    if (1.0 - fraction < Math.scalb(1.0, -10)) {
+      double liquidVolumeChange = MathArrays.linearCombination(bodyHoldup, gasVolume, bodyHoldup, liquidVolume, -1.0,
+          liquidVolume);
+      for (int phase = 0; phase < 3; phase++) {
+        double relativeChange = phase == 0 ? -liquidVolumeChange / gasVolume : liquidVolumeChange / liquidVolume;
+        bodyMassChanges[phase] = mean[phase] * relativeChange;
+        body[phase] = mean[phase] + bodyMassChanges[phase];
+        film[phase] = mean[phase] - bodyToFilmLengthRatio * bodyMassChanges[phase];
+      }
+    } else {
+      for (int phase = 0; phase < 3; phase++) {
+        double massScale = phase == 0 ? (1.0 - bodyHoldup) / (1.0 - meanHoldup) : bodyHoldup / meanHoldup;
+        body[phase] = mean[phase] * massScale;
+        film[phase] = (mean[phase] - fraction * body[phase]) / (1.0 - fraction);
+        bodyMassChanges[phase] = body[phase] - mean[phase];
+      }
     }
     double meanKineticEnergy = kineticEnergy(mean);
     double mixtureVelocity = 0.0;

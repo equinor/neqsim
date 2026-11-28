@@ -47,9 +47,12 @@ untracked cells and applies reconstructed body/film friction once to accepted tr
 A first geometric overlap owns that implicit source even before an admissible body/film contrast
 can be reconstructed; that threshold cell uses its unchanged mean-cell friction closure. This keeps
 the friction owner independent of Newton's trial state while a marker enters a new cell.
-When a marker nearly fills a cell, the short film's mass and momentum are reconstructed from
-the body-to-cell differences before scaling by film length. This preserves precision in the
-face state while conserving the same cell inventory.
+The integration-only arithmetic candidate retains the original mass partition for ordinary film lengths and
+uses the compensated mass contrast when the film fraction is below 2^-10, where division can amplify
+rounding by more than 1024. Momentum retains the contrast form. The 2026-11-28 controlled comparison
+(run 46170536957) found that momentum-only passed the moving three-phase and five-second cases, but
+all sustained 180/600 s cases remained unqualified. The conditioning switch is a candidate, not a
+validated solver recommendation; all original partition and transient acceptance gates still apply.
 The nonlinear momentum residual retains probes at exactly zero phase mass. The physical face
 and source states keep that phase absent, preserving the tracked reconstruction of the other
 phases. Accepted endpoints require zero momentum for every absent phase. If the tracked cell-only solve exhausts line search at a closure

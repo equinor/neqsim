@@ -61,8 +61,12 @@ transaction now leaves mean-cell friction on untracked cells and applies reconst
 friction once after a tracked step passes nonlinear and conservation checks. A first geometric
 overlap owns that implicit source before body/film contrast is admissible and uses the unchanged
 mean-cell friction closure, so Newton trial state cannot switch the owner at cell entry.
-For a nearly full body cell, film mass and momentum use the body-to-cell differences before
-division by film length. This avoids amplifying rounding in the reconstructed face state.
+The integration-only arithmetic candidate retains the original mass partition for ordinary film lengths and
+uses the compensated mass contrast when the film fraction is below 2^-10, where division can amplify
+rounding by more than 1024. Momentum retains the contrast form. The 2026-11-28 controlled comparison
+(run 46170536957) found that momentum-only passed the moving three-phase and five-second cases, but
+all sustained 180/600 s cases remained unqualified. The conditioning switch is a candidate, not a
+validated solver recommendation; all original partition and transient acceptance gates still apply.
 Momentum probes at exactly zero phase mass contribute to the nonlinear momentum residual while
 the face and source states keep that phase absent. If line search stalls at a closure transition,
 the tracked cell-only solver can restart Newton once within its existing iteration budget.

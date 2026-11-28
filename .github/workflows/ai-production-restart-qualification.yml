@@ -209,7 +209,8 @@ jobs:
         if: ${{ !cancelled() }}
         run: ./mvnw -B -ntp -Dtest=H2SScavengerDocumentationTest test
   slug-precision-control:
-    # Diagnostic only: isolate the two arithmetic changes; the primary job retains every gate.
+    # Completed negative controls remain reproducible on demand; the primary job retains every gate.
+    if: github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false
       matrix:
@@ -229,7 +230,7 @@ jobs:
         env:
           RECONSTRUCTION: ${{ matrix.reconstruction }}
         run: |
-          git fetch --depth=1 origin 963e2f57d641ab35088be5a3b274eafeb4cd9281
+          git fetch --depth=1 origin 963e2f57d641ab35088be5a3b274eafeb4cd9281 9d634c5b6d6b3c6b4ab73e4489d38cd15162cf4b
           test "$(git show 963e2f57d641ab35088be5a3b274eafeb4cd9281:src/main/java/neqsim/process/equipment/pipeline/twophasepipe/SlugFilmCoupling.java | git hash-object --stdin)" = 5df9be6c42a58474e3c84cbe82c443c2e9e36d6e
           python3 - <<'PY'
           import os
@@ -238,8 +239,8 @@ jobs:
           path = Path("src/main/java/neqsim/process/equipment/pipeline/twophasepipe/SlugFilmCoupling.java")
           mode = os.environ["RECONSTRUCTION"]
           original = subprocess.check_output(["git", "show", "963e2f57d641ab35088be5a3b274eafeb4cd9281:" + str(path)], text=True)
-          current = path.read_text()
-          assert subprocess.check_output(["git", "hash-object", str(path)], text=True).strip() == "cd23e5d21f8bdb9c9de2437237d2d60fb3e4fa84"
+          current = subprocess.check_output(["git", "show", "9d634c5b6d6b3c6b4ab73e4489d38cd15162cf4b:" + str(path)], text=True)
+          assert subprocess.check_output(["git", "rev-parse", "9d634c5b6d6b3c6b4ab73e4489d38cd15162cf4b:" + str(path)], text=True).strip() == "cd23e5d21f8bdb9c9de2437237d2d60fb3e4fa84"
           def replace_once(source, before, after):
               assert source.count(before) == 1, "Expected one exact arithmetic block"
               return source.replace(before, after, 1)
