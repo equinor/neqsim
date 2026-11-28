@@ -65,7 +65,7 @@ class ReleaseSolidRiskAssessmentTest extends neqsim.NeqSimTest {
   }
 
   @Test
-  void discontinuousMixtureSolidRootFailsClosed() {
+  void mixtureSolidRiskSurvivesCubicCarrierRootTransition() {
     SystemInterface fluid = new SystemSrkEos(300.0, 60.0);
     fluid.addComponent("methane", 0.1);
     fluid.addComponent("CO2", 0.9);
@@ -77,8 +77,10 @@ class ReleaseSolidRiskAssessmentTest extends neqsim.NeqSimTest {
 
     ReleaseSolidRiskAssessment result = ReleaseSolidRiskAssessment.assess(fluid);
 
-    assertEquals(Status.UNRESOLVED, result.getStatus());
-    assertTrue(result.getMessage().contains("discontinuous"));
+    assertEquals(Status.SOLID_RISK, result.getStatus(), result.getMessage());
+    assertEquals("CO2", result.getComponent());
+    assertTrue(result.getSolidMassFraction() > 0.8);
+    assertTrue(result.getSolidMassFraction() < 1.0);
     assertEquals(180.0, fluid.getTemperature());
     assertEquals(2.0, fluid.getPressure());
     assertFalse(fluid.doSolidPhaseCheck());
