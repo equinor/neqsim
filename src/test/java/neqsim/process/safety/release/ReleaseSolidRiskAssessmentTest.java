@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.safety.release.ReleaseSolidRiskAssessment.Status;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /** Mixture-specific, fail-closed applicability checks for solid-free release models. */
 class ReleaseSolidRiskAssessmentTest extends neqsim.NeqSimTest {
@@ -39,6 +40,48 @@ class ReleaseSolidRiskAssessmentTest extends neqsim.NeqSimTest {
     ReleaseSolidRiskAssessment result = ReleaseSolidRiskAssessment.assess(fluid);
 
     assertEquals(Status.CLEAR, result.getStatus(), result.getMessage());
+  }
+
+  @Test
+  void warmInitializedSourceCloneRetainsMixtureSolidRisk() {
+    SystemInterface fluid = new SystemSrkEos(300.0, 60.0);
+    fluid.addComponent("methane", 0.1);
+    fluid.addComponent("CO2", 0.9);
+    fluid.setMixingRule("classic");
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.init(3);
+    fluid.setTemperature(180.0);
+    fluid.setPressure(1.0);
+
+    ReleaseSolidRiskAssessment result = ReleaseSolidRiskAssessment.assess(fluid);
+
+    assertEquals(Status.SOLID_RISK, result.getStatus(), result.getMessage());
+    assertEquals("CO2", result.getComponent());
+    assertTrue(result.getSolidMassFraction() > 0.8);
+    assertTrue(result.getSolidMassFraction() < 1.0);
+    assertEquals(180.0, fluid.getTemperature());
+    assertEquals(1.0, fluid.getPressure());
+    assertFalse(fluid.doSolidPhaseCheck());
+  }
+
+  @Test
+  void discontinuousMixtureSolidRootFailsClosed() {
+    SystemInterface fluid = new SystemSrkEos(300.0, 60.0);
+    fluid.addComponent("methane", 0.1);
+    fluid.addComponent("CO2", 0.9);
+    fluid.setMixingRule("classic");
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.init(3);
+    fluid.setTemperature(180.0);
+    fluid.setPressure(2.0);
+
+    ReleaseSolidRiskAssessment result = ReleaseSolidRiskAssessment.assess(fluid);
+
+    assertEquals(Status.UNRESOLVED, result.getStatus());
+    assertTrue(result.getMessage().contains("discontinuous"));
+    assertEquals(180.0, fluid.getTemperature());
+    assertEquals(2.0, fluid.getPressure());
+    assertFalse(fluid.doSolidPhaseCheck());
   }
 
   @Test
