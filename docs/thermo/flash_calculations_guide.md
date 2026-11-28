@@ -1232,13 +1232,18 @@ When precipitation leaves one fluid carrier phase, `SolidFlash1` solves the sele
 component fugacity equality with a bracketed scalar solve and obtains the fluid fraction
 from the non-solid component inventory. This path preserves every non-solid component and
 gives the same conservative result when the calculation starts from a warm initialized
-source clone. It remains a one-pure-solid equilibrium model; the calculation does not
+source clone. Gas and liquid cubic-EOS roots are bracketed separately, with the selected
+root pinned during each fugacity trial. This prevents an initialization-dependent gas-to-liquid
+root jump from appearing as a false solid-equilibrium crossing; the methane/CO2 regression at
+180 K and 2 bara and nearby pressure/temperature cases retain the gas carrier, close component
+inventory and close the CO2 gas/solid fugacity equality. It remains a one-pure-solid equilibrium model; the calculation does not
 represent simultaneous solids, particle transport or precipitation kinetics.
 At the original single-fluid saturation boundary, an incipient solid below the existing
 phase-fraction resolution is omitted only when the selected-component fugacity also
 closes within the existing solver tolerance. This preserves the fluid inventory after
-complete removal of precipitated solid. If a fluid-root transition creates a discontinuous fugacity bracket, the flash throws
-instead of returning a component-deficient or fugacity-unclosed state.
+complete removal of precipitated solid. If neither pinned cubic root supplies a continuous
+fugacity bracket, the flash throws instead of returning a component-deficient or
+fugacity-unclosed state.
 
 The empirical `ComponentSolid` model excludes methane using a large fugacity
 coefficient (`1e30`). The returned coefficient and stored coefficient are identical,

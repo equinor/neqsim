@@ -173,7 +173,7 @@ public class SolidFlash1Test extends neqsim.NeqSimTest {
   }
 
   @Test
-  void discontinuousSingleFluidSolidRootFailsClosed() {
+  void gasCarrierRootRemainsContinuousAcrossMetastableLiquidRoot() {
     SystemInterface source = new SystemSrkEos(300.0, 60.0);
     source.addComponent("methane", 0.1);
     source.addComponent("CO2", 0.9);
@@ -185,10 +185,51 @@ public class SolidFlash1Test extends neqsim.NeqSimTest {
     fluid.setMultiPhaseCheck(true);
     fluid.setSolidPhaseCheck("CO2");
 
-    IllegalStateException failure = assertThrows(IllegalStateException.class,
-        () -> new ThermodynamicOperations(fluid).TPSolidflash());
+    new ThermodynamicOperations(fluid).TPSolidflash();
 
-    assertTrue(failure.getMessage().contains("discontinuous"));
+    assertTrue(fluid.hasPhaseType(PhaseType.GAS));
+    assertTrue(fluid.hasPhaseType(PhaseType.SOLID));
+    assertEquals(2, fluid.getNumberOfPhases());
+    assertConserved(fluid);
+    PhaseInterface gas = fluid.getPhase(PhaseType.GAS);
+    double solidFugacityCoefficient = fluid.getPhase(PhaseType.SOLID).getComponent("CO2").getFugacityCoefficient();
+    double gasFugacityCoefficient = gas.getComponent("CO2").getFugacityCoefficient();
+    double fugacityResidual = Math
+        .abs(Math.log(gas.getComponent("CO2").getx() * gasFugacityCoefficient / solidFugacityCoefficient));
+    assertTrue(fugacityResidual < 1e-8, "solid/gas fugacity closure");
+    assertTrue(gas.getZ() > 0.9, "gas root retained");
+  }
+
+  @ParameterizedTest
+  @CsvSource({"179.0, 2.0", "181.0, 2.0", "180.0, 1.8", "180.0, 2.2"})
+  void nearbyGasSolidRootsRemainContinuous(double temperature, double pressure) {
+    SystemInterface source = new SystemSrkEos(300.0, 60.0);
+    source.addComponent("methane", 0.1);
+    source.addComponent("CO2", 0.9);
+    source.setMixingRule("classic");
+    new ThermodynamicOperations(source).TPflash();
+    SystemInterface fluid = source.clone();
+    fluid.setTemperature(temperature);
+    fluid.setPressure(pressure);
+    fluid.setMultiPhaseCheck(true);
+    fluid.setSolidPhaseCheck("CO2");
+
+    new ThermodynamicOperations(fluid).TPSolidflash();
+
+    assertTrue(fluid.hasPhaseType(PhaseType.GAS));
+    assertTrue(fluid.hasPhaseType(PhaseType.SOLID));
+    assertEquals(2, fluid.getNumberOfPhases());
+    assertConserved(fluid);
+    PhaseInterface gas = fluid.getPhase(PhaseType.GAS);
+    double solidFugacityCoefficient = fluid.getPhase(PhaseType.SOLID).getComponent("CO2").getFugacityCoefficient();
+    double gasFugacityCoefficient = gas.getComponent("CO2").getFugacityCoefficient();
+    double fugacityResidual = Math
+        .abs(Math.log(gas.getComponent("CO2").getx() * gasFugacityCoefficient / solidFugacityCoefficient));
+    assertTrue(fugacityResidual < 1e-8, "solid/gas fugacity closure");
+    assertTrue(gas.getZ() > 0.9, "gas root retained");
+    assertEquals(300.0, source.getTemperature());
+    assertEquals(60.0, source.getPressure());
+    assertFalse(source.doSolidPhaseCheck());
   }
 
   private SystemInterface sulfurWithTraceTbp() {

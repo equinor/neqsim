@@ -28,6 +28,7 @@ public class SolidFlash1 extends TPflash {
   static Logger logger = LogManager.getLogger(SolidFlash1.class);
   private static final LinearAlgebraOperations ALGEBRA = new EjmlLinearAlgebra();
   private static final double SINGLE_FLUID_FUGACITY_TOLERANCE = 1.0e-10;
+  private static final int SINGLE_FLUID_BRACKET_SAMPLES = 128;
 
   // SystemInterface clonedSystem;
   boolean multiPhaseTest = false;
@@ -540,8 +541,8 @@ public class SolidFlash1 extends TPflash {
    * @throws IllegalStateException if the one-fluid-phase equilibrium is nonphysical or does not converge
    */
   private void solveSingleFluidPhase() {
-    final int maxIterations = 100;
     final double compositionTolerance = 1.0e-12;
+    PhaseType preferredCarrierRoot = system.getPhase(0).getType() == PhaseType.GAS ? PhaseType.GAS : PhaseType.LIQUID;
     double solidFeedFraction = system.getPhase(0).getComponent(solidIndex).getz();
     double lowerMoleFraction = Math.max(phaseFractionMinimumLimit, compositionTolerance);
     double upperMargin = Math.max(compositionTolerance, 100.0 * phaseFractionMinimumLimit * (1.0 - solidFeedFraction));
@@ -549,22 +550,79 @@ public class SolidFlash1 extends TPflash {
     if (upperMoleFraction <= lowerMoleFraction) {
       throw new IllegalStateException("Selected solid inventory is below the one-fluid equilibrium resolution");
     }
-    double lowerResidual = setSingleFluidState(lowerMoleFraction, solidFeedFraction);
-    double upperResidual = setSingleFluidState(upperMoleFraction, solidFeedFraction);
-    if (!Double.isFinite(lowerResidual) || !Double.isFinite(upperResidual) || lowerResidual * upperResidual > 0.0) {
-      throw new IllegalStateException("Single-fluid solid equilibrium is not bracketed");
+    if (solveSingleFluidRoot(preferredCarrierRoot, lowerMoleFraction, upperMoleFraction, solidFeedFraction,
+        compositionTolerance)) {
+      return;
     }
+    PhaseType alternativeCarrierRoot = preferredCarrierRoot == PhaseType.GAS ? PhaseType.LIQUID : PhaseType.GAS;
+    if (solveSingleFluidRoot(alternativeCarrierRoot, lowerMoleFraction, upperMoleFraction, solidFeedFraction,
+        compositionTolerance)) {
+      return;
+    }
+    throw new IllegalStateException("Single-fluid solid equilibrium is not bracketed on a gas or liquid carrier root");
+  }
+
+  /**
+   * Locates and solves a continuous fugacity bracket on one requested cubic-EOS carrier root.
+   *
+   * @param carrierRootType gas or liquid cubic-EOS root
+   * @param lowerMoleFraction lower selected-component mole fraction
+   * @param upperMoleFraction upper selected-component mole fraction
+   * @param solidFeedFraction selected-component overall mole fraction
+   * @param compositionTolerance absolute mole-fraction convergence tolerance
+   * @return true if a continuous root was found and applied
+   */
+  private boolean solveSingleFluidRoot(PhaseType carrierRootType, double lowerMoleFraction, double upperMoleFraction,
+      double solidFeedFraction, double compositionTolerance) {
+    double previousMoleFraction = Double.NaN;
+    double previousResidual = Double.NaN;
+    for (int sample = 0; sample <= SINGLE_FLUID_BRACKET_SAMPLES; sample++) {
+      double moleFraction = lowerMoleFraction
+          + (upperMoleFraction - lowerMoleFraction) * sample / SINGLE_FLUID_BRACKET_SAMPLES;
+      double residual = setSingleFluidState(moleFraction, solidFeedFraction, carrierRootType);
+      if (!Double.isFinite(residual)) {
+        previousMoleFraction = Double.NaN;
+        previousResidual = Double.NaN;
+        continue;
+      }
+      if (Math.abs(residual) <= SINGLE_FLUID_FUGACITY_TOLERANCE) {
+        return true;
+      }
+      if (Double.isFinite(previousResidual) && previousResidual * residual < 0.0) {
+        return solveSingleFluidBracket(carrierRootType, previousMoleFraction, moleFraction, previousResidual,
+            solidFeedFraction, compositionTolerance);
+      }
+      previousMoleFraction = moleFraction;
+      previousResidual = residual;
+    }
+    return false;
+  }
+
+  /**
+   * Bisects a continuous single-fluid fugacity bracket on a fixed cubic-EOS root.
+   *
+   * @param carrierRootType gas or liquid cubic-EOS root
+   * @param lowerMoleFraction lower bracket composition
+   * @param upperMoleFraction upper bracket composition
+   * @param lowerResidual residual at the lower bracket
+   * @param solidFeedFraction selected-component overall mole fraction
+   * @param compositionTolerance absolute mole-fraction convergence tolerance
+   * @return true if the bracket converged to the fugacity tolerance
+   */
+  private boolean solveSingleFluidBracket(PhaseType carrierRootType, double lowerMoleFraction, double upperMoleFraction,
+      double lowerResidual, double solidFeedFraction, double compositionTolerance) {
+    final int maxIterations = 100;
     for (int iteration = 0; iteration < maxIterations; iteration++) {
       double middleMoleFraction = 0.5 * (lowerMoleFraction + upperMoleFraction);
-      double middleResidual = setSingleFluidState(middleMoleFraction, solidFeedFraction);
+      double middleResidual = setSingleFluidState(middleMoleFraction, solidFeedFraction, carrierRootType);
       if (!Double.isFinite(middleResidual)) {
-        throw new IllegalStateException("Nonfinite single-fluid solid fugacity residual");
+        return false;
       }
       if (Math.abs(middleResidual) <= SINGLE_FLUID_FUGACITY_TOLERANCE) {
-        return;
+        return true;
       }
       if (upperMoleFraction - lowerMoleFraction <= compositionTolerance) {
-        throw new IllegalStateException("Single-fluid solid fugacity root is discontinuous");
+        return false;
       }
       if (lowerResidual * middleResidual <= 0.0) {
         upperMoleFraction = middleMoleFraction;
@@ -573,7 +631,7 @@ public class SolidFlash1 extends TPflash {
         lowerResidual = middleResidual;
       }
     }
-    throw new IllegalStateException("Single-fluid solid equilibrium did not converge");
+    return false;
   }
 
   /**
@@ -581,9 +639,11 @@ public class SolidFlash1 extends TPflash {
    *
    * @param solidFluidMoleFraction selected-solid component mole fraction in the fluid phase
    * @param solidFeedFraction selected-solid component overall mole fraction
+   * @param carrierRootType gas or liquid cubic-EOS root retained from the multiphase solve
    * @return logarithmic selected-component fugacity residual
    */
-  private double setSingleFluidState(double solidFluidMoleFraction, double solidFeedFraction) {
+  private double setSingleFluidState(double solidFluidMoleFraction, double solidFeedFraction,
+      PhaseType carrierRootType) {
     double fluidBeta = (1.0 - solidFeedFraction) / (1.0 - solidFluidMoleFraction);
     if (!Double.isFinite(fluidBeta) || fluidBeta <= phaseFractionMinimumLimit
         || fluidBeta >= 1.0 - phaseFractionMinimumLimit) {
@@ -596,7 +656,13 @@ public class SolidFlash1 extends TPflash {
           : system.getPhase(0).getComponent(component).getz() / fluidBeta;
       system.getPhase(0).getComponent(component).setx(moleFraction);
     }
+    // Preserve the retained carrier's cubic root. Letting init reuse a stale liquid selector can
+    // create a discontinuous gas-to-liquid root jump inside an otherwise bracketed solid solve.
+    system.setPhaseType(0, carrierRootType);
     system.init(1);
+    if ((carrierRootType == PhaseType.GAS) != (system.getPhase(0).getType() == PhaseType.GAS)) {
+      return Double.NaN;
+    }
     double solidFugacityCoefficient = system.getPhase(PhaseType.SOLID).getComponent(solidIndex)
         .getFugacityCoefficient();
     double fluidFugacityCoefficient = system.getPhase(0).getComponent(solidIndex).getFugacityCoefficient();
