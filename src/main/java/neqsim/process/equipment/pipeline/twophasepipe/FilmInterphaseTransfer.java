@@ -705,27 +705,7 @@ public final class FilmInterphaseTransfer implements Serializable {
       }
     }
     int count = names.length;
-    double[][][] sources = new double[cells][3][count];
-    CellMode[][] modes = new CellMode[LIQUIDS][cells];
-    double[][] widths = new double[LIQUIDS][cells];
-    double[] netFluxes = new double[cells];
-    double[] interfaceTemperatures = new double[cells];
-    Arrays.fill(interfaceTemperatures, Double.NaN);
-    double[] slowestTimeConstants = new double[cells];
-    Arrays.fill(slowestTimeConstants, Double.NaN);
-    double[][] characteristicTimes = new double[LIQUIDS][cells];
-    Arrays.fill(characteristicTimes[OIL], Double.NaN);
-    Arrays.fill(characteristicTimes[AQUEOUS], Double.NaN);
-    double[] entrainedFractions = new double[cells];
-    double[] dropletAreas = new double[cells];
-    boolean[] donorLimited = new boolean[cells];
-    boolean[] equilibriumLimited = new boolean[cells];
-    boolean[] counterEquilibrium = new boolean[cells];
-    double[][] fogRates = new double[LIQUIDS][cells];
-    double[][] flashingRates = new double[LIQUIDS][cells];
-    double[] liquidLiquidRates = new double[cells];
-    double[] mixingTimes = new double[cells];
-    Arrays.fill(mixingTimes, Double.NaN);
+    Work work = new Work(cells, count);
     // Fractions of a distance covered within this step, per second, for the fixed time constants.
     double splitFractionRate = -Math.expm1(-timeStepSeconds / bulkPhaseSplitTimeSeconds) / timeStepSeconds;
     double fallbackFractionRate = -Math.expm1(-timeStepSeconds / fallbackRelaxationTimeSeconds) / timeStepSeconds;
@@ -743,19 +723,7 @@ public final class FilmInterphaseTransfer implements Serializable {
       boolean singlePhaseEquilibrium = !(hasPhase(equilibriumStates[cell], 0) && hasPhase(equilibriumStates[cell], 1));
       boolean gasMajority = mass[0] >= mass[1];
       if (singlePhaseEquilibrium) {
-        for (int component = 0; component < count; component++) {
-          double gasNow = inventory[cell][0][component] / length;
-          double oilNow = inventory[cell][1][component] / length;
-          double hydrocarbonTarget = gasNow + oilNow + targetChanges[cell][0][component]
-              + targetChanges[cell][1][component];
-          if (gasMajority) {
-            targetChanges[cell][1][component] = -oilNow;
-            targetChanges[cell][0][component] = hydrocarbonTarget - gasNow;
-          } else {
-            targetChanges[cell][0][component] = -gasNow;
-            targetChanges[cell][1][component] = hydrocarbonTarget - oilNow;
-          }
-        }
+        moveHydrocarbonTargetToMajority(targetChanges[cell], inventory[cell], length, gasMajority);
       }
       double[] holdup = {aqueousCell ? section.getOilHoldup() : section.getLiquidHoldup(), section.getWaterHoldup()};
       double[] liquidVelocity = {aqueousCell ? section.getOilVelocity() : section.getLiquidVelocity(),
@@ -773,45 +741,9 @@ public final class FilmInterphaseTransfer implements Serializable {
       // Bulk split: what each phase sheds when flashed on its own, as the net gain of every phase in kg.
       double[][] split = new double[3][count];
       if ((filmPossible[OIL] || filmPossible[AQUEOUS]) && bulkPhaseSplit) {
-        for (int from = 0; from < 3; from++) {
-          if (!(mass[from] > 0.0) || from > 0 && !filmPossible[from - 1]) {
-            continue;
-          }
-          // The flashes are held for a third of the split time: far shorter than the time over which the split
-          // acts, far longer than a solver substep.
-          boolean splitStale = timeSeconds < cachedSplitTimeSeconds[cell][from]
-              || timeSeconds - cachedSplitTimeSeconds[cell][from] >= bulkPhaseSplitTimeSeconds / 3.0;
-          if (splitStale) {
-            cachedShedKg[cell][from] = bulkSplit(template, names, inventory[cell][from], section, from);
-            cachedSplitTimeSeconds[cell][from] = timeSeconds;
-          }
-          double[][] shed = cachedShedKg[cell][from];
-          if (shed == null) {
-            continue;
-          }
-          for (int to = 0; to < 3; to++) {
-            // Nothing is shed into the hydrocarbon phase that the cell should lose.
-            if (to == from || singlePhaseEquilibrium && (to == 1 && gasMajority || to == 0 && !gasMajority)) {
-              continue;
-            }
-            double moved = 0.0;
-            for (int component = 0; component < count; component++) {
-              // A held split cannot take more than the phase holds now.
-              double amount = Math.min(shed[to][component],
-                  Math.max(0.0, inventory[cell][from][component] + split[from][component]));
-              split[to][component] += amount;
-              split[from][component] -= amount;
-              moved += amount;
-            }
-            if (from == 0) {
-              fogRates[to - 1][cell] += moved * splitFractionRate / length;
-            } else if (to == 0) {
-              flashingRates[from - 1][cell] += moved * splitFractionRate / length;
-            } else {
-              liquidLiquidRates[cell] += (to == 2 ? moved : -moved) * splitFractionRate / length;
-            }
-          }
-        }
+        boolean[] closed = {singlePhaseEquilibrium && !gasMajority, singlePhaseEquilibrium && gasMajority, false};
+        splitPhases(cell, template, names, inventory[cell], section, mass, filmPossible, closed, timeSeconds,
+            splitFractionRate / length, split, work);
       }
 
       // What is left once fog and flashing vapour have moved. Where oil and aqueous phase must change in opposite
@@ -826,74 +758,16 @@ public final class FilmInterphaseTransfer implements Serializable {
           liquidLiquid[component] = residual[AQUEOUS][component] > 0.0 ? amount : -amount;
           residual[OIL][component] += liquidLiquid[component];
           residual[AQUEOUS][component] -= liquidLiquid[component];
-          liquidLiquidRates[cell] += liquidLiquid[component] * liquidLiquidFractionRate;
+          work.liquidLiquidRates[cell] += liquidLiquid[component] * liquidLiquidFractionRate;
         }
       }
 
+      double[][] pairRates = new double[LIQUIDS][count];
       for (int liquid = 0; liquid < LIQUIDS; liquid++) {
         if (filmPossible[liquid]) {
-          // A time before the cached one means a rejected step was rolled back: solve again.
-          boolean rolledBack = timeSeconds < cachedTimeSeconds[cell][liquid];
-          // A film solved near equilibrium says little about the rates far from it: solve again once the distance to
-          // equilibrium has doubled.
-          double distance = 0.0;
-          for (double value : residual[liquid]) {
-            distance += Math.abs(value);
-          }
-          boolean grown = distance > 2.0 * cachedDistanceKgPerMetre[cell][liquid]
-              && distance > MINIMUM_RELATIVE_DISTANCE * mass[liquid + 1] / length;
-          boolean stale = rolledBack
-              || cachedFilm[cell][liquid]
-                  && (timeSeconds - cachedTimeSeconds[cell][liquid] >= updateIntervalSeconds || grown)
-              || !cachedFilm[cell][liquid] && timeSeconds >= cachedRetryTimeSeconds[cell][liquid];
-          if (stale) {
-            try {
-              filmSolveCount++;
-              double[] interfaceTemperature = new double[1];
-              // The film acts between the phases as they are once fog and flashing vapour have moved.
-              double[][] stable = new double[2][count];
-              for (int component = 0; component < count; component++) {
-                stable[0][component] = Math.max(0.0, inventory[cell][0][component] + split[0][component]);
-                stable[1][component] = Math.max(0.0,
-                    inventory[cell][liquid + 1][component] + split[liquid + 1][component]);
-              }
-              if (liquid == OIL && isMiscible(template, names, stable, section)) {
-                // No mixture of the two phases splits: there is no interface to solve.
-                cachedMixingTimeSeconds[cell] = mixingTime(section);
-                cachedSolution[cell][liquid] = false;
-                interfaceTemperature[0] = section.getTemperature();
-              } else {
-                double[] flux = solveFilm(cell, liquid, section, template, names, stable, holdup[liquid],
-                    liquidVelocity[liquid], interfaceTemperature);
-                cachedMassFluxKgPerSquareMetreSecond[cell][liquid] = flux;
-                cachedSolution[cell][liquid] = true;
-              }
-              cachedInterfaceTemperatureK[cell][liquid] = interfaceTemperature[0];
-              cachedTargetKgPerMetre[cell][liquid] = residual[liquid].clone();
-              cachedDistanceKgPerMetre[cell][liquid] = distance;
-              cachedFilm[cell][liquid] = true;
-              cachedTimeSeconds[cell][liquid] = timeSeconds;
-            } catch (RuntimeException exception) {
-              filmFailureCount++;
-              lastFailure = "cell " + cell + (liquid == OIL ? "" : " (aqueous)") + " at " + timeSeconds + " s: "
-                  + exception.getMessage();
-              cachedTimeSeconds[cell][liquid] = timeSeconds;
-              if (cachedFilm[cell][liquid] && cachedSolution[cell][liquid]) {
-                // The rate constants of the last converged film are a property of the flow: they stay in use until
-                // the next attempt, one update interval from now.
-                cachedDistanceKgPerMetre[cell][liquid] = Math.max(cachedDistanceKgPerMetre[cell][liquid], distance);
-              } else {
-                cachedFilm[cell][liquid] = false;
-                cachedSolution[cell][liquid] = false;
-                if (liquid == OIL) {
-                  cachedMixingTimeSeconds[cell] = 0.0;
-                }
-                cachedRetryTimeSeconds[cell][liquid] = timeSeconds
-                    + FAILURE_RETRY_FACTOR * Math.max(updateIntervalSeconds, timeStepSeconds);
-              }
-            }
-          }
-          filmPossible[liquid] = cachedFilm[cell][liquid];
+          filmPossible[liquid] = refreshFilm(cell, liquid, section, template, names, inventory[cell], split,
+              residual[liquid], mass[liquid + 1] / length, holdup[liquid], liquidVelocity[liquid], timeSeconds,
+              timeStepSeconds);
         } else {
           cachedFilm[cell][liquid] = false;
           cachedSolution[cell][liquid] = false;
@@ -903,113 +777,22 @@ public final class FilmInterphaseTransfer implements Serializable {
           }
           cachedRetryTimeSeconds[cell][liquid] = Double.NEGATIVE_INFINITY;
         }
-      }
-
-      double[][] pairRates = new double[LIQUIDS][count];
-      double pipeArea = Math.PI * section.getDiameter() * section.getDiameter() / 4.0;
-      double gasArea = section.getGasHoldup() * pipeArea;
-      for (int liquid = 0; liquid < LIQUIDS; liquid++) {
         double[] target = residual[liquid];
         if (liquid == OIL && filmPossible[OIL] && cachedMixingTimeSeconds[cell] > 0.0) {
           // No interface: the phase the cell should lose mixes into the other.
-          modes[OIL][cell] = CellMode.MISCIBLE;
-          mixingTimes[cell] = Double.isNaN(miscibleMixingTimeSeconds) ? cachedMixingTimeSeconds[cell]
+          work.modes[OIL][cell] = CellMode.MISCIBLE;
+          work.mixingTimes[cell] = Double.isNaN(miscibleMixingTimeSeconds) ? cachedMixingTimeSeconds[cell]
               : miscibleMixingTimeSeconds;
-          interfaceTemperatures[cell] = cachedInterfaceTemperatureK[cell][OIL];
-          double mixingFractionRate = -Math.expm1(-timeStepSeconds / mixingTimes[cell]) / timeStepSeconds;
+          work.interfaceTemperatures[cell] = cachedInterfaceTemperatureK[cell][OIL];
+          double mixingFractionRate = -Math.expm1(-timeStepSeconds / work.mixingTimes[cell]) / timeStepSeconds;
           for (int component = 0; component < count; component++) {
             pairRates[OIL][component] = target[component] * mixingFractionRate;
           }
         } else if (filmPossible[liquid]) {
-          modes[liquid][cell] = CellMode.FILM;
-          double[] flux = cachedMassFluxKgPerSquareMetreSecond[cell][liquid];
-          double netFlux = sum(flux);
-          double netTarget = sum(target);
-          boolean condensing = transferLaw == TransferLaw.FILM_FLUX ? netFlux > 0.0 : netTarget > 0.0;
-          // Two liquids share the interface in proportion to their volume; droplets carry their own surface.
+          work.modes[liquid][cell] = CellMode.FILM;
           double share = wetHoldup > holdup[liquid] ? holdup[liquid] / wetHoldup : 1.0;
-          double dispersedArea = cachedDispersedAreaSquareMetresPerMetre[cell][liquid];
-          double width = interfaceAreaFactor
-              * (dispersedArea > 0.0 ? dispersedArea * (cachedDispersedLiquid[cell][liquid] ? 1.0 : share)
-                  : interfaceWidth(section, condensing) * share);
-          widths[liquid][cell] = width;
-          double gasMoles = 0.0;
-          double liquidMoles = 0.0;
-          for (int component = 0; component < count; component++) {
-            gasMoles += inventory[cell][0][component] / cachedMolarMassKgPerMol[cell][component];
-            liquidMoles += inventory[cell][liquid + 1][component] / cachedMolarMassKgPerMol[cell][component];
-          }
-          // Only the major movers set the reported time constant: components whose equilibrium change is at least a
-          // tenth of the largest one.
-          double significantTarget = 0.0;
-          for (double value : target) {
-            significantTarget = Math.max(significantTarget, 0.1 * Math.abs(value));
-          }
-          double dropletArea = 0.0;
-          if (dropletField && cachedEntrainedFraction[cell][liquid] > 0.0
-              && cachedDropletDiameterMetres[cell][liquid] > 0.0) {
-            dropletArea = 6.0 * cachedEntrainedFraction[cell][liquid] * holdup[liquid] * pipeArea
-                / cachedDropletDiameterMetres[cell][liquid];
-          }
-          double slowest = Double.NaN;
-          double distance = 0.0;
-          double initialRate = 0.0;
-          for (int component = 0; component < count; component++) {
-            double filmConductance = cachedOverallCoefficientMetresPerSecond[cell][liquid][component] * width;
-            double dropletConductance = cachedDropletOverallCoefficientMetresPerSecond[cell][liquid][component]
-                * dropletArea;
-            double rate;
-            if (transferLaw == TransferLaw.FILM_FLUX) {
-              rate = flux[component] * width;
-              if (singlePhaseEquilibrium && liquid == OIL && rate * target[component] <= 0.0) {
-                rate = 0.0;
-              }
-              // A film flux must not carry a component past its local equilibrium inventory within one step.
-              if (rate * target[component] > 0.0 && Math.abs(rate) * timeStepSeconds > Math.abs(target[component])) {
-                rate = target[component] / timeStepSeconds;
-                equilibriumLimited[cell] = true;
-              }
-            } else if (transferLaw == TransferLaw.TWO_RESISTANCE_RELAXATION) {
-              // Two finite compartments exchanging through two film resistances approach equilibrium at this rate.
-              double rateConstant = (filmConductance + dropletConductance) / gasArea
-                  * (1.0 + cachedEquilibriumRatio[cell][liquid][component] * gasMoles / liquidMoles);
-              rate = target[component] * -Math.expm1(-rateConstant * timeStepSeconds) / timeStepSeconds;
-              slowest = Double.isNaN(slowest) ? 1.0 / rateConstant : Math.max(slowest, 1.0 / rateConstant);
-              distance += Math.abs(target[component]);
-              initialRate += rateConstant * Math.abs(target[component]);
-            } else {
-              // The film flux of the component, raised by the droplet interface in proportion to its conductance,
-              // over the distance to equilibrium at the time of the film solve: a rate constant, which is held.
-              double filmRate = flux[component] * width
-                  * (filmConductance > 0.0 ? 1.0 + dropletConductance / filmConductance : 1.0);
-              double solvedTarget = cachedTargetKgPerMetre[cell][liquid][component];
-              if (filmRate * solvedTarget > 0.0) {
-                // Toward local equilibrium: exponential approach, starting at the film flux when the film is fresh.
-                double rateConstant = filmRate / solvedTarget;
-                rate = target[component] * -Math.expm1(-rateConstant * timeStepSeconds) / timeStepSeconds;
-                distance += Math.abs(target[component]);
-                initialRate += rateConstant * Math.abs(target[component]);
-                if (Math.abs(target[component]) > significantTarget) {
-                  slowest = Double.isNaN(slowest) ? 1.0 / rateConstant : Math.max(slowest, 1.0 / rateConstant);
-                }
-              } else {
-                // Away from local equilibrium: held until film flux and equilibrium agree.
-                rate = 0.0;
-                counterEquilibrium[cell] |= filmRate != 0.0 && solvedTarget != 0.0;
-              }
-            }
-            pairRates[liquid][component] = rate;
-          }
-          if (initialRate > 0.0) {
-            characteristicTimes[liquid][cell] = distance / initialRate;
-          }
-          if (liquid == OIL) {
-            netFluxes[cell] = netFlux;
-            interfaceTemperatures[cell] = cachedInterfaceTemperatureK[cell][OIL];
-            slowestTimeConstants[cell] = slowest;
-            entrainedFractions[cell] = dropletArea > 0.0 ? cachedEntrainedFraction[cell][OIL] : 0.0;
-            dropletAreas[cell] = dropletArea;
-          }
+          filmRates(cell, liquid, section, inventory[cell], target, holdup[liquid], share,
+              singlePhaseEquilibrium && liquid == OIL, timeStepSeconds, pairRates[liquid], work);
         } else {
           // Appearance, a trace phase or a failed film solve.
           boolean any = false;
@@ -1017,7 +800,7 @@ public final class FilmInterphaseTransfer implements Serializable {
             pairRates[liquid][component] = target[component] * fallbackFractionRate;
             any |= pairRates[liquid][component] != 0.0;
           }
-          modes[liquid][cell] = any ? CellMode.RELAXATION : CellMode.NONE;
+          work.modes[liquid][cell] = any ? CellMode.RELAXATION : CellMode.NONE;
         }
       }
 
@@ -1036,15 +819,334 @@ public final class FilmInterphaseTransfer implements Serializable {
             factor = Math.min(factor, limit / -rate[phase]);
           }
         }
-        donorLimited[cell] |= factor < 1.0;
-        sources[cell][1][component] = rate[1] * factor;
-        sources[cell][2][component] = rate[2] * factor;
-        sources[cell][0][component] = -(sources[cell][1][component] + sources[cell][2][component]);
+        work.donorLimited[cell] |= factor < 1.0;
+        work.sources[cell][1][component] = rate[1] * factor;
+        work.sources[cell][2][component] = rate[2] * factor;
+        work.sources[cell][0][component] = -(work.sources[cell][1][component] + work.sources[cell][2][component]);
       }
     }
-    return new Result(sources, modes, widths, netFluxes, interfaceTemperatures, slowestTimeConstants,
-        characteristicTimes, entrainedFractions, dropletAreas, donorLimited, equilibriumLimited, counterEquilibrium,
-        fogRates, flashingRates, liquidLiquidRates, mixingTimes, filmSolveCount, filmFailureCount, lastFailure);
+    return new Result(work.sources, work.modes, work.widths, work.netFluxes, work.interfaceTemperatures,
+        work.slowestTimeConstants, work.characteristicTimes, work.entrainedFractions, work.dropletAreas,
+        work.donorLimited, work.equilibriumLimited, work.counterEquilibrium, work.fogRates, work.flashingRates,
+        work.liquidLiquidRates, work.mixingTimes, filmSolveCount, filmFailureCount, lastFailure);
+  }
+
+  /** Arrays filled during one evaluation. */
+  private static final class Work {
+    private final double[][][] sources;
+    private final CellMode[][] modes;
+    private final double[][] widths;
+    private final double[] netFluxes;
+    private final double[] interfaceTemperatures;
+    private final double[] slowestTimeConstants;
+    private final double[][] characteristicTimes;
+    private final double[] entrainedFractions;
+    private final double[] dropletAreas;
+    private final boolean[] donorLimited;
+    private final boolean[] equilibriumLimited;
+    private final boolean[] counterEquilibrium;
+    private final double[][] fogRates;
+    private final double[][] flashingRates;
+    private final double[] liquidLiquidRates;
+    private final double[] mixingTimes;
+
+    private Work(int cells, int components) {
+      sources = new double[cells][3][components];
+      modes = new CellMode[LIQUIDS][cells];
+      widths = new double[LIQUIDS][cells];
+      netFluxes = new double[cells];
+      interfaceTemperatures = new double[cells];
+      Arrays.fill(interfaceTemperatures, Double.NaN);
+      slowestTimeConstants = new double[cells];
+      Arrays.fill(slowestTimeConstants, Double.NaN);
+      characteristicTimes = new double[LIQUIDS][cells];
+      Arrays.fill(characteristicTimes[OIL], Double.NaN);
+      Arrays.fill(characteristicTimes[AQUEOUS], Double.NaN);
+      entrainedFractions = new double[cells];
+      dropletAreas = new double[cells];
+      donorLimited = new boolean[cells];
+      equilibriumLimited = new boolean[cells];
+      counterEquilibrium = new boolean[cells];
+      fogRates = new double[LIQUIDS][cells];
+      flashingRates = new double[LIQUIDS][cells];
+      liquidLiquidRates = new double[cells];
+      mixingTimes = new double[cells];
+      Arrays.fill(mixingTimes, Double.NaN);
+    }
+  }
+
+  /**
+   * Give the hydrocarbon content of a cell to the hydrocarbon phase that holds more mass.
+   *
+   * @param target phase/component equilibrium changes of the cell in kg/m, changed in place
+   * @param inventory phase/component masses of the cell in kg
+   * @param length cell length in m
+   * @param gasMajority true when the gas holds at least as much mass as the oil
+   */
+  private static void moveHydrocarbonTargetToMajority(double[][] target, double[][] inventory, double length,
+      boolean gasMajority) {
+    for (int component = 0; component < target[0].length; component++) {
+      double gasNow = inventory[0][component] / length;
+      double oilNow = inventory[1][component] / length;
+      double hydrocarbonTarget = gasNow + oilNow + target[0][component] + target[1][component];
+      if (gasMajority) {
+        target[1][component] = -oilNow;
+        target[0][component] = hydrocarbonTarget - gasNow;
+      } else {
+        target[0][component] = -gasNow;
+        target[1][component] = hydrocarbonTarget - oilNow;
+      }
+    }
+  }
+
+  /**
+   * Flash every phase of a cell on its own and add what it sheds to the net gain of the other phases.
+   *
+   * @param cell cell index
+   * @param template thermodynamic template
+   * @param names transported component names
+   * @param inventory phase/component masses of the cell in kg
+   * @param section hydrodynamic cell
+   * @param mass phase masses of the cell in kg
+   * @param filmPossible liquids that are present in an amount that can hold an interface
+   * @param closed phases that must not receive anything (the hydrocarbon phase the cell should lose)
+   * @param timeSeconds simulation time in s
+   * @param rateFactor fraction of a split that moves per second, divided by the cell length in m
+   * @param split net gain of every phase and component in kg, added to
+   * @param work diagnostics of the evaluation
+   */
+  private void splitPhases(int cell, SystemInterface template, String[] names, double[][] inventory,
+      TwoFluidSection section, double[] mass, boolean[] filmPossible, boolean[] closed, double timeSeconds,
+      double rateFactor, double[][] split, Work work) {
+    for (int from = 0; from < 3; from++) {
+      if (!(mass[from] > 0.0) || from > 0 && !filmPossible[from - 1]) {
+        continue;
+      }
+      // The flashes are held for a third of the split time: far shorter than the time over which the split acts, far
+      // longer than a solver substep.
+      boolean stale = timeSeconds < cachedSplitTimeSeconds[cell][from]
+          || timeSeconds - cachedSplitTimeSeconds[cell][from] >= bulkPhaseSplitTimeSeconds / 3.0;
+      if (stale) {
+        cachedShedKg[cell][from] = bulkSplit(template, names, inventory[from], section, from);
+        cachedSplitTimeSeconds[cell][from] = timeSeconds;
+      }
+      double[][] shed = cachedShedKg[cell][from];
+      if (shed == null) {
+        continue;
+      }
+      for (int to = 0; to < 3; to++) {
+        if (to == from || closed[to]) {
+          continue;
+        }
+        double moved = 0.0;
+        for (int component = 0; component < names.length; component++) {
+          // A held split cannot take more than the phase holds now.
+          double amount = Math.min(shed[to][component],
+              Math.max(0.0, inventory[from][component] + split[from][component]));
+          split[to][component] += amount;
+          split[from][component] -= amount;
+          moved += amount;
+        }
+        if (from == 0) {
+          work.fogRates[to - 1][cell] += moved * rateFactor;
+        } else if (to == 0) {
+          work.flashingRates[from - 1][cell] += moved * rateFactor;
+        } else {
+          work.liquidLiquidRates[cell] += (to == 2 ? moved : -moved) * rateFactor;
+        }
+      }
+    }
+  }
+
+  /**
+   * Solve the film between the gas and one liquid of a cell again when its held solution is stale.
+   *
+   * @param cell cell index
+   * @param liquid {@link #OIL} or {@link #AQUEOUS}
+   * @param section hydrodynamic cell
+   * @param template thermodynamic template
+   * @param names transported component names
+   * @param inventory phase/component masses of the cell in kg
+   * @param split net gain of every phase and component from the bulk split in kg
+   * @param residual distance of the liquid to local equilibrium per component in kg/m
+   * @param liquidMassPerMetre mass of the liquid in kg/m
+   * @param holdup volume fraction of the liquid
+   * @param liquidSpeed velocity of the liquid in m/s
+   * @param timeSeconds simulation time in s
+   * @param timeStepSeconds step in s
+   * @return true when the cell holds a film solution or a miscibility result for this liquid
+   */
+  private boolean refreshFilm(int cell, int liquid, TwoFluidSection section, SystemInterface template, String[] names,
+      double[][] inventory, double[][] split, double[] residual, double liquidMassPerMetre, double holdup,
+      double liquidSpeed, double timeSeconds, double timeStepSeconds) {
+    // A time before the cached one means a rejected step was rolled back: solve again.
+    boolean rolledBack = timeSeconds < cachedTimeSeconds[cell][liquid];
+    // A film solved near equilibrium says little about the rates far from it: solve again once the distance to
+    // equilibrium has doubled.
+    double distance = 0.0;
+    for (double value : residual) {
+      distance += Math.abs(value);
+    }
+    boolean grown = distance > 2.0 * cachedDistanceKgPerMetre[cell][liquid]
+        && distance > MINIMUM_RELATIVE_DISTANCE * liquidMassPerMetre;
+    boolean stale = rolledBack
+        || cachedFilm[cell][liquid] && (timeSeconds - cachedTimeSeconds[cell][liquid] >= updateIntervalSeconds || grown)
+        || !cachedFilm[cell][liquid] && timeSeconds >= cachedRetryTimeSeconds[cell][liquid];
+    if (!stale) {
+      return cachedFilm[cell][liquid];
+    }
+    try {
+      filmSolveCount++;
+      double[] interfaceTemperature = new double[1];
+      // The film acts between the phases as they are once fog and flashing vapour have moved.
+      double[][] stable = new double[2][names.length];
+      for (int component = 0; component < names.length; component++) {
+        stable[0][component] = Math.max(0.0, inventory[0][component] + split[0][component]);
+        stable[1][component] = Math.max(0.0, inventory[liquid + 1][component] + split[liquid + 1][component]);
+      }
+      if (liquid == OIL && isMiscible(template, names, stable, section)) {
+        // No mixture of the two phases splits: there is no interface to solve.
+        cachedMixingTimeSeconds[cell] = mixingTime(section);
+        cachedSolution[cell][liquid] = false;
+        interfaceTemperature[0] = section.getTemperature();
+      } else {
+        double[] flux = solveFilm(cell, liquid, section, template, names, stable, holdup, liquidSpeed,
+            interfaceTemperature);
+        cachedMassFluxKgPerSquareMetreSecond[cell][liquid] = flux;
+        cachedSolution[cell][liquid] = true;
+      }
+      cachedInterfaceTemperatureK[cell][liquid] = interfaceTemperature[0];
+      cachedTargetKgPerMetre[cell][liquid] = residual.clone();
+      cachedDistanceKgPerMetre[cell][liquid] = distance;
+      cachedFilm[cell][liquid] = true;
+      cachedTimeSeconds[cell][liquid] = timeSeconds;
+    } catch (RuntimeException exception) {
+      filmFailureCount++;
+      lastFailure = "cell " + cell + (liquid == OIL ? "" : " (aqueous)") + " at " + timeSeconds + " s: "
+          + exception.getMessage();
+      cachedTimeSeconds[cell][liquid] = timeSeconds;
+      if (cachedFilm[cell][liquid] && cachedSolution[cell][liquid]) {
+        // The rate constants of the last converged film are a property of the flow: they stay in use until the next
+        // attempt, one update interval from now.
+        cachedDistanceKgPerMetre[cell][liquid] = Math.max(cachedDistanceKgPerMetre[cell][liquid], distance);
+      } else {
+        cachedFilm[cell][liquid] = false;
+        cachedSolution[cell][liquid] = false;
+        if (liquid == OIL) {
+          cachedMixingTimeSeconds[cell] = 0.0;
+        }
+        cachedRetryTimeSeconds[cell][liquid] = timeSeconds
+            + FAILURE_RETRY_FACTOR * Math.max(updateIntervalSeconds, timeStepSeconds);
+      }
+    }
+    return cachedFilm[cell][liquid];
+  }
+
+  /**
+   * Turn the held film solution of one liquid of a cell into component rates.
+   *
+   * @param cell cell index
+   * @param liquid {@link #OIL} or {@link #AQUEOUS}
+   * @param section hydrodynamic cell
+   * @param inventory phase/component masses of the cell in kg
+   * @param target distance of the liquid to local equilibrium per component in kg/m
+   * @param holdup volume fraction of the liquid
+   * @param share share of the gas-liquid interface that this liquid holds
+   * @param minorityOnly true when the liquid can only lose components (single-phase hydrocarbon equilibrium)
+   * @param timeStepSeconds step in s
+   * @param rates component rates from gas to liquid in kg/(m s), filled
+   * @param work diagnostics of the evaluation
+   */
+  private void filmRates(int cell, int liquid, TwoFluidSection section, double[][] inventory, double[] target,
+      double holdup, double share, boolean minorityOnly, double timeStepSeconds, double[] rates, Work work) {
+    int count = target.length;
+    double pipeArea = Math.PI * section.getDiameter() * section.getDiameter() / 4.0;
+    double gasArea = section.getGasHoldup() * pipeArea;
+    double[] flux = cachedMassFluxKgPerSquareMetreSecond[cell][liquid];
+    double netFlux = sum(flux);
+    boolean condensing = transferLaw == TransferLaw.FILM_FLUX ? netFlux > 0.0 : sum(target) > 0.0;
+    // Two liquids share the interface in proportion to their volume; droplets carry their own surface.
+    double dispersedArea = cachedDispersedAreaSquareMetresPerMetre[cell][liquid];
+    double width = interfaceAreaFactor
+        * (dispersedArea > 0.0 ? dispersedArea * (cachedDispersedLiquid[cell][liquid] ? 1.0 : share)
+            : interfaceWidth(section, condensing) * share);
+    work.widths[liquid][cell] = width;
+    double gasMoles = 0.0;
+    double liquidMoles = 0.0;
+    for (int component = 0; component < count; component++) {
+      gasMoles += inventory[0][component] / cachedMolarMassKgPerMol[cell][component];
+      liquidMoles += inventory[liquid + 1][component] / cachedMolarMassKgPerMol[cell][component];
+    }
+    // Only the major movers set the reported time constant: components whose equilibrium change is at least a tenth
+    // of the largest one.
+    double significantTarget = 0.0;
+    for (double value : target) {
+      significantTarget = Math.max(significantTarget, 0.1 * Math.abs(value));
+    }
+    double dropletArea = 0.0;
+    if (dropletField && cachedEntrainedFraction[cell][liquid] > 0.0
+        && cachedDropletDiameterMetres[cell][liquid] > 0.0) {
+      dropletArea = 6.0 * cachedEntrainedFraction[cell][liquid] * holdup * pipeArea
+          / cachedDropletDiameterMetres[cell][liquid];
+    }
+    double slowest = Double.NaN;
+    double distance = 0.0;
+    double initialRate = 0.0;
+    for (int component = 0; component < count; component++) {
+      double filmConductance = cachedOverallCoefficientMetresPerSecond[cell][liquid][component] * width;
+      double dropletConductance = cachedDropletOverallCoefficientMetresPerSecond[cell][liquid][component] * dropletArea;
+      double rate;
+      if (transferLaw == TransferLaw.FILM_FLUX) {
+        rate = flux[component] * width;
+        if (minorityOnly && rate * target[component] <= 0.0) {
+          rate = 0.0;
+        }
+        // A film flux must not carry a component past its local equilibrium inventory within one step.
+        if (rate * target[component] > 0.0 && Math.abs(rate) * timeStepSeconds > Math.abs(target[component])) {
+          rate = target[component] / timeStepSeconds;
+          work.equilibriumLimited[cell] = true;
+        }
+      } else if (transferLaw == TransferLaw.TWO_RESISTANCE_RELAXATION) {
+        // Two finite compartments exchanging through two film resistances approach equilibrium at this rate.
+        double rateConstant = (filmConductance + dropletConductance) / gasArea
+            * (1.0 + cachedEquilibriumRatio[cell][liquid][component] * gasMoles / liquidMoles);
+        rate = target[component] * -Math.expm1(-rateConstant * timeStepSeconds) / timeStepSeconds;
+        slowest = Double.isNaN(slowest) ? 1.0 / rateConstant : Math.max(slowest, 1.0 / rateConstant);
+        distance += Math.abs(target[component]);
+        initialRate += rateConstant * Math.abs(target[component]);
+      } else {
+        // The film flux of the component, raised by the droplet interface in proportion to its conductance, over the
+        // distance to equilibrium at the time of the film solve: a rate constant, which is held.
+        double filmRate = flux[component] * width
+            * (filmConductance > 0.0 ? 1.0 + dropletConductance / filmConductance : 1.0);
+        double solvedTarget = cachedTargetKgPerMetre[cell][liquid][component];
+        if (filmRate * solvedTarget > 0.0) {
+          // Toward local equilibrium: exponential approach, starting at the film flux when the film is fresh.
+          double rateConstant = filmRate / solvedTarget;
+          rate = target[component] * -Math.expm1(-rateConstant * timeStepSeconds) / timeStepSeconds;
+          distance += Math.abs(target[component]);
+          initialRate += rateConstant * Math.abs(target[component]);
+          if (Math.abs(target[component]) > significantTarget) {
+            slowest = Double.isNaN(slowest) ? 1.0 / rateConstant : Math.max(slowest, 1.0 / rateConstant);
+          }
+        } else {
+          // Away from local equilibrium: held until film flux and equilibrium agree.
+          rate = 0.0;
+          work.counterEquilibrium[cell] |= filmRate != 0.0 && solvedTarget != 0.0;
+        }
+      }
+      rates[component] = rate;
+    }
+    if (initialRate > 0.0) {
+      work.characteristicTimes[liquid][cell] = distance / initialRate;
+    }
+    if (liquid == OIL) {
+      work.netFluxes[cell] = netFlux;
+      work.interfaceTemperatures[cell] = cachedInterfaceTemperatureK[cell][OIL];
+      work.slowestTimeConstants[cell] = slowest;
+      work.entrainedFractions[cell] = dropletArea > 0.0 ? cachedEntrainedFraction[cell][OIL] : 0.0;
+      work.dropletAreas[cell] = dropletArea;
+    }
   }
 
   /**

@@ -329,23 +329,45 @@ After a rise from 80 to 86 bara neither phase sheds anything.
 | Time (h) | Stage | Inlet pressure (bara) | 30 s relaxation to equilibrium | Non-equilibrium model |
 |----------|-------|-----------------------|--------------------------------|-----------------------|
 | 1.25 | blowdown | 104 | 11 | 11 |
-| 1.50 | blowdown | 99 | 64 | 68 |
-| 2.00 | end of blowdown | 87 | 191 | 182 |
-| 2.50 | end of shut-in | 87 | 178 | 184 |
-| 2.75 | refill | 99 | 101 | 152 |
+| 1.50 | blowdown | 99 | 64 | 62 |
+| 2.00 | end of blowdown | 87 | 191 | 181 |
+| 2.50 | end of shut-in | 87 | 178 | 181 |
+| 2.75 | refill | 99 | 101 | 145 |
 | 3.00 | refill | 112 | 9 | 95 |
-| 3.25 | refill | 127 | 0 | 50 |
+| 3.25 | refill | 127 | 0 | 55 |
 | 3.50 | refill | 141 | 0 | 11 |
-| 4.00 | refill | 170 | 0 | 1.5 |
-| 4.50 | end of refill | 199 | 0 | 0.4 |
+| 4.00 | refill | 170 | 0 | 2.8 |
+| 4.50 | end of refill | 199 | 0 | 0.04 |
 
 - Condensation follows equilibrium within 5 %: the gas forms fog as it passes its dew point.
-- Evaporation lags. When the equilibrium run is dry (3.25 h) the non-equilibrium run still holds a quarter of
-  its liquid.
-- From 3.0 h one or two cells are miscible. The 0.1 to 0.4 t left at the end is a rich layer in a miscible cell
-  at the closed end, where the gas is at rest.
-- 631 film solves, 5 failed (0.8 %). With the first version of the default law the same case gave 687 t of
-  "liquid" at 1.6 h and 33 failures in 121 solves.
+- Evaporation lags. When the equilibrium run is dry (3.25 h) the non-equilibrium run still holds 30 % of its
+  liquid.
+- From 3.5 h two to four cells are miscible and mix with the turbulent mixing time.
+- 768 film solves, 14 failed (1.8 %), all between 127 and 185 bara; those cells kept their last rate constants.
+  With the first version of the default law the same case gave 687 t of "liquid" at 1.6 h and 33 failures in
+  121 solves.
+
+**20 km line with a small aqueous phase** (1.01 m bore, 6 cells; lean gas with 150 ppm water and 20 ppm TEG,
+CPA; flowing at 200 kg/s, then the inlet is shut and the line is blown down from 130 to 100 bara in 15 min,
+which cools the gas from 5 to −10 °C, shut in 5 min, refilled to 196 bara in 15 min and held 5 min;
+2026-11-28). The line starts with 31.1 t of glycol solution, 0.18 % of its volume. Change of the aqueous mass
+from the start, kg:
+
+| Time (min) | Stage | 30 s relaxation to equilibrium | Non-equilibrium model |
+|------------|-------|--------------------------------|-----------------------|
+| 5 | blowdown | +35 | +24 |
+| 15 | end of blowdown | +82 | +69 |
+| 20 | end of shut-in | +72 | +71 |
+| 25 | refill, 130 bara | −17 | +51 |
+| 30 | refill, 163 bara | −126 | +2 |
+| 35 | end of refill, 196 bara | −244 | −44 |
+| 40 | end of hold | −197 | −67 |
+
+- Water condensing out of the cooling gas follows equilibrium at about 85 %: a little forms as fog and the rest is
+  absorbed on the wall.
+- Water returning to the compressed gas has to cross the small surface of the solution: characteristic times
+  of 30 to 80 min, so only a fifth of the equilibrium amount has moved at the end of a 15 min refill.
+- 156 film solves, 14 failed. The run took 1.8 times as long as the relaxation run (14 min against 8 min).
 
 **707 km rich-gas export line** (1.01 m bore, real seabed profile, 25 cells; inlet shut, line settled at 130 bara and
 blown down through the outlet to 84 bara average in 16 h, held 12 h, repressurised from the inlet with the outlet
