@@ -47,6 +47,12 @@ jobs:
           ./mvnw -B -ntp
           -Dtest=CompositionalLinePackPipeTest#twoFluidPipeLiquidMassIncludesDenseBrine+twoFluidPipeLiquidInventoryRejectsUnknownUnit+blowdownFormsRetrogradeLiquidAndGuardStaysShut,StratifiedLiquidMomentumTest,TwoFluidUnsplitModelAdapterTest
           test
+      - name: Qualify combined process rollback, wet UMR flash and reconciliation
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
+        run: >-
+          ./mvnw -B -ntp
+          -Dtest=TransientStepTransactionTest,PhaseGEUnifacUMRPRUTest,DataReconciliationEngineTest
+          test
       - name: Qualify the tracked-force five-second mesh and time-step matrix
         if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
         run: >-
