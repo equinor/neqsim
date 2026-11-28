@@ -12,6 +12,9 @@ on:
       - 'src/main/java/neqsim/process/equipment/pipeline/DewPointGuardedOutletController.java'
       - 'src/test/java/neqsim/process/equipment/pipeline/CompositionalLinePackPipeTest.java'
       - 'src/test/java/neqsim/process/equipment/pipeline/StratifiedLiquidMomentumTest.java'
+      - 'src/test/java/neqsim/process/equipment/pipeline/TwoFluidPipeUnsplitRunTest.java'
+      - 'src/test/java/neqsim/process/equipment/pipeline/TwoFluidPipePhaseDisappearanceTest.java'
+      - 'src/test/java/neqsim/process/equipment/pipeline/TwoFluidComponentTraceInventoryTest.java'
       - 'src/main/java/neqsim/process/equipment/pipeline/twophasepipe/**'
       - 'src/test/java/neqsim/process/equipment/pipeline/twophasepipe/TwoFluidUnsplitTengesdalPreparationTest.java'
       - '.github/workflows/ai-production-restart-qualification.yml'
@@ -70,42 +73,40 @@ jobs:
         run: uv run --project devtools --locked --group test python -m pytest -q devtools/test_collect_electrolyte_evidence.py
       - name: Qualify the moving three-phase slug refinement regression
         if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
-        run: >-
-          ./mvnw -B -ntp
-          -Dtest=TwoFluidPipeUnsplitRunTest#movingSlugFilmCouplingIsStableAcrossMeshAndTimeStepRefinement
-          test
+        shell: bash
+        run: |
+          mkdir -p target/restart-qualification-logs
+          ./mvnw -B -ntp -Dtest=TwoFluidPipeUnsplitRunTest#movingSlugFilmCouplingIsStableAcrossMeshAndTimeStepRefinement test 2>&1 | tee target/restart-qualification-logs/moving-three-phase.log
       - name: Qualify the tracked-force five-second mesh and time-step matrix
         if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
-        run: >-
-          ./mvnw -B -ntp
-          -Dtest=TwoFluidUnsplitTengesdalPreparationTest#fiveSecondTrackedSubcellForceRiserQualificationMustCompleteTheWholeInterval
-          -Dgroups=slow
-          -DexcludedTestGroups=
-          -Dneqsim.unsplit.tengesdal.tracked-force-qualification=true
-          test
+        shell: bash
+        run: |
+          mkdir -p target/restart-qualification-logs
+          ./mvnw -B -ntp -Dtest=TwoFluidUnsplitTengesdalPreparationTest#fiveSecondTrackedSubcellForceRiserQualificationMustCompleteTheWholeInterval -Dgroups=slow -DexcludedTestGroups= -Dneqsim.unsplit.tengesdal.tracked-force-qualification=true test 2>&1 | tee target/restart-qualification-logs/tracked-5s.log
       - name: Qualify tracked-force 180 second mesh and time-step matrix
         if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
-        run: >-
-          ./mvnw -B -ntp
-          -Dtest=TwoFluidUnsplitTengesdalPreparationTest#trackedSubcellForceLongIntervalMustCompleteConservatively
-          -Dgroups=slow
-          -DexcludedTestGroups=
-          -Dneqsim.unsplit.tengesdal.tracked-force-long-qualification=true
-          test
+        shell: bash
+        run: |
+          mkdir -p target/restart-qualification-logs
+          ./mvnw -B -ntp -Dtest=TwoFluidUnsplitTengesdalPreparationTest#trackedSubcellForceLongIntervalMustCompleteConservatively -Dgroups=slow -DexcludedTestGroups= -Dneqsim.unsplit.tengesdal.tracked-force-long-qualification=true test 2>&1 | tee target/restart-qualification-logs/tracked-180s.log
       - name: Qualify tracked-force 600 second mesh and time-step matrix
         if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
-        run: >-
-          ./mvnw -B -ntp
-          -Dtest=TwoFluidUnsplitTengesdalPreparationTest#trackedSubcellForceSustainedIntervalMustCompleteConservatively
-          -Dgroups=slow
-          -DexcludedTestGroups=
-          -Dneqsim.unsplit.tengesdal.tracked-force-sustained-qualification=true
-          test
+        shell: bash
+        run: |
+          mkdir -p target/restart-qualification-logs
+          ./mvnw -B -ntp -Dtest=TwoFluidUnsplitTengesdalPreparationTest#trackedSubcellForceSustainedIntervalMustCompleteConservatively -Dgroups=slow -DexcludedTestGroups= -Dneqsim.unsplit.tengesdal.tracked-force-sustained-qualification=true test 2>&1 | tee target/restart-qualification-logs/tracked-600s.log
       - name: Exercise the installed restart, instrument holdouts and blind decisions
         if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
         run: |
           export NEQSIM_CLASSPATH="$PWD/target/classes:$(cat target/restart-classpath.txt)"
           uv run --project devtools --locked python -m unittest discover -s examples/production-decision -v
+      - name: Retain independent nonlinear qualification logs
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: combined-nonlinear-qualification-${{ github.run_attempt }}
+          path: target/restart-qualification-logs/*.log
+          if-no-files-found: error
   electrolyte-loading:
     runs-on: ubuntu-latest
     timeout-minutes: 60
