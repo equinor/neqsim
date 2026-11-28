@@ -289,12 +289,19 @@ Heat and mass transfer are related through:
 $$\frac{h}{c_p G} Pr^{2/3} = \frac{k_m}{u} Sc^{2/3} = \frac{f}{2}$$
 
 Here $f$ is the Fanning friction factor. With the Darcy factor $f_D = 4f$ that the flow nodes return
-(64/Re, Haaland) the right-hand side is $f_D/8$. `InterphaseStratifiedFlow`, which the stratified and
-annular film nodes use, applies $f_D/8$ since 2026-11-28; before that it applied $f_D/2$, which made the
-turbulent gas-side heat and mass transfer coefficients four times too high. For a nearly smooth pipe the
-corrected form reproduces Dittus-Boelter, $0.023\,Re^{0.8}X^{1/3}$, within 20 % for $Re = 10^4$ to
-$5\times10^6$ (`InterphaseStratifiedFlowAnalogyTest`). The single-phase pipe, slug, droplet and stirred-cell
-coefficient classes still apply $f_D/2$.
+(64/Re, Haaland) the right-hand side is $f_D/8$. All transport-coefficient classes (single-phase pipe,
+stratified and annular, slug, droplet, stirred cell) apply $f_D/8$ since 2026-11-28 through
+`InterphaseTransportCoefficientBaseClass.chiltonColburnStanton`. Before that they applied $f_D/2$, which
+made every turbulent wall and gas-side interphase heat and mass transfer coefficient four times too high.
+For a nearly smooth pipe the corrected form reproduces Dittus-Boelter, $0.023\,Re^{0.8}X^{1/3}$, within
+20 % for $Re = 10^4$ to $5\times10^6$ (`ChiltonColburnAnalogyTest`, `InterphaseStratifiedFlowAnalogyTest`).
+The slug class keeps its own factors on top (1.2 on friction, 1.4 to 2.0 on transfer).
+
+Results that depend on these coefficients change. A turbulent inner-film heat transfer coefficient is now a
+quarter of its old value, so a pipe whose heat loss is controlled by the inner film loses heat more slowly;
+where an outer resistance dominates (insulation, burial, an overall coefficient of a few W/m²K) the overall
+coefficient hardly moves. Friction factors and transfer coefficients also use the magnitude of the phase
+Reynolds number and speed, so a reversed phase no longer gives a negative or undefined coefficient.
 
 This allows estimation of mass transfer coefficients from heat transfer data:
 

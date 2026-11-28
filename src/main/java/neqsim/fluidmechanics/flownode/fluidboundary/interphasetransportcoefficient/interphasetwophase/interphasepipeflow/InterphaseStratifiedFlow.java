@@ -85,24 +85,6 @@ public class InterphaseStratifiedFlow extends InterphaseTwoPhasePipeFlow
     }
   }
 
-  /**
-   * Chilton-Colburn Stanton number for a Darcy friction factor.
-   *
-   * <p>
-   * The analogy reads {@code St * X^(2/3) = f_Fanning / 2 = f_Darcy / 8}, with X the Prandtl number for heat and the
-   * Schmidt number for mass transfer. {@link #calcWallFrictionFactor(int, FlowNodeInterface)} returns the Darcy factor
-   * (64/Re, Haaland), so the divisor is 8. For a smooth pipe at Re = 1e5 this gives Nu = 225 Pr^(1/3), against 230
-   * Pr^(1/3) from Dittus-Boelter.
-   * </p>
-   *
-   * @param darcyFrictionFactor Darcy friction factor
-   * @param prandtlOrSchmidtNumber Prandtl number (heat) or Schmidt number (mass)
-   * @return Stanton number, i.e. the transfer coefficient divided by the phase speed (mass) or by rho*cp*speed (heat)
-   */
-  static double chiltonColburnStanton(double darcyFrictionFactor, double prandtlOrSchmidtNumber) {
-    return darcyFrictionFactor / 8.0 * Math.pow(prandtlOrSchmidtNumber, -2.0 / 3.0);
-  }
-
   /** {@inheritDoc} */
   @Override
   public double calcInterPhaseFrictionFactor(int phase, FlowNodeInterface node) {
