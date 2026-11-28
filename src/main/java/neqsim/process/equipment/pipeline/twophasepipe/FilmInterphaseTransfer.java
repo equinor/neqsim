@@ -3,6 +3,9 @@ package neqsim.process.equipment.pipeline.twophasepipe;
 import java.io.Serializable;
 import java.util.Arrays;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface;
+import neqsim.fluidmechanics.flownode.FlowNodeInterface;
+import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.AnnularFlow;
+import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.SlugFlowNode;
 import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.StratifiedFlowNode;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
 import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
@@ -14,11 +17,11 @@ import neqsim.thermo.system.SystemInterface;
  * Non-equilibrium gas/oil mass transfer from the multicomponent film model of the fluid-mechanics package.
  *
  * <p>
- * Each wet cell is handed to a {@link StratifiedFlowNode} with the transported gas and oil compositions, the cell
- * pressure and temperature, the phase volume fractions and the phase speeds. Its Krishna-Standart fluid boundary solves
- * the Maxwell-Stefan film equations on both sides of the interface together with interface equilibrium and the
- * interface heat balance. Nothing is fitted here: transfer coefficients come from the flow state through the
- * correlations of the film model.
+ * Each wet cell is handed to a two-phase flow node with the transported gas and oil compositions, the cell pressure and
+ * temperature, the phase volume fractions and the phase speeds. Its Krishna-Standart fluid boundary solves the
+ * Maxwell-Stefan film equations on both sides of the interface together with interface equilibrium and the interface
+ * heat balance. Nothing is fitted here: transfer coefficients come from the flow state through the correlations of the
+ * film model.
  * </p>
  *
  * <p>
@@ -52,8 +55,9 @@ import neqsim.thermo.system.SystemInterface;
  * <li>Where the cell composition is single phase at equilibrium (above the local phase envelope, including dense phase
  * where gas and oil are miscible), the phase holding less mass can only lose components: film fluxes toward it are set
  * to zero, so a miscible "oil" cannot grow by absorbing gas.</li>
- * <li>Coefficients use the stratified-flow correlations in every regime. Gas at rest has only the laminar limit;
- * natural convection is not modelled.</li>
+ * <li>Stratified, bubble and dispersed cells use the stratified-flow film node, annular and mist cells the annular-flow
+ * node and slug cells the slug-flow node (switchable). The gas side follows the Chilton-Colburn analogy on the
+ * interfacial friction factor and includes natural convection where the gas is unstably stratified.</li>
  * </ul>
  */
 public final class FilmInterphaseTransfer implements Serializable {
@@ -89,6 +93,7 @@ public final class FilmInterphaseTransfer implements Serializable {
   private boolean thermodynamicCorrection = true;
   private double interfaceAreaFactor = 1.0;
   private TransferLaw transferLaw = TransferLaw.TWO_RESISTANCE_RELAXATION;
+  private boolean regimeSpecificFilm = true;
 
   private double[][] cachedMassFluxKgPerSquareMetreSecond;
   private double[] cachedTimeSeconds;
@@ -278,6 +283,21 @@ public final class FilmInterphaseTransfer implements Serializable {
   /** @return multiplier on the geometric interface width */
   public double getInterfaceAreaFactor() {
     return interfaceAreaFactor;
+  }
+
+  /**
+   * Choose the film node of annular, mist and slug cells.
+   *
+   * @param enabled true to solve annular and mist cells with the annular-flow node (Wallis interfacial friction) and
+   * slug cells with the slug-flow node; false to use the stratified-flow node in every regime
+   */
+  public void setRegimeSpecificFilm(boolean enabled) {
+    regimeSpecificFilm = enabled;
+  }
+
+  /** @return true when annular, mist and slug cells use their own film nodes */
+  public boolean isRegimeSpecificFilm() {
+    return regimeSpecificFilm;
   }
 
   /**
@@ -506,7 +526,15 @@ public final class FilmInterphaseTransfer implements Serializable {
 
     PipeData pipe = new PipeData(section.getDiameter(), section.getRoughness());
     pipe.setNodeLength(1.0);
-    StratifiedFlowNode node = new StratifiedFlowNode(bulk, pipe);
+    FlowRegime regime = section.getFlowRegime();
+    FlowNodeInterface node;
+    if (regimeSpecificFilm && (regime == FlowRegime.ANNULAR || regime == FlowRegime.MIST)) {
+      node = new AnnularFlow(bulk, pipe);
+    } else if (regimeSpecificFilm && regime == FlowRegime.SLUG) {
+      node = new SlugFlowNode(bulk, pipe);
+    } else {
+      node = new StratifiedFlowNode(bulk, pipe);
+    }
     double liquidHoldup = section.getLiquidHoldup();
     node.setPhaseFraction(0, 1.0 - liquidHoldup);
     node.setPhaseFraction(1, liquidHoldup);

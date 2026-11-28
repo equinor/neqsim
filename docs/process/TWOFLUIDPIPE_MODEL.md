@@ -826,6 +826,7 @@ double[] tau = r.getSlowestTimeConstantsSeconds();   // per film cell
 | `setUpdateInterval(s)` | 0 | Time a cell keeps its film coefficients before the film is solved again. |
 | `setWallCondensation(boolean)` | `true` | A cell with net condensation uses the gas-core perimeter as interface (vapour condenses on the whole wall); otherwise the stratified chord, or the gas-core perimeter in annular and mist flow. An assumption. |
 | `setInterfaceAreaFactor(x)` | 1 | Multiplier on the interface width, for sensitivity runs. |
+| `setRegimeSpecificFilm(boolean)` | `true` | Annular, mist and slug cells use their own film nodes instead of the stratified one. |
 | `setMinimumHoldup(x)` | 1e-7 | Below this gas or oil volume fraction no film is solved. |
 | `setFallbackRelaxationTime(s)` | 30 | Relaxation time where no film can be solved: phase appearance, trace phases, failed film solves. |
 
@@ -841,8 +842,13 @@ Requirements and limits:
 - Where the cell composition is single phase at equilibrium, the phase holding less mass can only lose
   components. In dense phase the film solve fails by design (no interface) and the cell uses the
   fallback relaxation; `Result.getFilmFailureCount()` counts these.
-- The stratified-flow correlations are used in every regime. Gas at rest has only the laminar limit, so
-  shut-in cells exchange very slowly (no natural convection).
+- Stratified, bubble and dispersed cells are solved with the stratified-flow film node, annular and mist
+  cells with the annular-flow node (Wallis interfacial friction, gas-core interface) and slug cells with the
+  slug-flow node (its enhancement factors are typical values, not fitted). `setRegimeSpecificFilm(false)`
+  uses the stratified node everywhere.
+- The gas side follows the Chilton-Colburn analogy on the interfacial friction factor and adds natural
+  convection where the gas is unstably stratified. Above an evaporating condensate the interface gas is
+  heavier than the bulk gas, so nearly stagnant cells still exchange slowly.
 - Nothing is validated against measured evaporation or condensation rates.
 
 Measured 2026-11-28 on a 50 km, 1.01 m rich-gas line (10 cells, blown down from 130 to 80 bara in 2 h,

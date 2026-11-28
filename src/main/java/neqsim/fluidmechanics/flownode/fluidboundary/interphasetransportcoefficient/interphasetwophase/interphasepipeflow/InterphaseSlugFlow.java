@@ -219,22 +219,28 @@ public class InterphaseSlugFlow extends InterphaseTwoPhasePipeFlow
 
     if (phaseNum == 1) {
       // Liquid phase - enhanced mass transfer at Taylor bubble nose and wake
-      if (Math.abs(node.getReynoldsNumber(phaseNum)) < 300) {
+      // The correlations depend on the magnitude of the film Reynolds number.
+      double reynolds = Math.abs(node.getReynoldsNumber(phaseNum));
+      if (reynolds < 300) {
         // Laminar film region
-        massTrans = 1.5e-2 * Math.pow(node.getReynoldsNumber(phaseNum), 0.4) * Math.pow(schmidtNumber, 0.5);
-      } else if (Math.abs(node.getReynoldsNumber(phaseNum)) < 1600) {
+        massTrans = 1.5e-2 * Math.pow(reynolds, 0.4) * Math.pow(schmidtNumber, 0.5);
+      } else if (reynolds < 1600) {
         // Transitional
-        massTrans = 4.0e-2 * Math.pow(node.getReynoldsNumber(phaseNum), 0.25) * Math.pow(schmidtNumber, 0.5);
+        massTrans = 4.0e-2 * Math.pow(reynolds, 0.25) * Math.pow(schmidtNumber, 0.5);
       } else {
         // Turbulent slug body - significantly enhanced
-        massTrans = 2.0e-3 * Math.pow(node.getReynoldsNumber(phaseNum), 0.7) * Math.pow(schmidtNumber, 0.5);
+        massTrans = 2.0e-3 * Math.pow(reynolds, 0.7) * Math.pow(schmidtNumber, 0.5);
       }
-      massTrans = massTrans
-          * Math.pow(
-              Math.pow(node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity(), 2.0)
-                  / gravity,
-              -1.0 / 3.0)
-          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity() / schmidtNumber;
+      double kinematicViscosity = node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties()
+          .getKinematicViscosity();
+      double diffusivity = kinematicViscosity / schmidtNumber;
+      massTrans = massTrans * Math.pow(Math.max(Math.pow(kinematicViscosity, 2.0) / gravity, 1e-30), -1.0 / 3.0)
+          * diffusivity;
+      // A liquid at rest transfers at the diffusion limit of a laminar layer instead of zero.
+      double depth = node.getHydraulicDiameter(phaseNum) / 4.0;
+      if (depth > 0.0) {
+        massTrans = Math.max(massTrans, 3.41 * diffusivity / depth);
+      }
     }
 
     if (phaseNum == 0) {

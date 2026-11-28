@@ -666,9 +666,11 @@ constants. Call `setUpdateInterval(300.0)` on long lines (a film solve costs 10â
 and read `getLastFilmInterphaseTransferResult()`: `getSlowestTimeConstantsSeconds()`,
 `getModes()`, `getFilmFailureCount()`. Do not select `TransferLaw.FILM_FLUX` on pipeline time
 steps: it is explicit and turned whole cells into oil at the onset of condensation in a 50 km
-test. Report the interface assumptions with the result (`setWallCondensation`, stratified
-correlations in every regime, laminar limit for gas at rest, 30 s fallback where no film exists)
-and run `setInterfaceAreaFactor` as a sensitivity. It requires dry gas/oil of hydrocarbons and
+test. Report the interface assumptions with the result (`setWallCondensation`, regime-specific
+film nodes via `setRegimeSpecificFilm`, interfacial-friction analogy with natural convection on
+the gas side, 30 s fallback where no film exists) and run `setInterfaceAreaFactor` as a
+sensitivity. The fallback, not a film rate, removes the last liquid once the local pressure passes
+the phase envelope, so quote that liquid-free time as a lower estimate. It requires dry gas/oil of hydrocarbons and
 inert gases and excludes `HydrocarbonPoolTransfer` and `NonEquilibriumFilmTransfer`.
 
 When `TwoFluidPipe.setIncludeMassTransfer(true)` is enabled, flash-driven transfer is phase

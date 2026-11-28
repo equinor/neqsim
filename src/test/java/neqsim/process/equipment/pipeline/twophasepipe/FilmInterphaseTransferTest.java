@@ -150,6 +150,31 @@ class FilmInterphaseTransferTest {
         .getFilmSolveCount());
   }
 
+  /**
+   * Annular and slug cells are solved with their own film nodes (annular geometry and Wallis friction, slug
+   * enhancement). Each gives a film solution with a time constant that differs from the stratified treatment.
+   */
+  @Test
+  void annularAndSlugCellsUseTheirOwnFilmNodes() {
+    for (FlowRegime regime : new FlowRegime[] {FlowRegime.ANNULAR, FlowRegime.SLUG}) {
+      Cell cell = cell(80.0, 86.0, 5.0, 0.5);
+      cell.sections[0].setFlowRegime(regime);
+      FilmInterphaseTransfer specific = new FilmInterphaseTransfer();
+      FilmInterphaseTransfer stratified = new FilmInterphaseTransfer();
+      stratified.setRegimeSpecificFilm(false);
+      FilmInterphaseTransfer.Result own = specific.calculate(cell.transport, cell.sections, cell.fluid,
+          cell.equilibrium(), 0.0, 1.0);
+      FilmInterphaseTransfer.Result generic = stratified.calculate(cell.transport, cell.sections, cell.fluid,
+          cell.equilibrium(), 0.0, 1.0);
+      assertEquals(CellMode.FILM, own.getModes()[0], regime + ": " + own.getLastFailure());
+      assertEquals(CellMode.FILM, generic.getModes()[0], regime + ": " + generic.getLastFailure());
+      double ownConstant = own.getSlowestTimeConstantsSeconds()[0];
+      double genericConstant = generic.getSlowestTimeConstantsSeconds()[0];
+      assertTrue(ownConstant > 0.0 && Double.isFinite(ownConstant), regime + " " + ownConstant);
+      assertTrue(ownConstant != genericConstant, regime + " must not use the stratified node");
+    }
+  }
+
   /** Invalid settings are rejected. */
   @Test
   void settersValidateTheirArguments() {

@@ -297,6 +297,32 @@ For a nearly smooth pipe the corrected form reproduces Dittus-Boelter, $0.023\,R
 20 % for $Re = 10^4$ to $5\times10^6$ (`ChiltonColburnAnalogyTest`, `InterphaseStratifiedFlowAnalogyTest`).
 The slug class keeps its own factors on top (1.2 on friction, 1.4 to 2.0 on transfer).
 
+**Stratified and annular interphase coefficients (2026-11-28).** `InterphaseStratifiedFlow` and
+`InterphaseAnnularFlow` now build the interphase coefficients as follows.
+
+| Side | Mass transfer | Heat transfer |
+|------|---------------|---------------|
+| Gas, turbulent | $k_G = (f_i/8)\,Sc^{-2/3}\,\lvert u_G\rvert$ | $h_G = (f_i/8)\,Pr^{-2/3}\,\rho c_p \lvert u_G\rvert$ |
+| Gas, laminar ($Re < 2300$) | $Sh = 3.66$ | $Nu = 3.66$ |
+| Gas, natural convection | $k = 0.15\,(g\,\Delta\rho/\rho)^{1/3}\nu^{1/3}Sc^{-2/3}$ | same with $Pr$, times $\rho c_p$ |
+| Liquid film | Yih and Chen: $k_L(\nu^2/g)^{1/3}/D = a\,Re^b\,Sc^{1/2}$ | $h_L(\nu^2/g)^{1/3}/\lambda = a\,Re^b\,Pr^{1/2}$ |
+| Liquid at rest | $k_L \ge 3.41\,D/\delta$ | $h_L \ge 3.41\,\lambda/\delta$ |
+
+- $f_i$ is the **interfacial** Darcy friction factor, because the gas exchanges with the liquid surface and
+  not with the pipe wall: $f_i = f_w(1 + 75\alpha_L)$ in stratified flow and the Wallis form
+  $f_i = f_w(1 + 300\,\delta/D)$, capped at 50, in annular flow. Wall coefficients keep $f_w$.
+- Forced and natural convection on the gas side combine as $(k_f^3 + k_n^3)^{1/3}$. The natural-convection
+  relation is the turbulent one for an unstably stratified horizontal layer (McAdams; the length cancels).
+  $\Delta\rho$ is the gas density difference between the bulk and the interface of the current film solution.
+  In stratified flow it counts only when the interface gas is lighter than the bulk gas; a heavier interface
+  gas, as above an evaporating condensate, is stably stratified and gives none. Around an annular film either
+  sign counts.
+- The liquid-side heat transfer coefficient is the heat counterpart of the liquid-side mass transfer
+  coefficient (same film correlation with $Pr$ for $Sc$). Before, it used the gas-type analogy on the liquid
+  Reynolds number, which gave interface temperatures up to 1 K from the bulk at the pipe states of a 707 km
+  rich-gas case; with the consistent form they are within 0.1 K.
+- None of these closures is validated here against measured interphase transfer in pipes.
+
 Results that depend on these coefficients change. A turbulent inner-film heat transfer coefficient is now a
 quarter of its old value, so a pipe whose heat loss is controlled by the inner film loses heat more slowly;
 where an outer resistance dominates (insulation, burial, an overall coefficient of a few W/m²K) the overall
