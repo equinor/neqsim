@@ -108,11 +108,11 @@ class ElectrolyteEvidenceTest(unittest.TestCase):
         manifest, errors = self.collect(selected)
         self.assertEqual(errors, [])
         self.assertTrue(manifest["selected_evidence_complete"])
-        self.assertEqual(manifest["selected_assessment_count"], 22)
+        self.assertEqual(manifest["selected_assessment_count"], 26)
         self.assertEqual([item["data_rows"] for item in manifest["assessments"]],
-                         [28, 10, 26, 20, 26, 78, 36, 16, 18, 34, 48, 84, 7, 7,
+                         [28, 10, 26, 20, 26, 78, 36, 16, 44, 18, 124, 144, 18, 34, 48, 84, 7, 7,
                           6, 12, 57, 7, 10, 13, 110, 110])
-        self.assertEqual(sum(item["data_rows"] for item in manifest["assessments"]), 763)
+        self.assertEqual(sum(item["data_rows"] for item in manifest["assessments"]), 1093)
         assessments = {item["producer"]: item for item in manifest["assessments"]}
         archer = assessments[evidence.PACKAGE + "KClWaterActivityReferenceAssessmentTest"]
         self.assertEqual(archer["fixture"]["basis"], "inline reference values")
@@ -156,6 +156,53 @@ class ElectrolyteEvidenceTest(unittest.TestCase):
             item["fixtures"],
             [self.fixture_digest("co2_kcl_solubility_mousavi_chapoy_burgass2024.csv"),
              self.fixture_digest("co2_water_nacl_solubility_mousavi_chapoy_burgass2024.csv")])
+
+    def test_smooth_salt_pair_law_retains_calibration_and_holdout_sources(self):
+        item, source = self.collect_assessment("KClCO2SmoothSaltPairLawAssessmentTest")
+        self.assertEqual(item["output"], "co2-kcl-smooth-salt-pair-law-assessment.csv")
+        self.assertEqual(item["data_rows"], 44)
+        self.assertEqual((self.output / item["output"]).read_bytes(), source.read_bytes())
+        self.assertEqual(
+            item["fixtures"],
+            [self.fixture_digest("co2_kcl_solubility_he_morse1993.csv"),
+             self.fixture_digest("co2_kcl_solubility_mousavi_chapoy_burgass2024.csv"),
+             self.fixture_digest("co2_water_nacl_solubility_mousavi_chapoy_burgass2024.csv")])
+
+    def test_kamps_transfer_retains_independent_thermoml_source(self):
+        item, source = self.collect_assessment(
+            "KClCO2Kamps2007IndependentTransferAssessmentTest")
+        self.assertEqual(
+            item["output"],
+            "co2-kcl-kamps2007-independent-transfer-assessment.csv")
+        self.assertEqual(item["data_rows"], 18)
+        self.assertEqual((self.output / item["output"]).read_bytes(), source.read_bytes())
+        self.assertEqual(
+            item["fixture"],
+            self.fixture_digest("co2_kcl_solubility_kamps2007_thermoml.csv"))
+
+    def test_kamps_loading_trend_retains_complete_thermoml_source(self):
+        item, source = self.collect_assessment(
+            "KClCO2Kamps2007LoadingTrendAssessmentTest")
+        self.assertEqual(
+            item["output"],
+            "co2-kcl-kamps2007-loading-trend-assessment.csv")
+        self.assertEqual(item["data_rows"], 124)
+        self.assertEqual((self.output / item["output"]).read_bytes(), source.read_bytes())
+        self.assertEqual(
+            item["fixture"],
+            self.fixture_digest("co2_kcl_solubility_kamps2007_thermoml.csv"))
+
+    def test_kamps_furst_loading_sensitivity_retains_thermoml_source(self):
+        item, source = self.collect_assessment(
+            "KClCO2Kamps2007FurstLoadingSensitivityAssessmentTest")
+        self.assertEqual(
+            item["output"],
+            "co2-kcl-kamps2007-furst-loading-sensitivity-assessment.csv")
+        self.assertEqual(item["data_rows"], 144)
+        self.assertEqual((self.output / item["output"]).read_bytes(), source.read_bytes())
+        self.assertEqual(
+            item["fixture"],
+            self.fixture_digest("co2_kcl_solubility_kamps2007_thermoml.csv"))
 
     def test_full_family_numerical_failure_retains_all_110_rows(self):
         item, source = self.collect_assessment("CO2BrineHydrateFullFamilyAssessmentTest", failures=1)
