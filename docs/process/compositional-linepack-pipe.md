@@ -19,8 +19,8 @@ physical qualification, rollback support or suitability for severe-slugging tran
 
 It answers where and when retrograde condensate forms, how much there is, whether it revaporises, and
 whether the gas delivered at the receiving end is single phase. Its two-fluid liquid transport predicts how stratified films and pools move. It does not resolve slug
-flow or annular films; use [TwoFluidPipe](TWOFLUIDPIPE_MODEL.md) for a flowing steady state in those
-regimes and read its [evidence matrix](twofluidpipe-evidence-matrix.md) first.
+flow or annular films; use [TwoFluidPipe](TWOFLUIDPIPE_MODEL.md) for those regimes, steady or transient,
+and read its [evidence matrix](twofluidpipe-evidence-matrix.md) first.
 
 Two helpers come with it:
 
@@ -209,15 +209,43 @@ divided by the converged `TwoFluidPipe` holdup:
 | Slug (uphill, low gas velocity) | 8 | 0.50–0.92 |
 | Annular (film only, no entrainment) | 3 | 1.43–1.81 |
 
-**`TwoFluidPipe` transient on this process** (2026-11-27 probe, rich gas, closed inlet, outlet pressure
-ramped from 130 to 30 bara; coupled pressure-momentum, component transport and mass transfer on):
+**`TwoFluidPipe` transient on this process** (2026-11-28; same 707 km route, fluid, wall and heat transfer as
+the real-route study below; 25 cells, 60 s outer steps; conservative-energy transient with coupled
+pressure-momentum, component transport and 30 s mass-transfer relaxation). The end pressures follow the
+100-section line-pack base case, so flows, temperatures, condensation and liquid movement are
+`TwoFluidPipe`'s own and the end pressures are not.
 
-- 5 km, 12 sections, 0.25 s steps, 2 min ramp: stopped at 10 s ("stable time step cannot advance").
-- 50 km, 20 sections, 5 s steps, 4 h ramp: stopped at 180 s ("unsupported component inflow through the
-  outlet boundary").
+| Result | Line-pack, two-fluid transport | `TwoFluidPipe`, liquid may leave | `TwoFluidPipe`, gas-only outlet |
+|--------|-------------------------------:|---------------------------------:|--------------------------------:|
+| Inlet pressure before shutdown (bara) | 179.7 | 178.5 | 178.5 |
+| Mass removed in blowdown (t) | 39,466 | 37,460 | 35,457 |
+| Line-average pressure at end of blowdown (bara) | 80.2 | 83.9 | 85.3 |
+| Coldest fluid (°C) | -27.1 | -19.0 | -17.2 |
+| Liquid in line at end of blowdown (t) | 2,152 | 1,660 | 2,541 |
+| Liquid through the outlet in blowdown (t) | 1,167 | 1,057 | 0 |
+| Liquid at end of 12 h hold (t) | 1,576 | 1,141 | 2,047 |
+| Line liquid-free after restart begins (h) | 16.5 | 12.2 | 18.3 |
+| Liquid delivered in restart (t) | 0 | 0 | 0 |
+| Delivery at end of run (kg/s) | 520 | 484 | 489 |
 
-That is why this sequence is run with `CompositionalLinePackPipe`, and `TwoFluidPipe` is used for steady
-cross-checks.
+- Both `TwoFluidPipe` runs completed 84.5 h of pipeline time in 18 min of computer time with phase-mass
+  residuals below $10^{-15}$.
+- `TwoFluidPipe` classified the wet cells as stratified (87 % in blowdown, 63 % in the hold, 73 % in the
+  restart) and otherwise slug; 5 % were annular in blowdown, at holdups of 0.6–2 %.
+- Use this set-up: steady `run()`, `prepareConservativeEnergyTransientFromSteadyState()`, `closeInlet()`,
+  then either `setGasOnlyOutletTakeoff(true)` or `setOutletBoundaryFluid(...)` with
+  `setAllowOutletPhaseBackflow(true)`. Before `closeOutlet()` switch the gas-only take-off off, or set the
+  outlet fluid to `null` and backflow to `false`. Restart with
+  `setInletBoundaryCondition(CONSTANT_PRESSURE)`, `setInletBoundaryFluid(...)` and `setInletPressure(Pa)`.
+- A probe on 2026-11-27 without that set-up stopped after 10 s and 180 s. That was a set-up error, not a
+  model limit.
+- Before the phase-disappearance and annular wall-friction corrections of 2026-11-28 (see
+  [TwoFluidPipe](TWOFLUIDPIPE_MODEL.md#phase-disappearance-and-numerical-regularization)) the correctly set
+  up run stopped 5.7 h into the restart.
+
+Use `CompositionalLinePackPipe` for many long cases on a fine mesh and for the dew-point guarded restart
+controller; use `TwoFluidPipe` when separate phase momentum, slug or annular regimes or finite-rate phase
+change matter, and to check the line-pack result on the base case.
 
 **Real-route study** (rich gas with CO2, 707 km, 42" line, ID 1.013 m, public Sodir route and EMODnet
 bathymetry, SRK with Pedersen C7–C9; shutdown from 180/110 bara, blowdown from the outlet to 80 bara average,
