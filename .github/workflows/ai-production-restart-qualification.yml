@@ -53,6 +53,15 @@ jobs:
           ./mvnw -B -ntp
           -Dtest=TransientStepTransactionTest,PhaseGEUnifacUMRPRUTest,DataReconciliationEngineTest
           test
+      - name: Qualify combined heat capacity and model selection contracts (Python)
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
+        run: uv run --project devtools --locked python -m pytest -q devtools/test_copied_component_cp.py docs/test_mathematical_models_documentation.py
+      - name: Qualify combined heat capacity and model selection contracts (Java)
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
+        run: >-
+          ./mvnw -B -ntp
+          -Dtest=WaterCpPlaceholderRegressionTest,ComponentDatabaseIntegrityTest,MathematicalModelsDocumentationTest
+          test
       - name: Qualify the tracked-force five-second mesh and time-step matrix
         if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
         run: >-

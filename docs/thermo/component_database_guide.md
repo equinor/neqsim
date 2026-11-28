@@ -224,6 +224,32 @@ Polynomial coefficients for ideal gas heat capacity: $C_p^{ig} = A + BT + CT^2 +
 
 **Usage:** Enthalpy, entropy, and Gibbs energy departure functions for all EoS models.
 
+#### Copied ideal-gas heat capacities (issue #5313)
+
+The [reference inventory](data/copied_cp_references.csv) identifies the 34 neutral
+component rows corrected in both tables. Each row gives the CAS number, source,
+fit interval in kelvin and three source values in J/(mol·K). The maximum relative
+residual measures how closely the stored polynomial represents its source.
+Experimental uncertainty and uncertainty in predictive methods are additional.
+
+| Inventory source | Basis for the coefficients |
+|---|---|
+| TRC | Frenkel, Kabo, Marsh, Roganov and Wilhoit, *Thermodynamics of Organic Compounds in the Gas State* (1994). Evaluate the CAS-specific TRC correlation distributed in `chemicals` 1.5.2 within its stated temperature range. |
+| NIST-JANAF Shomate | Gas-phase Shomate correlations from Chase (1998) for [sulfuric acid](https://webbook.nist.gov/cgi/cbook.cgi?ID=C7664939&Mask=1) and [nitrous acid](https://webbook.nist.gov/cgi/cbook.cgi?ID=C7782776&Mask=1). |
+| Eisenbach EOS | Ideal part of the [propylene glycol EOS](https://doi.org/10.1063/5.0050021), evaluated as `CP0MOLAR` in CoolProp 8.1.0. The 250–1000 K fit follows the ideal-gas curve shown in the paper. Above 680 K it extends past the stated range of the full EOS. |
+| Klippenstein NASA7 | Low-temperature `NH2OH` polynomial attributed to Klippenstein et al. (2011) in the [Alzueta thermodynamic data](https://github.com/Cantera/cantera-example-data/blob/main/ammonia-CO-H2-Alzueta-2023.yaml). Multiply the first five dimensionless coefficients by the molar gas constant. |
+| Kuznetsov-Frolov | [Equation (5) and Table 1](https://doi.org/10.3390/en14092641). For carbon number *n*, add *(n − 5)* tabulated methylene increments to the pentane value at each of the eight temperatures, then convert cal to J using 4.184. These are homologous-series estimates for C21–C24, C28 and C29. |
+| Joback-Reid | [Published group increments](https://doi.org/10.1080/00986448708960487) for three methyl, three ring CH and three ring CH₂ groups. This estimate represents 1,2,4-trimethylcyclohexane without resolving stereoisomers. |
+| Irikura Table 3 | Six nonzero-temperature ideal-gas heat capacities of molecular ammonium nitrate in [Irikura (2010)](https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=905920). The quadratic is qualified from 100 to 500 K. |
+| Elm RRHO | Calculated ideal-gas heat capacity of the intact neutral 1:1 ammonia–sulfuric acid cluster using the 27 harmonic wavenumbers from the [Clusteromics I DFT record](https://github.com/elmjonas/ACDB/blob/3fc700d0132009811f17a9616809733a28cbd6e2/Articles/clusteromics_I_sa_multibase/DFT/1sa1am/pre-database.pkl). Add the harmonic-oscillator mode contributions to 4R for translation and rigid rotation. This is a molecular estimate. Dissociation requires a separate equilibrium calculation. |
+
+The fitted polynomials minimize squared relative error. Continuous reference
+functions use 161 equally spaced temperatures including both endpoints, with
+residuals checked at 1601 temperatures. Tabulated sources use their original
+temperature points. The NASA7 and Joback coefficients are direct conversions.
+The fit intervals apply to each polynomial individually. NeqSim evaluates the
+stored coefficients without enforcing these limits.
+
 #### Repaired water Cp placeholders (issue #4049)
 
 The 130 non-water hydrocarbon rows in `COMP.csv` that previously contained
