@@ -50,6 +50,32 @@ It requires the conservative-energy Euler transient with component transport and
 tracking and no other finite-rate closure. The liquid can be oil, an aqueous phase (water, glycols, alcohols; no
 ions), or both; see [Aqueous phase and three phases](#aqueous-phase-and-three-phases).
 
+## Equilibrium and non-equilibrium mode
+
+Every case runs in two modes through the same closure, so the two results differ only by the transfer model:
+
+```java
+FilmInterphaseTransfer closure = new FilmInterphaseTransfer();
+closure.setEquilibriumMode(true);            // relaxation to local equilibrium
+closure.setFallbackRelaxationTime(30.0);     // its time constant in s
+pipe.setFilmInterphaseTransfer(closure);
+```
+
+| | Equilibrium mode | Non-equilibrium mode (default) |
+|---|---|---|
+| What moves a component | Relaxation of every component to its local equilibrium partition, one time constant | Bulk split, film transfer across the interface, miscible mixing, liquid-liquid exchange |
+| Fluids | Gas with oil, with an aqueous phase, or both | The same |
+| Flow regime, interfacial area, droplets | No influence | Decide the rates |
+| Film solves and extra flashes | None | Yes |
+| Update | $\Delta m = \Delta m^{eq}(1 - e^{-\Delta t/\tau})$, stable on any step | The same form with calculated rate constants |
+
+- Equilibrium mode is the relaxation the pipe uses when no closure is set
+  (`setMassTransferRelaxationTime`), written with the exponential update. In a 60 s blowdown of a 5 km line
+  the two condensed the same liquid within 2 % (`TwoFluidPipeFilmInterphaseTransferTest`).
+- Run a case in both modes and read the difference as the non-equilibrium effect. Do not compare a
+  non-equilibrium run with a run made at another internal step: see the step sensitivity in
+  [TwoFluidPipe model](TWOFLUIDPIPE_MODEL.md).
+
 ## Model
 
 ### What is solved in each wet cell
@@ -264,6 +290,7 @@ would matter for thick liquid layers, flashing liquids and cryogenic service.
 
 | Setting | Default | Meaning |
 |---------|---------|---------|
+| `setEquilibriumMode(boolean)` | `false` | Relaxation to local equilibrium instead of finite-rate transfer. |
 | `setTransferLaw(...)` | `FILM_FLUX_RELAXATION` | Rate law, see above. |
 | `setUpdateInterval(s)` | 0 | Time a cell keeps its film coefficients before the film is solved again. |
 | `setDropletField(boolean)` | `false` | Add entrained droplets as a second interface (upper bound of the area). |
@@ -298,6 +325,9 @@ and a 20 km, 6-cell case ran four times slower than with plain relaxation.
 | Gas with a small aqueous phase, with and without condensate: no source at equilibrium; evaporation through the stratified surface without overshoot; aqueous fog on cooling; absorption without fog on a pressure rise; every component conserved over three phases | `FilmInterphaseTransferAqueousTest` |
 | Rate follows gas speed, interface area and droplet area | `FilmInterphaseTransferTest` |
 | Every flow regime is solved without failure, with its own interface: layer, gas core, droplets (over 1000 times the layer surface, time below a thousandth) or bubbles | `FilmInterphaseTransferTest` |
+| Equilibrium mode: no film solve, every component at the relaxation rate of the pipe, in every flow regime, for gas/oil, gas/aqueous and three phases | `FilmInterphaseTransferTest`, `FilmInterphaseTransferAqueousTest` |
+| The same blowdown with the pipe's relaxation, in equilibrium mode and in non-equilibrium mode: balances close in all three, the first two agree within 2 % | `TwoFluidPipeFilmInterphaseTransferTest` |
+| A 20 km line with a water/TEG phase, with and without condensate, in both modes: balances close for all phases | `TwoFluidPipeAqueousTransferModesTest` |
 | The minority phase cannot grow where equilibrium is single phase | `FilmInterphaseTransferTest` |
 | Turbulent coefficients against Dittus-Boelter, within 20 % for $Re = 10^4$ to $5\times10^6$ | `InterphaseStratifiedFlowAnalogyTest`, `ChiltonColburnAnalogyTest` |
 | Liquid-side heat and mass transfer are the same correlation; natural convection only where unstable; Wallis factor | `InterphaseStratifiedFlowAnalogyTest` |

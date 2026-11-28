@@ -104,6 +104,51 @@ class TwoFluidPipeFilmInterphaseTransferTest {
         pipe.getLastComponentConservationReport().getMessage());
   }
 
+  /**
+   * The same blowdown in three ways: the relaxation of the pipe itself, the closure in equilibrium mode with the same
+   * relaxation time, and the closure in non-equilibrium mode. The first two condense the same liquid; all three close
+   * the balances.
+   */
+  @Test
+  void blowdownRunsInEquilibriumAndNonEquilibriumMode() {
+    double[] oil = new double[3];
+    for (int variant = 0; variant < 3; variant++) {
+      TwoFluidPipe pipe = createPipe();
+      if (variant > 0) {
+        FilmInterphaseTransfer closure = new FilmInterphaseTransfer();
+        closure.setEquilibriumMode(variant == 1);
+        closure.setFallbackRelaxationTime(30.0);
+        closure.setUpdateInterval(2.0);
+        pipe.setFilmInterphaseTransfer(closure);
+      }
+      double initialMass = pipe.getTotalMassInventory();
+      double boundaryMass = 0.0;
+      double worstResidual = 0.0;
+      int steps = (int) Math.round(60.0 / DT);
+      for (int step = 1; step <= steps; step++) {
+        pipe.setOutletPressure(130.0 - 50.0 * step / steps, "bara");
+        pipe.runTransient(DT, null);
+        boundaryMass += acceptedBoundaryMass(pipe);
+        worstResidual = Math.max(worstResidual, worstResidual(pipe));
+      }
+      oil[variant] = pipe.getLastMassBalanceReport().getFinalMassKg(Phase.OIL);
+      assertTrue(oil[variant] > 1000.0, "variant " + variant + " condensed " + oil[variant] + " kg");
+      assertTrue(worstResidual < 1.0e-10, "variant " + variant + " phase mass residual " + worstResidual);
+      assertEquals(initialMass + boundaryMass, pipe.getTotalMassInventory(), 1.0e-9 * initialMass);
+      assertTrue(pipe.getLastComponentConservationReport().isConverged(),
+          pipe.getLastComponentConservationReport().getMessage());
+      if (variant == 1) {
+        FilmInterphaseTransfer.Result result = pipe.getLastFilmInterphaseTransferResult();
+        assertEquals(0L, result.getFilmSolveCount());
+        for (CellMode mode : result.getModes()) {
+          assertTrue(mode == CellMode.RELAXATION || mode == CellMode.NONE);
+        }
+      }
+    }
+    assertEquals(oil[0], oil[1], 0.02 * oil[0], "equilibrium mode against the relaxation of the pipe");
+    assertEquals(oil[0], oil[2], 0.25 * oil[0], "non-equilibrium mode against the relaxation of the pipe");
+  }
+
   /** Only one finite-rate closure can own the interphase source. */
   @Test
   void filmTransferExcludesTheOtherFiniteRateClosures() {

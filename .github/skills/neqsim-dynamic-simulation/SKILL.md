@@ -672,7 +672,9 @@ point flashes; `setBulkPhaseSplit`, 30 s split time), two stable phases exchange
 and phases that are miscible at first contact mix with the radial turbulent mixing time
 (`CellMode.MISCIBLE`, `setMiscibleMixingTime`). So a blowdown condenses close to equilibrium, while
 evaporation during repressurisation is interface-limited: expect liquid to outlast the equilibrium
-prediction in a refill. Do not switch the bulk split off except to show its effect. The liquid can be oil, an aqueous phase
+prediction in a refill. Do not switch the bulk split off except to show its effect. Run every case twice through the same
+closure, with `setEquilibriumMode(true)` (relaxation to local equilibrium, no film solve) and without,
+and report the difference as the non-equilibrium effect. The liquid can be oil, an aqueous phase
 (water and glycol carry-over; use CPA with `setMultiPhaseCheck(true)`), or both: each liquid gets its
 own film with the gas, they share the interface by volume, and `getAqueousModes()`,
 `getAqueousCharacteristicTimesSeconds()` and `getLiquidLiquidRatesKgPerMetreSecond()` report the

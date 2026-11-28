@@ -140,6 +140,83 @@ class FilmInterphaseTransferAqueousTest {
     }
   }
 
+  /**
+   * Equilibrium mode: every component of every phase approaches its local equilibrium partition with one time constant,
+   * without a film solve, for gas with an aqueous phase and for three phases, in any flow regime. It is the relaxation
+   * of the pipe itself, written with an update that is stable on any step.
+   */
+  @Test
+  void equilibriumModeRelaxesEveryPhaseWithOneTimeConstant() {
+    for (boolean withOil : new boolean[] {false, true}) {
+      for (FlowRegime regime : new FlowRegime[] {FlowRegime.STRATIFIED_WAVY, FlowRegime.SLUG, FlowRegime.ANNULAR,
+          FlowRegime.MIST, FlowRegime.BUBBLE}) {
+        Cell cell = cell(withOil, 100.0, 90.0, -3.0, 2.0);
+        cell.sections[0].setFlowRegime(regime);
+        double[][][] pipeRates = cell.transport.createEquilibriumRelaxationSourceRates(cell.equilibrium(),
+            cell.sections, 45.0);
+        FilmInterphaseTransfer closure = new FilmInterphaseTransfer();
+        closure.setEquilibriumMode(true);
+        assertTrue(closure.isEquilibriumMode());
+        closure.setFallbackRelaxationTime(45.0);
+        double step = 1.0e-3;
+        FilmInterphaseTransfer.Result result = closure.calculate(cell.transport, cell.sections, cell.fluid,
+            cell.equilibrium(), 0.0, step);
+        assertEquals(0L, result.getFilmSolveCount());
+        assertEquals(CellMode.RELAXATION, result.getAqueousModes()[0]);
+        assertEquals(withOil ? CellMode.RELAXATION : CellMode.NONE, result.getModes()[0]);
+        assertEquals(0.0, result.getFogRatesKgPerMetreSecond()[0], 0.0);
+        assertEquals(0.0, result.getAqueousFogRatesKgPerMetreSecond()[0], 0.0);
+        double[][][] sources = result.getSourcesKgPerMetreSecond();
+        double moved = 0.0;
+        for (int phase = 0; phase < 3; phase++) {
+          for (int component = 0; component < sources[0][phase].length; component++) {
+            // The rate of the pipe's own relaxation, less the curvature of the exponential over the step.
+            assertEquals(pipeRates[0][phase][component], sources[0][phase][component],
+                1.0e-4 * Math.abs(pipeRates[0][phase][component]) + 1.0e-18,
+                regime + ", oil " + withOil + ", phase " + phase + ", component " + component);
+            moved += Math.abs(sources[0][phase][component]);
+          }
+        }
+        assertTrue(moved > 0.0);
+      }
+    }
+  }
+
+  /**
+   * The same three-phase cell in the two modes: equilibrium mode moves every component at the relaxation time, the
+   * non-equilibrium mode moves the hydrocarbons about as fast (fog) and the water much more slowly (interface).
+   */
+  @Test
+  void bothModesRunTheSameCellAndDifferWhereTheInterfaceLimits() {
+    Cell cell = cell(true, 100.0, 90.0, 0.0, 2.0);
+    int water = index(cell, "water");
+    FilmInterphaseTransfer equilibrium = new FilmInterphaseTransfer();
+    equilibrium.setEquilibriumMode(true);
+    double[][][] atEquilibrium = equilibrium
+        .calculate(cell.transport, cell.sections, cell.fluid, cell.equilibrium(), 0.0, 1.0)
+        .getSourcesKgPerMetreSecond();
+    double[][][] finiteRate = new FilmInterphaseTransfer()
+        .calculate(cell.transport, cell.sections, cell.fluid, cell.equilibrium(), 0.0, 1.0)
+        .getSourcesKgPerMetreSecond();
+    double oilAtEquilibrium = 0.0;
+    double oilFiniteRate = 0.0;
+    for (int component = 0; component < atEquilibrium[0][1].length; component++) {
+      oilAtEquilibrium += atEquilibrium[0][1][component];
+      oilFiniteRate += finiteRate[0][1][component];
+      assertEquals(0.0, finiteRate[0][0][component] + finiteRate[0][1][component] + finiteRate[0][2][component],
+          1.0e-15 * cell.oilMassPerMetre);
+      assertEquals(0.0,
+          atEquilibrium[0][0][component] + atEquilibrium[0][1][component] + atEquilibrium[0][2][component],
+          1.0e-15 * cell.oilMassPerMetre);
+    }
+    assertTrue(oilAtEquilibrium > 0.0 && oilFiniteRate > 0.0, "the pressure fall must condense hydrocarbons");
+    assertTrue(oilFiniteRate > 0.3 * oilAtEquilibrium && oilFiniteRate < 3.0 * oilAtEquilibrium,
+        "oil source " + oilFiniteRate + " against " + oilAtEquilibrium + " kg/(m s)");
+    assertTrue(atEquilibrium[0][2][water] < 0.0 && finiteRate[0][2][water] < 0.0);
+    assertTrue(Math.abs(finiteRate[0][2][water]) < 0.05 * Math.abs(atEquilibrium[0][2][water]),
+        "water source " + finiteRate[0][2][water] + " against " + atEquilibrium[0][2][water] + " kg/(m s)");
+  }
+
   /** The liquid-liquid time constant must be positive and finite. */
   @Test
   void liquidLiquidRelaxationTimeIsValidated() {

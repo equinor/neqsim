@@ -159,6 +159,7 @@ public final class FilmInterphaseTransfer implements Serializable {
   private boolean bulkPhaseSplit = true;
   private double bulkPhaseSplitTimeSeconds = 30.0;
   private double liquidLiquidRelaxationTimeSeconds = 30.0;
+  private boolean equilibriumMode = false;
 
   /** Mass fluxes of the last film solve, by cell, liquid and component. */
   private double[][][] cachedMassFluxKgPerSquareMetreSecond;
@@ -539,6 +540,29 @@ public final class FilmInterphaseTransfer implements Serializable {
   }
 
   /**
+   * Choose between equilibrium and non-equilibrium transfer.
+   *
+   * <p>
+   * In equilibrium mode no interface is resolved. Every component of every cell approaches its local equilibrium
+   * partition between gas, oil and aqueous phase with one time constant, the relaxation time set by
+   * {@link #setFallbackRelaxationTime(double)} (default 30 s), using the same exponential update as the non-equilibrium
+   * mode. No film is solved and no phase is flashed on its own, so the flow regime, the interfacial area and the
+   * droplet field have no influence. It is the reference against which the non-equilibrium result of the same case is
+   * read, and it works for the same fluids: gas with oil, with an aqueous phase, or with both.
+   * </p>
+   *
+   * @param enabled true for relaxation to local equilibrium, false (default) for finite-rate transfer
+   */
+  public void setEquilibriumMode(boolean enabled) {
+    equilibriumMode = enabled;
+  }
+
+  /** @return true when every cell relaxes to local equilibrium with the relaxation time */
+  public boolean isEquilibriumMode() {
+    return equilibriumMode;
+  }
+
+  /**
    * Switch the bulk phase split.
    *
    * <p>
@@ -709,8 +733,8 @@ public final class FilmInterphaseTransfer implements Serializable {
     // Fractions of a distance covered within this step, per second, for the fixed time constants.
     double splitFractionRate = -Math.expm1(-timeStepSeconds / bulkPhaseSplitTimeSeconds) / timeStepSeconds;
     double fallbackFractionRate = -Math.expm1(-timeStepSeconds / fallbackRelaxationTimeSeconds) / timeStepSeconds;
-    double liquidLiquidFractionRate = -Math.expm1(-timeStepSeconds / liquidLiquidRelaxationTimeSeconds)
-        / timeStepSeconds;
+    double liquidLiquidFractionRate = equilibriumMode ? fallbackFractionRate
+        : -Math.expm1(-timeStepSeconds / liquidLiquidRelaxationTimeSeconds) / timeStepSeconds;
 
     for (int cell = 0; cell < cells; cell++) {
       TwoFluidSection section = sections[cell];
@@ -731,8 +755,9 @@ public final class FilmInterphaseTransfer implements Serializable {
       boolean[] filmPossible = new boolean[LIQUIDS];
       double wetHoldup = 0.0;
       for (int liquid = 0; liquid < LIQUIDS; liquid++) {
-        filmPossible[liquid] = mass[0] > 0.0 && mass[liquid + 1] > 0.0 && section.getGasHoldup() >= minimumHoldup
-            && holdup[liquid] >= minimumHoldup;
+        // In equilibrium mode no interface is resolved: every cell takes the relaxation branch below.
+        filmPossible[liquid] = !equilibriumMode && mass[0] > 0.0 && mass[liquid + 1] > 0.0
+            && section.getGasHoldup() >= minimumHoldup && holdup[liquid] >= minimumHoldup;
         if (filmPossible[liquid]) {
           wetHoldup += holdup[liquid];
         }
@@ -742,7 +767,8 @@ public final class FilmInterphaseTransfer implements Serializable {
       double[][] split = new double[3][count];
       if ((filmPossible[OIL] || filmPossible[AQUEOUS]) && bulkPhaseSplit) {
         boolean[] closed = {singlePhaseEquilibrium && !gasMajority, singlePhaseEquilibrium && gasMajority, false};
-        splitPhases(cell, template, names, inventory[cell], section, mass, filmPossible, closed, timeSeconds,
+        boolean[] sheds = {mass[0] > 0.0, filmPossible[OIL], filmPossible[AQUEOUS]};
+        splitPhases(cell, template, names, inventory[cell], section, sheds, closed, timeSeconds,
             splitFractionRate / length, split, work);
       }
 
@@ -827,8 +853,10 @@ public final class FilmInterphaseTransfer implements Serializable {
     }
     return new Result(work.sources, work.modes, work.widths, work.netFluxes, work.interfaceTemperatures,
         work.slowestTimeConstants, work.characteristicTimes, work.entrainedFractions, work.dropletAreas,
-        work.donorLimited, work.equilibriumLimited, work.counterEquilibrium, work.fogRates, work.flashingRates,
-        work.liquidLiquidRates, work.mixingTimes, filmSolveCount, filmFailureCount, lastFailure);
+        work.donorLimited, work.equilibriumLimited, work.counterEquilibrium,
+        new double[][] {work.fogRates[1], work.fogRates[2]},
+        new double[][] {work.flashingRates[1], work.flashingRates[2]}, work.liquidLiquidRates, work.mixingTimes,
+        filmSolveCount, filmFailureCount, lastFailure);
   }
 
   /** Arrays filled during one evaluation. */
@@ -867,8 +895,9 @@ public final class FilmInterphaseTransfer implements Serializable {
       donorLimited = new boolean[cells];
       equilibriumLimited = new boolean[cells];
       counterEquilibrium = new boolean[cells];
-      fogRates = new double[LIQUIDS][cells];
-      flashingRates = new double[LIQUIDS][cells];
+      // By phase (0 gas, 1 oil, 2 aqueous): the receiving phase of fog, the shedding phase of flashing vapour.
+      fogRates = new double[3][cells];
+      flashingRates = new double[3][cells];
       liquidLiquidRates = new double[cells];
       mixingTimes = new double[cells];
       Arrays.fill(mixingTimes, Double.NaN);
@@ -907,8 +936,7 @@ public final class FilmInterphaseTransfer implements Serializable {
    * @param names transported component names
    * @param inventory phase/component masses of the cell in kg
    * @param section hydrodynamic cell
-   * @param mass phase masses of the cell in kg
-   * @param filmPossible liquids that are present in an amount that can hold an interface
+   * @param sheds phases that are flashed (the gas, and the liquids present in an amount that can hold an interface)
    * @param closed phases that must not receive anything (the hydrocarbon phase the cell should lose)
    * @param timeSeconds simulation time in s
    * @param rateFactor fraction of a split that moves per second, divided by the cell length in m
@@ -916,10 +944,10 @@ public final class FilmInterphaseTransfer implements Serializable {
    * @param work diagnostics of the evaluation
    */
   private void splitPhases(int cell, SystemInterface template, String[] names, double[][] inventory,
-      TwoFluidSection section, double[] mass, boolean[] filmPossible, boolean[] closed, double timeSeconds,
-      double rateFactor, double[][] split, Work work) {
+      TwoFluidSection section, boolean[] sheds, boolean[] closed, double timeSeconds, double rateFactor,
+      double[][] split, Work work) {
     for (int from = 0; from < 3; from++) {
-      if (!(mass[from] > 0.0) || from > 0 && !filmPossible[from - 1]) {
+      if (!sheds[from]) {
         continue;
       }
       // The flashes are held for a third of the split time: far shorter than the time over which the split acts, far
@@ -947,12 +975,15 @@ public final class FilmInterphaseTransfer implements Serializable {
           split[from][component] -= amount;
           moved += amount;
         }
+        // Indexed by phase, not by liquid: no index arithmetic on the loop variables.
         if (from == 0) {
-          work.fogRates[to - 1][cell] += moved * rateFactor;
+          work.fogRates[to][cell] += moved * rateFactor;
         } else if (to == 0) {
-          work.flashingRates[from - 1][cell] += moved * rateFactor;
+          work.flashingRates[from][cell] += moved * rateFactor;
+        } else if (to == 2) {
+          work.liquidLiquidRates[cell] += moved * rateFactor;
         } else {
-          work.liquidLiquidRates[cell] += (to == 2 ? moved : -moved) * rateFactor;
+          work.liquidLiquidRates[cell] -= moved * rateFactor;
         }
       }
     }

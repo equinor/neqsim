@@ -453,6 +453,52 @@ class FilmInterphaseTransferTest {
     return closure.calculate(cell.transport, cell.sections, cell.fluid, cell.equilibrium(), 0.0, 1.0);
   }
 
+  /**
+   * Equilibrium mode of a gas/oil cell: no film is solved, and every component moves at the relaxation rate of the pipe
+   * whatever the flow regime; the non-equilibrium mode of the same cell is slower where the interface limits.
+   */
+  @Test
+  void equilibriumModeGivesTheRelaxationRateInEveryRegime() {
+    for (FlowRegime regime : FlowRegime.values()) {
+      Cell cell = cell(80.0, 86.0, 2.0, 0.3);
+      cell.sections[0].setFlowRegime(regime);
+      double[][][] target = cell.transport.createHydrocarbonEquilibriumInventoryChanges(cell.equilibrium(),
+          cell.sections);
+      FilmInterphaseTransfer closure = new FilmInterphaseTransfer();
+      closure.setEquilibriumMode(true);
+      FilmInterphaseTransfer.Result result = closure.calculate(cell.transport, cell.sections, cell.fluid,
+          cell.equilibrium(), 0.0, 1.0e-3);
+      assertEquals(0L, result.getFilmSolveCount());
+      assertEquals(CellMode.RELAXATION, result.getModes()[0], regime.toString());
+      double[][][] sources = result.getSourcesKgPerMetreSecond();
+      for (int component = 0; component < sources[0][1].length; component++) {
+        assertEquals(target[0][1][component] / 30.0, sources[0][1][component],
+            1.0e-4 * Math.abs(target[0][1][component]) / 30.0 + 1.0e-300, regime + " component " + component);
+        assertEquals(-sources[0][1][component], sources[0][0][component], 0.0);
+      }
+    }
+    Cell cell = cell(80.0, 86.0, 2.0, 0.3);
+    FilmInterphaseTransfer equilibrium = new FilmInterphaseTransfer();
+    equilibrium.setEquilibriumMode(true);
+    double atEquilibrium = 0.0;
+    double finiteRate = 0.0;
+    double[] equilibriumSources = equilibrium
+        .calculate(cell.transport, cell.sections, cell.fluid, cell.equilibrium(), 0.0, 1.0)
+        .getSourcesKgPerMetreSecond()[0][1];
+    double[] filmSources = new FilmInterphaseTransfer()
+        .calculate(cell.transport, cell.sections, cell.fluid, cell.equilibrium(), 0.0, 1.0)
+        .getSourcesKgPerMetreSecond()[0][1];
+    int heavy = java.util.Arrays.asList(cell.transport.getComponentNames()).indexOf("n-heptane");
+    for (int component = 0; component < equilibriumSources.length; component++) {
+      atEquilibrium += Math.abs(equilibriumSources[component]);
+      finiteRate += Math.abs(filmSources[component]);
+    }
+    assertTrue(atEquilibrium > 0.0 && finiteRate > 0.0);
+    // After a pressure rise the heaviest component evaporates through the interface, far slower than 30 s.
+    assertTrue(Math.abs(filmSources[heavy]) < 0.5 * Math.abs(equilibriumSources[heavy]),
+        "heaviest component " + filmSources[heavy] + " against " + equilibriumSources[heavy] + " kg/(m s)");
+  }
+
   /** Invalid settings are rejected. */
   @Test
   void settersValidateTheirArguments() {
