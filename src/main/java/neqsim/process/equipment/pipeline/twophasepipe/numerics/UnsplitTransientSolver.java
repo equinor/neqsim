@@ -573,8 +573,8 @@ public final class UnsplitTransientSolver implements Serializable {
         residualNorm = maximumAbsolute(current.residual);
         // Activating staged closure choices can make this iterate satisfy the exact residual already.
         jacobian = residualNorm <= solveTolerance ? null
-            : approximateJacobian(previousState, previousPressure, state, pressure, cellAreas, variableScale,
-                current, timeStep, startTime, outletPressure, outletPressureFixed, countedModel, timeWeight);
+            : approximateJacobian(previousState, previousPressure, state, pressure, cellAreas, variableScale, current,
+                timeStep, startTime, outletPressure, outletPressureFixed, countedModel, timeWeight);
       }
       if (jacobian == null) {
         // Check the same active-set gate as after an accepted update, outside the frozen linearization.
