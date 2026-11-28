@@ -5,7 +5,7 @@ description: Deterministic receipts between qualified S8 transition-chain checkp
 
 # S8 transition-chain checkpoint transitions
 
-`AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransition`
+`S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransition`
 creates an immutable receipt between two independently qualified transition-chain checkpoints. The caller-owned
 checkpoint identifier is treated as a checkpoint-series identity, so both checkpoints must use the same identifier
 and the candidate checkpoint sequence must increase strictly.
@@ -30,12 +30,12 @@ endpoints, state flags, and count deltas into a versioned canonical SHA-256 dige
 and raw digest accessors return defensive copies.
 
 ```java
-AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransition.Result
+S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransition.Result
     receipt =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransition
+        S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransition
             .create(priorChain, priorCheckpoint, candidateChain, candidateCheckpoint);
 boolean valid =
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransition
+    S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransition
         .verify(priorChain, priorCheckpoint, candidateChain, candidateCheckpoint, receipt);
 ```
 

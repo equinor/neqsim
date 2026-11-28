@@ -5,7 +5,7 @@ import unittest
 
 
 DOC = Path(__file__).parent / "chemicalreactions" / (
-    "h2s_oxygen_s8_stream_application_batch_reconciliation_checkpoint_manifest_transition_chain.md"
+    "s8_manifest_transition_chain.md"
 )
 
 

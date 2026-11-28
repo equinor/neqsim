@@ -5,7 +5,7 @@ description: Deterministic continuity chains for ordered S8 reconciliation check
 
 # S8 reconciliation checkpoint manifest transition chains
 
-`AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChain`
+`S8ManifestTransitionChain`
 binds one or more qualified manifest-transition receipts into an ordered, non-mutating continuity proof. Every
 transition must retain the same manifest identifier, and each candidate manifest digest must equal the next
 transition's prior manifest digest. A gap, fork, reordering, identity drift, duplicate transition digest, or count

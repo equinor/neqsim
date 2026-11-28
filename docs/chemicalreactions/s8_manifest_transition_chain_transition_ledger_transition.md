@@ -5,7 +5,7 @@ description: Deterministic append receipts between qualified S8 chain-transition
 
 # S8 manifest transition-chain ledger transitions
 
-`AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransition`
+`S8ManifestTransitionChainTransitionLedgerTransition`
 compares two already-qualified transition-ledger values without replaying their underlying chains, manifests,
 reconciliations, or stream-application evidence. The prior and candidate ledgers must retain the same caller-owned
 ledger, chain, and manifest identities. Every chain-transition receipt in the prior ledger must remain an exact

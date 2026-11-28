@@ -13,7 +13,7 @@ does not allocate either value.
 ## Checkpoint contract
 
 `create(identifier, sequence, chain)` requires a chain created by
-`AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain`.
+`S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain`.
 The checkpoint preserves the chain identity, inherited checkpoint-series and transition-chain identities, ledger,
 chain and manifest identities, first/final checkpoint sequences and raw checkpoint and upstream-chain digests,
 endpoint digests, exact aggregate sequence delta, state counts and every checked aggregate count.
@@ -24,7 +24,7 @@ and counts, and compares raw digests in constant time. All byte-array inputs are
 copies, and the result is serializable.
 
 ```java
-AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.Result chain = qualifiedCheckpointTransitionChain;
+S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.Result chain = qualifiedCheckpointTransitionChain;
 S8QualifiedTransitionChainCheckpoint.Result checkpoint = S8QualifiedTransitionChainCheckpoint.create(
     "checkpoint-transition-chain-checkpoint-transition-chain-checkpoint-A",
     31L,

@@ -5,7 +5,7 @@ description: Ordered deterministic ledgers over qualified S8 manifest transition
 
 # S8 manifest transition-chain transition ledgers
 
-`AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedger`
+`S8ManifestTransitionChainTransitionLedger`
 binds an ordered sequence of already-qualified chain-transition receipts into one immutable evidence value. The ledger
 does not retain or replay the underlying manifests, manifest-transition chains, reconciliations, or stream-application
 evidence.

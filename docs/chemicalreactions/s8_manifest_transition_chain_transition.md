@@ -5,7 +5,7 @@ description: Deterministic append receipts between qualified S8 manifest transit
 
 # S8 reconciliation checkpoint manifest transition chain transitions
 
-`AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition`
+`S8ManifestTransitionChainTransition`
 compares two already-qualified manifest-transition chains without replaying their underlying manifests. The prior and
 candidate chains must retain the same caller-owned chain and manifest identities. Every transition in the prior chain
 must remain an exact ordered prefix of the candidate chain.

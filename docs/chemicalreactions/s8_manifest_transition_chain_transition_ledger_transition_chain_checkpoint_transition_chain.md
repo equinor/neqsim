@@ -5,7 +5,7 @@ description: Deterministic ordered chains of qualified S8 checkpoint-transition 
 
 # S8 checkpoint-transition chains
 
-`AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChain`
+`S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChain`
 creates an immutable chain from already-qualified checkpoint-transition receipts. The caller owns the
 checkpoint-transition-chain identifier. Every receipt must retain the same checkpoint-series, transition-chain,
 ledger, chain, and manifest identities.
@@ -24,12 +24,12 @@ represented-entry deltas. Integer and sequence totals use overflow-detecting exa
 transition-state, and represented-entry-state families close exactly.
 
 ```java
-AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChain.Result
+S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChain.Result
     chain =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChain
+        S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChain
             .create("checkpoint-transition-chain-A", Arrays.asList(firstTransition, secondTransition));
 boolean valid =
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChain
+    S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChain
         .verify("checkpoint-transition-chain-A", Arrays.asList(firstTransition, secondTransition), chain);
 ```
 

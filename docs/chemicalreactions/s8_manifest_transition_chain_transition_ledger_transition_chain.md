@@ -5,7 +5,7 @@ description: Deterministic ordered chains of qualified S8 transition-ledger appe
 
 # S8 transition-ledger transition chains
 
-`AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChain`
+`S8ManifestTransitionChainTransitionLedgerTransitionChain`
 binds an ordered sequence of already-qualified transition-ledger append receipts. It does not replay the underlying
 ledgers, chains, manifests, reconciliations, or stream-application evidence.
 

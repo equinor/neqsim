@@ -5,7 +5,7 @@ description: Deterministic immutable checkpoints of qualified S8 checkpoint-tran
 
 # S8 checkpoint-transition-chain checkpoints
 
-`AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpoint`
+`S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpoint`
 freezes one already-qualified checkpoint-transition chain as an immutable checkpoint. The caller owns the
 checkpoint-transition-chain checkpoint identifier and its non-negative sequence.
 
@@ -23,12 +23,12 @@ exactly, and the final-minus-first checkpoint sequence equals the recorded posit
 must each contain exactly 32 bytes.
 
 ```java
-AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpoint.Result
+S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpoint.Result
     checkpoint =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpoint
+        S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpoint
             .create("checkpoint-transition-chain-checkpoint-A", 31L, chain);
 boolean valid =
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpoint
+    S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpoint
         .verify("checkpoint-transition-chain-checkpoint-A", 31L, chain, checkpoint);
 ```
 

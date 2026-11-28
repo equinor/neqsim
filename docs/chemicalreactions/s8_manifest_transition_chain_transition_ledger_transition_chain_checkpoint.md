@@ -5,7 +5,7 @@ description: Deterministic immutable checkpoints for qualified S8 transition-led
 
 # S8 transition-ledger transition-chain checkpoints
 
-`AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpoint`
+`S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpoint`
 freezes the evidence identity of one already-qualified S8 transition-ledger transition chain. It does not replay or
 requalify the underlying ledgers, chains, manifests, reconciliations, or stream-application evidence.
 
@@ -27,12 +27,12 @@ reconstructs the checkpoint and compares both raw digests with `MessageDigest.is
 serializable, and both digest accessors return defensive copies.
 
 ```java
-AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpoint.Result
+S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpoint.Result
     checkpoint =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpoint
+        S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpoint
             .create("checkpoint-A", 17L, qualifiedChain);
 boolean valid =
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpoint
+    S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpoint
         .verify("checkpoint-A", 17L, qualifiedChain, checkpoint);
 ```
 

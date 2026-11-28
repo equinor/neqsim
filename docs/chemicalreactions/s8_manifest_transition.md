@@ -5,7 +5,7 @@ description: Deterministic exact-prefix transition receipts for ordered S8 recon
 
 # S8 reconciliation checkpoint manifest transitions
 
-`AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransition`
+`S8ManifestTransition`
 links two qualified reconciliation-checkpoint manifests without mutating either manifest, a stream, or a fluid.
 The candidate must have the same manifest identifier and must preserve every prior reconciliation identifier and
 checkpoint digest in the same order. A valid candidate is therefore either unchanged or a strict append.

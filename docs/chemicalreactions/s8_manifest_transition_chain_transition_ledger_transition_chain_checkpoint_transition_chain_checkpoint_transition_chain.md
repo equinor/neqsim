@@ -5,7 +5,7 @@ description: Deterministic ordered chains of qualified S8 checkpoint-transition-
 
 # S8 checkpoint-transition-chain checkpoint-transition chains
 
-`AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain`
+`S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain`
 creates an immutable chain from already-qualified checkpoint-transition-chain checkpoint-transition receipts. The
 caller owns the checkpoint-transition-chain checkpoint-transition-chain identifier. Every receipt must retain the same
 checkpoint series, upstream checkpoint-transition chain, ledger, chain, and manifest identities.
@@ -24,12 +24,12 @@ represented-entry deltas. Integer and sequence totals use overflow-detecting exa
 transition-state, and represented-entry-state families close exactly.
 
 ```java
-AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.Result chain =
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.create(
+S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.Result chain =
+    S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.create(
         "checkpoint-transition-chain-checkpoint-transition-chain-A",
         Arrays.asList(firstTransition, secondTransition));
 boolean valid =
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.verify(
+    S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.verify(
         "checkpoint-transition-chain-checkpoint-transition-chain-A",
         Arrays.asList(firstTransition, secondTransition),
         chain);
