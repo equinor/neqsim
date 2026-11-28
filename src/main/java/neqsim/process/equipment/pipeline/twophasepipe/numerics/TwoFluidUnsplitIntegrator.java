@@ -238,8 +238,8 @@ public final class TwoFluidUnsplitIntegrator {
         if (attempt.depth >= maximumHalvings || !(middle > time) || !(middle < attempt.endTime)) {
           throw new IntervalPreparationException("Nonlinear subdivision limit or time resolution reached", time, dt,
               prepared.size(), rejected, candidate.getTerminationReason(), candidate, local, localTolerance,
-               adapter.describeRegimeChoices(candidate.getMaximumScaledResidualIndex() < 0 ? -1
-                   : candidate.getMaximumScaledResidualIndex() / UnsplitTransientSolver.BLOCK_SIZE));
+              adapter.describeRegimeChoices(candidate.getMaximumScaledResidualIndex() < 0 ? -1
+                  : candidate.getMaximumScaledResidualIndex() / UnsplitTransientSolver.BLOCK_SIZE));
         }
         pending.push(new Attempt(attempt.endTime, attempt.depth + 1));
         pending.push(new Attempt(middle, attempt.depth + 1));
@@ -308,7 +308,7 @@ public final class TwoFluidUnsplitIntegrator {
     private IntervalPreparationException(String message, double failureTime, double attemptedTimeStep,
         int preparedSubsteps, int rejectedAttempts, UnsplitTransientSolver.TerminationReason terminationReason,
         UnsplitTransientSolver.Result candidate, TwoFluidSection[] acceptedSections, double localTolerance,
-         String regimeDetails) {
+        String regimeDetails) {
       super(message + ": time=" + failureTime + ", dt=" + attemptedTimeStep + ", preparedSubsteps=" + preparedSubsteps
           + ", rejectedAttempts=" + rejectedAttempts + ", reason=" + terminationReason
           + (candidate == null ? ""
@@ -316,7 +316,8 @@ public final class TwoFluidUnsplitIntegrator {
                   + ", scaledResidual=" + candidate.getMaximumScaledResidual() + ", localTolerance=" + localTolerance
                   + ", activeSetStable=" + candidate.isActiveSetStable() + ", residualIndex="
                   + candidate.getMaximumScaledResidualIndex() + ", minimumNewtonStep="
-                  + candidate.getMinimumAcceptedStepLength() + describeWorstCell(candidate, acceptedSections) + regimeDetails));
+                  + candidate.getMinimumAcceptedStepLength() + describeWorstCell(candidate, acceptedSections)
+                  + regimeDetails));
       this.failureTime = failureTime;
       this.attemptedTimeStep = attemptedTimeStep;
       this.preparedSubsteps = preparedSubsteps;
