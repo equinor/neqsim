@@ -1,7 +1,7 @@
 ---
 name: neqsim-rotating-equipment-design
 description: "NeqSim rotating-equipment studies. USE WHEN: dry gas seal or seal gas conditioning troubleshooting, regulator JT condensation, primary vent leakage, buffer/separation gas, API 692/ISO 6368 scope, startup and standby margins, compressor vendor maps/trains, turboexpanders, pump NPSH/API 610 or mechanical screening. APIs: DryGasSealAnalyzer, SealGasSupplyConditioning, DryGasSealMonitor, LabyrinthSealFlowCalculator, CompressorThermalModel."
-last_verified: "2026-11-20"
+last_verified: "2026-11-27"
 ---
 
 # Rotating Equipment Design
@@ -228,6 +228,42 @@ Lessons from a multi-platform compressor-limit study (generic; verify against th
 - **Power turbine tied to the power module.** Drive the shaft power limit from the gas-turbine site rating at the
   year's ambient temperature, report utilisation against the ISO rating separately from the site rating, and mark years
   with shared shafts as the least certain.
+
+## EOS choice for dense-gas compressors (gas injection, 200-720 bar)
+
+Measured 2026-11-27 on the Bacalhau HP/gas-injection compressors (lean gas, C1 82 mol%, 84-720 bar, 35-135 C), with
+GERG-2008 as reference (NeqSim GERG-2008 matched CoolProp GERG-2008 to 0.01 % density, 0.04 % Cp; pure methane at 720 bar
+matched the Setzmann-Wagner equation to 0.03 % density and 0.13 % enthalpy rise).
+
+- **Default `SystemSrkEos`/`SystemPrEos`/`SystemPrEos1978`/`SystemUMRPRUMCEos` translate density only.** Enthalpy, entropy,
+  Cp, Cv and sound speed come from the untranslated EOS, so compressor work is wrong when the pressure rise is large:
+  at equal flow, discharge pressure and polytropic efficiency the power is PR78 -1.9 / -4.1 / -6.4 % and UMR-PRU-MC
+  -2.8 / -5.3 / -7.5 % for stage 1 (84-270 bar), stage 2 (270-510 bar) and gas injection (500-700 bar), although the UMR
+  inlet density is within 0.2-1 %. The missing term is `c*dP` (about 5.7 kJ/kg of an 80 kJ/kg stage at 500 to 720 bar).
+- **Reference choice:** `compressor.setUseGERG2008(true)` keeps the PR/UMR fluid for phase equilibrium and uses GERG-2008
+  for single-phase compressor streams (pseudo-components are mapped by molar mass; run time about 3x). Power in the
+  Bacalhau EOT model rose 2.6 / 5.0 / 7.3 % for the three stages at unchanged flow and map factors. GERG-2008 is single
+  phase only, valid to 35 MPa (extended to 70 MPa): state that a 72 MPa discharge is at the edge of the extended range.
+- **Best cubic when no GERG route exists:** `SystemPrEosvolcor` (translation inside the EOS): power +1.3 / +2.5 / +1.0 %,
+  density -1.3 to -3.3 %, sound speed -2.7 to -4.3 %. `SystemSrkEos` is within +3.2 % on power
+  (error cancellation, not a better translation). Avoid `SystemSrkPenelouxEos` (density +4.7 % at 500 bar), `SystemBWRSEos` (Cp 87 % high),
+  `SystemGERG2004Eos` (native library missing) and `SystemEOSCGEos` (zero density for this fluid) here.
+- Default PR/SRK `getSoundSpeed()` is also untranslated (PR78 -12 % at 500 bar, `SystemPrEosvolcor` -4 %).
+- **Experimental check (693 open densities, 240-470 K, to 196 MPa; ThermoML: methane, ethane, N2, CO2, CH4+N2, CH4+C3H8;
+  2026-11-27).** `SystemGERG2008Eos` is within 0.5 % of every point (AAD 0.00-0.14 % per fluid; 0.05 % at 35-72 MPa).
+  35-72 MPa (48 points): PR78/UMR-PRU-MC 0.9 % low, SRK 1.3 %, SRK-Peneloux 4.3 % high; 20-35 MPa methane + propane
+  (80 points): PR78 2.6 % low, UMR 2.1 % low. Isothermal enthalpy rise derived from the measured isotherms
+  (integral of v - T dv/dT; methane, ethane, CH4+N2, 320-375 K), NeqSim minus experiment over 500-700 bar
+  (experiment 7-18 kJ/kg, u 0.2-0.6): GERG-2008 -0.06 (max 0.36), `SystemPrEosvolcor` +0.03 (0.84), SRK -1.2 (2.2),
+  SRK-Peneloux -2.9 (3.8), PR78 and UMR-PRU-MC -4.9 (6.6) kJ/kg; over 200-700 bar PR78/UMR are -10.5 (max -16) and
+  `SystemPrEosvolcor` +1.8 (max 6.5). This confirms the compression-work bias experimentally. Not covered: a propane-
+  containing mixture above 35 MPa (the 250-450 K lean synthetic natural gas data to 150 MPa, doi 10.1021/je200438t, is
+  not open), speed of sound and heat capacity. Download ThermoML with `https://trc.nist.gov/ThermoML/<doi>.xml`
+  (JCED/JCT/FPE/IJT papers, mainly 2003 onwards).
+- The large as-found map factors (head 1.2-1.3, efficiency 1.2-1.25 on stage 2 and gas injection) stayed with every EOS
+  including GERG-2008: they are not an EOS artefact. The EOS shifts the flow implied by measured motor power by about
+  8 percentage points (13 % vs 22 % above the metered suction flow), so re-derive recycle and map factors when the
+  EOS changes. A 1 K discharge-temperature error moves the specific work 3.8 %.
 
 ## Gotchas
 
