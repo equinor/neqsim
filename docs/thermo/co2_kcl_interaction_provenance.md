@@ -1657,3 +1657,70 @@ closure, the existing Furst double-counting audit, convergence and timing
 non-regression, and transfer to Table A.24 plus independent hydrate and adjacent-salt
 controls. No empirical temperature offset, invented parameter or relaxed tolerance
 is introduced.
+## Mousavi concentration-family loading-kernel discrimination (2026-11-28; validation pending CI)
+
+Mousavi, Chapoy and Burgass (2024), DOI `10.1002/ghg.2298`, is retained under
+CC BY 4.0 in the source-pinned fixture introduced by #5082. Tables A11, A12
+and A13 contain the complete loading-resolved KCl series at 10, 15 and 22 wt%
+KCl, respectively, at 323.15, 373.15 and 423.15 K. The source reports
+salt-free aqueous CO2 mole percent. The assessment converts it without fitting
+to molality as
+
+$$
+m_{0,source}=\frac{x_0}{1-x_0}\frac{1}{M_w},
+$$
+
+and preserves the existing final-aqueous-water salt convention
+
+$$
+m_s=\frac{w_s}{1-w_s}\frac{1}{M_{KCl}}.
+$$
+
+The concentration-family split was frozen before model evaluation: A11 (10
+wt%) and A13 (22 wt%) are calibration families; A12 (15 wt%) is an interior,
+source-family holdout. Table A.24 mixed brine and the independent
+Dholabhai/Burgass hydrate families remain downstream holdouts and are not read
+by this fit. NaCl, CaCl2/MgCl2, Archer water activity, Yasunishi-Yoshida,
+He-Morse, Kamps and the pure-water CO2 assessments remain adjacent controls.
+
+For each source-table/temperature block, the current-model response
+
+$$
+r=\ln\left(\frac{m_{0,model}}{m_{0,source}}\right)
+$$
+
+and both predictors are centered within the block. This removes a nuisance
+block intercept, including pure-water-reference and pressure-level effects,
+while retaining only the measured loading shape. The two predeclared,
+degree-one excess-Helmholtz chemical-potential directions are
+
+$$
+\frac{\mu^E_{0,L}}{RT}=2L m_0m_s
+\qquad\text{and}\qquad
+\frac{\mu^E_{0,Z}}{RT}=2Z m_0m_s^2.
+$$
+
+The constant linear-salt model estimates only $L$. The combined model estimates
+$L$ and $Z$ from A11+A13 and transfers both without refit to A12. No reciprocal-
+temperature coefficient is admitted because the preceding independent Kamps
+assessment did not resolve one. The evidence reports coefficient standard
+errors, covariance correlation, design condition number, AICc, centered
+calibration and holdout RMSE, and the number of A12 residuals improved. Matched
+current-model pure-water dissolved CO2, water activity and guest fugacity are
+retained per state, and existing component and fugacity closure gates are not
+relaxed. Both loading increments vanish as $m_0\rightarrow0$, so the test does
+not alter the pure-water CO2 reference or the independently anchored dilute
+CO2-ion coefficients.
+
+**Validation status.** The implementation is diagnostic only and is
+`VALIDATION PENDING CI` until its exact-head slow-test artifact is retained
+and reviewed. No production equation, database parameter, solver tolerance,
+hydrate model or empirical temperature offset changes in this increment.
+Scientific disposition requires the artifact to show whether the added
+concentration curvature is identifiable on A11+A13 and improves the frozen A12
+holdout rather than merely reducing calibration error. Activation would still
+require a thermodynamically consistent residual-Helmholtz implementation with
+complete amount and temperature derivatives, bounded covariance/sensitivity,
+Furst double-counting audit, physical-limit checks, convergence/timing
+non-regression, and successful transfer to the frozen mixed-brine, hydrate and
+adjacent-salt controls.

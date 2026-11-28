@@ -75,9 +75,11 @@ two-fluid pressure, temperature, holdup and superficial phase-velocity profiles.
 `MONOTONIC`, `NON_MONOTONIC` or `ROUND_OFF_LIMITED` and publishes order/GCI only for resolved
 monotonic evidence. For unresolved sequences, inspect the signed native-unit discrepancies,
 normalization scale and maximum-discrepancy route positions before changing a closure or mesh.
-Inspect every status and mass-balance residual; unresolved production
-B&B profiles and two-fluid pressure remain explicit blockers, and these comparisons are
-integration evidence until independently qualified.
+Inspect every status and mass-balance residual. Continue a localized 4/6/9 receipt with
+8/12/18 cells before treating one non-monotonic coarse sequence as resolved. On the maintained
+20 km production route, the finer sequence leaves Beggs-Brill holdup non-monotonic and a roughly
+0.76 normalized two-fluid holdup discrepancy; both remain explicit blockers. These comparisons
+are integration evidence until independently qualified.
 After an accepted two-fluid solve, use `Result.compareTransientRateStep` for controlled
 steady-to-transient initialization and outer-time-step sensitivity. It starts every
 requested step size from the same detached steady state, advances to one common time and
