@@ -45,8 +45,10 @@ class FilmInterphaseTransferTest {
         cell.sections);
     double previousFraction = 0.0;
     for (double step : new double[] {1.0, 60.0, 3600.0, 1.0e7}) {
-      FilmInterphaseTransfer.Result result = new FilmInterphaseTransfer().calculate(cell.transport, cell.sections,
-          cell.fluid, cell.equilibrium(), 0.0, step);
+      FilmInterphaseTransfer closure = new FilmInterphaseTransfer();
+      closure.setTransferLaw(TransferLaw.TWO_RESISTANCE_RELAXATION);
+      FilmInterphaseTransfer.Result result = closure.calculate(cell.transport, cell.sections, cell.fluid,
+          cell.equilibrium(), 0.0, step);
       assertEquals(CellMode.FILM, result.getModes()[0]);
       double[][][] sources = result.getSourcesKgPerMetreSecond();
       double moved = 0.0;
@@ -67,6 +69,70 @@ class FilmInterphaseTransferTest {
       assertTrue(slowest > 1.0 && slowest < 1.0e6, "slowest time constant " + slowest + " s");
     }
     assertTrue(previousFraction > 0.999, "a very long step must reach equilibrium, got " + previousFraction);
+  }
+
+  /**
+   * The default law starts every component at its Maxwell-Stefan film flux and never carries a component that moves
+   * toward equilibrium past it, whatever the step.
+   */
+  @Test
+  void defaultLawStartsAtTheFilmFluxAndSaturatesAtEquilibrium() {
+    for (double pressure : new double[] {80.3, 79.7}) {
+      Cell cell = cell(80.0, pressure, 2.0, 0.3);
+      double[][][] target = cell.transport.createHydrocarbonEquilibriumInventoryChanges(cell.equilibrium(),
+          cell.sections);
+      FilmInterphaseTransfer explicit = new FilmInterphaseTransfer();
+      explicit.setTransferLaw(TransferLaw.FILM_FLUX);
+      explicit.setWallCondensation(false);
+      FilmInterphaseTransfer relaxing = new FilmInterphaseTransfer();
+      relaxing.setWallCondensation(false);
+      assertEquals(TransferLaw.FILM_FLUX_RELAXATION, relaxing.getTransferLaw());
+      double shortStep = 1.0e-4;
+      double[] filmFlux = explicit
+          .calculate(cell.transport, cell.sections, cell.fluid, cell.equilibrium(), 0.0, shortStep)
+          .getSourcesKgPerMetreSecond()[0][1];
+      double[] initial = relaxing
+          .calculate(cell.transport, cell.sections, cell.fluid, cell.equilibrium(), 0.0, shortStep)
+          .getSourcesKgPerMetreSecond()[0][1];
+      double[] longStep = relaxing.calculate(cell.transport, cell.sections, cell.fluid, cell.equilibrium(), 0.0, 1.0e9)
+          .getSourcesKgPerMetreSecond()[0][1];
+      int towardEquilibrium = 0;
+      for (int component = 0; component < filmFlux.length; component++) {
+        if (filmFlux[component] * target[0][1][component] > 0.0) {
+          towardEquilibrium++;
+          assertEquals(filmFlux[component], initial[component], 1.0e-3 * Math.abs(filmFlux[component]),
+              "initial rate of component " + component);
+          assertEquals(target[0][1][component], longStep[component] * 1.0e9, 1.0e-9 * Math.abs(target[0][1][component]),
+              "end state of component " + component);
+        } else {
+          // A transient against equilibrium is bounded by the film flux and by its saturation capacity.
+          assertTrue(Math.abs(initial[component]) <= Math.abs(filmFlux[component]) * (1.0 + 1.0e-9),
+              "transient of component " + component);
+        }
+      }
+      assertTrue(towardEquilibrium >= 4, "components moving toward equilibrium: " + towardEquilibrium);
+    }
+  }
+
+  /** Entrained droplets add interface: with the droplet field the cell approaches equilibrium faster. */
+  @Test
+  void dropletFieldAddsInterfaceWhereTheGasEntrainsLiquid() {
+    Cell cell = cell(80.0, 86.0, 8.0, 0.5);
+    FilmInterphaseTransfer filmOnly = new FilmInterphaseTransfer();
+    FilmInterphaseTransfer withDroplets = new FilmInterphaseTransfer();
+    withDroplets.setDropletField(true);
+    FilmInterphaseTransfer.Result film = filmOnly.calculate(cell.transport, cell.sections, cell.fluid,
+        cell.equilibrium(), 0.0, 1.0);
+    FilmInterphaseTransfer.Result droplets = withDroplets.calculate(cell.transport, cell.sections, cell.fluid,
+        cell.equilibrium(), 0.0, 1.0);
+    assertEquals(0.0, film.getDropletAreasSquareMetresPerMetre()[0], 0.0);
+    assertEquals(0.0, film.getEntrainedFractions()[0], 0.0);
+    assertTrue(droplets.getEntrainedFractions()[0] > 0.0 && droplets.getEntrainedFractions()[0] <= 1.0);
+    assertTrue(droplets.getDropletAreasSquareMetresPerMetre()[0] > film.getInterfaceWidthsMetres()[0],
+        "droplet area " + droplets.getDropletAreasSquareMetresPerMetre()[0] + " m2/m");
+    assertTrue(droplets.getCharacteristicTimesSeconds()[0] < 0.1 * film.getCharacteristicTimesSeconds()[0],
+        "with droplets " + droplets.getCharacteristicTimesSeconds()[0] + " s, film only "
+            + film.getCharacteristicTimesSeconds()[0] + " s");
   }
 
   /** Faster gas shortens the time constant: the coefficients come from the flow state, not from an input. */

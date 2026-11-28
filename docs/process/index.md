@@ -11,6 +11,7 @@ description: "Documentation for NeqSim's process simulation capabilities includi
 
 - [Two-fluid pipeline model](TWOFLUIDPIPE_MODEL.md): steady closures, transient qualification and configuration.
 - [Compositional line-pack pipe](compositional-linepack-pipe.md): retrograde condensation, depressurisation and dew-point-guarded restart of long gas/condensate lines.
+- [Non-equilibrium two-phase pipe flow](non-equilibrium-two-phase-pipe-flow.md): film-model heat and mass transfer rates in the `TwoFluidPipe` transient instead of a relaxation time.
 - [Experimental pressure-driven pig mechanics](pig-motion): prescribed-pressure mechanics with explicit coupling limits.
 
 ## Residual film after pigging

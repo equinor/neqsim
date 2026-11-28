@@ -25,19 +25,23 @@ import neqsim.thermo.system.SystemInterface;
  * </p>
  *
  * <p>
- * Two transfer laws turn the film solution into component sources:
+ * Three transfer laws turn the film solution into component sources:
  * </p>
  * <ul>
- * <li>{@link TransferLaw#TWO_RESISTANCE_RELAXATION} (default). Each component relaxes toward its inventory at local
- * equilibrium with the rate constant of two finite compartments exchanging through two film resistances,
- * {@code kappa = K_ov (w / A_G) (1 + K n_G / n_L)}, {@code 1 / K_ov = 1 / k_G + K c_G / (c_L k_L)}. The effective film
- * coefficients {@code k_G}, {@code k_L} and the interface equilibrium ratio {@code K} come from the film solve;
- * {@code w} is the interface width, {@code A_G} the gas flow area and {@code n} the phase moles in the cell. The update
- * over a step is the exact exponential, so it is stable for any step. This is needed on pipeline time steps: a thin
- * liquid layer saturates with light components in seconds.</li>
- * <li>{@link TransferLaw#FILM_FLUX}. The Maxwell-Stefan fluxes times the interface width are applied directly, with the
- * cross-diffusion and finite-flux effects of the film model. It is explicit: use it only with steps well below the
- * liquid-layer time scale {@code depth / k_L}.</li>
+ * <li>{@link TransferLaw#FILM_FLUX_RELAXATION} (default). A component whose Maxwell-Stefan film flux points toward its
+ * inventory at local equilibrium approaches that inventory exponentially, with the film flux as initial rate:
+ * {@code dm = dm_eq (1 - exp(-N w dt / dm_eq))}. For a short step this is the film flux, with its cross-diffusion and
+ * finite-flux effects; for a long step it is local equilibrium, so it is stable on pipeline time steps. A component
+ * whose flux points away from equilibrium (a transient, for example ethane dissolving while the liquid as a whole
+ * evaporates) saturates when the bulk of the limiting phase reaches the interface composition of the film
+ * solution.</li>
+ * <li>{@link TransferLaw#TWO_RESISTANCE_RELAXATION}. Each component relaxes toward its inventory at local equilibrium
+ * with the rate constant of two finite compartments exchanging through two film resistances,
+ * {@code kappa = K_ov (w / A_G) (1 + K n_G / n_L)}, {@code 1 / K_ov = 1 / k_G + K c_G / (c_L k_L)}. It uses effective
+ * coefficients only. Against the film flux its initial rates were 2 to 8 times higher for butane to heptane in a rich
+ * gas at 80 bara and wrong in sign for ethane and propane.</li>
+ * <li>{@link TransferLaw#FILM_FLUX}. The Maxwell-Stefan fluxes times the interface width are applied directly. It is
+ * explicit: use it only with steps well below the liquid-layer time scale {@code depth / k_L} (seconds).</li>
  * </ul>
  *
  * <p>
@@ -55,6 +59,11 @@ import neqsim.thermo.system.SystemInterface;
  * <li>Where the cell composition is single phase at equilibrium (above the local phase envelope, including dense phase
  * where gas and oil are miscible), the phase holding less mass can only lose components: film fluxes toward it are set
  * to zero, so a miscible "oil" cannot grow by absorbing gas.</li>
+ * <li>Entrained droplets can be added as a second interface (off by default): entrained fraction and Sauter diameter
+ * from {@link EntrainmentDeposition}, Ranz-Marshall outside the droplet and the rigid-sphere limit inside it. Droplets
+ * are not transported as a separate field; the entrained fraction is the local equilibrium value. The entrainment
+ * correlation puts almost all liquid in droplets in large high-pressure lines, so treat the result with droplets as the
+ * upper bound of the interfacial area and the result without them as the lower bound.</li>
  * <li>Stratified, bubble and dispersed cells use the stratified-flow film node, annular and mist cells the annular-flow
  * node and slug cells the slug-flow node (switchable). The gas side follows the Chilton-Colburn analogy on the
  * interfacial friction factor and includes natural convection where the gas is unstably stratified.</li>
@@ -69,6 +78,10 @@ public final class FilmInterphaseTransfer implements Serializable {
 
   /** How a film solution is turned into component sources. */
   public enum TransferLaw {
+    /**
+     * Exponential approach to local equilibrium whose initial rate is the Maxwell-Stefan film flux of the component.
+     */
+    FILM_FLUX_RELAXATION,
     /** Exponential relaxation toward local equilibrium with two-resistance rate constants from the film solve. */
     TWO_RESISTANCE_RELAXATION,
     /** Maxwell-Stefan film fluxes applied directly (explicit). */
@@ -92,15 +105,21 @@ public final class FilmInterphaseTransfer implements Serializable {
   private boolean finiteFluxCorrection = true;
   private boolean thermodynamicCorrection = true;
   private double interfaceAreaFactor = 1.0;
-  private TransferLaw transferLaw = TransferLaw.TWO_RESISTANCE_RELAXATION;
+  private TransferLaw transferLaw = TransferLaw.FILM_FLUX_RELAXATION;
   private boolean regimeSpecificFilm = true;
+  private boolean dropletField = false;
 
   private double[][] cachedMassFluxKgPerSquareMetreSecond;
   private double[] cachedTimeSeconds;
   private double[] cachedInterfaceTemperatureK;
   private double[][] cachedOverallCoefficientMetresPerSecond;
   private double[][] cachedEquilibriumRatio;
+  private double[][] cachedInterfaceGasFraction;
+  private double[][] cachedInterfaceOilFraction;
   private double[][] cachedMolarMassKgPerMol;
+  private double[][] cachedDropletOverallCoefficientMetresPerSecond;
+  private double[] cachedEntrainedFraction;
+  private double[] cachedDropletDiameterMetres;
   private boolean[] cachedFilm;
   private double[] cachedRetryTimeSeconds;
   private long filmSolveCount;
@@ -116,6 +135,9 @@ public final class FilmInterphaseTransfer implements Serializable {
     private final double[] netMassFluxes;
     private final double[] interfaceTemperatures;
     private final double[] slowestTimeConstants;
+    private final double[] characteristicTimes;
+    private final double[] entrainedFractions;
+    private final double[] dropletAreas;
     private final boolean[] donorLimited;
     private final boolean[] equilibriumLimited;
     private final long filmSolveCount;
@@ -123,14 +145,18 @@ public final class FilmInterphaseTransfer implements Serializable {
     private final String lastFailure;
 
     private Result(double[][][] sources, CellMode[] modes, double[] interfaceWidths, double[] netMassFluxes,
-        double[] interfaceTemperatures, double[] slowestTimeConstants, boolean[] donorLimited,
-        boolean[] equilibriumLimited, long filmSolveCount, long filmFailureCount, String lastFailure) {
+        double[] interfaceTemperatures, double[] slowestTimeConstants, double[] characteristicTimes,
+        double[] entrainedFractions, double[] dropletAreas, boolean[] donorLimited, boolean[] equilibriumLimited,
+        long filmSolveCount, long filmFailureCount, String lastFailure) {
       this.sources = sources;
       this.modes = modes;
       this.interfaceWidths = interfaceWidths;
       this.netMassFluxes = netMassFluxes;
       this.interfaceTemperatures = interfaceTemperatures;
       this.slowestTimeConstants = slowestTimeConstants;
+      this.characteristicTimes = characteristicTimes;
+      this.entrainedFractions = entrainedFractions;
+      this.dropletAreas = dropletAreas;
       this.donorLimited = donorLimited;
       this.equilibriumLimited = equilibriumLimited;
       this.filmSolveCount = filmSolveCount;
@@ -171,10 +197,35 @@ public final class FilmInterphaseTransfer implements Serializable {
     }
 
     /**
-     * @return longest component time constant of each film cell under the two-resistance law, in s; NaN elsewhere
+     * Time each film cell needs to cover its distance to local equilibrium at its present rates: the sum over the
+     * components moving toward equilibrium of their equilibrium inventory change, divided by the sum of their initial
+     * transfer rates.
+     *
+     * @return characteristic time of each film cell in s; NaN where no film is solved or nothing moves
+     */
+    public double[] getCharacteristicTimesSeconds() {
+      return characteristicTimes.clone();
+    }
+
+    /**
+     * Longest time constant among the major movers of a film cell: the components that move toward equilibrium and
+     * whose equilibrium inventory change is at least a tenth of the largest one. In a gas-condensate cell these are the
+     * heavy components, which decide how fast the liquid amount follows equilibrium.
+     *
+     * @return longest component time constant of each film cell in s; NaN elsewhere
      */
     public double[] getSlowestTimeConstantsSeconds() {
       return slowestTimeConstants.clone();
+    }
+
+    /** @return fraction of the liquid carried as droplets in each film cell, zero elsewhere */
+    public double[] getEntrainedFractions() {
+      return entrainedFractions.clone();
+    }
+
+    /** @return droplet surface area of each film cell in m2 per m of pipe, zero elsewhere */
+    public double[] getDropletAreasSquareMetresPerMetre() {
+      return dropletAreas.clone();
     }
 
     /** @return cells where a component source was cut to half of its donor inventory per step */
@@ -301,6 +352,28 @@ public final class FilmInterphaseTransfer implements Serializable {
   }
 
   /**
+   * Include entrained droplets as a second interface.
+   *
+   * <p>
+   * The entrained fraction (Ishii and Mishima) and the Sauter diameter (critical Weber number) come from
+   * {@link EntrainmentDeposition}. The droplets add the area {@code 6 E alpha_L A / d32} per metre of pipe, with a
+   * gas-side coefficient from Ranz and Marshall at the droplet settling speed and a liquid-side coefficient for a rigid
+   * sphere, {@code Sh = 6.58}. The droplet conductance is added to the film conductance; the film flux of a component
+   * is raised in the same proportion.
+   * </p>
+   *
+   * @param enabled true to add the droplet interface where the gas entrains liquid; default false
+   */
+  public void setDropletField(boolean enabled) {
+    dropletField = enabled;
+  }
+
+  /** @return true when entrained droplets contribute to the transfer */
+  public boolean isDropletField() {
+    return dropletField;
+  }
+
+  /**
    * Choose how the film solution becomes component sources.
    *
    * @param law transfer law
@@ -359,7 +432,12 @@ public final class FilmInterphaseTransfer implements Serializable {
       cachedInterfaceTemperatureK = new double[cells];
       cachedOverallCoefficientMetresPerSecond = new double[cells][];
       cachedEquilibriumRatio = new double[cells][];
+      cachedInterfaceGasFraction = new double[cells][];
+      cachedInterfaceOilFraction = new double[cells][];
       cachedMolarMassKgPerMol = new double[cells][];
+      cachedDropletOverallCoefficientMetresPerSecond = new double[cells][];
+      cachedEntrainedFraction = new double[cells];
+      cachedDropletDiameterMetres = new double[cells];
       cachedFilm = new boolean[cells];
       cachedRetryTimeSeconds = new double[cells];
       Arrays.fill(cachedTimeSeconds, Double.NEGATIVE_INFINITY);
@@ -373,6 +451,10 @@ public final class FilmInterphaseTransfer implements Serializable {
     Arrays.fill(interfaceTemperatures, Double.NaN);
     double[] slowestTimeConstants = new double[cells];
     Arrays.fill(slowestTimeConstants, Double.NaN);
+    double[] characteristicTimes = new double[cells];
+    Arrays.fill(characteristicTimes, Double.NaN);
+    double[] entrainedFractions = new double[cells];
+    double[] dropletAreas = new double[cells];
     boolean[] donorLimited = new boolean[cells];
     boolean[] equilibriumLimited = new boolean[cells];
 
@@ -439,9 +521,26 @@ public final class FilmInterphaseTransfer implements Serializable {
           gasMoles += inventory[cell][0][component] / cachedMolarMassKgPerMol[cell][component];
           oilMoles += inventory[cell][1][component] / cachedMolarMassKgPerMol[cell][component];
         }
-        double gasArea = section.getGasHoldup() * Math.PI * section.getDiameter() * section.getDiameter() / 4.0;
+        // Only the major movers set the reported time constant: components whose equilibrium change is at least a
+        // tenth of the largest one.
+        double significantTarget = 0.0;
+        for (double target : targetChanges[cell][1]) {
+          significantTarget = Math.max(significantTarget, 0.1 * Math.abs(target));
+        }
+        double pipeArea = Math.PI * section.getDiameter() * section.getDiameter() / 4.0;
+        double gasArea = section.getGasHoldup() * pipeArea;
+        if (dropletField && cachedEntrainedFraction[cell] > 0.0 && cachedDropletDiameterMetres[cell] > 0.0) {
+          entrainedFractions[cell] = cachedEntrainedFraction[cell];
+          dropletAreas[cell] = 6.0 * cachedEntrainedFraction[cell] * section.getLiquidHoldup() * pipeArea
+              / cachedDropletDiameterMetres[cell];
+        }
+        double distance = 0.0;
+        double initialRate = 0.0;
         for (int component = 0; component < names.length; component++) {
           double target = targetChanges[cell][1][component];
+          double filmConductance = cachedOverallCoefficientMetresPerSecond[cell][component] * widths[cell];
+          double dropletConductance = cachedDropletOverallCoefficientMetresPerSecond[cell][component]
+              * dropletAreas[cell];
           double rate;
           if (transferLaw == TransferLaw.FILM_FLUX) {
             rate = flux[component] * widths[cell];
@@ -453,15 +552,55 @@ public final class FilmInterphaseTransfer implements Serializable {
               rate = target / timeStepSeconds;
               equilibriumLimited[cell] = true;
             }
-          } else {
+          } else if (transferLaw == TransferLaw.TWO_RESISTANCE_RELAXATION) {
             // Two finite compartments exchanging through two film resistances approach equilibrium at this rate.
-            double rateConstant = cachedOverallCoefficientMetresPerSecond[cell][component] * widths[cell] / gasArea
+            double rateConstant = (filmConductance + dropletConductance) / gasArea
                 * (1.0 + cachedEquilibriumRatio[cell][component] * gasMoles / oilMoles);
             rate = target * -Math.expm1(-rateConstant * timeStepSeconds) / timeStepSeconds;
             slowestTimeConstants[cell] = Double.isNaN(slowestTimeConstants[cell]) ? 1.0 / rateConstant
                 : Math.max(slowestTimeConstants[cell], 1.0 / rateConstant);
+            distance += Math.abs(target);
+            initialRate += rateConstant * Math.abs(target);
+          } else {
+            // The film flux of the component, raised by the droplet interface in proportion to its conductance.
+            double filmRate = flux[component] * widths[cell]
+                * (filmConductance > 0.0 ? 1.0 + dropletConductance / filmConductance : 1.0);
+            if (filmRate * target > 0.0) {
+              // Same direction as local equilibrium: exponential approach with the film flux as initial rate.
+              double rateConstant = filmRate / target;
+              rate = target * -Math.expm1(-rateConstant * timeStepSeconds) / timeStepSeconds;
+              distance += Math.abs(target);
+              initialRate += Math.abs(filmRate);
+              if (Math.abs(target) > significantTarget) {
+                slowestTimeConstants[cell] = Double.isNaN(slowestTimeConstants[cell]) ? 1.0 / rateConstant
+                    : Math.max(slowestTimeConstants[cell], 1.0 / rateConstant);
+              }
+            } else if (singlePhaseEquilibrium || filmRate == 0.0) {
+              rate = 0.0;
+            } else {
+              // Against the direction of local equilibrium: a transient that saturates when the bulk of the
+              // limiting phase reaches the interface composition of the film solution.
+              double molarMass = cachedMolarMassKgPerMol[cell][component];
+              double oilFraction = inventory[cell][1][component] / molarMass / oilMoles;
+              double gasFraction = inventory[cell][0][component] / molarMass / gasMoles;
+              double interfaceOil = cachedInterfaceOilFraction[cell][component];
+              double interfaceGas = cachedInterfaceGasFraction[cell][component];
+              double direction = Math.signum(filmRate);
+              double oilCapacity = oilMoles * Math.max(0.0, direction * (interfaceOil - oilFraction))
+                  / (1.0 - interfaceOil);
+              double gasCapacity = gasMoles * Math.max(0.0, direction * (gasFraction - interfaceGas))
+                  / (1.0 - interfaceGas);
+              double capacityMoles = oilCapacity > 0.0 && gasCapacity > 0.0 ? Math.min(oilCapacity, gasCapacity)
+                  : Math.max(oilCapacity, gasCapacity);
+              double capacity = capacityMoles * molarMass / length;
+              rate = capacity > 0.0 && Double.isFinite(capacity) ? direction * capacity
+                  * -Math.expm1(-Math.abs(filmRate) * timeStepSeconds / capacity) / timeStepSeconds : 0.0;
+            }
           }
           oilRates[component] = rate;
+        }
+        if (initialRate > 0.0) {
+          characteristicTimes[cell] = distance / initialRate;
         }
       } else {
         boolean any = false;
@@ -481,8 +620,9 @@ public final class FilmInterphaseTransfer implements Serializable {
         sources[cell][0][component] = -limited;
       }
     }
-    return new Result(sources, modes, widths, netFluxes, interfaceTemperatures, slowestTimeConstants, donorLimited,
-        equilibriumLimited, filmSolveCount, filmFailureCount, lastFailure);
+    return new Result(sources, modes, widths, netFluxes, interfaceTemperatures, slowestTimeConstants,
+        characteristicTimes, entrainedFractions, dropletAreas, donorLimited, equilibriumLimited, filmSolveCount,
+        filmFailureCount, lastFailure);
   }
 
   /**
@@ -553,6 +693,8 @@ public final class FilmInterphaseTransfer implements Serializable {
     double[] flux = new double[names.length];
     double[] overall = new double[names.length];
     double[] ratio = new double[names.length];
+    double[] interfaceGasFraction = new double[names.length];
+    double[] interfaceOilFraction = new double[names.length];
     double[] molarMasses = new double[names.length];
     SystemInterface nodeBulk = node.getBulkSystem();
     SystemInterface interfaceState = boundary.getInterphaseSystem();
@@ -567,6 +709,8 @@ public final class FilmInterphaseTransfer implements Serializable {
       double interfaceGas = interfaceState.getPhase(0).getComponent(component).getx();
       double interfaceOil = interfaceState.getPhase(1).getComponent(component).getx();
       ratio[index] = interfaceGas / interfaceOil;
+      interfaceGasFraction[index] = interfaceGas;
+      interfaceOilFraction[index] = interfaceOil;
       overall[index] = 1.0
           / (1.0 / gasCoefficient + ratio[index] * gasMolarDensity / (oilMolarDensity * oilCoefficient));
       if (!Double.isFinite(value) || !(gasCoefficient > 0.0) || !(oilCoefficient > 0.0) || !(ratio[index] > 0.0)
@@ -577,7 +721,60 @@ public final class FilmInterphaseTransfer implements Serializable {
     }
     cachedOverallCoefficientMetresPerSecond[cell] = overall;
     cachedEquilibriumRatio[cell] = ratio;
+    cachedInterfaceGasFraction[cell] = interfaceGasFraction;
+    cachedInterfaceOilFraction[cell] = interfaceOilFraction;
     cachedMolarMassKgPerMol[cell] = molarMasses;
+
+    // Entrained droplets: fraction and size from the entrainment closure, coefficients for a sphere.
+    double[] dropletOverall = new double[names.length];
+    cachedEntrainedFraction[cell] = 0.0;
+    cachedDropletDiameterMetres[cell] = 0.0;
+    if (dropletField) {
+      double gasDensity = nodeBulk.getPhase(0).getDensity("kg/m3");
+      double oilDensity = nodeBulk.getPhase(1).getDensity("kg/m3");
+      double gasViscosity = nodeBulk.getPhase(0).getPhysicalProperties().getViscosity();
+      double oilViscosity = nodeBulk.getPhase(1).getPhysicalProperties().getViscosity();
+      double surfaceTension = nodeBulk.getInterphaseProperties().getSurfaceTension(0, 1);
+      if (!(surfaceTension > 0.0) || !Double.isFinite(surfaceTension)) {
+        surfaceTension = 5.0e-3;
+      }
+      double gasSpeed = Math.abs(section.getGasVelocity());
+      EntrainmentDeposition.EntrainmentResult entrainment = new EntrainmentDeposition().calculate(FlowRegime.ANNULAR,
+          gasSpeed * (1.0 - liquidHoldup), Math.max(Math.abs(section.getLiquidVelocity()) * liquidHoldup, 1.0e-9),
+          gasDensity, oilDensity, gasViscosity, oilViscosity, surfaceTension, section.getDiameter(), liquidHoldup);
+      double entrained = entrainment.entrainmentFraction;
+      double dropletDiameter = entrainment.dropletDiameter;
+      if (entrained > 0.0 && entrained <= 1.0 && dropletDiameter > 0.0 && Double.isFinite(dropletDiameter)) {
+        cachedEntrainedFraction[cell] = entrained;
+        cachedDropletDiameterMetres[cell] = dropletDiameter;
+        // Settling speed of the droplet from the Archimedes number, Re = Ar / (18 + 0.61 sqrt(Ar)).
+        double archimedes = 9.81 * Math.pow(dropletDiameter, 3.0) * gasDensity * Math.abs(oilDensity - gasDensity)
+            / (gasViscosity * gasViscosity);
+        double dropletReynolds = archimedes / (18.0 + 0.61 * Math.sqrt(archimedes));
+        double gasKinematicViscosity = gasViscosity / gasDensity;
+        nodeBulk.getPhase(0).getPhysicalProperties().calcEffectiveDiffusionCoefficients();
+        nodeBulk.getPhase(1).getPhysicalProperties().calcEffectiveDiffusionCoefficients();
+        for (int component = 0; component < count; component++) {
+          int index = transportIndex[component];
+          double gasDiffusivity = nodeBulk.getPhase(0).getPhysicalProperties()
+              .getEffectiveDiffusionCoefficient(component);
+          double oilDiffusivity = nodeBulk.getPhase(1).getPhysicalProperties()
+              .getEffectiveDiffusionCoefficient(component);
+          if (!(gasDiffusivity > 0.0) || !(oilDiffusivity > 0.0) || !Double.isFinite(gasDiffusivity)
+              || !Double.isFinite(oilDiffusivity)) {
+            continue;
+          }
+          // Ranz and Marshall outside the droplet, rigid-sphere diffusion limit inside it.
+          double gasSherwood = 2.0
+              + 0.6 * Math.sqrt(dropletReynolds) * Math.cbrt(gasKinematicViscosity / gasDiffusivity);
+          double gasDropletCoefficient = gasSherwood * gasDiffusivity / dropletDiameter;
+          double oilDropletCoefficient = 6.58 * oilDiffusivity / dropletDiameter;
+          dropletOverall[index] = 1.0 / (1.0 / gasDropletCoefficient
+              + ratio[index] * gasMolarDensity / (oilMolarDensity * oilDropletCoefficient));
+        }
+      }
+    }
+    cachedDropletOverallCoefficientMetresPerSecond[cell] = dropletOverall;
     interfaceTemperature[0] = boundary.getInterphaseSystem().getTemperature();
     if (!Double.isFinite(interfaceTemperature[0])) {
       throw new IllegalStateException("Film returned a nonfinite interface temperature");

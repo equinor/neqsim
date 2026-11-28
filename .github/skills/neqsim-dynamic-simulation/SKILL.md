@@ -661,12 +661,17 @@ For non-equilibrium condensation and evaporation without a user-supplied rate, s
 `pipe.setFilmInterphaseTransfer(new FilmInterphaseTransfer())` after
 `prepareConservativeEnergyTransientFromSteadyState()`. Each wet cell is solved with the
 Krishna-Standart film model of `neqsim.fluidmechanics` at its own holdup and phase speeds; the
-default two-resistance law relaxes every component toward local equilibrium with film-derived rate
-constants. Call `setUpdateInterval(300.0)` on long lines (a film solve costs 10–100 ms per cell)
+default law starts every component at its Maxwell-Stefan film flux and approaches local equilibrium
+exponentially, so it is stable on pipeline steps. Read
+`docs/process/non-equilibrium-two-phase-pipe-flow.md` first. Interfacial area is the largest
+uncertainty: run the case twice, with `setDropletField(false)` (default, film interface only) and
+`setDropletField(true)` (entrained droplets, close to equilibrium wherever the gas moves), and
+report both as bounds. Call `setUpdateInterval(300.0)` on long lines (a film solve costs 10–100 ms per cell)
 and read `getLastFilmInterphaseTransferResult()`: `getSlowestTimeConstantsSeconds()`,
-`getModes()`, `getFilmFailureCount()`. Do not select `TransferLaw.FILM_FLUX` on pipeline time
-steps: it is explicit and turned whole cells into oil at the onset of condensation in a 50 km
-test. Report the interface assumptions with the result (`setWallCondensation`, regime-specific
+`getCharacteristicTimesSeconds()`, `getModes()`, `getFilmFailureCount()`. Do not select
+`TransferLaw.FILM_FLUX` on pipeline time steps: it is explicit and turned whole cells into oil at
+the onset of condensation in a 50 km test. `TWO_RESISTANCE_RELAXATION` overstates the rates of butane
+to heptane by a factor of 2 to 8 against the film flux. Report the interface assumptions with the result (`setWallCondensation`, regime-specific
 film nodes via `setRegimeSpecificFilm`, interfacial-friction analogy with natural convection on
 the gas side, 30 s fallback where no film exists) and run `setInterfaceAreaFactor` as a
 sensitivity. The fallback, not a film rate, removes the last liquid once the local pressure passes
