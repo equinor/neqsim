@@ -243,6 +243,34 @@ Two-fluid pressure remained non-monotonic at 18,333/10,000 m with ranges
 0.00628–0.00631 and 0.00711–0.00752. This repeatability localizes the current
 numerical behavior; it does not establish asymptotic convergence or physical accuracy.
 
+The 8/12/18 continuation replays the unchanged 2.0 kg/s, 0.30 m production route and
+the unchanged 1.0 kg/s injection route from detached copies. It changes only the selected
+edge's segment count and again proves that both network mass-balance residuals close below
+1e-6 kg/s while the caller topology, mesh and hydraulic-model choice remain untouched.
+The production receipt is:
+
+| Model and quantity | 8/12 normalized maximum at position | 12/18 normalized maximum at position | Status |
+| --- | ---: | ---: | --- |
+| Beggs-Brill pressure | 0.00177484 at 15,000 m | 0.00137346 at 8,500 m | `MONOTONIC` |
+| Beggs-Brill temperature | 0.000214516 at 17,000 m | 0.000117421 at 10,875 m | `MONOTONIC` |
+| Beggs-Brill liquid holdup | 0.0344537 at 15,000 m | 0.0381406 at 8,500 m | `NON_MONOTONIC` |
+| Beggs-Brill gas velocity | 0.00224319 at 15,000 m | 0.00162197 at 8,500 m | `MONOTONIC` |
+| Beggs-Brill liquid velocity | 0.000484523 at 15,000 m | 0.000347567 at 8,500 m | `MONOTONIC` |
+| Two-fluid pressure | 0.00705914 at 19,167 m | 0.00568984 at 19,444 m | `MONOTONIC` |
+| Two-fluid temperature | 0.00521421 at 2,500 m | 0.00349968 at 1,667 m | `MONOTONIC` |
+| Two-fluid liquid holdup | 0.766857 at 4,167 m | 0.756746 at 3,889 m | `MONOTONIC` |
+| Two-fluid gas velocity | 0.00963029 at 2,500 m | 0.00695739 at 19,444 m | `MONOTONIC` |
+| Two-fluid liquid velocity | 0.00142766 at 19,167 m | 0.00114102 at 19,444 m | `MONOTONIC` |
+
+All ten injection receipts are monotonic on 8/12/18 cells. Their normalized
+12/18 discrepancies range from 0.000175793 for two-fluid liquid velocity to
+0.0672976 for two-fluid liquid holdup. That injection holdup maximum remains near
+2,111 m; the production two-fluid holdup discrepancy remains about 0.757 of the
+profile scale near 3,889 m, and Beggs-Brill production holdup remains non-monotonic.
+The finer sequence therefore narrows the unresolved set but does not establish practical
+mesh independence. Broader fluid and operating-envelope cases, then independent field or
+commercial-simulator comparisons, remain required before either correlation is qualified.
+
 `Result.compareTransientRateStep(...)` extends that handoff without rebuilding the
 field. Every requested positive outer time step starts from an independent copy of the
 same accepted two-fluid steady state, switches only the inlet to a controlled constant

@@ -299,6 +299,43 @@ class NetworkHydraulicModelComparisonTest {
     }
   }
 
+  /** Continue the localized production and injection receipts on a finer three-grid sequence. */
+  @Test
+  void continuesLocalizedSpatialRefinementOnFinerMeshes() {
+    FieldNetworkTopology[] topologies = new FieldNetworkTopology[] {topology(2.0), injectionTopology(1.0)};
+    String[] edgeIds = new String[] {"flowline", "injection-flowline"};
+    for (int caseIndex = 0; caseIndex < topologies.length; caseIndex++) {
+      String edgeId = edgeIds[caseIndex];
+      NetworkPipe originalEdge = topologies[caseIndex].getHydraulicNetwork().getPipe(edgeId);
+      int originalSegments = originalEdge.getMultiphaseSegments();
+      MeshSensitivityResult sensitivity = new NetworkHydraulicModelComparison(topologies[caseIndex])
+          .compareMeshSensitivity(Arrays.asList(edgeId), Arrays.asList(8, 12, 18), UUID.randomUUID());
+      assertEquals(originalSegments, originalEdge.getMultiphaseSegments());
+      assertEquals("NOT_RUN", originalEdge.getHydraulicModelStatus());
+      for (int segments : sensitivity.getSegmentCounts()) {
+        assertEquals(0.0, sensitivity.getResult(segments).getBeggsBrillMassBalanceErrorKgS(), 1.0e-6);
+        assertEquals(0.0, sensitivity.getResult(segments).getTwoFluidMassBalanceErrorKgS(), 1.0e-6);
+      }
+      for (PipeModelType modelType : Arrays.asList(PipeModelType.BEGGS_BRILL, PipeModelType.TWO_FLUID)) {
+        for (ProfileQuantity quantity : ProfileQuantity.values()) {
+          HydraulicSpatialConvergenceReport report = sensitivity.getSpatialConvergenceReport(8, 12, 18, edgeId,
+              modelType, quantity);
+          assertLocalizedReceipt(report, topologies[caseIndex].getHydraulicNetwork().getPipe(edgeId).getLength());
+          SpatialConvergenceStatus expected = caseIndex == 0 && modelType == PipeModelType.BEGGS_BRILL
+              && quantity == ProfileQuantity.LIQUID_HOLDUP ? SpatialConvergenceStatus.NON_MONOTONIC
+                  : SpatialConvergenceStatus.MONOTONIC;
+          assertEquals(expected, report.getStatus());
+          if (expected == SpatialConvergenceStatus.MONOTONIC) {
+            assertTrue(report.getMediumFineDifference() < report.getCoarseMediumDifference());
+          }
+        }
+      }
+      HydraulicSpatialConvergenceReport twoFluidHoldup = sensitivity.getSpatialConvergenceReport(8, 12, 18, edgeId,
+          PipeModelType.TWO_FLUID, ProfileQuantity.LIQUID_HOLDUP);
+      assertTrue(twoFluidHoldup.getMediumFineDifference() > (caseIndex == 0 ? 0.70 : 0.05));
+    }
+  }
+
   /** Controlled rate steps retain conservation evidence and a common horizon at each outer time step. */
   @Test
   void comparesControlledTransientRateStepTimeSteps() {
