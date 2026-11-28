@@ -1,7 +1,7 @@
 ---
 name: neqsim-flow-assurance
 description: "Flow assurance patterns for NeqSim. USE WHEN: predicting hydrate, wax, asphaltene, CO2/H2S corrosion (NORSOK M-506), mineral scale and brine mixing, valve scale drift and remediation, sulfur S8 deposition, metal-loss screening, pipeline hydraulics, DNV-RP-F109/F105/F104/F110/F114 screening, water hammer, slug flow, thermal analysis or inhibitor dosing. Code patterns plus the governing standards for every threat."
-last_verified: "2026-11-27"
+last_verified: "2026-11-28"
 ---
 
 # Flow Assurance Analysis with NeqSim
@@ -567,9 +567,18 @@ double liquidKg = pipe.getLiquidInventory("kg");            // "kg", "tonnes", "
 - **Blowdown from the receiving end delivers liquid.** On the 707 km case the two-fluid transport sent
   1,177 t of condensate through the outlet during blowdown to 80 bara average (bounds: 0 immobile, 2,072 t
   no-slip; 2026-11-27). Report it; the guard only protects the restart.
-- **`TwoFluidPipe` transient cannot run this sequence yet.** Probed 2026-11-27 with a closed inlet and a
-  130→30 bara outlet ramp: it stopped at 10 s (time step collapse, 5 km) and at 180 s (outlet backflow without
-  an outlet composition, 50 km). Use it for steady cross-checks only.
+- **`TwoFluidPipe` runs this sequence too; use it to check the line-pack base case.** Set it up as: steady
+  `run()`, `prepareConservativeEnergyTransientFromSteadyState()`, `closeInlet()`, then
+  `setGasOnlyOutletTakeoff(true)` or `setOutletBoundaryFluid(...)` with `setAllowOutletPhaseBackflow(true)`;
+  undo those before `closeOutlet()`; restart with `CONSTANT_PRESSURE` inlet, `setInletBoundaryFluid(...)` and
+  `setInletPressure(Pa)`. Without that set-up it stops within minutes (10 s and 180 s in a 2026-11-27 probe);
+  that is a set-up error. Measured 2026-11-28 on the 707 km case, 50 cells, end pressures from the line-pack
+  base case: 1,092 t of liquid through the outlet in blowdown (line-pack 1,167 t), 1,878 t in the line at
+  the end of blowdown (2,152 t), line liquid-free 14.2 h after restart (16.5 h), 19.5 h with a gas-only
+  outlet; 84.5 h simulated in 59 min. It removed 2.5 % less mass in blowdown and stayed 4 K warmer, so it
+  condensed less. From 25 to 50 cells these results moved 3–17 % toward the line-pack values (1,057 t,
+  1,660 t, 12.3 h and 18.5 h at 25 cells), so run a mesh pair and say `TwoFluidPipe` is not mesh-converged
+  at 50 cells. Report both models and say that neither is validated against field data.
 - Equilibrium is instantaneous, so "line liquid-free" times are optimistic. Slug flow, annular films and
   terrain slugging are not modelled, and nothing here is validated against measured pipeline data.
 

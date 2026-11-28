@@ -115,6 +115,54 @@ class TwoFluidComponentTraceInventoryTest {
     assertTrue(transport.createReport(1.0, 1, 1.0e-8).isConverged());
   }
 
+  /**
+   * A phase holding less than one molecule is absorbed by the dominant phase without changing any component total.
+   *
+   * @param oilMassKg initial oil mass in kg
+   */
+  @ParameterizedTest
+  @ValueSource(doubles = {4.9e-324, 1.0e-300, 1.0e-40, 1.0e-27})
+  void subMolecularPhaseIsAbsorbedByTheDominantPhase(double oilMassKg) {
+    SystemInterface fluid = richGas(80.0);
+    TwoFluidSection[] cells = {twoPhaseCell(oilMassKg)};
+    TwoFluidComponentTransport transport = new TwoFluidComponentTransport(fluid, cells);
+    double[][][] before = transport.getInventoryKg();
+    assertTrue(sum(before[0][1]) > 0.0);
+
+    double[][] transferKg = transport.absorbSubmolecularPhases();
+    double[][][] after = transport.getInventoryKg();
+
+    assertTrue(transferKg[0][1] < 0.0);
+    assertEquals(-transferKg[0][1], transferKg[0][0], 0.0);
+    assertEquals(0.0, transferKg[0][2], 0.0);
+    for (int component = 0; component < before[0][0].length; component++) {
+      assertEquals(0.0, after[0][1][component], 0.0);
+      assertEquals(before[0][0][component] + before[0][1][component], after[0][0][component], 0.0);
+    }
+  }
+
+  /**
+   * A positive trace phase holding at least one molecule is retained exactly.
+   *
+   * @param oilMassKg initial oil mass in kg
+   */
+  @ParameterizedTest
+  @ValueSource(doubles = {1.0e-24, 1.0e-15, 1.0e-3})
+  void tracePhaseWithAtLeastOneMoleculeIsRetained(double oilMassKg) {
+    SystemInterface fluid = richGas(80.0);
+    TwoFluidSection[] cells = {twoPhaseCell(oilMassKg)};
+    TwoFluidComponentTransport transport = new TwoFluidComponentTransport(fluid, cells);
+    double[][][] before = transport.getInventoryKg();
+
+    double[][] transferKg = transport.absorbSubmolecularPhases();
+
+    assertArrayEquals(new double[3], transferKg[0], 0.0);
+    double[][][] after = transport.getInventoryKg();
+    for (int phase = 0; phase < 3; phase++) {
+      assertArrayEquals(before[0][phase], after[0][phase], 0.0);
+    }
+  }
+
   private static SystemInterface wetGas() {
     SystemInterface fluid = new SystemSrkEos(288.15, 70.0);
     fluid.addComponent("methane", 1.0 - 1.0e-6);
@@ -154,6 +202,20 @@ class TwoFluidComponentTraceInventoryTest {
       result += value;
     }
     return result;
+  }
+
+  /**
+   * Build a one-metre cell at the two-phase state of the synthetic rich gas.
+   *
+   * @param oilMassKg oil mass in kg
+   * @return cell holding one kilogram of gas and the requested oil mass
+   */
+  private static TwoFluidSection twoPhaseCell(double oilMassKg) {
+    TwoFluidSection section = cell(1.0);
+    section.setPressure(80.0e5);
+    section.setTemperature(277.15);
+    section.setOilMassPerLength(oilMassKg);
+    return section;
   }
 
   private static TwoFluidSection cell(double gasMassKg) {

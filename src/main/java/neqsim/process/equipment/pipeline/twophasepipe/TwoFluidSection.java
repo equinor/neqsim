@@ -559,7 +559,9 @@ public class TwoFluidSection extends PipeSection {
       holdups[phase] = (state[phase] / densities[phase]) / area;
       if (!Double.isFinite(velocities[phase]) || !Double.isFinite(holdups[phase])
           || state[phase] > 0.0 && !(holdups[phase] > 0.0)) {
-        throw new IllegalArgumentException("Endpoint primitive values must be finite");
+        throw new IllegalArgumentException("Endpoint primitive values must be finite: phase " + phase + " mass="
+            + state[phase] + " kg/m, momentum=" + state[phase + 3] + " kg/s, density=" + densities[phase]
+            + " kg/m3, velocity=" + velocities[phase] + " m/s, holdup=" + holdups[phase]);
       }
       occupiedFraction += holdups[phase];
     }
