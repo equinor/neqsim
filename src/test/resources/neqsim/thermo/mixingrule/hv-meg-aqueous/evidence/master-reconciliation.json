@@ -1,0 +1,116 @@
+{
+  "qualified_base": "611f315adca3a5ac7647ea0105aac6dfe207c7d7",
+  "observed_master": "6ba9cc5c834135f561a7f8602156bf010412c12b",
+  "decision": "Keep the frozen qualified branch base. No merge/rebase of unrelated master into this campaign branch. New source/PR writes use freshly re-read observed master and absent/owned branch guards; combined-tree integration remains hosted-CI pending.",
+  "commits": [
+    {
+      "sha": "5eb9f44517b62437bb6d7559c7374f55f5379436",
+      "message": "Add industrial refrigeration, staged C3MR precooling and heat-pump performance (#5298)"
+    },
+    {
+      "sha": "96b175085adbb909ac527bc0abe80eb56ceae4b2",
+      "message": "docs: execute Python quickstart API paths (#5300)"
+    },
+    {
+      "sha": "6ba9cc5c834135f561a7f8602156bf010412c12b",
+      "message": "[AI-Assisted] Add same-topology hydraulic convergence receipts (#5301)"
+    }
+  ],
+  "changed_paths": [
+    ".github/agents/network-energy-systems.agent.md",
+    ".github/agents/utility-design.agent.md",
+    ".github/skills/neqsim-capability-map/SKILL.md",
+    ".github/skills/neqsim-heat-integration/SKILL.md",
+    ".github/skills/neqsim-lng-liquefaction/SKILL.md",
+    ".github/skills/neqsim-pipeline-and-terminal-networks/SKILL.md",
+    ".github/skills/neqsim-process-extraction/SKILL.md",
+    ".github/skills/neqsim-utility-design/SKILL.md",
+    ".github/skills/neqsim-utility-design/scripts/refrigeration_diagrams.py",
+    "CHANGELOG_AGENT_NOTES.md",
+    "devtools/generate_equipment_documentation_catalog.py",
+    "docs/REFERENCE_MANUAL_INDEX.md",
+    "docs/fielddevelopment/SURF_NETWORK_INTEGRATION.md",
+    "docs/process/equipment/README.md",
+    "docs/process/equipment/equipment_catalog.md",
+    "docs/process/equipment/figures/c3mr-precooling-composites.svg",
+    "docs/process/equipment/figures/c3mr-propane-cycle.svg",
+    "docs/process/equipment/refrigeration.md",
+    "docs/process/lng_liquefaction.md",
+    "docs/process/processmodel/graph_simulation.md",
+    "docs/process/thermal_utility_quality.md",
+    "docs/quickstart/python-quickstart.md",
+    "docs/thermo/component_database_guide.md",
+    "src/main/java/neqsim/process/equipment/ProcessEquipmentInterface.java",
+    "src/main/java/neqsim/process/equipment/heatexchanger/Cooler.java",
+    "src/main/java/neqsim/process/equipment/heatexchanger/MultiStreamHeatExchanger2.java",
+    "src/main/java/neqsim/process/equipment/network/NetworkHydraulicModelComparison.java",
+    "src/main/java/neqsim/process/equipment/refrigeration/RefrigerantFluid.java",
+    "src/main/java/neqsim/process/equipment/refrigeration/RefrigerantState.java",
+    "src/main/java/neqsim/process/equipment/refrigeration/RefrigerationLevel.java",
+    "src/main/java/neqsim/process/equipment/refrigeration/RefrigerationLoad.java",
+    "src/main/java/neqsim/process/equipment/refrigeration/RefrigerationStage.java",
+    "src/main/java/neqsim/process/equipment/refrigeration/RefrigerationSystem.java",
+    "src/main/java/neqsim/process/equipment/refrigeration/package-info.java",
+    "src/main/java/neqsim/process/lng/LNGProcessBuilder.java",
+    "src/main/java/neqsim/process/lng/LNGProcessModel.java",
+    "src/main/java/neqsim/process/processmodel/dexpi/Dexpi201XmlWriter.java",
+    "src/main/java/neqsim/process/processmodel/dexpi/Dexpi20SemanticValidator.java",
+    "src/main/java/neqsim/process/processmodel/dexpi/Dexpi20XmlWriter.java",
+    "src/main/java/neqsim/process/processmodel/dexpi/DexpiLayoutEngine.java",
+    "src/main/java/neqsim/process/processmodel/dexpi/DexpiShapeCatalog.java",
+    "src/main/java/neqsim/process/processmodel/dexpi/DexpiXmlWriter.java",
+    "src/main/java/neqsim/process/processmodel/dexpi/RefrigerationPipeRouting.java",
+    "src/main/java/neqsim/process/processmodel/dexpi/RefrigerationPlantProjection.java",
+    "src/main/java/neqsim/process/processmodel/graph/ProcessGraphBuilder.java",
+    "src/main/java/neqsim/process/util/utilitydesign/UtilitySystemDesigner.java",
+    "src/main/resources/data/COMP.csv",
+    "src/main/resources/neqsim/mcp/engineering-coverage.json",
+    "src/main/resources/neqsim/process/processmodel/dexpi_equipment_mapping.properties",
+    "src/main/resources/neqsim/process/processmodel/dexpi_piping_component_mapping.properties",
+    "src/test/java/neqsim/DocExamplesCompilationTest.java",
+    "src/test/java/neqsim/documentation/EntryPointExamplesDocumentationTest.java",
+    "src/test/java/neqsim/process/equipment/network/NetworkHydraulicModelComparisonTest.java",
+    "src/test/java/neqsim/process/equipment/refrigeration/RefrigerantFluidTest.java",
+    "src/test/java/neqsim/process/equipment/refrigeration/RefrigerationSystemTest.java",
+    "src/test/java/neqsim/process/lng/LNGProcessBenchmarkTest.java",
+    "src/test/java/neqsim/process/lng/LNGProcessBuilderTest.java",
+    "src/test/java/neqsim/process/processmodel/dexpi/RefrigerationPlantProjectionTest.java"
+  ],
+  "critical_policy_and_thermo_source_overlap": [],
+  "selected_component_rows_identical": [
+    "water",
+    "MEG",
+    "methanol",
+    "CO2",
+    "methane",
+    "ethane",
+    "propane",
+    "i-butane",
+    "n-butane",
+    "i-pentane",
+    "n-pentane",
+    "n-hexane",
+    "n-heptane",
+    "n-octane",
+    "nitrogen"
+  ],
+  "other_changed_component_rows": [
+    "R12",
+    "R134a",
+    "ammonia"
+  ],
+  "remaining_open_peers": [
+    {
+      "number": 5299,
+      "head": "20dbba0dea938273291d0a34e8cb6366191c78d1"
+    },
+    {
+      "number": 5302,
+      "head": "c8aaf1239f0085521fb92a4a1ec9b1f1f3641936"
+    },
+    {
+      "number": 5236,
+      "head": "e7b056183f13a82c83db0269b122d2d678a2dd52"
+    }
+  ]
+}

@@ -143,6 +143,18 @@ distributed across route legs with at least one increment per leg, including non
 It applies the count only to selected edges on detached definitions, executes the normal
 fail-closed comparison at every mesh and returns each full result by count. Unselected edge
 fidelity and mesh settings remain unchanged, and the caller topology is not run or mutated.
+For three increasing meshes with one constant ratio,
+`MeshSensitivityResult.getSpatialConvergenceReport(...)` applies the same symmetric
+common-position discrepancy and fail-closed status contract used by
+`TwoFluidPipeNetworkRefinementStudy`. It reports `MONOTONIC`, `NON_MONOTONIC` or
+`ROUND_OFF_LIMITED` separately for either Beggs-Brill or two-fluid pressure, temperature,
+liquid-holdup and superficial phase-velocity profiles. Observed order and a safety-factored
+fine-grid convergence index are finite only for a resolved monotonic sequence; unresolved
+sequences retain `NaN` instead of manufacturing an error estimate. Every receipt also
+retains the native-unit normalization scale, the signed coarse-minus-medium and
+medium-minus-fine discrepancy, and the physical route position of each maximum. These
+diagnostics localize and bound non-monotonic behavior without changing its fail-closed
+classification.
 
 ```java
 NetworkHydraulicModelComparison comparison =
@@ -166,9 +178,16 @@ conservative.runTransient(0.000001, UUID.randomUUID());
 
 NetworkHydraulicModelComparison.MeshSensitivityResult mesh =
     comparison.compareMeshSensitivity(
-        Arrays.asList("flowline"), Arrays.asList(4, 8, 10), UUID.randomUUID());
+        Arrays.asList("flowline"), Arrays.asList(4, 6, 9), UUID.randomUUID());
 NetworkHydraulicModelComparison.EdgeComparison fine =
-    mesh.getResult(10).getEdgeComparison("flowline");
+    mesh.getResult(9).getEdgeComparison("flowline");
+NetworkHydraulicModelComparison.HydraulicSpatialConvergenceReport pressureReceipt =
+    mesh.getSpatialConvergenceReport(
+        4, 6, 9, "flowline", PipeModelType.TWO_FLUID, ProfileQuantity.PRESSURE);
+double finePressureMismatchPositionM =
+    pressureReceipt.getMediumFineMaximumDifferencePositionM();
+double finePressureMismatchPa =
+    pressureReceipt.getMediumFineSignedDifference();
 
 NetworkHydraulicModelComparison.TransientTimeStepSensitivityResult rateStep =
     result.compareTransientRateStep(
@@ -182,15 +201,47 @@ double acceptedEnergyResidualJ = fineTransient.getEnergyResidualJ();
 ```
 
 `NetworkHydraulicModelComparisonTest` exercises two different SRK well fluids through
-a conservative template, an undulating 20 km flowline and a 500 m riser at 2.0 kg/s,
-plus a nearby 1.5 kg/s point. It checks both network mass balances, physical and
+a conservative template, an undulating 20 km flowline and a 500 m riser at 2.0 kg/s.
+It also repeats the complete 4/6/9 receipt at 1.5 kg/s through a 0.25 m line and
+2.5 kg/s through a 0.35 m line. It checks both network mass balances, physical and
 distance-aligned profile bounds, cross-model engineering bounds for all five quantities,
-4/8/10-segment sensitivity, preservation of the original topology/model selection,
+4/6/9-segment sensitivity, explicit three-grid status, signed discrepancy reconstruction
+and physical localization, preservation of the original topology/model selection,
 clone independence and one accepted transactional transient step. This is evidence-ladder
 level 3/4 (conservation and engineering bounds), not an independent correlation benchmark.
 The test also checks that the conservative-energy handoff preserves every accepted steady
 pressure, temperature, holdup, phase-velocity and section-energy value exactly, then exercises
 the component and total-energy ledgers for one accepted transient interval.
+
+The equally refined 4/6/9 production-flowline receipt deliberately retains the unresolved
+quantities found by the acceptance run:
+
+| Model and quantity | 4/6 normalized | 4/6 signed maximum at position | 6/9 normalized | 6/9 signed maximum at position | Status |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Beggs-Brill pressure | 0.00519958 | +62,994 Pa at 7,750 m | 0.00526264 | -63,758 Pa at 15,500 m | `NON_MONOTONIC` |
+| Beggs-Brill temperature | 0.000817490 | +0.23584 K at 7,750 m | 0.00116597 | +0.33637 K at 18,500 m | `NON_MONOTONIC` |
+| Beggs-Brill liquid holdup | 0.0473558 | -0.029067 at 5,250 m | 0.0675760 | +0.041478 at 10,250 m | `NON_MONOTONIC` |
+| Beggs-Brill gas velocity | 0.00473765 | -0.0006944 m/s at 7,750 m | 0.00637535 | +0.0009344 m/s at 15,500 m | `NON_MONOTONIC` |
+| Beggs-Brill liquid velocity | 0.00106831 | +0.00002396 m/s at 7,750 m | 0.00137218 | -0.00003078 m/s at 15,500 m | `NON_MONOTONIC` |
+| Two-fluid pressure | 0.00630335 | +75,818 Pa at 18,333 m | 0.00732692 | +88,130 Pa at 10,000 m | `NON_MONOTONIC` |
+| Two-fluid temperature | 0.0104224 | +3.0032 K at 5,000 m | 0.00673976 | +1.9421 K at 3,333 m | `MONOTONIC` |
+| Two-fluid liquid holdup | 0.499260 | -0.44974 at 15,000 m | 0.477140 | +0.42982 at 10,000 m | `MONOTONIC` |
+| Two-fluid gas velocity | 0.0174235 | +0.002543 m/s at 5,000 m | 0.0153676 | +0.002243 m/s at 3,333 m | `MONOTONIC` |
+| Two-fluid liquid velocity | 0.00181692 | +0.00004067 m/s at 5,000 m | 0.00154802 | +0.00003465 m/s at 10,000 m | `MONOTONIC` |
+
+The typed injection route executes the same ten model/quantity receipt paths. These are
+topology-specific synthetic numerical diagnostics, not a mesh recommendation, a physical
+accuracy band or independent B&B/two-fluid qualification. In particular, the large monotonic
+two-fluid holdup discrepancy is retained rather than accepted as practically mesh independent.
+The additional rate/diameter cases are operating-envelope software evidence only; they do
+not turn the three synthetic points into a qualified hydraulic envelope.
+Across the 1.5 kg/s–0.25 m, 2.0 kg/s–0.30 m and 2.5 kg/s–0.35 m cases, every
+quantity retained the same classification and maximum-discrepancy route positions.
+For example, Beggs-Brill pressure remained non-monotonic at 7,750/15,500 m with
+normalized 4/6 and 6/9 discrepancies of 0.00509–0.00530 and 0.00516–0.00537.
+Two-fluid pressure remained non-monotonic at 18,333/10,000 m with ranges
+0.00628–0.00631 and 0.00711–0.00752. This repeatability localizes the current
+numerical behavior; it does not establish asymptotic convergence or physical accuracy.
 
 `Result.compareTransientRateStep(...)` extends that handoff without rebuilding the
 field. Every requested positive outer time step starts from an independent copy of the
@@ -1189,8 +1240,11 @@ second transition detector or interpret a heuristic `OPTIMAL` status as operatin
    Its multi-template
    case uses a three-incident algebraic PLEM, with a retained donor-convergence regression and no
    relaxed conservation tolerance. Longer production/injection trajectories now retain topology- and
-   quantity-specific three-grid statuses without claiming unresolved sequences converged. Next broaden closure,
-   fluid and operating-envelope coverage and add independent field/commercial comparisons; only then
+   quantity-specific three-grid statuses without claiming unresolved sequences converged. The same-topology
+   steady B&B/two-fluid comparison now also emits fail-closed three-grid statuses for production and injection
+   routes; its unresolved B&B profiles and two-fluid pressure are retained as blockers. Next broaden closure,
+   fluid and operating-envelope coverage, resolve or bound those non-monotonic sequences, and add independent
+   field/commercial comparisons; only then
    consider asynchronous multirate boundary coupling. Enable dynamics only within the quantitatively
    tested scope.
 4. Add reviewed Java/Python builders, agent/MCP routes (#3153) and DEXPI identity export

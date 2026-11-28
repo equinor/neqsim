@@ -177,6 +177,9 @@ final class DexpiLayoutEngine {
       if (unit instanceof Stream || unit instanceof DexpiStream) {
         continue;
       }
+      for (StreamInterface outlet : unit.getOutletStreams()) {
+        outletStreamToEquipment.put(System.identityHashCode(outlet), unit.getName());
+      }
       StreamInterface gasOut = DexpiStreamUtils.getGasOutletStream(unit);
       if (gasOut != null) {
         outletStreamToEquipment.put(System.identityHashCode(gasOut), unit.getName());
@@ -838,20 +841,8 @@ final class DexpiLayoutEngine {
    * @return list of inlet streams (never null, may be empty)
    */
   static List<StreamInterface> resolveInletStreams(ProcessEquipmentInterface unit) {
-    List<StreamInterface> result = new ArrayList<>();
-    if (unit instanceof TwoPortEquipment) {
-      StreamInterface inlet = ((TwoPortEquipment) unit).getInletStream();
-      if (inlet != null) {
-        result.add(inlet);
-      }
-    } else {
-      // Separator, Mixer, Splitter, etc. — use getInletStreams()
-      List<StreamInterface> inlets = unit.getInletStreams();
-      if (inlets != null) {
-        result.addAll(inlets);
-      }
-    }
-    return result;
+    List<StreamInterface> inlets = unit.getInletStreams();
+    return inlets == null ? java.util.Collections.<StreamInterface>emptyList() : inlets;
   }
 
   /**
@@ -3012,6 +3003,31 @@ final class DexpiLayoutEngine {
     }
     appendStyledConnectionLine(document, parent, fromX, fromY, toX, toY, service.getLineType(), service.getLineWeight(),
         service.getColorR(), service.getColorG(), service.getColorB());
+  }
+
+  /**
+   * Draws a routed process line, preserving the service presentation on a single Proteus CenterLine.
+   *
+   * @param document exchange document
+   * @param parent owning piping network segment
+   * @param route ordered nozzle-to-nozzle coordinates
+   * @param service line service and style
+   */
+  static void appendServiceRoute(Document document, Element parent, double[][] route,
+      DexpiServiceClassifier.ServiceType service) {
+    Element line = document.createElement("CenterLine");
+    line.setAttribute("NumPoints", String.valueOf(route.length));
+    Element style = document.createElement("Presentation");
+    style.setAttribute("LineType", String.valueOf(service.getLineType()));
+    style.setAttribute("LineWeight", String.valueOf(service.getLineWeight()));
+    style.setAttribute("R", service.getColorR());
+    style.setAttribute("G", service.getColorG());
+    style.setAttribute("B", service.getColorB());
+    line.appendChild(style);
+    for (double[] point : route) {
+      appendCoordinate(document, line, point[0], point[1]);
+    }
+    parent.appendChild(line);
   }
 
   // ==== Utility supply connection points (ISO 10628) ====

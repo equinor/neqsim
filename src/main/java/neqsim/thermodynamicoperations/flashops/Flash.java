@@ -780,7 +780,12 @@ public abstract class Flash extends BaseOperation {
   }
 
   /**
-   * stabilityAnalysis.
+   * Evaluates ordinary trial phases in homogeneous-reference order.
+   *
+   * <p>
+   * Enhanced and automatic-LLE filtering contexts visit vapor then liquid for a liquid reference, and liquid then vapor
+   * for a gas reference. The legacy traversal and tangent-plane reset policy remain unchanged. A bounded trial search
+   * is not a proof of global stability.
    *
    * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
@@ -852,8 +857,12 @@ public abstract class Flash extends BaseOperation {
           clonedSystem.getPhase(0).getComponent(i).getK() * clonedSystem.getPhase(0).getComponent(i).getz() / sumw[0]);
     }
 
-    // for (int j = 0; j < clonedSystem.getNumberOfPhases(); j++) {
-    for (int j = start; j >= end; j = j + mult) {
+    // Enhanced/LLE contexts retain nontrivial tangent-plane results. A liquid reference visits
+    // vapor then liquid in ascending index order; the descending comparison otherwise skips both.
+    // Keep legacy traversal paired with its existing tm-reset policy until separately qualified.
+    boolean useNonTrivialFiltering = shouldApplyEnhancedMultiPhaseCheck() || shouldRunAutomaticLLECheck();
+    boolean ascendingTrials = useNonTrivialFiltering && mult > 0;
+    for (int j = start; ascendingTrials ? j <= end : j >= end; j += mult) {
       for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
         Wi[j][i] = clonedSystem.getPhase(j).getComponent(i).getx();
         logWi[i] = Math.log(Wi[j][i]);
@@ -999,7 +1008,6 @@ public abstract class Flash extends BaseOperation {
     // Improved trivial solution detection using cosine similarity.
     // Use strict compatibility gating: enable non-trivial filtering for enhanced/LLE-auto
     // contexts, keep legacy tm-reset behavior for baseline default mode.
-    boolean useNonTrivialFiltering = shouldApplyEnhancedMultiPhaseCheck() || shouldRunAutomaticLLECheck();
     if (useNonTrivialFiltering) {
       for (int trialPhase = 0; trialPhase < 2; trialPhase++) {
         double dotProduct = 0.0;

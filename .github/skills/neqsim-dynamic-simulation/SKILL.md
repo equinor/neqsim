@@ -1010,6 +1010,10 @@ Minimum result keys: `max_pressure_bara`, `max_level_m`, `min_temperature_C`,
 
 ## Depressurization / Blowdown
 
+For long gas or gas-condensate export lines (hours to days, retrograde condensation, restart delivery
+policy) use `CompositionalLinePackPipe.runTransient(dt, id)` with `DewPointGuardedOutletController`; see
+`neqsim-flow-assurance` section 4 and [the docs](../../../docs/process/compositional-linepack-pipe.md).
+
 ```java
 // For vessel depressurization, use the safety/depressuring agent
 // Key pattern: open a blowdown valve at t=0 and track P, T vs time

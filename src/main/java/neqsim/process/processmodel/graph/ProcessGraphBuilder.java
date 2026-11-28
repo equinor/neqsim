@@ -667,6 +667,21 @@ public final class ProcessGraphBuilder {
         addSignalEdgeIfAbsent(graph, setPoint, setPoint.getTargetEquipment(),
             "signal:" + setPoint.getName() + "->" + safeName(setPoint.getTargetEquipment()));
       }
+
+      // Uniform catch-all: equipment that reads results of other equipment
+      // outside the stream and energy topology reports those sources itself.
+      try {
+        List<ProcessEquipmentInterface> signalSources = unit.getSignalSources();
+        if (signalSources != null) {
+          for (ProcessEquipmentInterface source : signalSources) {
+            if (source != null && source != unit) {
+              addSignalEdgeIfAbsent(graph, source, unit, "signal:" + safeName(source) + "->" + unit.getName());
+            }
+          }
+        }
+      } catch (Exception ex) {
+        // Some equipment may throw if not yet configured; ignore.
+      }
     }
 
     return graph;

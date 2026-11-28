@@ -1,0 +1,1338 @@
+{
+  "JVMs": 96,
+  "rounds": 960,
+  "state_rows": 18000,
+  "maxima": {
+    "balance": 4.107825191113079e-15,
+    "normalization": 2.220446049250313e-16,
+    "log_fugacity": 8.480327551296796e-12,
+    "matched_state_absolute_difference": 0.0
+  },
+  "same_rule_comparison": [
+    {
+      "profile": 0,
+      "rule": 2,
+      "scenario": "init1",
+      "components": 5,
+      "candidate_over_base_by_fork": [
+        1.043496658893457,
+        1.0635041993082615
+      ],
+      "identical_control_over_base_by_fork": [
+        0.9960363088745288,
+        0.9831231710031951
+      ],
+      "candidate_over_identical_control_by_fork": [
+        1.0476492167966809,
+        1.0817608929133917
+      ],
+      "allocations_by_fork": [
+        {
+          "base": 304.024,
+          "candidate": 304.024,
+          "control": 304.024
+        },
+        {
+          "base": 304.024,
+          "candidate": 304.024,
+          "control": 304.024
+        }
+      ]
+    },
+    {
+      "profile": 0,
+      "rule": 2,
+      "scenario": "init3",
+      "components": 5,
+      "candidate_over_base_by_fork": [
+        0.9604852754605516,
+        0.9080731585240385
+      ],
+      "identical_control_over_base_by_fork": [
+        0.9935545401128933,
+        1.0283017267747407
+      ],
+      "candidate_over_identical_control_by_fork": [
+        0.9667162059884663,
+        0.8830804567178954
+      ],
+      "allocations_by_fork": [
+        {
+          "base": 416.024,
+          "candidate": 416.024,
+          "control": 416.024
+        },
+        {
+          "base": 416.024,
+          "candidate": 416.024,
+          "control": 416.024
+        }
+      ]
+    },
+    {
+      "profile": 0,
+      "rule": 2,
+      "scenario": "flash",
+      "components": 5,
+      "candidate_over_base_by_fork": [
+        1.0869717454781305,
+        1.1432777972221617
+      ],
+      "identical_control_over_base_by_fork": [
+        2.0843555425777467,
+        1.0089188603219343
+      ],
+      "candidate_over_identical_control_by_fork": [
+        0.5214905630417831,
+        1.1331712015546571
+      ],
+      "allocations_by_fork": [
+        {
+          "base": 108072.96,
+          "candidate": 108072.96,
+          "control": 108072.96
+        },
+        {
+          "base": 108072.96,
+          "candidate": 108072.96,
+          "control": 108072.96
+        }
+      ]
+    },
+    {
+      "profile": 0,
+      "rule": 2,
+      "scenario": "flash",
+      "components": 15,
+      "candidate_over_base_by_fork": [
+        1.0717830718521182,
+        0.9877640849628715
+      ],
+      "identical_control_over_base_by_fork": [
+        1.1387161829533992,
+        1.016232121289582
+      ],
+      "candidate_over_identical_control_by_fork": [
+        0.9412205498584539,
+        0.9719866792927339
+      ],
+      "allocations_by_fork": [
+        {
+          "base": 433504.96,
+          "candidate": 433504.96,
+          "control": 433504.96
+        },
+        {
+          "base": 433504.96,
+          "candidate": 433504.96,
+          "control": 433504.96
+        }
+      ]
+    },
+    {
+      "profile": 0,
+      "rule": 4,
+      "scenario": "init1",
+      "components": 5,
+      "candidate_over_base_by_fork": [
+        0.8949869228658098,
+        1.3815433970381845
+      ],
+      "identical_control_over_base_by_fork": [
+        0.9484735103971851,
+        1.0126021501874696
+      ],
+      "candidate_over_identical_control_by_fork": [
+        0.9436077160352353,
+        1.3643496577430834
+      ],
+      "allocations_by_fork": [
+        {
+          "base": 160.024,
+          "candidate": 160.024,
+          "control": 160.024
+        },
+        {
+          "base": 160.024,
+          "candidate": 160.024,
+          "control": 160.024
+        }
+      ]
+    },
+    {
+      "profile": 0,
+      "rule": 4,
+      "scenario": "init3",
+      "components": 5,
+      "candidate_over_base_by_fork": [
+        1.0551726131846173,
+        1.4532617137872097
+      ],
+      "identical_control_over_base_by_fork": [
+        1.48724591302376,
+        1.3143578893200498
+      ],
+      "candidate_over_identical_control_by_fork": [
+        0.7094809297806824,
+        1.1056818889252595
+      ],
+      "allocations_by_fork": [
+        {
+          "base": 5600.024,
+          "candidate": 5600.024,
+          "control": 5600.024
+        },
+        {
+          "base": 5600.024,
+          "candidate": 5600.024,
+          "control": 5600.024
+        }
+      ]
+    },
+    {
+      "profile": 0,
+      "rule": 4,
+      "scenario": "flash",
+      "components": 5,
+      "candidate_over_base_by_fork": [
+        1.5584034996330378,
+        0.849806040326604
+      ],
+      "identical_control_over_base_by_fork": [
+        1.588994939609245,
+        1.5954286673015314
+      ],
+      "candidate_over_identical_control_by_fork": [
+        0.9807479311521721,
+        0.5326506021506714
+      ],
+      "allocations_by_fork": [
+        {
+          "base": 274216.96,
+          "candidate": 274216.96,
+          "control": 274216.96
+        },
+        {
+          "base": 274216.96,
+          "candidate": 274216.96,
+          "control": 274216.96
+        }
+      ]
+    },
+    {
+      "profile": 0,
+      "rule": 4,
+      "scenario": "flash",
+      "components": 15,
+      "candidate_over_base_by_fork": [
+        0.9381063518130939,
+        1.1100908568056407
+      ],
+      "identical_control_over_base_by_fork": [
+        0.9555291232529672,
+        0.9384119365687261
+      ],
+      "candidate_over_identical_control_by_fork": [
+        0.9817663627241836,
+        1.1829462238776
+      ],
+      "allocations_by_fork": [
+        {
+          "base": 1554760.96,
+          "candidate": 1554760.96,
+          "control": 1554760.96
+        },
+        {
+          "base": 1554760.96,
+          "candidate": 1554760.96,
+          "control": 1554760.96
+        }
+      ]
+    },
+    {
+      "profile": 1,
+      "rule": 2,
+      "scenario": "init1",
+      "components": 5,
+      "candidate_over_base_by_fork": [
+        1.6729477628444513,
+        1.0744464903070072
+      ],
+      "identical_control_over_base_by_fork": [
+        0.9232748848406725,
+        1.0434508378113239
+      ],
+      "candidate_over_identical_control_by_fork": [
+        1.8119714835881713,
+        1.0297049476338511
+      ],
+      "allocations_by_fork": [
+        {
+          "base": 304.024,
+          "candidate": 304.024,
+          "control": 304.024
+        },
+        {
+          "base": 304.024,
+          "candidate": 304.024,
+          "control": 304.024
+        }
+      ]
+    },
+    {
+      "profile": 1,
+      "rule": 2,
+      "scenario": "init3",
+      "components": 5,
+      "candidate_over_base_by_fork": [
+        1.1438075352049555,
+        0.9979411969613846
+      ],
+      "identical_control_over_base_by_fork": [
+        1.0402018889893145,
+        0.9922445218011401
+      ],
+      "candidate_over_identical_control_by_fork": [
+        1.0996014786286408,
+        1.0057412009188056
+      ],
+      "allocations_by_fork": [
+        {
+          "base": 416.024,
+          "candidate": 416.024,
+          "control": 416.024
+        },
+        {
+          "base": 416.024,
+          "candidate": 416.024,
+          "control": 416.024
+        }
+      ]
+    },
+    {
+      "profile": 1,
+      "rule": 2,
+      "scenario": "flash",
+      "components": 5,
+      "candidate_over_base_by_fork": [
+        1.2098031806196707,
+        0.8460555441993444
+      ],
+      "identical_control_over_base_by_fork": [
+        1.2687548259799326,
+        0.7484687604999263
+      ],
+      "candidate_over_identical_control_by_fork": [
+        0.9535358257142154,
+        1.130381906165645
+      ],
+      "allocations_by_fork": [
+        {
+          "base": 110088.96,
+          "candidate": 110088.96,
+          "control": 110088.96
+        },
+        {
+          "base": 110088.96,
+          "candidate": 110088.96,
+          "control": 110088.96
+        }
+      ]
+    },
+    {
+      "profile": 1,
+      "rule": 2,
+      "scenario": "flash",
+      "components": 15,
+      "candidate_over_base_by_fork": [
+        0.9007679882358833,
+        1.0000033334755045
+      ],
+      "identical_control_over_base_by_fork": [
+        1.106257732853481,
+        1.1795108611897207
+      ],
+      "candidate_over_identical_control_by_fork": [
+        0.8142478569731146,
+        0.8478118908263762
+      ],
+      "allocations_by_fork": [
+        {
+          "base": 432720.96,
+          "candidate": 432720.96,
+          "control": 432720.96
+        },
+        {
+          "base": 432720.96,
+          "candidate": 432720.96,
+          "control": 432720.96
+        }
+      ]
+    },
+    {
+      "profile": 1,
+      "rule": 4,
+      "scenario": "init1",
+      "components": 5,
+      "candidate_over_base_by_fork": [
+        0.9501561517016568,
+        0.9729045507091213
+      ],
+      "identical_control_over_base_by_fork": [
+        0.9288966029393169,
+        1.07240803088537
+      ],
+      "candidate_over_identical_control_by_fork": [
+        1.0228868839600318,
+        0.9072149057909425
+      ],
+      "allocations_by_fork": [
+        {
+          "base": 160.024,
+          "candidate": 160.024,
+          "control": 160.024
+        },
+        {
+          "base": 160.024,
+          "candidate": 160.024,
+          "control": 160.024
+        }
+      ]
+    },
+    {
+      "profile": 1,
+      "rule": 4,
+      "scenario": "init3",
+      "components": 5,
+      "candidate_over_base_by_fork": [
+        1.0053876520777734,
+        0.9143449711720403
+      ],
+      "identical_control_over_base_by_fork": [
+        0.9228165974030311,
+        0.9786077835451467
+      ],
+      "candidate_over_identical_control_by_fork": [
+        1.089477210213938,
+        0.9343324123784249
+      ],
+      "allocations_by_fork": [
+        {
+          "base": 5600.024,
+          "candidate": 5600.024,
+          "control": 5600.024
+        },
+        {
+          "base": 5600.024,
+          "candidate": 5600.024,
+          "control": 5600.024
+        }
+      ]
+    },
+    {
+      "profile": 1,
+      "rule": 4,
+      "scenario": "flash",
+      "components": 5,
+      "candidate_over_base_by_fork": [
+        0.9225209673221162,
+        1.0711891081945732
+      ],
+      "identical_control_over_base_by_fork": [
+        0.9517146170125056,
+        0.9388065334019836
+      ],
+      "candidate_over_identical_control_by_fork": [
+        0.9693252061400189,
+        1.1410115610432223
+      ],
+      "allocations_by_fork": [
+        {
+          "base": 275216.96,
+          "candidate": 275216.96,
+          "control": 275216.96
+        },
+        {
+          "base": 275216.96,
+          "candidate": 275216.96,
+          "control": 275216.96
+        }
+      ]
+    },
+    {
+      "profile": 1,
+      "rule": 4,
+      "scenario": "flash",
+      "components": 15,
+      "candidate_over_base_by_fork": [
+        0.975629770292401,
+        1.0187791101774002
+      ],
+      "identical_control_over_base_by_fork": [
+        1.006008696945103,
+        1.0562965099495885
+      ],
+      "candidate_over_identical_control_by_fork": [
+        0.9698025208480283,
+        0.9644821322244276
+      ],
+      "allocations_by_fork": [
+        {
+          "base": 1554160.96,
+          "candidate": 1554160.96,
+          "control": 1554160.96
+        },
+        {
+          "base": 1554160.96,
+          "candidate": 1554160.96,
+          "control": 1554160.96
+        }
+      ]
+    }
+  ],
+  "different_thermodynamics_cost": [
+    {
+      "profile": 0,
+      "scenario": "init1",
+      "components": 5,
+      "rule4_over_rule2_by_fork": [
+        7.255952479187836,
+        10.319161090709546
+      ]
+    },
+    {
+      "profile": 0,
+      "scenario": "init3",
+      "components": 5,
+      "rule4_over_rule2_by_fork": [
+        14.247580306630747,
+        17.36806801352297
+      ]
+    },
+    {
+      "profile": 0,
+      "scenario": "flash",
+      "components": 5,
+      "rule4_over_rule2_by_fork": [
+        7.160110112741113,
+        4.356439621537517
+      ]
+    },
+    {
+      "profile": 0,
+      "scenario": "flash",
+      "components": 15,
+      "rule4_over_rule2_by_fork": [
+        21.535146821112733,
+        29.170197215554744
+      ]
+    },
+    {
+      "profile": 1,
+      "scenario": "init1",
+      "components": 5,
+      "rule4_over_rule2_by_fork": [
+        12.140557089193253,
+        21.087137816964777
+      ]
+    },
+    {
+      "profile": 1,
+      "scenario": "init3",
+      "components": 5,
+      "rule4_over_rule2_by_fork": [
+        23.265734225782026,
+        24.967766739036247
+      ]
+    },
+    {
+      "profile": 1,
+      "scenario": "flash",
+      "components": 5,
+      "rule4_over_rule2_by_fork": [
+        12.889638226773373,
+        11.084629659831577
+      ]
+    },
+    {
+      "profile": 1,
+      "scenario": "flash",
+      "components": 15,
+      "rule4_over_rule2_by_fork": [
+        46.72064882919203,
+        47.29949487330271
+      ]
+    }
+  ],
+  "process_medians": {
+    "p0-r2-init1-n5-f0-base": {
+      "ns_per_call": 812.94175,
+      "bytes_per_call": 304.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "c9109f0198c3dd7223846cdd4ff6f05735afd5bca4049bef537ecbfa19b53b4a"
+    },
+    "p0-r2-init1-n5-f0-candidate": {
+      "ns_per_call": 848.302,
+      "bytes_per_call": 304.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "d15137a823cd1931a0cbaba1acadd22da1eda82783e97cf6e6e11b32f6e4583c"
+    },
+    "p0-r2-init1-n5-f0-control": {
+      "ns_per_call": 809.7194999999999,
+      "bytes_per_call": 304.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "047ba19aa31b8de02d50f47a303a603334d1959a4a142c6ab781a03de7362c35"
+    },
+    "p0-r2-init1-n5-f1-base": {
+      "ns_per_call": 804.0609999999999,
+      "bytes_per_call": 304.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "2b02395b0bda8800a938ea10f841aef9f9582bc9d9b991807c66a5def52a0b2c"
+    },
+    "p0-r2-init1-n5-f1-candidate": {
+      "ns_per_call": 855.1222499999999,
+      "bytes_per_call": 304.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "de822a2f58707a7133340c2eae815ac87547926b36570e56f6625cf8798756cc"
+    },
+    "p0-r2-init1-n5-f1-control": {
+      "ns_per_call": 790.491,
+      "bytes_per_call": 304.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "12edf8da63413109e7a6a19d3b4e27708300b5c6c762d9894a561b45f1c6b7b6"
+    },
+    "p0-r2-init3-n5-f0-base": {
+      "ns_per_call": 1700.189,
+      "bytes_per_call": 416.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "3e539ea754b64d8d0937474f955077bcf5d49fa57271325d26eaf24e1495ab69"
+    },
+    "p0-r2-init3-n5-f0-candidate": {
+      "ns_per_call": 1633.0065,
+      "bytes_per_call": 416.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "8c81b3c102b07dce2591bbac8346566d189b535f138053b39980fb7409018e24"
+    },
+    "p0-r2-init3-n5-f0-control": {
+      "ns_per_call": 1689.2305000000001,
+      "bytes_per_call": 416.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "fecdfd207c982b19ba33b78e7b59ea780689d301930b52efecaa4776ac218bc1"
+    },
+    "p0-r2-init3-n5-f1-base": {
+      "ns_per_call": 1798.15,
+      "bytes_per_call": 416.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "674a254587d939bc3463c47927fa2c6fab454a484be033f5384054fa36443e3d"
+    },
+    "p0-r2-init3-n5-f1-candidate": {
+      "ns_per_call": 1632.8517499999998,
+      "bytes_per_call": 416.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "0458a6effb46c603d45e92b836dae69b664c1989a6c8dd55cc4ce766df514f01"
+    },
+    "p0-r2-init3-n5-f1-control": {
+      "ns_per_call": 1849.0407500000001,
+      "bytes_per_call": 416.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "a3b61156ebe440ea300dc642d17027f337d81edd91c0bc5341fcfd8a4a336114"
+    },
+    "p0-r2-flash-n5-f0-base": {
+      "ns_per_call": 149109.23,
+      "bytes_per_call": 108072.96,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "a8ed4ccb673f55ef77f6d3e6031de2be21d87ed4c833d53f7aad58eb747d8f9e"
+    },
+    "p0-r2-flash-n5-f0-candidate": {
+      "ns_per_call": 162077.52000000002,
+      "bytes_per_call": 108072.96,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "a33d770b5f0016445cf1afaa2d3bd8cae01fdc93fad268d9d965a24b638a6329"
+    },
+    "p0-r2-flash-n5-f0-control": {
+      "ns_per_call": 310796.65,
+      "bytes_per_call": 108072.96,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "41e857b8428cf942b4dfe2de5403739e22fd5da63445bc50a562b9d300796b24"
+    },
+    "p0-r2-flash-n5-f1-base": {
+      "ns_per_call": 133343.27000000002,
+      "bytes_per_call": 108072.96,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "57bb79b4b83c3d69c6360ae558cc18f1dfe78455ee57c7f233cbfb96dcabff9f"
+    },
+    "p0-r2-flash-n5-f1-candidate": {
+      "ns_per_call": 152448.4,
+      "bytes_per_call": 108072.96,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "baaed4542bcbee3c3140a5c131124c025b9bcab02af2afec8c6fc94828de738a"
+    },
+    "p0-r2-flash-n5-f1-control": {
+      "ns_per_call": 134532.54,
+      "bytes_per_call": 108072.96,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "c96fae1527ab4a8a54f4ecae0da67635dbfa56502dc79fb0989ac6bb8bbff5d1"
+    },
+    "p0-r2-flash-n15-f0-base": {
+      "ns_per_call": 421601.35,
+      "bytes_per_call": 433504.96,
+      "topologies": [
+        "GAS/OIL/AQUEOUS"
+      ],
+      "sha256": "f91df9b698b04b53d39c0a1e611d5c49ce2767da931b313d676bfef1e6e3ecda"
+    },
+    "p0-r2-flash-n15-f0-candidate": {
+      "ns_per_call": 451865.19,
+      "bytes_per_call": 433504.96,
+      "topologies": [
+        "GAS/OIL/AQUEOUS"
+      ],
+      "sha256": "50bdefc0b96fcde16231f69349cd910ec0e34976d1dae0463a1e3e81864d3988"
+    },
+    "p0-r2-flash-n15-f0-control": {
+      "ns_per_call": 480084.28,
+      "bytes_per_call": 433504.96,
+      "topologies": [
+        "GAS/OIL/AQUEOUS"
+      ],
+      "sha256": "924ac5666a6fc397be01746fb743047d2b02442b086211af63541de989f0ba59"
+    },
+    "p0-r2-flash-n15-f1-base": {
+      "ns_per_call": 413269.45999999996,
+      "bytes_per_call": 433504.96,
+      "topologies": [
+        "GAS/OIL/AQUEOUS"
+      ],
+      "sha256": "9d9d663a68b6cb0c5b02594617904a0e53cfe2a87a41277e20dbbf26b6039624"
+    },
+    "p0-r2-flash-n15-f1-candidate": {
+      "ns_per_call": 408212.73,
+      "bytes_per_call": 433504.96,
+      "topologies": [
+        "GAS/OIL/AQUEOUS"
+      ],
+      "sha256": "991dc96a9c46310319f4f7e316713a4781d89d58da3120eadfc19b9448c3478e"
+    },
+    "p0-r2-flash-n15-f1-control": {
+      "ns_per_call": 419977.7,
+      "bytes_per_call": 433504.96,
+      "topologies": [
+        "GAS/OIL/AQUEOUS"
+      ],
+      "sha256": "e381573a0a87058fc940bb934d10c3f32c51445613ecf16dd3b82668adff23db"
+    },
+    "p0-r4-init1-n5-f0-base": {
+      "ns_per_call": 6877.4625,
+      "bytes_per_call": 160.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "33b5f52b800c7da071d242518d11d29c5401109f098556fe01b51d2c42693697"
+    },
+    "p0-r4-init1-n5-f0-candidate": {
+      "ns_per_call": 6155.239,
+      "bytes_per_call": 160.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "c43b456b12a66db44652abcbb1d25e949394dc4fbafea3dffeae2ef4dbf5ce9b"
+    },
+    "p0-r4-init1-n5-f0-control": {
+      "ns_per_call": 6523.091,
+      "bytes_per_call": 160.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "f6fd855ddce0b26d5ff8b85cc1305d28441645ff6073c1b22309499a07684c2d"
+    },
+    "p0-r4-init1-n5-f1-base": {
+      "ns_per_call": 6387.164000000001,
+      "bytes_per_call": 160.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "2aaeaa083cdf6c8bf5a1b65fd979b70689a83aee7b7fefefaaa7ac7da3b6b8e4"
+    },
+    "p0-r4-init1-n5-f1-candidate": {
+      "ns_per_call": 8824.14425,
+      "bytes_per_call": 160.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "3d204712bfad5efb40a3ef97844c402fe622597789e4076ae9f237c7f740e6c1"
+    },
+    "p0-r4-init1-n5-f1-control": {
+      "ns_per_call": 6467.656,
+      "bytes_per_call": 160.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "5200df17e7ec807971f1765519af40c1e25b395e9b8e15f5f55afdd18a81b6ee"
+    },
+    "p0-r4-init3-n5-f0-base": {
+      "ns_per_call": 22049.84375,
+      "bytes_per_call": 5600.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "34171492200d3c9002930d05fd10fd25482cdf4e382817415ce2f8e4f7b22985"
+    },
+    "p0-r4-init3-n5-f0-candidate": {
+      "ns_per_call": 23266.39125,
+      "bytes_per_call": 5600.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "85f9dc1bda82bd49d0c4083e760254724657a788d9cf4507a1c114f93289a804"
+    },
+    "p0-r4-init3-n5-f0-control": {
+      "ns_per_call": 32793.54,
+      "bytes_per_call": 5600.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "967e787a278282f6ec7e5c5032a47713ade5af22b337efefc2b8a8410f3aef69"
+    },
+    "p0-r4-init3-n5-f1-base": {
+      "ns_per_call": 19514.3655,
+      "bytes_per_call": 5600.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "d9d2130697f574a59469f0935cf6a2b0442d7c0e084ea944a55d7f1b82b7d551"
+    },
+    "p0-r4-init3-n5-f1-candidate": {
+      "ns_per_call": 28359.48025,
+      "bytes_per_call": 5600.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "e7f3db246509662451be8faa4b18a01355e96124f8a725f9760f9dd0539207a8"
+    },
+    "p0-r4-init3-n5-f1-control": {
+      "ns_per_call": 25648.860249999998,
+      "bytes_per_call": 5600.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "3147c11153547060b3799c269a29c21b15e67371cfe00e90253cb08bbcd92ebe"
+    },
+    "p0-r4-flash-n5-f0-base": {
+      "ns_per_call": 744667.79,
+      "bytes_per_call": 274216.96,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "1b6685d042b790248d2431e81cab7d063409dbe24ccf441a57624aae6b328857"
+    },
+    "p0-r4-flash-n5-f0-candidate": {
+      "ns_per_call": 1160492.8900000001,
+      "bytes_per_call": 274216.96,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "2bbd82015aca609b9b68ef6e44a07f81d5345df63a8936f85e0b93d3f7bd6e9f"
+    },
+    "p0-r4-flash-n5-f0-control": {
+      "ns_per_call": 1183273.35,
+      "bytes_per_call": 274216.96,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "a383d60ce06a145e20454677c3a682d68eb2a65ab6c5f1a139b81e71335c3e66"
+    },
+    "p0-r4-flash-n5-f1-base": {
+      "ns_per_call": 781510.39,
+      "bytes_per_call": 274216.96,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "4d67931ad7081fcb56e716a9d5b0189b1000edf45d179173d9917e0439025114"
+    },
+    "p0-r4-flash-n5-f1-candidate": {
+      "ns_per_call": 664132.25,
+      "bytes_per_call": 274216.96,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "cefedc07b777475076454fba373a024c735da377ffb9b1158f438086b463bb15"
+    },
+    "p0-r4-flash-n5-f1-control": {
+      "ns_per_call": 1246844.08,
+      "bytes_per_call": 274216.96,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "4017f7bc7c5741fb48b77399c2cc6897beb774475e9ec3c19f2d5c8e32d255e1"
+    },
+    "p0-r4-flash-n15-f0-base": {
+      "ns_per_call": 10373006.42,
+      "bytes_per_call": 1554760.96,
+      "topologies": [
+        "GAS/OIL/AQUEOUS"
+      ],
+      "sha256": "b88c7c25771e24a1f2cf5eb302f575580156b756e21cdec6e19eed633ea6e501"
+    },
+    "p0-r4-flash-n15-f0-candidate": {
+      "ns_per_call": 9730983.21,
+      "bytes_per_call": 1554760.96,
+      "topologies": [
+        "GAS/OIL/AQUEOUS"
+      ],
+      "sha256": "873ccb4ac40a5bb8258fb06ab0e03c5a94068390b4b293bdba135de5b2ed0b8b"
+    },
+    "p0-r4-flash-n15-f0-control": {
+      "ns_per_call": 9911709.73,
+      "bytes_per_call": 1554760.96,
+      "topologies": [
+        "GAS/OIL/AQUEOUS"
+      ],
+      "sha256": "955d80db2b625af6343693e2c81b4e9b435eb5fb6c0d87962f5fd8f0ddd9935b"
+    },
+    "p0-r4-flash-n15-f1-base": {
+      "ns_per_call": 10726730.850000001,
+      "bytes_per_call": 1554760.96,
+      "topologies": [
+        "GAS/OIL/AQUEOUS"
+      ],
+      "sha256": "5d006b6423fa84c87a9f8d06f572fcc81eb64a661a2c810c78ebc424ee206416"
+    },
+    "p0-r4-flash-n15-f1-candidate": {
+      "ns_per_call": 11907645.84,
+      "bytes_per_call": 1554760.96,
+      "topologies": [
+        "GAS/OIL/AQUEOUS"
+      ],
+      "sha256": "15e927c4abe059820aa3761a2148bdf21bfe1654448f6f8e9784e7352538ddd8"
+    },
+    "p0-r4-flash-n15-f1-control": {
+      "ns_per_call": 10066092.27,
+      "bytes_per_call": 1554760.96,
+      "topologies": [
+        "GAS/OIL/AQUEOUS"
+      ],
+      "sha256": "564878d4a5b39dac3e8f0b77968fcb92253518dc7835eda9b3fa892865ff94bc"
+    },
+    "p1-r2-init1-n5-f0-base": {
+      "ns_per_call": 989.11875,
+      "bytes_per_call": 304.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "ea44bdf9e6eba08e89593713ba216641a6e0fe059a31032cf314da90e8410abd"
+    },
+    "p1-r2-init1-n5-f0-candidate": {
+      "ns_per_call": 1654.7440000000001,
+      "bytes_per_call": 304.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "fdad639dc602971fd0990a1971e8a4d7bf5123c45cca9d5836cadb31256d3790"
+    },
+    "p1-r2-init1-n5-f0-control": {
+      "ns_per_call": 913.2284999999999,
+      "bytes_per_call": 304.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "d02fd377f0f336b91cd3da0fca83091cf3abbffff89dca0bec834f7a2fab944a"
+    },
+    "p1-r2-init1-n5-f1-base": {
+      "ns_per_call": 898.5615,
+      "bytes_per_call": 304.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "f61077a50c0c99c47fcf18147b7f0cfc63cdf32c3e5ce5877fda77f98f043365"
+    },
+    "p1-r2-init1-n5-f1-candidate": {
+      "ns_per_call": 965.45625,
+      "bytes_per_call": 304.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "3ce21adf6ac21fcc42211254b44efa1e3dc838c1cbb3fdb9a03f2164ee86fa77"
+    },
+    "p1-r2-init1-n5-f1-control": {
+      "ns_per_call": 937.60475,
+      "bytes_per_call": 304.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "937d037831d2458119a03e362874bce25e7c6929947fdef2262bbb7d937e1368"
+    },
+    "p1-r2-init3-n5-f0-base": {
+      "ns_per_call": 2831.01125,
+      "bytes_per_call": 416.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "ddec062a4c599d84a336dfa091a365f5394c76d37aad199a024d54ef4fd01832"
+    },
+    "p1-r2-init3-n5-f0-candidate": {
+      "ns_per_call": 3238.132,
+      "bytes_per_call": 416.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "a68deb7e189b0815a9a58671ebde2100d98cb3a15247d4284912e773e2f561ae"
+    },
+    "p1-r2-init3-n5-f0-control": {
+      "ns_per_call": 2944.8232500000004,
+      "bytes_per_call": 416.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "eae8cbe91c974061959a0a93e48e660cc18b38c3b27971e95ca58d74094327b3"
+    },
+    "p1-r2-init3-n5-f1-base": {
+      "ns_per_call": 2831.25675,
+      "bytes_per_call": 416.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "72cfcc2b56c912879924d0d2252b94d3d4b9d0af322338968277d94af701cbfc"
+    },
+    "p1-r2-init3-n5-f1-candidate": {
+      "ns_per_call": 2825.42775,
+      "bytes_per_call": 416.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "0b78b4e2ebcd090f7a80e4fc8f471dee1e91c871fa99ced9ec746d1788c5e8f3"
+    },
+    "p1-r2-init3-n5-f1-control": {
+      "ns_per_call": 2809.299,
+      "bytes_per_call": 416.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "8e306868a3de43ae0e31d9ee459f9e20e9a11609eee61e1109281a317171313d"
+    },
+    "p1-r2-flash-n5-f0-base": {
+      "ns_per_call": 148881.68,
+      "bytes_per_call": 110088.96,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "2e72c7a426d1fc4ba65988ae68dc4afc4a0001a0d7bc7196961e53f1af8da3a3"
+    },
+    "p1-r2-flash-n5-f0-candidate": {
+      "ns_per_call": 180117.53,
+      "bytes_per_call": 110088.96,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "0e951acea0c64050aea5527174e35976b34c5ed2a8a816242df9283aeece53f1"
+    },
+    "p1-r2-flash-n5-f0-control": {
+      "ns_per_call": 188894.35,
+      "bytes_per_call": 110088.96,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "03b6cfc849063eb9dfab50b775a965dab9c80bb384d5cf92f27e487318d0b31c"
+    },
+    "p1-r2-flash-n5-f1-base": {
+      "ns_per_call": 220388.45,
+      "bytes_per_call": 110088.96,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "7629aafc9c91026c312348b2192b6639f641081abd72e5621980a6c9b8d23590"
+    },
+    "p1-r2-flash-n5-f1-candidate": {
+      "ns_per_call": 186460.87,
+      "bytes_per_call": 110088.96,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "332a5b6f0f36845672739259bf493244b5a87cbb2bd67a918825e60f0847aa2e"
+    },
+    "p1-r2-flash-n5-f1-control": {
+      "ns_per_call": 164953.87,
+      "bytes_per_call": 110088.96,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "98adb2633adefee24b93b7b9b680d44a3fec7b8f219ab158b06b10ba6682e0e2"
+    },
+    "p1-r2-flash-n15-f0-base": {
+      "ns_per_call": 502490.77,
+      "bytes_per_call": 432720.96,
+      "topologies": [
+        "GAS/OIL/AQUEOUS"
+      ],
+      "sha256": "1df26df241efc4cab3b69fffc2126cfba861ff1735f9367e0d183689d9c40c12"
+    },
+    "p1-r2-flash-n15-f0-candidate": {
+      "ns_per_call": 452627.6,
+      "bytes_per_call": 432720.96,
+      "topologies": [
+        "GAS/OIL/AQUEOUS"
+      ],
+      "sha256": "4130aceb08fa7985c1bc09a3f5c2b2beee487e9297512cd0950d94a0793658db"
+    },
+    "p1-r2-flash-n15-f0-control": {
+      "ns_per_call": 555884.3,
+      "bytes_per_call": 432720.96,
+      "topologies": [
+        "GAS/OIL/AQUEOUS"
+      ],
+      "sha256": "9809b6c247bfc4eeeaa7ab5ec7d68950783d0b75cd0de4cd0f4bbc50abb1f153"
+    },
+    "p1-r2-flash-n15-f1-base": {
+      "ns_per_call": 467980.04000000004,
+      "bytes_per_call": 432720.96,
+      "topologies": [
+        "GAS/OIL/AQUEOUS"
+      ],
+      "sha256": "6660846f7ef987efd8bbcd8a1aa366d1dbac8782748230bedc302d93f693ba32"
+    },
+    "p1-r2-flash-n15-f1-candidate": {
+      "ns_per_call": 467981.6,
+      "bytes_per_call": 432720.96,
+      "topologies": [
+        "GAS/OIL/AQUEOUS"
+      ],
+      "sha256": "0daab6d6e4d67a5fcbb8445d5573d00ab78a4ff1e309050d7e6d9de274331402"
+    },
+    "p1-r2-flash-n15-f1-control": {
+      "ns_per_call": 551987.54,
+      "bytes_per_call": 432720.96,
+      "topologies": [
+        "GAS/OIL/AQUEOUS"
+      ],
+      "sha256": "c48e69527b7274415a917e9c288dd02b6e684729aa2c8846672f11451ac3b59e"
+    },
+    "p1-r4-init1-n5-f0-base": {
+      "ns_per_call": 21143.3815,
+      "bytes_per_call": 160.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "09f742e0f8cea397275bd0c14535ba0d09ad04319cf7fcc58f2ffd18796811d3"
+    },
+    "p1-r4-init1-n5-f0-candidate": {
+      "ns_per_call": 20089.514000000003,
+      "bytes_per_call": 160.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "0fbadd4728e7952345f098b9d87c299fb6b365081087c6ce8d180b6d121d1bef"
+    },
+    "p1-r4-init1-n5-f0-control": {
+      "ns_per_call": 19640.015249999997,
+      "bytes_per_call": 160.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "574f59b1bfe3b6f95cbdf233b8634a101bdfca6b510aa5f8a3ea4c780c391f2c"
+    },
+    "p1-r4-init1-n5-f1-base": {
+      "ns_per_call": 20925.70025,
+      "bytes_per_call": 160.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "936dc70ff9b14121c41137ff5209104986c7bea6f5a812d610d4be8facc87756"
+    },
+    "p1-r4-init1-n5-f1-candidate": {
+      "ns_per_call": 20358.709,
+      "bytes_per_call": 160.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "44ee548cd13b9038fc076c0c17ec34bf1ed6520844f1f7cab465c6cff90a94e3"
+    },
+    "p1-r4-init1-n5-f1-control": {
+      "ns_per_call": 22440.889,
+      "bytes_per_call": 160.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "4f26ffa958286a208ddcc390f56714b03e699055b697a553884f4834bce8a959"
+    },
+    "p1-r4-init3-n5-f0-base": {
+      "ns_per_call": 74933.80124999999,
+      "bytes_per_call": 5600.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "4a3006ecedb7c890e299ebe9de193d1b974a16893028316f39ba6b91418680bb"
+    },
+    "p1-r4-init3-n5-f0-candidate": {
+      "ns_per_call": 75337.5185,
+      "bytes_per_call": 5600.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "340fc2682053bea17a968363718872c2cdfbde79a2885fced730da403060072c"
+    },
+    "p1-r4-init3-n5-f0-control": {
+      "ns_per_call": 69150.1555,
+      "bytes_per_call": 5600.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "d7d4f6e7e68f83ccff23a1241b74cac01e76ea1bcc64ee5b5d3168a3f6c36e91"
+    },
+    "p1-r4-init3-n5-f1-base": {
+      "ns_per_call": 77153.17874999999,
+      "bytes_per_call": 5600.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "ee020924b27ea2ca67545926e4d9b1ad9943548761973e1be7a0dcb8d3b9202b"
+    },
+    "p1-r4-init3-n5-f1-candidate": {
+      "ns_per_call": 70544.62100000001,
+      "bytes_per_call": 5600.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "14f59c4927110b415688d6b9ef4d46f023adf4f43936c7b16e7511c58314679a"
+    },
+    "p1-r4-init3-n5-f1-control": {
+      "ns_per_call": 75502.70125,
+      "bytes_per_call": 5600.024,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "e801e519b838de1368be405fbb91c9380b539a77c21c0219285b54128122d29c"
+    },
+    "p1-r4-flash-n5-f0-base": {
+      "ns_per_call": 2516636.35,
+      "bytes_per_call": 275216.96,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "17fb24a11d3ea23766c3436ecc515d9aaf0993d00bc7db234ea3d8e7ce29d2d2"
+    },
+    "p1-r4-flash-n5-f0-candidate": {
+      "ns_per_call": 2321649.8,
+      "bytes_per_call": 275216.96,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "e3726bb1b3c917747a3dd4a52343ac32587b4183709cbbce6b132021e579c0c9"
+    },
+    "p1-r4-flash-n5-f0-control": {
+      "ns_per_call": 2395119.6,
+      "bytes_per_call": 275216.96,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "7d02ab3973bb77228ae6cf9baf4e3e1272f3b63314fa2c5553861ffcaa944a98"
+    },
+    "p1-r4-flash-n5-f1-base": {
+      "ns_per_call": 1929490.95,
+      "bytes_per_call": 275216.96,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "95fc640dea400677963b560639a1f368287ba1f0781f845cda3a9ed2a26f8464"
+    },
+    "p1-r4-flash-n5-f1-candidate": {
+      "ns_per_call": 2066849.69,
+      "bytes_per_call": 275216.96,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "88b00713475021475a7d6df508bfbf031d43f91c4c828d7c7933c534dec273c3"
+    },
+    "p1-r4-flash-n5-f1-control": {
+      "ns_per_call": 1811418.71,
+      "bytes_per_call": 275216.96,
+      "topologies": [
+        "GAS/AQUEOUS"
+      ],
+      "sha256": "f694384f9a8684c1859e543eab643a167b1fdcf786359ab400f0b053ab8a5b62"
+    },
+    "p1-r4-flash-n15-f0-base": {
+      "ns_per_call": 21675286.87,
+      "bytes_per_call": 1554160.96,
+      "topologies": [
+        "GAS/OIL/AQUEOUS"
+      ],
+      "sha256": "cd114aec0855f1f393b6f220698cd01a3b2b2c46c3b38aa3eea8a62ab0a89552"
+    },
+    "p1-r4-flash-n15-f0-candidate": {
+      "ns_per_call": 21147055.15,
+      "bytes_per_call": 1554160.96,
+      "topologies": [
+        "GAS/OIL/AQUEOUS"
+      ],
+      "sha256": "6b0fd5482522738c0b1a53ea45a539c1fa2815c93e694c4f93741a84852b0a0a"
+    },
+    "p1-r4-flash-n15-f0-control": {
+      "ns_per_call": 21805527.1,
+      "bytes_per_call": 1554160.96,
+      "topologies": [
+        "GAS/OIL/AQUEOUS"
+      ],
+      "sha256": "3230a32f18dff7449e76ef866db902ff36a4fc5a511a17a91d084f0799b0aaa6"
+    },
+    "p1-r4-flash-n15-f1-base": {
+      "ns_per_call": 21727274.41,
+      "bytes_per_call": 1554160.96,
+      "topologies": [
+        "GAS/OIL/AQUEOUS"
+      ],
+      "sha256": "d96d3f4a009f296ede48a2e7995012659424d1e73913f5314a5e37291b45d76f"
+    },
+    "p1-r4-flash-n15-f1-candidate": {
+      "ns_per_call": 22135293.29,
+      "bytes_per_call": 1554160.96,
+      "topologies": [
+        "GAS/OIL/AQUEOUS"
+      ],
+      "sha256": "e0effd8750a327faee17070e0104ffd23a5d50cf36c215f689856527cef68b8c"
+    },
+    "p1-r4-flash-n15-f1-control": {
+      "ns_per_call": 22950444.130000003,
+      "bytes_per_call": 1554160.96,
+      "topologies": [
+        "GAS/OIL/AQUEOUS"
+      ],
+      "sha256": "35475b33d9d2581e3ca6661c33460e1c47056e72baf5aa66808114ceb465ad99"
+    }
+  },
+  "interpretation": "Two independent forks with reversed arm order and an identical-baseline control; descriptive ranges, no statistical non-inferiority or speedup claim. Rule4/rule2 differ in thermodynamics/solver work. Enhanced cold topology cases excluded from overhead comparison."
+}

@@ -30,7 +30,7 @@ ALWAYS read these skills before proceeding:
 1. **Levels first, then sizing.** Decide the utility level with `neqsim-utilities-specification`; size the duty/flow/power with `neqsim-utility-design`.
 2. **Duties drive everything.** Get heating/cooling duties from the flowsheet (or the grand composite curve), not from guesses.
 3. **Screening, not detail.** These models are deterministic early-design sizers — state that explicitly; do not present them as detailed mechanical design.
-4. **Use the right class.** Map the request to exactly one of: `Boiler`, `Deaerator`, `RefrigerationCycle`, `NitrogenSystem`, `SteamNetwork`, or the `UtilitySystemDesigner` aggregator.
+4. **Use the right class.** Map the request to exactly one of: `Boiler`, `Deaerator`, `RefrigerationCycle`, `RefrigerationSystem`, `NitrogenSystem`, `SteamNetwork`, or the `UtilitySystemDesigner` aggregator.
 5. **kW everywhere.** All duties are kW; negative duties are rejected.
 6. **Report CO₂ and OPEX.** Every utility class emits emissions and operating cost — include them for ESG/screening.
 7. **Java 8 only.** No `var`, `List.of`, text blocks, etc.
@@ -41,7 +41,8 @@ ALWAYS read these skills before proceeding:
 |---|---|---|
 | Fired steam / steam generation | `Boiler` | steam duties (kW), efficiency, fuel LHV |
 | Feedwater deaeration | `Deaerator` | feedwater flow, inlet T, pressure |
-| Chilling / refrigeration | `RefrigerationCycle` | duties (kW), evaporator/condenser T |
+| Chilling / refrigeration, screening | `RefrigerationCycle` | duties (kW), evaporator/condenser T |
+| Refrigeration cycle simulation: stage power, flows, economizer, inter-cooler, cascade, chillers in a flowsheet | `RefrigerationSystem` (`neqsim.process.equipment.refrigeration`) | refrigerant, condensing T or cooling medium, levels with bound coolers or duties |
 | On-site nitrogen | `NitrogenSystem` | demand (Nm³/h), purity, method (MEMBRANE/PSA/CRYOGENIC) |
 | Steam header balance | `SteamNetwork` | levels, demands, local generation |
 | Plant-wide utility roll-up | `UtilitySystemDesigner` | a run `ProcessSystem` / `ProcessModel` |
@@ -79,7 +80,7 @@ When the task is exposed through the MCP server, call the `designUtilities` tool
 ## Honest Gaps
 
 - Screening-level only: no detailed combustion, control, transient, or mechanical design.
-- Refrigeration COP is a Carnot fraction, not a cycle simulation.
+- `RefrigerationCycle` COP is a Carnot fraction, not a cycle simulation; use `RefrigerationSystem` for one. It covers single-component refrigerants at subcritical condensing with fixed stage efficiencies: no mixed refrigerants, transcritical CO₂, rated exchangers or compressor maps.
 - Nitrogen specific energy is a method-based estimate; override it when a vendor figure exists.
 - Do NOT claim TEMA/ASME mechanical sizing here — escalate to `@mechanical-design`.
 

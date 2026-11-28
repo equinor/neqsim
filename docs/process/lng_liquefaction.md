@@ -16,14 +16,9 @@ and explicit `Recycle` units for refrigerant-loop convergence.
 | Cycle | Template scope | Main equipment |
 |---|---|---|
 | `SMR` | Single mixed-refrigerant loop | Two-stage MR compression, JT expansion, one MCHE |
-| `C3MR` | Single-level equivalent propane precooling plus mixed refrigerant | Propane and MR compressor trains, precooler, MCHE |
+| `C3MR` | One to four propane precooling levels plus mixed refrigerant | Propane and MR compressor trains, precooler, MCHE |
 | `DMR` | Warm and cold mixed-refrigerant loops | Two MR compressor trains, precooler, MCHE |
 | `NITROGEN_EXPANDER` | Closed reverse-Brayton nitrogen loop | Two-stage N2 compression, turboexpander, MCHE |
-
-The C3MR template represents one equivalent propane evaporation level. It is
-appropriate for route screening and API examples; detailed design studies
-should model the actual three- or four-level propane cascade and optimize
-refrigerant inventories, pressure levels, and exchanger geometry.
 
 ## Quick start
 
@@ -43,6 +38,54 @@ double lngYield = result.getLNGYield();
 double minimumApproach = result.getMinimumInternalTemperatureApproachC();
 LNGProcessBenchmark.Assessment benchmark = result.assessBenchmark();
 ```
+
+### Compare one and three propane levels
+
+Use `setPropanePrecoolingLevels(3)` on a C3MR builder. The default of one uses the
+original explicit propane loop. Two to four use an economized pure-propane
+[refrigeration system](equipment/refrigeration) that serves both the natural gas
+and compressed mixed refrigerant (MR). Already-cold streams bypass warmer
+levels. Both streams enter the main cryogenic exchanger through their live outlets.
+
+```java
+LNGProcessBuilder builder = new LNGProcessBuilder().setCycle(LNGProcessCycle.C3MR)
+    .setFeedFlowRate(20000.0);
+LNGProcessModel.Result one = builder.build().run();
+LNGProcessModel staged = builder.setPropanePrecoolingLevels(3).build();
+LNGProcessModel.Result three = staged.run();
+double propaneKW = three.getPropaneCompressorPowerKW();
+double mrKW = three.getMixedRefrigerantCompressorPowerKW();
+double energyChange = three.getSpecificEnergyKWhPerKgLNG() - one.getSpecificEnergyKWhPerKgLNG();
+double minimumApproachK = three.getMinimumInternalTemperatureApproachC();
+```
+
+The table uses the default treated gas at 60 bara and 25 °C, 20,000 kg/h,
+a −155 °C cold-end specification, and product letdown to 1.20 bara.
+Both cases produce 19,089 kg/h of liquid LNG. Shaft power excludes driver losses.
+
+| Propane levels | Propane shaft power (kW) | MR shaft power (kW) | Train energy (kWh/kg liquid LNG) | Train minimum approach (K) |
+|---|---:|---:|---:|---:|
+| One | 2,462 | 5,092 | 0.3957 | 2.91 |
+| Three | 1,661 | 5,092 | 0.3538 | 2.91 |
+
+The staged process outlet targets span 0 to −32 °C in equal temperature steps
+(0, −16 and −32 °C with three levels). Propane evaporates the specified approach
+below each target. Both cases use 15 bara propane discharge, 80% propane
+compressor efficiency and the configured refrigerant aftercooler outlet
+temperature. The staged model sizes propane circulation from the calculated
+loads. The one-level template uses a prescribed circulation and an explicit
+intercooled compression train. The difference therefore includes the change in
+cycle representation. The MR power stays the same here because both precoolers
+deliver the same hot-stream states to the main exchanger.
+
+The staged chillers assume isothermal evaporation. The train minimum includes
+the approach at each loaded chiller outlet and the zone-based minimum inside
+the main exchanger. The default 0.97 maldistribution factor gives 2.91 K in
+the main exchanger for the 3 K nominal approach. Compare the reported minimum
+with the design requirement. The exergy sum covers the explicit cryogenic
+exchangers. Equipment rating requires geometry and compressor maps.
+
+![Calculated hot and cold composite curves for the three-level case](equipment/figures/c3mr-precooling-composites.svg)
 
 Use `setFeedFluid(SystemInterface)` to clone a custom pretreated fluid into a
 standalone LNG feed. To connect a larger NeqSim simulation without copying its
@@ -247,6 +290,14 @@ For an existing design, set the actual mechanical design limits and call
 current operating point. The capacity snapshot is a constraint-utilization
 report; a maximum-throughput study should vary the live feed rate with the
 NeqSim optimization framework until the first hard or design constraint binds.
+
+## P&ID and controls for staged C3MR
+
+The three-pass main exchanger exposes three indexed inlets and three indexed
+outlets to the flowsheet and DEXPI. The staged propane package shares each
+feed and mixed-refrigerant chiller with the process drawing. Use the
+[refrigeration P&ID and controller example](equipment/refrigeration.md#generate-a-pid-and-test-its-temperature-controller)
+to export the train and reproduce a loss-of-cooling test.
 
 ## Literature comparison points
 

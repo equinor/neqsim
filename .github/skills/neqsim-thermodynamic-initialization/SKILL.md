@@ -1,7 +1,7 @@
 ---
 name: neqsim-thermodynamic-initialization
 description: "Select and audit NeqSim thermodynamic initialization levels for correctness and performance. USE WHEN: implementing or reviewing flashes, phase stability, EOS root selection, process-equipment thermodynamics, property access, or performance changes involving init(...) or initProperties()."
-last_verified: "2026-11-25"
+last_verified: "2026-11-26"
 ---
 
 # NeqSim thermodynamic initialization
@@ -154,3 +154,16 @@ when evaluating another performance change; allocation is not a latency gate.
 See `src/test/resources/neqsim/thermo/mixingrule/hv-phase-scratch/README.md`.
 Benchmark JSON receipts now use atomic replacement: a failed next write must
 preserve the accepted prefix. This adds no automatic retry or resume authority.
+
+
+## Enhanced stability trial-order qualification
+
+For a low-pressure water/glycol assessment, distinguish an imposed-liquid bubble
+pressure from cold TP phase discovery. Enhanced/automatic-LLE ordinary trials must
+visit vapor then liquid when the homogeneous reference is liquid; otherwise no
+ordinary trial runs. The corrected order is tested by `FlashStabilityTrialOrderTest`
+and the 42-row `HuronVidalAqueousMegPressureAssessmentTest` (2026-11-26).
+Legacy traversal/reset behavior remains outside this repair. Numerical identity
+checks do not establish global stability or measured accuracy; retain Gibbs,
+phase-root and inventory evidence. See the owning [TP algorithm guide](../../../docs/thermodynamicoperations/TPflash_algorithm.md#enhanced-ordinary-trial-order)
+and [HV source assessment](../../../src/test/resources/neqsim/thermo/mixingrule/hv-meg-aqueous/README.md).

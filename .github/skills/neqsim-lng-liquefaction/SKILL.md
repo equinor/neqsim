@@ -1,7 +1,7 @@
 ---
 name: neqsim-lng-liquefaction
 description: "LNG liquefaction modelling in NeqSim. USE WHEN: building or sizing a liquefaction plant (SMR, DMR, C3MR, nitrogen expander), calibrating a mixed refrigerant, computing liquefaction specific energy or power, scaling to trains, choosing gas-turbine against electric drive and the resulting carbon intensity, or sizing LNG storage and cargo loading. Covers LNGProcessBuilder, LNGProcessModel, specific-energy validation and phase-state checks."
-last_verified: "2026-10-03"
+last_verified: "2026-11-26"
 ---
 
 # LNG liquefaction with NeqSim
@@ -11,6 +11,8 @@ last_verified: "2026-10-03"
 Any task that turns a treated gas stream into LNG and needs a defensible power, specific energy,
 train count, storage volume or carbon intensity. Pair with `neqsim-process-modeling` for the
 upstream treatment train and `neqsim-equipment-cost-estimation` for the cost side.
+For a pure-refrigerant plant (propane, ammonia, CO2 cascade, gas-plant chilling) use
+`RefrigerationSystem` from `neqsim-utility-design`; it rejects mixed refrigerants.
 
 ## Validate the cycle design
 
@@ -43,6 +45,7 @@ Inspect `src/main/java/neqsim/process/lng/LNGProcessBuilder.java` and the execut
 - Construct `LNGProcessBuilder` with no arguments, then set its name and select
   an `LNGProcessCycle`: SMR, DMR, C3MR or NITROGEN_EXPANDER. The current enum
   does not expose a cascade cycle.
+- For C3MR, compare the default one-level propane loop with `setPropanePrecoolingLevels(3)` on identical feed and product specifications. Report propane and MR shaft kW, train kWh/kg liquid LNG, yield and minimum approach. Use the utility-design plotting helper for p–h, p–s, T–s and the main exchanger T–Q curves.
 - Supply the treated feed with `setFeedStream(StreamInterface)` or the documented
   fluid/flow/T/P setters. Set the cold-end target with
   `setTargetLiquefactionTemperature(double)` in °C, and the product pressure with

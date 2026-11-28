@@ -17,6 +17,8 @@ import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.heatexchanger.LNGHeatExchanger;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
+import neqsim.process.equipment.refrigeration.RefrigerationLevel;
+import neqsim.process.equipment.refrigeration.RefrigerationSystem;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.Recycle;
@@ -105,6 +107,43 @@ class LNGProcessBuilderTest {
 
     assertTrue(Double.isFinite(result.getLNGMassFlowKgPerHour()));
     assertTrue(result.getLNGMassFlowKgPerHour() > 0.0);
+    assertEquals(
+        Math.abs(model.getCompressors().get(0).getPower("kW")) + Math.abs(model.getCompressors().get(1).getPower("kW")),
+        result.getPropaneCompressorPowerKW(), 1.0e-6);
+  }
+
+  @Test
+  void stagedPropanePrecoolingClosesHeatAndPowerBalances() {
+    LNGProcessModel model = new LNGProcessBuilder().setCycle(LNGProcessCycle.C3MR).setPropanePrecoolingLevels(3)
+        .setFeedFlowRate(20000.0).setNumberOfZones(6).setAdaptiveRefinement(false).build();
+    LNGProcessModel.Result result = model.run();
+    RefrigerationSystem propane = model.getEquipment(RefrigerationSystem.class).get(0);
+    assertEquals(3, propane.getStages().size());
+    for (RefrigerationLevel level : propane.getLevels()) {
+      assertEquals(2, level.getLoads().size());
+      assertTrue(level.getLoads().get(0).getDuty() > 0.0);
+      assertTrue(level.getLoads().get(1).getDuty() > 0.0);
+    }
+    assertEquals(0.0, propane.getEnergyBalanceResidual(), 1.0);
+    double mrKW = model.getCompressors().stream().mapToDouble(stage -> Math.abs(stage.getPower("kW"))).sum();
+    assertEquals(mrKW, result.getMixedRefrigerantCompressorPowerKW(), 1.0e-6);
+    assertEquals(propane.getCompressorPower("kW"), result.getPropaneCompressorPowerKW(), 1.0e-6);
+    assertEquals(mrKW + propane.getCompressorPower("kW"),
+        result.getSpecificEnergyKWhPerKgLNG() * result.getLNGMassFlowKgPerHour(), 1.0e-6);
+    assertEquals(Math.min(3.0, model.getCryogenicHeatExchangers().get(0).getMITA()),
+        result.getMinimumInternalTemperatureApproachC(), 1.0e-6);
+    assertTrue(result.getLNGYield() > 0.0 && result.getLNGYield() <= 1.0);
+    model.getFeedStream().setTemperature(-5.0, "C");
+    model.run();
+    assertEquals(0.0, propane.getLevels().get(0).getLoads().get(0).getDuty(), 0.1);
+    assertEquals(-5.0, propane.getLevels().get(0).getLoads().get(0).getProcessOutletTemperature() - 273.15, 1.0e-6);
+  }
+
+  @Test
+  void validatesPropaneLevelSelection() {
+    assertThrows(IllegalArgumentException.class, () -> new LNGProcessBuilder().setPropanePrecoolingLevels(0));
+    assertThrows(IllegalArgumentException.class, () -> new LNGProcessBuilder().setPropanePrecoolingLevels(5));
+    assertThrows(IllegalStateException.class, () -> new LNGProcessBuilder().setPropanePrecoolingLevels(3).build());
   }
 
   @Test

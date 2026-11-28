@@ -345,11 +345,20 @@ public class Cooler extends Heater {
     double minimumOutletTemperature = Math.min(dynamicCoolingMediumTemperature, inletTemperature);
     outletTemperature = Math.max(minimumOutletTemperature, Math.min(inletTemperature, outletTemperature));
     setOutletTemperature(outletTemperature, "K");
-    run(id);
+    runAtDynamicOutlet(id);
     dynamicStepIdentifier = id;
     if (!alreadyEvaluatedForStep) {
       increaseTime(dt);
     }
+  }
+
+  /**
+   * Flashes the thermodynamic outlet after the dynamic model has selected its temperature.
+   *
+   * @param id physical step identifier
+   */
+  protected void runAtDynamicOutlet(UUID id) {
+    run(id);
   }
 
   /** {@inheritDoc} */

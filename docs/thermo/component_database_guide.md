@@ -851,6 +851,15 @@ selected, preserving unrelated extended data. This does not remove the component
 Species aliases and deliberate seawater/water or MEG variants are not automatically
 rejected merely because their coefficients coincide.
 
+### Refrigerant parameters
+
+The ammonia ideal-gas heat capacity polynomial, the ammonia Mathias-Copeman parameters for SRK and
+Peng-Robinson, and the R134a and R12 critical constants, heat capacities and Mathias-Copeman
+parameters were corrected on 2026-11-26. The earlier ammonia `MC1..3` and the shared R12/R134a
+`MC1..3` were the published PSRK constants of methanol and CO2. The values, their sources and the
+measured accuracy are listed in
+[refrigeration systems](../process/equipment/refrigeration#database-parameters-corrected-for-refrigerants).
+
 Ammonia and H2S use sourced base-ten Antoine fits, with pressure in bar:
 
 | Component | Source temperature range (K) | A | B | C for T in K |

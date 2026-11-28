@@ -144,6 +144,42 @@ Pressure (Pa absolute), temperature (K), molar mass (kg/mol) and compressibility
 positive, and the heat-capacity ratio must exceed one. The stateless partial-lift method
 clamps finite lift commands to [0, 1]. Invalid inputs raise `IllegalArgumentException`.
 
+The literal program below is compiled and executed by
+[`PsvFiniteInputDocumentationTest`](../../src/test/java/neqsim/documentation/PsvFiniteInputDocumentationTest.java).
+Run it directly with `./mvnw -Dtest=PsvFiniteInputDocumentationTest test`.
+
+<!-- psv-example: finite-input-contract -->
+```java
+import neqsim.process.safety.depressurization.PsvValveModel;
+
+public final class PsvFiniteInputExample {
+  private PsvFiniteInputExample() {}
+
+  public static void main(String[] args) {
+    PsvValveModel psv = new PsvValveModel(50.0e5, 0.1, 0.975, 1.0e-3, 1.0e5);
+    double fullOpen = psv.fullOpenMassFlowKgPerS(55.0e5, 350.0, 0.018, 1.3, 0.95);
+    double partial = psv.massFlowKgPerS(55.0e5, 350.0, 0.018, 1.3, 0.95, 0.4);
+
+    if (!Double.isFinite(fullOpen) || fullOpen <= 0.0) {
+      throw new AssertionError("Full-open relieving capacity must be finite and positive");
+    }
+    if (Math.abs(partial - 0.4 * fullOpen) > 1.0e-12 * fullOpen) {
+      throw new AssertionError("Partial lift must scale the full-open capacity");
+    }
+
+    boolean rejected = false;
+    try {
+      psv.massFlowKgPerS(55.0e5, Double.NaN, 0.018, 1.3, 0.95, 0.0);
+    } catch (IllegalArgumentException expected) {
+      rejected = true;
+    }
+    if (!rejected) {
+      throw new AssertionError("Non-finite properties must fail even at zero lift");
+    }
+  }
+}
+```
+
 Both calculations apply the overpressure fraction to gauge set pressure relative to 1.01325 bara.
 At 50 bara set pressure, 21% gives an absolute limit of 60.2872175 bara.
 

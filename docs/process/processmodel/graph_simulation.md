@@ -176,6 +176,12 @@ process.runOptimized();
 - `HeatExchanger`, `MultiStreamHeatExchanger`
 - `FurnaceBurner`, `FlareStack`
 
+**Dependencies outside the stream topology:** equipment that reads the results of other
+equipment directly overrides `ProcessEquipmentInterface.getSignalSources()`. The graph builder adds
+a signal edge from every reported source, so the sources are solved first.
+[`RefrigerationSystem`](../equipment/refrigeration) uses this for the coolers and cascade condensers
+it serves. `Calculator`, `Adjuster` and `SetPoint` have their own signal edges.
+
 **Note:** `hasRecycles()` checks for explicit `Recycle` unit operations. `hasRecycleLoops()`
 checks graph cycles, including signal feedback and recuperator loops without an explicit
 recycle. Only cycles formed by material-stream edges activate implicit outlet-state

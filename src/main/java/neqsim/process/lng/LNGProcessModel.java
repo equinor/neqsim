@@ -13,6 +13,9 @@ import neqsim.process.equipment.capacity.BottleneckResult;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.expander.Expander;
 import neqsim.process.equipment.heatexchanger.LNGHeatExchanger;
+import neqsim.process.equipment.refrigeration.RefrigerationLevel;
+import neqsim.process.equipment.refrigeration.RefrigerationLoad;
+import neqsim.process.equipment.refrigeration.RefrigerationSystem;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
 
@@ -51,6 +54,9 @@ public final class LNGProcessModel implements Serializable {
   private final List<Expander> expanders;
   private final List<LNGHeatExchanger> cryogenicHeatExchangers;
 
+  private final RefrigerationSystem propaneSystem;
+  private final List<Compressor> propaneCompressors;
+
   private transient Result lastResult;
   private transient long lastRunTimeNanos;
 
@@ -65,11 +71,16 @@ public final class LNGProcessModel implements Serializable {
    * @param flashGasStream product-flash gas
    * @param compressors compressor list
    * @param expanders expander list
+   * @param propaneSystem integrated multi-level propane package, or null
+   * @param propaneCompressors explicit single-level propane compressors
    * @param cryogenicHeatExchangers cryogenic exchanger list
    */
   LNGProcessModel(String name, LNGProcessCycle cycle, ProcessSystem processSystem, StreamInterface feedStream,
       StreamInterface productStream, StreamInterface flashGasStream, List<Compressor> compressors,
-      List<Expander> expanders, List<LNGHeatExchanger> cryogenicHeatExchangers) {
+      List<Expander> expanders, List<LNGHeatExchanger> cryogenicHeatExchangers, RefrigerationSystem propaneSystem,
+      List<Compressor> propaneCompressors) {
+    this.propaneSystem = propaneSystem;
+    this.propaneCompressors = new ArrayList<Compressor>(propaneCompressors);
     this.name = name;
     this.cycle = cycle;
     this.processSystem = processSystem;
@@ -106,7 +117,8 @@ public final class LNGProcessModel implements Serializable {
     double feedKgPerHour = feedStream.getFlowRate("kg/hr");
     double lngKgPerHour = productStream.getFlowRate("kg/hr");
 
-    double compressorPowerKW = 0.0;
+    double propanePowerKW = getPropaneCompressorPowerKW();
+    double compressorPowerKW = propaneSystem == null ? 0.0 : propanePowerKW;
     for (Compressor compressor : compressors) {
       compressorPowerKW += Math.abs(compressor.getPower("kW"));
     }
@@ -133,13 +145,45 @@ public final class LNGProcessModel implements Serializable {
         exchangerExergyDestructionKW += exergy;
       }
     }
+    if (propaneSystem != null) {
+      // Pure propane boils isothermally. For a loaded chiller the minimum is at the hot-stream outlet.
+      for (RefrigerationLevel level : propaneSystem.getLevels()) {
+        for (RefrigerationLoad load : level.getLoads()) {
+          if (load.getDuty() > 0.0) {
+            mita = Math.min(mita, load.getProcessOutletTemperature() - level.getTemperature());
+          }
+        }
+      }
+    }
     if (!Double.isFinite(mita)) {
       mita = Double.NaN;
     }
 
     return new Result(name, cycle, feedKgPerHour, lngKgPerHour, lngYield, mtpa, compressorPowerKW, expanderPowerKW,
         netPowerKW, specificEnergy, productStream.getTemperature("C"), productStream.getPressure("bara"),
-        productStream.getFluid().getDensity("kg/m3"), mita, exchangerExergyDestructionKW, lastRunTimeNanos / 1.0e6);
+        productStream.getFluid().getDensity("kg/m3"), mita, exchangerExergyDestructionKW, lastRunTimeNanos / 1.0e6,
+        propanePowerKW);
+  }
+
+  /**
+   * Gets the C3MR propane shaft power from the package or the explicit single-level compressor train.
+   *
+   * @return propane compressor power in kW, zero for other cycles
+   */
+  private double getPropaneCompressorPowerKW() {
+    if (propaneSystem != null) {
+      return propaneSystem.getCompressorPower("kW");
+    }
+    // Older serialized C3MR models stored the two propane compressors first and had no role list.
+    List<Compressor> stages = propaneCompressors;
+    if (stages == null) {
+      stages = cycle == LNGProcessCycle.C3MR ? compressors.subList(0, 2) : Collections.<Compressor>emptyList();
+    }
+    double powerKW = 0.0;
+    for (Compressor stage : stages) {
+      powerKW += Math.abs(stage.getPower("kW"));
+    }
+    return powerKW;
   }
 
   /** @return model name */
@@ -477,6 +521,7 @@ public final class LNGProcessModel implements Serializable {
     private final double lngYield;
     private final double capacityMTPA;
     private final double compressorPowerKW;
+    private final double propaneCompressorPowerKW;
     private final double expanderRecoveredPowerKW;
     private final double netPowerKW;
     private final double specificEnergyKWhPerKgLNG;
@@ -505,13 +550,15 @@ public final class LNGProcessModel implements Serializable {
      * @param productDensityKgPerM3 product density in kg/m3
      * @param minimumInternalTemperatureApproachC minimum exchanger approach in Celsius
      * @param exchangerExergyDestructionKW exchanger exergy destruction in kW
+     * @param propaneCompressorPowerKW propane shaft power for C3MR, in kW
      * @param runTimeMilliseconds process execution time in milliseconds
      */
     Result(String name, LNGProcessCycle cycle, double feedMassFlowKgPerHour, double lngMassFlowKgPerHour,
         double lngYield, double capacityMTPA, double compressorPowerKW, double expanderRecoveredPowerKW,
         double netPowerKW, double specificEnergyKWhPerKgLNG, double productTemperatureC, double productPressureBara,
         double productDensityKgPerM3, double minimumInternalTemperatureApproachC, double exchangerExergyDestructionKW,
-        double runTimeMilliseconds) {
+        double runTimeMilliseconds, double propaneCompressorPowerKW) {
+      this.propaneCompressorPowerKW = propaneCompressorPowerKW;
       this.name = name;
       this.cycle = cycle;
       this.feedMassFlowKgPerHour = feedMassFlowKgPerHour;
@@ -563,6 +610,16 @@ public final class LNGProcessModel implements Serializable {
     /** @return total compressor power in kW */
     public double getCompressorPowerKW() {
       return compressorPowerKW;
+    }
+
+    /** @return propane compressor shaft power in kW for C3MR, zero for other cycles */
+    public double getPropaneCompressorPowerKW() {
+      return propaneCompressorPowerKW;
+    }
+
+    /** @return mixed refrigerant compressor shaft power in kW, zero for the nitrogen-expander cycle */
+    public double getMixedRefrigerantCompressorPowerKW() {
+      return cycle == LNGProcessCycle.NITROGEN_EXPANDER ? 0.0 : compressorPowerKW - propaneCompressorPowerKW;
     }
 
     /** @return recovered expander power in kW */

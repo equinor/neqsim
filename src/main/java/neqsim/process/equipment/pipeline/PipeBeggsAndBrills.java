@@ -661,9 +661,9 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
 
   // Flag to run isothermal calculations
   private boolean runAdiabatic = true;
-  private boolean runConstantSurfaceTemperature = false;
+  private volatile boolean runConstantSurfaceTemperature = false;
 
-  private double constantSurfaceTemperature = 288.15;
+  private volatile double constantSurfaceTemperature = 288.15;
 
   /**
    * Formation (geothermal) temperature gradient in K/m. When set to a positive value, the surface temperature varies
@@ -955,6 +955,24 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     this.runIsothermal = false;
     this.runAdiabatic = false;
     this.runConstantSurfaceTemperature = true;
+  }
+
+  /**
+   * Gets the constant surface (outer ambient) temperature used for heat transfer.
+   *
+   * @return the constant surface temperature in Kelvin
+   */
+  public double getConstantSurfaceTemperature() {
+    return constantSurfaceTemperature;
+  }
+
+  /**
+   * Checks whether heat transfer towards a constant surface temperature is active.
+   *
+   * @return true if a constant surface temperature, a U-value or a non-isothermal heat transfer mode has been set
+   */
+  public boolean isRunConstantSurfaceTemperature() {
+    return runConstantSurfaceTemperature;
   }
 
   /** {@inheritDoc} */

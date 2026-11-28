@@ -63,6 +63,24 @@ class ElectrolyteEvidenceTest(unittest.TestCase):
                                 self.selected if selected is None else selected,
                                 self.context, self.sha)
 
+    def collect_assessment(self, producer, *, failures=0):
+        registered = {spec[0]: spec for spec in evidence.ASSESSMENTS}
+        _, filename, rows, _ = registered[producer]
+        self.report(producer=producer, failures=failures)
+        source = self.csv(filename=filename, rows=rows)
+        class_name = evidence.PACKAGE + producer
+        manifest, errors = self.collect({class_name})
+        self.assertEqual(errors, [])
+        self.assertEqual(manifest["qualification"], "not_assessed")
+        self.assertEqual(manifest["selected_evidence_complete"], failures == 0)
+        selected = [item for item in manifest["assessments"] if item["selected"]]
+        self.assertEqual([item["producer"] for item in selected], [class_name])
+        return selected[0], source
+
+    def fixture_digest(self, filename):
+        path = evidence.FIXTURE_DIR + filename
+        return {"path": path, "sha256": evidence.digest(self.root / path)}
+
     def test_lossless_bytes_hashes_and_actual_checkout(self):
         self.report()
         source = self.csv()
@@ -90,111 +108,118 @@ class ElectrolyteEvidenceTest(unittest.TestCase):
         manifest, errors = self.collect(selected)
         self.assertEqual(errors, [])
         self.assertTrue(manifest["selected_evidence_complete"])
-        self.assertEqual(manifest["selected_assessment_count"], 21)
+        self.assertEqual(manifest["selected_assessment_count"], 26)
         self.assertEqual([item["data_rows"] for item in manifest["assessments"]],
-                         [28, 10, 26, 20, 26, 78, 36, 18, 34, 48, 84, 7, 7,
+                         [28, 10, 26, 20, 26, 78, 36, 16, 44, 18, 124, 144, 18, 34, 48, 84, 7, 7,
                           6, 12, 57, 7, 10, 13, 110, 110])
-        self.assertEqual(sum(item["data_rows"] for item in manifest["assessments"]), 747)
-        self.assertEqual(manifest["assessments"][1]["fixture"]["basis"],
-                         "inline reference values")
+        self.assertEqual(sum(item["data_rows"] for item in manifest["assessments"]), 1093)
+        assessments = {item["producer"]: item for item in manifest["assessments"]}
+        archer = assessments[evidence.PACKAGE + "KClWaterActivityReferenceAssessmentTest"]
+        self.assertEqual(archer["fixture"]["basis"], "inline reference values")
 
     def test_multi_fixture_assessment_hashes_every_source(self):
-        producer, filename, rows, fixtures = evidence.ASSESSMENTS[12]
-        self.assertEqual(producer, "CO2ChlorideSaltPairCurvatureAssessmentTest")
-        self.assertEqual(rows, 7)
-        self.assertEqual(len(fixtures), 3)
-        self.report(producer=producer)
-        self.csv(filename=filename, rows=rows)
-        manifest, errors = self.collect({evidence.PACKAGE + producer})
-        self.assertEqual(errors, [])
-        item = manifest["assessments"][12]
-        self.assertTrue(manifest["selected_evidence_complete"])
+        item, _ = self.collect_assessment("CO2ChlorideSaltPairCurvatureAssessmentTest")
+        self.assertEqual(item["data_rows"], 7)
         self.assertEqual(
             item["fixtures"],
-            [{"path": evidence.FIXTURE_DIR + fixture,
-              "sha256": evidence.digest(self.root / evidence.FIXTURE_DIR / fixture)}
-             for fixture in fixtures])
+            [self.fixture_digest("co2_kcl_solubility_he_morse1993.csv"),
+             self.fixture_digest("co2_kcl_ostwald_yasunishi_yoshida1979.csv"),
+             self.fixture_digest("co2_water_nacl_solubility_liu2021.csv")])
 
     def test_standard_state_audit_hashes_existing_he_morse_source(self):
-        producer, filename, rows, fixture = evidence.ASSESSMENTS[13]
-        self.assertEqual(producer, "CO2HeMorseStandardStateAuditTest")
-        self.assertEqual(rows, 6)
-        self.assertEqual(fixture, "co2_kcl_solubility_he_morse1993.csv")
-        self.report(producer=producer)
-        self.csv(filename=filename, rows=rows)
-        manifest, errors = self.collect({evidence.PACKAGE + producer})
-        self.assertEqual(errors, [])
-        item = manifest["assessments"][13]
-        self.assertTrue(manifest["selected_evidence_complete"])
-        self.assertEqual(item["fixture"]["sha256"],
-                         evidence.digest(self.root / evidence.FIXTURE_DIR / fixture))
+        item, _ = self.collect_assessment("CO2HeMorseStandardStateAuditTest")
+        self.assertEqual(item["data_rows"], 6)
+        self.assertEqual(item["fixture"],
+                         self.fixture_digest("co2_kcl_solubility_he_morse1993.csv"))
 
     def test_temperature_law_hashes_both_independent_source_fixtures(self):
-        producer, filename, rows, fixtures = evidence.ASSESSMENTS[17]
-        self.assertEqual(producer, "CO2SaltPairTemperatureLawAssessmentTest")
-        self.assertEqual(rows, 10)
-        self.assertEqual(
-            fixtures,
-            ("co2_kcl_solubility_he_morse1993.csv",
-             "co2_kcl_ostwald_yasunishi_yoshida1979.csv"))
-        self.report(producer=producer)
-        self.csv(filename=filename, rows=rows)
-        manifest, errors = self.collect({evidence.PACKAGE + producer})
-        self.assertEqual(errors, [])
-        item = manifest["assessments"][17]
-        self.assertTrue(manifest["selected_evidence_complete"])
+        item, _ = self.collect_assessment("CO2SaltPairTemperatureLawAssessmentTest")
+        self.assertEqual(item["data_rows"], 10)
         self.assertEqual(
             item["fixtures"],
-            [{"path": evidence.FIXTURE_DIR + fixture,
-              "sha256": evidence.digest(self.root / evidence.FIXTURE_DIR / fixture)}
-             for fixture in fixtures])
+            [self.fixture_digest("co2_kcl_solubility_he_morse1993.csv"),
+             self.fixture_digest("co2_kcl_ostwald_yasunishi_yoshida1979.csv")])
 
     def test_transfer_assessment_hashes_independent_dense_kcl_fixture(self):
-        producer, filename, rows, fixture = evidence.ASSESSMENTS[18]
-        self.assertEqual(producer, "KClCO2SaltPairTransferAssessmentTest")
-        self.assertEqual(rows, 13)
-        self.assertEqual(fixture, "co2_kcl_solubility_mousavi_chapoy_burgass2024.csv")
-        self.report(producer=producer)
-        self.csv(filename=filename, rows=rows)
-        manifest, errors = self.collect({evidence.PACKAGE + producer})
-        self.assertEqual(errors, [])
-        item = manifest["assessments"][18]
-        self.assertTrue(manifest["selected_evidence_complete"])
-        self.assertEqual(item["fixture"]["sha256"],
-                         evidence.digest(self.root / evidence.FIXTURE_DIR / fixture))
+        item, _ = self.collect_assessment("KClCO2SaltPairTransferAssessmentTest")
+        self.assertEqual(item["data_rows"], 13)
+        self.assertEqual(
+            item["fixture"],
+            self.fixture_digest("co2_kcl_solubility_mousavi_chapoy_burgass2024.csv"))
+
+    def test_source_matched_salt_effect_retains_rows_and_hashes_both_fixtures(self):
+        item, source = self.collect_assessment("KClCO2SourceMatchedSaltEffectAssessmentTest")
+        self.assertEqual(item["output"], "co2-kcl-source-matched-salt-effect-assessment.csv")
+        self.assertEqual(item["data_rows"], 16)
+        self.assertEqual((self.output / item["output"]).read_bytes(), source.read_bytes())
+        self.assertEqual(
+            item["fixtures"],
+            [self.fixture_digest("co2_kcl_solubility_mousavi_chapoy_burgass2024.csv"),
+             self.fixture_digest("co2_water_nacl_solubility_mousavi_chapoy_burgass2024.csv")])
+
+    def test_smooth_salt_pair_law_retains_calibration_and_holdout_sources(self):
+        item, source = self.collect_assessment("KClCO2SmoothSaltPairLawAssessmentTest")
+        self.assertEqual(item["output"], "co2-kcl-smooth-salt-pair-law-assessment.csv")
+        self.assertEqual(item["data_rows"], 44)
+        self.assertEqual((self.output / item["output"]).read_bytes(), source.read_bytes())
+        self.assertEqual(
+            item["fixtures"],
+            [self.fixture_digest("co2_kcl_solubility_he_morse1993.csv"),
+             self.fixture_digest("co2_kcl_solubility_mousavi_chapoy_burgass2024.csv"),
+             self.fixture_digest("co2_water_nacl_solubility_mousavi_chapoy_burgass2024.csv")])
+
+    def test_kamps_transfer_retains_independent_thermoml_source(self):
+        item, source = self.collect_assessment(
+            "KClCO2Kamps2007IndependentTransferAssessmentTest")
+        self.assertEqual(
+            item["output"],
+            "co2-kcl-kamps2007-independent-transfer-assessment.csv")
+        self.assertEqual(item["data_rows"], 18)
+        self.assertEqual((self.output / item["output"]).read_bytes(), source.read_bytes())
+        self.assertEqual(
+            item["fixture"],
+            self.fixture_digest("co2_kcl_solubility_kamps2007_thermoml.csv"))
+
+    def test_kamps_loading_trend_retains_complete_thermoml_source(self):
+        item, source = self.collect_assessment(
+            "KClCO2Kamps2007LoadingTrendAssessmentTest")
+        self.assertEqual(
+            item["output"],
+            "co2-kcl-kamps2007-loading-trend-assessment.csv")
+        self.assertEqual(item["data_rows"], 124)
+        self.assertEqual((self.output / item["output"]).read_bytes(), source.read_bytes())
+        self.assertEqual(
+            item["fixture"],
+            self.fixture_digest("co2_kcl_solubility_kamps2007_thermoml.csv"))
+
+    def test_kamps_furst_loading_sensitivity_retains_thermoml_source(self):
+        item, source = self.collect_assessment(
+            "KClCO2Kamps2007FurstLoadingSensitivityAssessmentTest")
+        self.assertEqual(
+            item["output"],
+            "co2-kcl-kamps2007-furst-loading-sensitivity-assessment.csv")
+        self.assertEqual(item["data_rows"], 144)
+        self.assertEqual((self.output / item["output"]).read_bytes(), source.read_bytes())
+        self.assertEqual(
+            item["fixture"],
+            self.fixture_digest("co2_kcl_solubility_kamps2007_thermoml.csv"))
 
     def test_full_family_numerical_failure_retains_all_110_rows(self):
-        producer, filename, rows, fixture = evidence.ASSESSMENTS[-2]
-        self.assertEqual(rows, 110)
-        self.report(producer=producer, tests=1, failures=1)
-        source = self.csv(filename=filename, rows=rows)
-        manifest, errors = self.collect({evidence.PACKAGE + producer})
-        self.assertEqual(errors, [])
-        self.assertFalse(manifest["selected_evidence_complete"])
-        self.assertEqual(manifest["qualification"], "not_assessed")
-        item = manifest["assessments"][-2]
+        item, source = self.collect_assessment("CO2BrineHydrateFullFamilyAssessmentTest", failures=1)
         self.assertEqual(item["producer_result"]["status"], "failed")
         self.assertEqual(item["data_rows"], 110)
-        self.assertEqual((self.output / filename).read_bytes(), source.read_bytes())
-        self.assertEqual(item["fixture"]["sha256"],
-                         evidence.digest(self.root / evidence.FIXTURE_DIR / fixture))
+        self.assertEqual((self.output / item["output"]).read_bytes(), source.read_bytes())
+        self.assertEqual(item["fixture"],
+                         self.fixture_digest("co2_brine_hydrate_dholabhai1993_full.csv"))
 
     def test_measured_state_failure_retains_every_pair_without_qualification(self):
-        producer, filename, rows, fixture = evidence.ASSESSMENTS[-1]
-        self.assertEqual(producer, "CO2BrineHydrateMeasuredStateAssessmentTest")
-        self.assertEqual(rows, 110)
-        self.report(producer=producer, tests=1, failures=1)
-        source = self.csv(filename=filename, rows=rows)
-        manifest, errors = self.collect({evidence.PACKAGE + producer})
-        self.assertEqual(errors, [])
-        self.assertFalse(manifest["selected_evidence_complete"])
-        self.assertEqual(manifest["qualification"], "not_assessed")
-        item = manifest["assessments"][-1]
+        item, source = self.collect_assessment("CO2BrineHydrateMeasuredStateAssessmentTest",
+                                               failures=1)
         self.assertEqual(item["producer_result"]["status"], "failed")
         self.assertEqual(item["data_rows"], 110)
-        self.assertEqual((self.output / filename).read_bytes(), source.read_bytes())
-        self.assertEqual(item["fixture"]["sha256"],
-                         evidence.digest(self.root / evidence.FIXTURE_DIR / fixture))
+        self.assertEqual((self.output / item["output"]).read_bytes(), source.read_bytes())
+        self.assertEqual(item["fixture"],
+                         self.fixture_digest("co2_brine_hydrate_dholabhai1993_full.csv"))
 
     def test_unselected_leftovers_and_unrelated_files_are_not_uploaded(self):
         self.csv()

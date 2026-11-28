@@ -1,7 +1,7 @@
 ---
 name: neqsim-pipeline-and-terminal-networks
 description: "Guides agents through NeqSim pipeline and terminal networks. USE WHEN: users ask to solve a looped gathering/export network, optimize well and choke settings, apply nominations or quality limits, track gas linepack or transient composition, blend crude, or schedule terminal tanks and cargoes. Anchors: LoopedPipeNetwork, NetworkOptimizer, TransientGasNetwork, TransientCompositionalPipeNetwork, NetworkQualityProfile, OilNetworkSchedule."
-last_verified: "2026-11-26"
+last_verified: "2026-11-27"
 ---
 
 # Pipeline and Terminal Networks
@@ -69,8 +69,15 @@ Use `NetworkHydraulicModelComparison` to replay selected canonical edges with bo
 Beggs-Brill and two-fluid hydraulics. Its normalized position/pressure/temperature/
 holdup/phase-velocity profiles include segmented terrain routes, and
 `compareMeshSensitivity` evaluates selected edges on detached meshes without changing
-the caller topology. Inspect every convergence status and mass-balance residual; these
-comparisons are integration evidence until independently qualified.
+the caller topology. For equal-ratio three-grid sequences, call
+`MeshSensitivityResult.getSpatialConvergenceReport` separately for the Beggs-Brill or
+two-fluid pressure, temperature, holdup and superficial phase-velocity profiles. It returns
+`MONOTONIC`, `NON_MONOTONIC` or `ROUND_OFF_LIMITED` and publishes order/GCI only for resolved
+monotonic evidence. For unresolved sequences, inspect the signed native-unit discrepancies,
+normalization scale and maximum-discrepancy route positions before changing a closure or mesh.
+Inspect every status and mass-balance residual; unresolved production
+B&B profiles and two-fluid pressure remain explicit blockers, and these comparisons are
+integration evidence until independently qualified.
 After an accepted two-fluid solve, use `Result.compareTransientRateStep` for controlled
 steady-to-transient initialization and outer-time-step sensitivity. It starts every
 requested step size from the same detached steady state, advances to one common time and

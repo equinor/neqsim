@@ -27,6 +27,7 @@ import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.manifold.Manifold;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.pipeline.AdiabaticPipe;
+import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.pipeline.PipeLineInterface;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.pump.Pump;
@@ -190,7 +191,17 @@ public class JsonProcessExporter {
     for (ProcessEquipmentInterface unit : units) {
       if (unit instanceof StreamInterface) {
         streamRefMap.put((StreamInterface) unit, unit.getName());
-      } else {
+      }
+    }
+    for (ProcessEquipmentInterface unit : units) {
+      if (unit instanceof Recycle) {
+        // The outlet of a recycle is its tear stream; keep the name of that stream when it is a stream unit.
+        StreamInterface tearStream = ((Recycle) unit).getOutletStream();
+        if (tearStream != null && streamRefMap.containsKey(tearStream)) {
+          continue;
+        }
+      }
+      if (!(unit instanceof StreamInterface)) {
         mapOutletStreams(unit);
       }
     }
@@ -323,6 +334,21 @@ public class JsonProcessExporter {
   }
 
   /**
+   * Finds the reference of the equipment outlet that a stream unit is an alias of.
+   *
+   * @param stream the stream unit
+   * @param unitName the name of the stream unit
+   * @return the outlet reference such as {@code Heater.outlet}, or null if the stream is not an outlet of another unit
+   */
+  private String outletAliasReference(StreamInterface stream, String unitName) {
+    String reference = streamRefMap.get(stream);
+    if (reference != null && reference.contains(".") && !reference.equals(unitName)) {
+      return reference;
+    }
+    return null;
+  }
+
+  /**
    * Registers named fluid references for explicit stream units.
    *
    * @param units process units to inspect
@@ -334,7 +360,7 @@ public class JsonProcessExporter {
         continue;
       }
       StreamInterface stream = (StreamInterface) unit;
-      if (stream.getFluid() == null) {
+      if (stream.getFluid() == null || outletAliasReference(stream, unit.getName()) != null) {
         continue;
       }
       String baseRef = sanitizeFluidReference(unit.getName()) + "_fluid";
@@ -790,6 +816,12 @@ public class JsonProcessExporter {
    * @return JsonObject describing the unit, or null if the unit should be skipped
    */
   private JsonObject exportUnit(ProcessEquipmentInterface unit) {
+    if (unit instanceof Calculator && ((Calculator) unit).hasCustomCalculationMethod()) {
+      exportWarnings.add("Calculator '" + unit.getName()
+          + "' runs a custom calculation method that cannot be exported; the exported process keeps the values it"
+          + " had calculated");
+      return null;
+    }
     JsonObject json = new JsonObject();
     String typeName = getTypeName(unit);
     json.addProperty("type", typeName);
@@ -800,11 +832,17 @@ public class JsonProcessExporter {
 
     if (unit instanceof StreamInterface) {
       StreamInterface stream = (StreamInterface) unit;
+      String outletRef = outletAliasReference(stream, unit.getName());
       String fluidRef = streamUnitFluidRefMap.get(stream);
-      if (fluidRef != null) {
-        json.addProperty("fluidRef", fluidRef);
+      if (outletRef != null) {
+        // The stream is the outlet of another unit that was also added to the process under its own name.
+        json.addProperty("outletOf", outletRef);
+      } else {
+        if (fluidRef != null) {
+          json.addProperty("fluidRef", fluidRef);
+        }
+        exportStreamProperties(json, stream);
       }
-      exportStreamProperties(json, stream);
     } else if (unit instanceof Mixer) {
       exportMixerInlets(json, (Mixer) unit);
     } else if (unit instanceof Manifold) {
@@ -835,6 +873,13 @@ public class JsonProcessExporter {
         json.addProperty("inlet", inletRefs.get(0).getAsString());
       } else if (inletRefs.size() > 1) {
         json.add("inlets", inletRefs);
+      }
+      if (unit instanceof Recycle) {
+        // The tear stream the recycle writes into; it is a separate stream unit that other units read from.
+        StreamInterface tearStream = ((Recycle) unit).getOutletStream();
+        if (tearStream != null && streamUnitFluidRefMap.containsKey(tearStream)) {
+          json.addProperty("outlet", tearStream.getName());
+        }
       }
     }
 
@@ -1051,7 +1096,15 @@ public class JsonProcessExporter {
       Compressor comp = (Compressor) unit;
       double outP = comp.getOutletPressure();
       if (outP > 0) {
-        props.addProperty("outletPressure", outP);
+        String outPUnit = comp.getOutletPressureUnit();
+        if (outPUnit == null || "bara".equals(outPUnit)) {
+          props.addProperty("outletPressure", outP);
+        } else {
+          JsonArray outPArr = new JsonArray();
+          outPArr.add(outP);
+          outPArr.add(outPUnit);
+          props.add("outletPressure", outPArr);
+        }
       }
       props.addProperty("speed", comp.getSpeed());
       props.addProperty("minimumSpeed", comp.getMinimumSpeed());
@@ -1091,6 +1144,8 @@ public class JsonProcessExporter {
         props.addProperty("cv", valve.getCv());
       }
       props.addProperty("percentValveOpening", valve.getPercentValveOpening());
+    } else if (unit instanceof DistillationColumn) {
+      exportDistillationColumnProperties((DistillationColumn) unit, props);
     } else if (unit instanceof Separator) {
       Separator separator = (Separator) unit;
       if (separator.getInternalDiameter() > 0.0) {
@@ -1133,6 +1188,10 @@ public class JsonProcessExporter {
       if (outP > 0) {
         props.addProperty("outletPressure", outP);
       }
+      double isentropicEfficiency = pump.getIsentropicEfficiency();
+      if (isentropicEfficiency > 0.0 && isentropicEfficiency <= 1.0) {
+        props.addProperty("isentropicEfficiency", isentropicEfficiency);
+      }
     } else if (unit instanceof Splitter) {
       Splitter splitter = (Splitter) unit;
       double[] flowRates = splitter.getFlowRates();
@@ -1161,6 +1220,17 @@ public class JsonProcessExporter {
           factorsArr.add(f);
         }
         props.add("splitFactors", factorsArr);
+        props.addProperty("splitBasis", compSplitter.getSplitBasis());
+        StreamInterface splitterInlet = compSplitter.getInletStream();
+        if (splitterInlet != null && splitterInlet.getFluid() != null
+            && splitterInlet.getFluid().getNumberOfComponents() == factors.length) {
+          // Component order is not preserved when a fluid is rebuilt from JSON, so also key the factors by name.
+          JsonObject byName = new JsonObject();
+          for (int k = 0; k < factors.length; k++) {
+            byName.addProperty(splitterInlet.getFluid().getComponent(k).getComponentName(), factors[k]);
+          }
+          props.add("componentSplitFactors", byName);
+        }
       }
     } else if (unit instanceof Manifold) {
       Manifold manifold = (Manifold) unit;
@@ -1245,6 +1315,9 @@ public class JsonProcessExporter {
       int numberOfIncrements = pipe.getNumberOfIncrements();
       if (numberOfIncrements > 0) {
         props.addProperty("numberOfIncrements", numberOfIncrements);
+      }
+      if (unit instanceof PipeBeggsAndBrills) {
+        exportBeggsAndBrillsHeatTransfer((PipeBeggsAndBrills) unit, props);
       }
     } else if (unit instanceof Calculator) {
       JsonObject calculator = exportCalculatorProperties((Calculator) unit);
@@ -1396,6 +1469,96 @@ public class JsonProcessExporter {
     antiSurgeJson.addProperty("surgeWarningMargin", antiSurge.getSurgeWarningMargin());
     antiSurgeJson.addProperty("predictiveHorizon", antiSurge.getPredictiveHorizon());
     return antiSurgeJson;
+  }
+
+  /**
+   * Exports the tray layout, feed trays, pressures and condenser/reboiler specifications of a distillation column.
+   *
+   * @param column the column to export
+   * @param props the property object to add to
+   */
+  private void exportDistillationColumnProperties(DistillationColumn column, JsonObject props) {
+    int localTrays = column.getNumberOfTrays() - (column.hasReboiler() ? 1 : 0) - (column.hasCondenser() ? 1 : 0);
+    props.addProperty("numberOfTrays", localTrays);
+    props.addProperty("hasReboiler", column.hasReboiler());
+    props.addProperty("hasCondenser", column.hasCondenser());
+    if (column.getTopPressure() > 0.0) {
+      props.addProperty("topPressure", column.getTopPressure());
+    }
+    if (column.getBottomPressure() > 0.0) {
+      props.addProperty("bottomPressure", column.getBottomPressure());
+    }
+    JsonArray feedTrays = new JsonArray();
+    for (StreamInterface feed : column.getInletStreams()) {
+      feedTrays.add(column.getFeedTrayNumber(feed));
+    }
+    if (feedTrays.size() > 0) {
+      props.add("feedTrays", feedTrays);
+    }
+    if (column.hasCondenser()) {
+      neqsim.process.equipment.distillation.Condenser condenser = column.getCondenser();
+      if (condenser.isSetOutTemperature()) {
+        props.add("condenserTemperature", kelvinArray(condenser.getOutletTemperature()));
+      }
+      if (condenser.isRefluxSet()) {
+        props.addProperty("refluxRatio", condenser.getRefluxRatio());
+      }
+    }
+    if (column.hasReboiler() && column.getReboiler().isSetOutTemperature()) {
+      props.add("reboilerTemperature", kelvinArray(column.getReboiler().getOutletTemperature()));
+    }
+  }
+
+  /**
+   * Creates a unit-bearing temperature array in Kelvin.
+   *
+   * @param kelvin temperature in Kelvin
+   * @return JSON array with the value and its unit
+   */
+  private JsonArray kelvinArray(double kelvin) {
+    JsonArray array = new JsonArray();
+    array.add(kelvin);
+    array.add("K");
+    return array;
+  }
+
+  /**
+   * Exports the heat transfer settings of a Beggs and Brill pipe so that a rebuilt pipe keeps its thermal behaviour.
+   *
+   * @param pipe the pipe to export
+   * @param props the property object to add to
+   */
+  private void exportBeggsAndBrillsHeatTransfer(PipeBeggsAndBrills pipe, JsonObject props) {
+    PipeBeggsAndBrills.HeatTransferMode mode = pipe.getHeatTransferMode();
+    if (pipe.isRunConstantSurfaceTemperature()) {
+      JsonArray surfaceTemperature = new JsonArray();
+      surfaceTemperature.add(pipe.getConstantSurfaceTemperature());
+      surfaceTemperature.add("K");
+      props.add("constantSurfaceTemperature", surfaceTemperature);
+      if (pipe.getHeatTransferCoefficient() > 0.0) {
+        props.addProperty("heatTransferCoefficient", pipe.getHeatTransferCoefficient());
+      }
+    } else if (mode == PipeBeggsAndBrills.HeatTransferMode.ESTIMATED_INNER_H) {
+      return;
+    }
+    double outerCoefficient = pipe.getOuterHeatTransferCoefficient();
+    if (!Double.isNaN(outerCoefficient) && outerCoefficient >= 0.0) {
+      props.addProperty("outerHeatTransferCoefficient", outerCoefficient);
+    }
+    props.addProperty("pipeWallThermalConductivity", pipe.getPipeWallThermalConductivity());
+    if (pipe.getInsulationThickness() > 0.0) {
+      JsonObject insulation = new JsonObject();
+      insulation.addProperty("thickness", pipe.getInsulationThickness());
+      insulation.addProperty("conductivity", pipe.getInsulationThermalConductivity());
+      props.add("insulation", insulation);
+    }
+    if (pipe.getFormationTemperatureGradient() != 0.0 && !Double.isNaN(pipe.getSurfaceTemperatureAtInlet())) {
+      JsonObject formation = new JsonObject();
+      formation.addProperty("inletTemperature", pipe.getSurfaceTemperatureAtInlet());
+      formation.addProperty("gradient", pipe.getFormationTemperatureGradient());
+      props.add("formationTemperature", formation);
+    }
+    props.addProperty("heatTransferMode", mode.name());
   }
 
   /**

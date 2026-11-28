@@ -151,6 +151,7 @@ is checked in CI, so a newly added equipment class cannot remain absent from thi
 | Power Equipment | [power_generation.md](power_generation) | Gas turbines, fuel cells, renewables |
 | Battery Storage | [battery_storage.md](battery_storage) | Energy storage systems |
 | Energy Conversion | [energy_conversion.md](energy_conversion) | Motors, generators, converters, thermal utilities, and energy-network solvers |
+| Refrigeration Systems | [refrigeration.md](refrigeration) | Multi-level vapour-compression refrigeration with economizers, inter-cooling, cascades and process-cooler integration |
 
 ### Utility Equipment
 

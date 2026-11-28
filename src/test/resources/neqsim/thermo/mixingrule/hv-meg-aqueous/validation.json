@@ -1,0 +1,414 @@
+{
+  "schema_version": 1,
+  "campaign": 4576,
+  "run": "r71",
+  "base": "611f315adca3a5ac7647ea0105aac6dfe207c7d7",
+  "candidate_head": "See the draft PR and guarded campaign receipt; source digests below identify the validated patch without a self-referential commit hash.",
+  "bounded_contract": "Enhanced/automatic-LLE ordinary trial direction plus unchanged-model aqueous-MEG/pure-water qualification. No new parameters, alpha/default changes, tolerance relaxation or global-stability guarantee.",
+  "source_tree_audit": {
+    "blobs": 10857,
+    "tree_entries": 12387,
+    "all_base_blob_hashes_verified_before_edits": true,
+    "local_initial_commit_note": "The initial local index omits26ignored base paths, normalizes1base path, and also contains the new raw CSV. All source filesystem blobs were independently verified before edits. Remote publication uses the authoritative full GitHub base tree, preserves untouched blobs, and explicitly adds the new CSV; a separately computed complete tree digest guards publication."
+  },
+  "source_sha256": {
+    "src/main/java/neqsim/thermodynamicoperations/flashops/Flash.java": "cbcc663f846bf31cd0859344ed1b2fa1131feda25f9b21d3777631453970aa3b",
+    "src/test/java/neqsim/thermodynamicoperations/flashops/FlashStabilityTrialOrderTest.java": "58fb1b3767db7392312a211fedc51ea7d18a50890db90923a05f00b75f4baf2f",
+    "src/test/java/neqsim/thermo/mixingrule/HuronVidalAqueousMegPressureAssessmentTest.java": "c6599ff111953877ab38eb322f6c34f6b141bce7521b2a6b79ea68ef2e3b28cc",
+    ".github/skills/neqsim-thermodynamic-initialization/SKILL.md": "bac7c14c4b76fccf02751facd0f78b4bbb8f3e73bd01b8896ca49048de9da984",
+    ".github/agents/thermo-fluid.agent.md": "05ae85a369820180484ab9a46bba902a8e131c3aa411ca8815d0acb03570a151",
+    "docs/thermo/mixing_rules_guide.md": "f64619201f4a07ed20e8e49dfc952e9057eff29a6f14015f82698913ef3a3984",
+    "docs/thermodynamicoperations/TPflash_algorithm.md": "324224dfdfb8a780f533a401ab43be8715455d78b1a0d4d8f622983d4491d960",
+    "src/test/resources/neqsim/thermo/mixingrule/hv-literature-candidates.json": "ec86489797213a8db72eaf660f19320b714a7b49b8bb887b30a160f720537af0",
+    "src/test/resources/neqsim/thermo/mixingrule/hv-meg-aqueous/fujita-1989.csv": "ac9bca0913653c0e29d4b4cda65e6ff850e01c1045cff0f13667d7da994395b1",
+    "src/test/resources/neqsim/thermo/mixingrule/hv-meg-aqueous/README.md": "5de66476970f692520bdf22366c68e0bb4bbd51ee6bc7fb015194b76fbc935a6"
+  },
+  "primary": {
+    "doi": "10.11322/tjsrae.6.183",
+    "url": "https://www.jstage.jst.go.jp/article/tjsrae/6/2/6_2_183/_pdf",
+    "pdf_sha256_retained_r70": "1011af0d18684e98ac6c5af28a919d8fd159a1e81d97dc6683183c0a2235b2fe",
+    "image_audit": "Retained r70 table-image audit, receipt7175159154; r71 also reopened the primary PDF text. Screenshot connector returned text placeholders rather than usable pixels; no new image inspection claimed.",
+    "rows": 42,
+    "mixture_rows": 36,
+    "water_rows": 6,
+    "units": "Liquid MEG mass percent; Celsius; absolute Torr; total pressure. No vapor-MEG measurement or measured overall feed.",
+    "mixture_range": "263.12–333.15K;20.5–51.4mass%MEG",
+    "water_control_range": "288.15–328.15K",
+    "uncertainty": "Instrument±.05Torr/±.05K; composition approximately±1mass-percentage-point; broader author apparatus pressure error±.15Torr. No distribution/coverage factor; notU95.",
+    "holdout": "Whole source frozen before new selection/fit. Independence from historical parameter/alpha training lineage unresolved; no independent-holdout qualification claimed.",
+    "transcription": "Retains image-verified-4.82C; bodyEq6minus reproduces all42rows .809171898%AARD. Abstractplus rejected. No manuscript/images redistributed."
+  },
+  "native": {
+    "roster": [
+      "neqsim.thermo.HuronVidalMixingRulesDocumentationTest",
+      "neqsim.thermo.HuronVidalThermodynamicModelConsistencyTest",
+      "neqsim.thermo.component.HuronVidalPhasePureRequestTest",
+      "neqsim.thermo.component.HuronVidalRowPureRequestTest",
+      "neqsim.thermo.component.HuronVidalWorkspaceLifecycleTest",
+      "neqsim.thermo.mixingrule.HuronVidalAqueousMegPressureAssessmentTest",
+      "neqsim.thermo.mixingrule.HuronVidalCloneIsolationTest",
+      "neqsim.thermo.mixingrule.HuronVidalCo2SourceDiagnosticTest",
+      "neqsim.thermo.mixingrule.HuronVidalEosParameterSelectionTest",
+      "neqsim.thermo.mixingrule.HuronVidalFrostAssessmentTest",
+      "neqsim.thermo.mixingrule.HuronVidalLiteratureReproductionTest",
+      "neqsim.thermo.mixingrule.HuronVidalMegExperimentalAssessmentTest",
+      "neqsim.thermo.mixingrule.HuronVidalMegMethaneDiagnosticTest",
+      "neqsim.thermo.mixingrule.HuronVidalModelConsistencyTest",
+      "neqsim.thermo.mixingrule.HuronVidalParameterWiringTest",
+      "neqsim.thermo.mixingrule.HuronVidalSelectedPairPerformanceTest",
+      "neqsim.thermo.mixingrule.HuronVidalWaterButaneAssessmentTest",
+      "neqsim.thermo.mixingrule.HuronVidalWaterNitrogenAssessmentTest",
+      "neqsim.thermodynamicoperations.flashops.FlashStabilityTrialOrderTest",
+      "neqsim.thermodynamicoperations.flashops.FlashStabilityTrialRevertTest",
+      "neqsim.thermodynamicoperations.flashops.HuronVidalMultiphaseQualificationTest",
+      "neqsim.thermodynamicoperations.flashops.ReactiveElectrolyteCPAScaleTest",
+      "neqsim.thermodynamicoperations.flashops.StabilityOptimizationInvariantTest",
+      "neqsim.thermodynamicoperations.flashops.TPFlashTest",
+      "neqsim.thermodynamicoperations.flashops.TPflashCpaAqueousStabilityConsistencyTest",
+      "neqsim.thermodynamicoperations.flashops.TPflashCpaHydrocarbonLiquidStabilityTest",
+      "neqsim.thermodynamicoperations.flashops.TPflashIncipientPhaseStabilityTest",
+      "neqsim.thermodynamicoperations.flashops.TPflashSourGasConsistencyTest",
+      "neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveElectrolyteStateConsistencyTest"
+    ],
+    "java17": {
+      "tests": 181,
+      "failed": 0,
+      "skipped": 0,
+      "final_affected_refinement_guard_cases_rechecked": 4
+    },
+    "java8": {
+      "main_sources_compiled": 3782,
+      "test_sources_compiled": 3046,
+      "tests": 181,
+      "failed": 0,
+      "skipped": 0,
+      "final_affected_refinement_guard_cases_rechecked": 4
+    },
+    "history_results_per_runtime": 840,
+    "source_results_per_runtime": 168,
+    "pure_source_water_results_per_runtime": 12,
+    "checks": "All five ThermodynamicModelTest identities plus checkNumerically(maxError1e-6) asserted; existing independent T/P/n stencils, cold closure, distinct mechanical/EOS roots, native detached refinement and strict endpoints outside the explicitly adverse classical branch. No logging-only acceptance.",
+    "tolerances": {
+      "component_balance": 1e-10,
+      "normalization": 1e-12,
+      "log_fugacity": 1e-08,
+      "native_numerical": 1e-06,
+      "EOS_pressure_bara": 1e-08,
+      "endpoint_relative": 1e-08,
+      "endpoint_absolute_floor": 1e-13,
+      "refinement_GRT_roundoff": 1e-10
+    },
+    "maxima_java17": {
+      "cold_log_fugacity": 7.937094537169287e-09,
+      "refined_log_fugacity": 6.921574424723076e-12,
+      "balance": 6.217248937900877e-15,
+      "normalization": 2.220446049250313e-16
+    },
+    "java8_vs_java17_pressure_relative": {
+      "SRK-rule2": 4.440892098500626e-16,
+      "SRK-rule4": 0.0,
+      "PR-rule2": 6.661338147750939e-16,
+      "PR-rule4": 1.3322676295501878e-15
+    },
+    "full_repository_tests": "Not run locally; exact-head hosted CI required."
+  },
+  "physical": {
+    "unfiltered_pressure_errors": {
+      "SRK-rule2": {
+        "mixture": {
+          "n": 36,
+          "AARD_percent": 19.227302457429214
+        },
+        "water": {
+          "n": 6,
+          "AARD_percent": 23.03416665460425
+        },
+        "dispositions": {
+          "recovered_bubble_tie_line": 41,
+          "metastable_classical_bubble_branch": 1
+        }
+      },
+      "SRK-rule4": {
+        "mixture": {
+          "n": 36,
+          "AARD_percent": 27.15912495625997
+        },
+        "water": {
+          "n": 6,
+          "AARD_percent": 23.034166654604363
+        },
+        "dispositions": {
+          "recovered_bubble_tie_line": 42
+        }
+      },
+      "PR-rule2": {
+        "mixture": {
+          "n": 36,
+          "AARD_percent": 13.060241123842191
+        },
+        "water": {
+          "n": 6,
+          "AARD_percent": 13.78544830628934
+        },
+        "dispositions": {
+          "recovered_bubble_tie_line": 42
+        }
+      },
+      "PR-rule4": {
+        "mixture": {
+          "n": 36,
+          "AARD_percent": 16.935562723059657
+        },
+        "water": {
+          "n": 6,
+          "AARD_percent": 13.78544830628946
+        },
+        "dispositions": {
+          "recovered_bubble_tie_line": 42
+        }
+      }
+    },
+    "existing_Twu_pure_water_AARD_percent": {
+      "SRK": 1.045474242487323,
+      "PR": 0.9380713516898694
+    },
+    "acceptance": "No physical error threshold fitted/accepted. Raw metastable source pressure remains in unfiltered classical SRK error; no global equilibrium or inhibitor-partition certification.",
+    "follow_through": [
+      {
+        "cause": "Skipped ascending ordinary stability trials",
+        "owner": 5303,
+        "improvement": "Bounded enhanced/LLE traversal repair with failing-master regression and lower-G witnesses",
+        "disposition": "Implemented in this draft; CI/review pending."
+      },
+      {
+        "cause": "Large ordinary pure-water pressure bias contributes to mixture error",
+        "owner": 4576,
+        "improvement": "Assess already sourced EOS-specific Twu water inputs on all six measured pure controls",
+        "disposition": "Pure-only staged source adoption assessment; no fitted interaction transfer/default change."
+      },
+      {
+        "cause": "Water/MEG total-pressure error does not identify MEG chemical potential or isolate interaction error",
+        "owner": 4576,
+        "improvement": "Require compatible pure-MEG/alpha inputs, pure-pressure uncertainty and bidirectional partition holdouts before source adoption/refit",
+        "disposition": "Blocked by missing low-temperature pure-MEG measurements/source-compatible conventions and independent partition validation."
+      },
+      {
+        "cause": "Nonconvex classical-SRK mixture admits multiple stationary branches; nearby cold result remains above a feasible split",
+        "owner": 2937,
+        "improvement": "Bounded lower-G branch discovery with paired source/nearby witnesses, closure, deterministic histories and timing controls",
+        "disposition": "Separate high-risk solver batch. Source263.12K bubble is metastable; nearby263.32K cold branch is higher-G by7.41e-7. Both retained distinctly, not physical acceptance."
+      }
+    ],
+    "full_multiphase_flag_control": "Paired baseline/candidate12-state witness repeated with setMultiPhaseCheck(true); nearby263.32K higher-G classic branch persists. No global-minimum claim."
+  },
+  "performance": {
+    "archive": "performance-raw.zip",
+    "sha256": "d4f24af526b58ee4be25531c9c5ca825a089e6050dc2343f78218092c4f6b175",
+    "bytes": 224698,
+    "summary": "evidence/performance-summary.json",
+    "interpretation": "Two independent forks with reversed arm order and an identical-baseline control; descriptive ranges, no statistical non-inferiority or speedup claim. Rule4/rule2 differ in thermodynamics/solver work. Enhanced cold topology cases excluded from overhead comparison.",
+    "profiling": {
+      "archive": "profiling-samples.zip",
+      "sha256": "8914787f92df9345ae8e08356a914d304ad01771d08650cafdb28af13983c32e",
+      "bytes": 604946,
+      "summary": "evidence/profiling-summary.json",
+      "events": "Complete extracted jdk.ExecutionSample events plus profiled result states; instrumented times excluded from matrix."
+    }
+  },
+  "quality": {
+    "code_health": {
+      "status": "passed",
+      "errors": [],
+      "new_findings": [],
+      "analyzers": {
+        "pmd": "7.17.0",
+        "spotbugs": "4.10.5"
+      },
+      "source_files": 3983,
+      "findings_by_tool": {
+        "pmd": 8,
+        "source": 1026,
+        "spotbugs": 10960
+      }
+    },
+    "analysis_runtime": "PinnedJDK17.0.21+9; freshPMD7.17.0/SpotBugs4.10.5; complete7357-class canonical input",
+    "checkstyle": {
+      "version": "14.4.0",
+      "runtime": "Java21",
+      "exit": 0,
+      "findings_by_severity": {
+        "warning": 35199
+      },
+      "config": ".config/checkstyle_neqsim.xml",
+      "note": "Existing warning-level findings retained; no severity threshold, baseline or configuration changed."
+    },
+    "spotless": "Final direct apply/check, both available hook stages, generated coverage and documentation search passed after final receipt assembly; publication stops on any failed final command.",
+    "docs": "Documentation search866Markdown+1HTML; generated engineering coverage; changed Java doclint noerrors (inheritedwarnings retained).",
+    "independent_review": "Relevant original blobs independently checked against authoritative611manifest. No blocking source defect found for draft bounded scope. Not human domain/global stability/merge approval.",
+    "infrastructure": "Helper bootstrapped first. Fullpinned17JDK replaces system21JRE for compilation. Completeofflinecache plus fullyqualifiedcanonical plugin resolution/systemtruststore resolved missing prefixes/artifacts. UnboundedMaven137 failures and lowerheap8compile interrupted130 are not passes. Actual8fullcompile at1280MiB passed35s. SpotBugs child1024MiB exclusive with same pinnedanalyzer/arguments passed after residentMaven memory failures; nobaseline/suppression/POM changes.",
+    "commands": [
+      {
+        "command": "prepare_maven.py helper before each Maven/Spotless workspace command",
+        "result": "Applied; canonical Central/proxy/private settings, no repository configuration change."
+      },
+      {
+        "command": "MAVEN_OPTS=-Xmx1280m ./mvnw -B -o -f pomJava8.xml -DskipTests test-compile",
+        "result": "Exit0;3782main+3046test source files;35seconds. Complete cache selected via task-local Maven property."
+      },
+      {
+        "command": "javac plus JUnitPlatformLauncher(29-class roster), actual Java8/17, -Xmx512m -XX:ActiveProcessorCount=2",
+        "result": "181/181 each; zero failures/skips; final four affected refinement-guard cases directly recompiled/rechecked on both runtimes."
+      },
+      {
+        "command": "Pinned-JDK17 PMD7.17.0, SpotBugs4.10.5; code_health.py --tools source,pmd,spotbugs",
+        "result": "Fresh candidate-production reports;7357-class canonical input;no new findings/errors;unchanged reviewed baselines."
+      },
+      {
+        "command": "python devtools/run_spotless.py apply; pre-commit run --all-files --hook-stage pre-commit; python devtools/run_spotless.py check; python devtools/check_documentation_search.py; pre-commit run --all-files --hook-stage pre-push",
+        "result": "Exit0 required immediately before connector-backed publication."
+      },
+      {
+        "command": "uv run --project devtools --locked devtools/build_engineering_coverage.py",
+        "result": "Exit0; regenerated Flash source digest and staged; stable on final rerun."
+      },
+      {
+        "command": "org.apache.maven.plugins:maven-checkstyle-plugin:3.6.0:check, pinned current Checkstyle14.4.0, Java21",
+        "result": "Exit0;35199 warning-level findings retained;no configuration or severity-threshold change."
+      },
+      {
+        "command": "javadoc -private -quiet -Xdoclint:all, three changed Java files",
+        "result": "Exit0;inherited warning-level documentation debt retained;no errors."
+      },
+      {
+        "command": "96-JVM unchanged-harness matrix; audit_performance.py",
+        "result": "96successful native processes,960rounds,18000phase/component rows;all same-rule vectors bit-identical,allocations identical;maxbalance4.11e-15/norm2.22e-16/logf8.48e-12."
+      }
+    ]
+  },
+  "documentation_impact": "Javadocs, initialization skill/thermo-fluid agent, mixing-rule/TP-flash guides, source/range catalog, raw measurements, executable assessment, all history outputs and timing/profiling evidence.",
+  "limits": [
+    "No source-author pure profile reproduction for unqualified tuples",
+    "No low-temperature pure-MEG or independent bidirectional inhibitor qualification",
+    "No default retuning or ordinary-NRTL/MHV/CPA/PRSV substitution",
+    "No independent hydrate/ice/brine/extrapolation qualification",
+    "No global phase-minimum guarantee",
+    "No established speedup/absolute optimality or statistical non-inferiority"
+  ],
+  "master_reconciliation": {
+    "qualified_base": "611f315adca3a5ac7647ea0105aac6dfe207c7d7",
+    "observed_master": "6ba9cc5c834135f561a7f8602156bf010412c12b",
+    "decision": "Keep the frozen qualified branch base. No merge/rebase of unrelated master into this campaign branch. New source/PR writes use freshly re-read observed master and absent/owned branch guards; combined-tree integration remains hosted-CI pending.",
+    "commits": [
+      {
+        "sha": "5eb9f44517b62437bb6d7559c7374f55f5379436",
+        "message": "Add industrial refrigeration, staged C3MR precooling and heat-pump performance (#5298)"
+      },
+      {
+        "sha": "96b175085adbb909ac527bc0abe80eb56ceae4b2",
+        "message": "docs: execute Python quickstart API paths (#5300)"
+      },
+      {
+        "sha": "6ba9cc5c834135f561a7f8602156bf010412c12b",
+        "message": "[AI-Assisted] Add same-topology hydraulic convergence receipts (#5301)"
+      }
+    ],
+    "changed_paths": [
+      ".github/agents/network-energy-systems.agent.md",
+      ".github/agents/utility-design.agent.md",
+      ".github/skills/neqsim-capability-map/SKILL.md",
+      ".github/skills/neqsim-heat-integration/SKILL.md",
+      ".github/skills/neqsim-lng-liquefaction/SKILL.md",
+      ".github/skills/neqsim-pipeline-and-terminal-networks/SKILL.md",
+      ".github/skills/neqsim-process-extraction/SKILL.md",
+      ".github/skills/neqsim-utility-design/SKILL.md",
+      ".github/skills/neqsim-utility-design/scripts/refrigeration_diagrams.py",
+      "CHANGELOG_AGENT_NOTES.md",
+      "devtools/generate_equipment_documentation_catalog.py",
+      "docs/REFERENCE_MANUAL_INDEX.md",
+      "docs/fielddevelopment/SURF_NETWORK_INTEGRATION.md",
+      "docs/process/equipment/README.md",
+      "docs/process/equipment/equipment_catalog.md",
+      "docs/process/equipment/figures/c3mr-precooling-composites.svg",
+      "docs/process/equipment/figures/c3mr-propane-cycle.svg",
+      "docs/process/equipment/refrigeration.md",
+      "docs/process/lng_liquefaction.md",
+      "docs/process/processmodel/graph_simulation.md",
+      "docs/process/thermal_utility_quality.md",
+      "docs/quickstart/python-quickstart.md",
+      "docs/thermo/component_database_guide.md",
+      "src/main/java/neqsim/process/equipment/ProcessEquipmentInterface.java",
+      "src/main/java/neqsim/process/equipment/heatexchanger/Cooler.java",
+      "src/main/java/neqsim/process/equipment/heatexchanger/MultiStreamHeatExchanger2.java",
+      "src/main/java/neqsim/process/equipment/network/NetworkHydraulicModelComparison.java",
+      "src/main/java/neqsim/process/equipment/refrigeration/RefrigerantFluid.java",
+      "src/main/java/neqsim/process/equipment/refrigeration/RefrigerantState.java",
+      "src/main/java/neqsim/process/equipment/refrigeration/RefrigerationLevel.java",
+      "src/main/java/neqsim/process/equipment/refrigeration/RefrigerationLoad.java",
+      "src/main/java/neqsim/process/equipment/refrigeration/RefrigerationStage.java",
+      "src/main/java/neqsim/process/equipment/refrigeration/RefrigerationSystem.java",
+      "src/main/java/neqsim/process/equipment/refrigeration/package-info.java",
+      "src/main/java/neqsim/process/lng/LNGProcessBuilder.java",
+      "src/main/java/neqsim/process/lng/LNGProcessModel.java",
+      "src/main/java/neqsim/process/processmodel/dexpi/Dexpi201XmlWriter.java",
+      "src/main/java/neqsim/process/processmodel/dexpi/Dexpi20SemanticValidator.java",
+      "src/main/java/neqsim/process/processmodel/dexpi/Dexpi20XmlWriter.java",
+      "src/main/java/neqsim/process/processmodel/dexpi/DexpiLayoutEngine.java",
+      "src/main/java/neqsim/process/processmodel/dexpi/DexpiShapeCatalog.java",
+      "src/main/java/neqsim/process/processmodel/dexpi/DexpiXmlWriter.java",
+      "src/main/java/neqsim/process/processmodel/dexpi/RefrigerationPipeRouting.java",
+      "src/main/java/neqsim/process/processmodel/dexpi/RefrigerationPlantProjection.java",
+      "src/main/java/neqsim/process/processmodel/graph/ProcessGraphBuilder.java",
+      "src/main/java/neqsim/process/util/utilitydesign/UtilitySystemDesigner.java",
+      "src/main/resources/data/COMP.csv",
+      "src/main/resources/neqsim/mcp/engineering-coverage.json",
+      "src/main/resources/neqsim/process/processmodel/dexpi_equipment_mapping.properties",
+      "src/main/resources/neqsim/process/processmodel/dexpi_piping_component_mapping.properties",
+      "src/test/java/neqsim/DocExamplesCompilationTest.java",
+      "src/test/java/neqsim/documentation/EntryPointExamplesDocumentationTest.java",
+      "src/test/java/neqsim/process/equipment/network/NetworkHydraulicModelComparisonTest.java",
+      "src/test/java/neqsim/process/equipment/refrigeration/RefrigerantFluidTest.java",
+      "src/test/java/neqsim/process/equipment/refrigeration/RefrigerationSystemTest.java",
+      "src/test/java/neqsim/process/lng/LNGProcessBenchmarkTest.java",
+      "src/test/java/neqsim/process/lng/LNGProcessBuilderTest.java",
+      "src/test/java/neqsim/process/processmodel/dexpi/RefrigerationPlantProjectionTest.java"
+    ],
+    "critical_policy_and_thermo_source_overlap": [],
+    "selected_component_rows_identical": [
+      "water",
+      "MEG",
+      "methanol",
+      "CO2",
+      "methane",
+      "ethane",
+      "propane",
+      "i-butane",
+      "n-butane",
+      "i-pentane",
+      "n-pentane",
+      "n-hexane",
+      "n-heptane",
+      "n-octane",
+      "nitrogen"
+    ],
+    "other_changed_component_rows": [
+      "R12",
+      "R134a",
+      "ammonia"
+    ],
+    "remaining_open_peers": [
+      {
+        "number": 5299,
+        "head": "20dbba0dea938273291d0a34e8cb6366191c78d1"
+      },
+      {
+        "number": 5302,
+        "head": "c8aaf1239f0085521fb92a4a1ec9b1f1f3641936"
+      },
+      {
+        "number": 5236,
+        "head": "e7b056183f13a82c83db0269b122d2d678a2dd52"
+      }
+    ],
+    "shared_generated_inventory": "Branch changes only the regenerated Flash sourceDigest. Complete current-master comparison patch does not touch the Flash row; upstream inventory changes are disjoint. Hosted combined-source regeneration remains pending; no inventory hand-combination."
+  }
+}

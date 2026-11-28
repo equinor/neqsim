@@ -194,6 +194,9 @@ public final class Dexpi20XmlWriter {
     }
     Dexpi20PlantExportMetadata metadata = options == null ? null : options.getMetadata();
     boolean specification201 = options != null && options.isSpecification201();
+    if (specification201) {
+      processSystem = RefrigerationPlantProjection.of(processSystem);
+    }
     PidSizing sizing = specification201 ? options.getSizing() : null;
     boolean explicitBoundaryConnectors = options != null && options
         .getBoundaryConnectionMode() == Dexpi20PlantExportOptions.BoundaryConnectionMode.EXPLICIT_OFF_PAGE_CONNECTORS;
@@ -247,7 +250,7 @@ public final class Dexpi20XmlWriter {
               "No reviewed DEXPI 2.0.1 Plant mapping for " + unit.getClass().getName() + " (" + unit.getName() + ")");
         }
         Element equipment = object(document, equipmentId, equipmentType);
-        boolean pipingComponent = specification201 && (unit instanceof ThrottlingValve || unit instanceof Splitter);
+        boolean pipingComponent = specification201 && equipmentType.startsWith("Plant/Piping.");
         data(document, equipment,
             pipingComponent
                 ? ("Plant/Piping.SafetyValveOrFitting".equals(equipmentType)
@@ -615,6 +618,10 @@ public final class Dexpi20XmlWriter {
    * @return official native 2.0.1 class
    */
   private static String dexpi201Type(ProcessEquipmentInterface unit) {
+    if (unit instanceof RefrigerationPlantProjection.Item) {
+      RefrigerationPlantProjection.Item item = (RefrigerationPlantProjection.Item) unit;
+      return (item.isValve() ? "Plant/Piping." : "Plant/ProcessEquipment.") + item.getDexpiClass();
+    }
     if (unit instanceof AirCooler) {
       return "Plant/ProcessEquipment.AirCoolingSystem";
     }

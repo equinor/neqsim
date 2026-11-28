@@ -137,6 +137,18 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     addStreamState(inStream, streamType, outletTemp);
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public List<StreamInterface> getInletStreams() {
+    return new ArrayList<>(inStreams);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<StreamInterface> getOutletStreams() {
+    return new ArrayList<>(outStreams);
+  }
+
   private void addStreamState(StreamInterface inStream, String streamType, Double outletTemp) {
     this.inStreams.add(inStream);
     StreamInterface outStream = inStream.clone();
