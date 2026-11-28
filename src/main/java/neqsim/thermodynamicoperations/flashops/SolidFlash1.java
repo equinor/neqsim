@@ -419,6 +419,8 @@ public class SolidFlash1 extends TPflash {
     }
     if (system.getNumberOfPhases() - solidsNumber == 1) {
       if (removeIncipientSolidAtFluidBoundary()) {
+        solidsNumber = 0;
+        totalSolidFrac = 0.0;
         system.init(1);
         return;
       }
@@ -475,15 +477,15 @@ public class SolidFlash1 extends TPflash {
    * @return true if an incipient solid was removed without changing the overall inventory
    */
   private boolean removeIncipientSolidAtFluidBoundary() {
-    if (totalSolidFrac > phaseFractionMinimumLimit) {
+    if (system.getBeta(1) > phaseFractionMinimumLimit) {
       return false;
     }
     PhaseInterface fluid = system.getPhase(0);
     PhaseInterface solid = system.getPhase(1);
     double feedFraction = fluid.getComponent(solidIndex).getz();
     double solidCoefficient = solid.getComponent(solidIndex).fugcoef(solid);
-    double residual = Math.log(feedFraction * fluid.getComponent(solidIndex).getFugacityCoefficient()
-        / solidCoefficient);
+    double residual = Math
+        .log(feedFraction * fluid.getComponent(solidIndex).getFugacityCoefficient() / solidCoefficient);
     if (!Double.isFinite(residual) || Math.abs(residual) > SINGLE_FLUID_FUGACITY_TOLERANCE) {
       return false;
     }
@@ -493,8 +495,6 @@ public class SolidFlash1 extends TPflash {
     for (int component = 0; component < system.getNumberOfComponents(); component++) {
       fluid.getComponent(component).setx(fluid.getComponent(component).getz());
     }
-    solidsNumber = 0;
-    totalSolidFrac = 0.0;
     return true;
   }
 
