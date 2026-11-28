@@ -683,6 +683,55 @@ class UnsplitTransientSolverTest {
     assertEquals(1.0, result.getMaximumScaledResidual(), 0.0);
   }
 
+  /** A staged closure that already closes the residual must not require a nonsingular Jacobian. */
+  @Test
+  void frozenClosureRootSkipsUnnecessaryJacobianAndChecksActiveSet() {
+    double[][] state = filledState(1);
+    double[] pressure = {5.0e6};
+    final boolean[] activated = {false};
+    final int[] callbacks = {0, 0, 0};
+    UnsplitTransientSolver.Model model = new UnsplitTransientSolver.Model() {
+      @Override
+      public UnsplitTransientSolver.Evaluation evaluate(double[][] midpointState, double[] midpointPressure,
+          double[][] closureState, double[] closurePressure, double time, double outletPressure,
+          boolean outletPressureFixed) {
+        double[][] rates = new double[1][6];
+        rates[0][3] = activated[0] ? 0.0 : 1.0;
+        return new UnsplitTransientSolver.Evaluation(rates, constantDensities(1));
+      }
+
+      @Override
+      public void beginLinearization(double[][] midpointState, double[] midpointPressure) {
+        callbacks[0]++;
+        activated[0] = true;
+      }
+
+      @Override
+      public void endLinearization() {
+        callbacks[1]++;
+      }
+
+      @Override
+      public boolean updateActiveSet(double[][] midpointState, double[] midpointPressure) {
+        callbacks[2]++;
+        return false;
+      }
+    };
+
+    UnsplitTransientSolver.Result result = new UnsplitTransientSolver().solve(state, pressure, unitAreas(1), 1.0, 0.0,
+        Double.NaN, false, model);
+
+    assertTrue(result.isConverged());
+    assertTrue(result.isActiveSetStable());
+    assertEquals(0.0, result.getMaximumScaledResidual(), 1.0e-14);
+    assertEquals(2, result.getModelEvaluations(), "Only the initial and newly frozen residual are needed");
+    assertEquals(1, callbacks[0]);
+    assertEquals(1, callbacks[1]);
+    assertEquals(2, callbacks[2]);
+    assertStateEquals(state, result.getState(), 0.0);
+    assertEquals(pressure[0], result.getPressure()[0], 0.0);
+  }
+
   /** A restart can cross a closure jump, but the result still solves the original residual. */
   @Test
   void boundedRestartRecoversTheRootAcrossAClosureJump() {

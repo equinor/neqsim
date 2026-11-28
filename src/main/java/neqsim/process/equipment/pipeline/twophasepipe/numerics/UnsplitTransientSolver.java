@@ -571,8 +571,22 @@ public final class UnsplitTransientSolver implements Serializable {
         current = evaluateResidual(previousState, previousPressure, state, pressure, cellAreas, timeStep, startTime,
             outletPressure, outletPressureFixed, countedModel, timeWeight);
         residualNorm = maximumAbsolute(current.residual);
-        jacobian = approximateJacobian(previousState, previousPressure, state, pressure, cellAreas, variableScale,
-            current, timeStep, startTime, outletPressure, outletPressureFixed, countedModel, timeWeight);
+        // Activating staged closure choices can make this iterate satisfy the exact residual already.
+        jacobian = residualNorm <= solveTolerance ? null
+            : approximateJacobian(previousState, previousPressure, state, pressure, cellAreas, variableScale,
+                current, timeStep, startTime, outletPressure, outletPressureFixed, countedModel, timeWeight);
+      }
+      if (jacobian == null) {
+        // Check the same active-set gate as after an accepted update, outside the frozen linearization.
+        refreshed = refreshActiveSet(previousState, previousPressure, state, pressure, cellAreas, timeStep, startTime,
+            outletPressure, outletPressureFixed, countedModel, current, timeWeight);
+        current = refreshed.evaluation;
+        activeSetStable = refreshed.stable;
+        residualNorm = maximumAbsolute(current.residual);
+        if (!activeSetStable) {
+          terminationReason = TerminationReason.ACTIVE_SET_UPDATE_LIMIT;
+        }
+        continue;
       }
 
       double[] rightHandSide = new double[current.residual.length];

@@ -211,7 +211,7 @@ public final class TwoFluidUnsplitIntegrator {
       double dt = attempt.endTime - time;
       if (prepared.size() >= maximumSubsteps) {
         throw new IntervalPreparationException("Accepted substep limit reached", time, dt, prepared.size(), rejected,
-            null, null, local);
+            null, null, local, Double.NaN);
       }
       double timeWeight = solver
           .getTimeIntegrationMethod() == UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER ? 1.0 : 0.5;
@@ -237,7 +237,7 @@ public final class TwoFluidUnsplitIntegrator {
         double middle = time + 0.5 * dt;
         if (attempt.depth >= maximumHalvings || !(middle > time) || !(middle < attempt.endTime)) {
           throw new IntervalPreparationException("Nonlinear subdivision limit or time resolution reached", time, dt,
-              prepared.size(), rejected, candidate.getTerminationReason(), candidate, local);
+              prepared.size(), rejected, candidate.getTerminationReason(), candidate, local, localTolerance);
         }
         pending.push(new Attempt(attempt.endTime, attempt.depth + 1));
         pending.push(new Attempt(middle, attempt.depth + 1));
@@ -305,12 +305,13 @@ public final class TwoFluidUnsplitIntegrator {
 
     private IntervalPreparationException(String message, double failureTime, double attemptedTimeStep,
         int preparedSubsteps, int rejectedAttempts, UnsplitTransientSolver.TerminationReason terminationReason,
-        UnsplitTransientSolver.Result candidate, TwoFluidSection[] acceptedSections) {
+        UnsplitTransientSolver.Result candidate, TwoFluidSection[] acceptedSections, double localTolerance) {
       super(message + ": time=" + failureTime + ", dt=" + attemptedTimeStep + ", preparedSubsteps=" + preparedSubsteps
           + ", rejectedAttempts=" + rejectedAttempts + ", reason=" + terminationReason
           + (candidate == null ? ""
               : ", iterations=" + candidate.getIterations() + ", evaluations=" + candidate.getModelEvaluations()
-                  + ", scaledResidual=" + candidate.getMaximumScaledResidual() + ", residualIndex="
+                  + ", scaledResidual=" + candidate.getMaximumScaledResidual() + ", localTolerance=" + localTolerance
+                  + ", activeSetStable=" + candidate.isActiveSetStable() + ", residualIndex="
                   + candidate.getMaximumScaledResidualIndex() + ", minimumNewtonStep="
                   + candidate.getMinimumAcceptedStepLength() + describeWorstCell(candidate, acceptedSections)));
       this.failureTime = failureTime;

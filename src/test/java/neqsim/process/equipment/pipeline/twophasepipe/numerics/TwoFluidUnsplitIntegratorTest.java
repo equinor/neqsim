@@ -297,6 +297,7 @@ class TwoFluidUnsplitIntegratorTest {
     assertEquals(0, failure.getPreparedSubsteps());
     assertEquals(1, failure.getRejectedAttempts());
     assertNotNull(failure.getTerminationReason());
+    assertTrue(failure.getMessage().contains(", localTolerance=1.0E-10, activeSetStable="));
     assertEquals(1, solver.getMaximumIterations());
     assertEquals(1.0e-10, solver.getRelativeTolerance(), 0.0);
     assertSectionsEqual(original, accepted);
