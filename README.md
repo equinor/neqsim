@@ -445,6 +445,11 @@ mvnw.cmd install      # Windows
 > Also prefer cloning **inside your user profile** (e.g.
 > `C:\Users\<id>\Documents\GitHub\neqsim`) rather than a short drive root, and
 > avoid `C:\Program Files` (which needs elevated rights to write).
+>
+> The repository itself keeps every tracked path within 200 characters so a
+> default Windows clone stays under `MAX_PATH`; the pre-push hook
+> `devtools/check_path_lengths.py` (also run by the `[Core] Pre-commit Checks`
+> workflow) fails if a new file or Java class name would exceed that budget.
 
 ### Restricted / corporate PC (no admin rights)
 
