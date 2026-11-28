@@ -282,7 +282,7 @@ After a rise from 80 to 86 bara neither phase sheds anything.
 
 **707 km rich-gas export line** (1.01 m bore, real seabed profile, 25 cells; inlet shut, line settled at 130 bara and
 blown down through the outlet to 84 bara average in 16 h, held 12 h, repressurised from the inlet with the outlet
-shut for about 18 h and then opened; 60 s steps, film update every 300 s; 2026-11-28):
+shut for 17 h and then opened; 60 s steps, film update every 300 s; 2026-11-28):
 
 | Quantity | 30 s relaxation | Film interface | Film and droplets | Film, no bulk split |
 |----------|-----------------|----------------|-------------------|---------------------|
@@ -301,11 +301,13 @@ shut for about 18 h and then opened; 60 s steps, film update every 300 s; 2026-1
 - **Hold:** with relaxation a third of the liquid evaporates again in 12 h as the line settles and warms. With
   the film model 7 to 15 % does: the gas is nearly at rest and the interface is small.
 - **Restart:** the liquid lasts 4.5 to 8 h longer. The last 110 t sits in the 85 km before the closed outlet,
-  where the gas moves at 0.1 to 0.6 m/s at 115 to 135 bara and the characteristic times are 6 to 40 h. It goes
-  within 2 h of the outlet opening, when the gas there starts to move and the characteristic time falls to
-  minutes.
+  where the gas moves at 0.1 to 0.6 m/s at 115 to 135 bara and the characteristic times are 6 to 40 h. While the
+  outlet stays shut it is barely shrinking.
 - **Consequence for the case:** the outlet-opening time was taken from an equilibrium study. With the film
-  interface 26 t of liquid is still in the line when the outlet opens. None reached the outlet (0.002 t).
+  interface 104 t of liquid is then within 85 km of the outlet (13 t with droplets). None reached the outlet
+  (0.002 t), but only because the prescribed outlet pressure is at first above the line pressure of this model,
+  so 220 to 440 t of dry gas flows in through the outlet for 1.2 to 1.5 h and evaporates most of it before
+  delivery starts. That is a property of the boundary condition, not evidence that opening then is safe.
 - **Droplets** bound the interfacial area from above; the truth is between the two non-equilibrium columns.
 - In the two non-equilibrium columns at most one cell was miscible at a time, holding up to 9 t.
 - With the droplet interface, and without the bulk split, the line took in 1.9 % and 2.4 % more gas during the
