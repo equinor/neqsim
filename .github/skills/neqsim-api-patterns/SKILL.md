@@ -1,7 +1,7 @@
 ---
 name: neqsim-api-patterns
 description: "NeqSim Java/Python API patterns for fluids, flashes, process equipment and units. USE WHEN: selecting EOS/mixing-rule selection and property retrieval, including viscosity, thermal conductivity, binary/effective diffusion, gas-oil-water interfacial tension and black-oil PVT table conversion. Follow linked references for exact model selection, initialization and tested examples."
-last_verified: "2026-11-24"
+last_verified: "2026-11-26"
 ---
 
 # NeqSim API Patterns
@@ -343,6 +343,7 @@ between propagating uncertainty through the model and deciding not to.
 |------|---------|------|
 | `Standard_ISO6976(sys, 15, 15, "volume").getValue("GCV")` | **kJ/Sm³** (~40 000) | Dividing by 1e6 gives a nonsense 0.04 MJ/Sm³ — divide by **1e3** |
 | `Standard_ISO6976(...).getValue("WI")` | **kJ/Sm³** | Same |
+| `Standard_ISO6976(...).getValue("GCV")` on a fluid never initialised | **0.0** (WI `NaN`) | Call `fluid.init(0)` after `setMixingRule`, before `calculate()`; `init(0)` alone is enough (tested 2026-11-26, 90 % CH4 / 10 % C2H6: 40 641 kJ/Sm³ GCV at 15/15) |
 | `SURFCostEstimator.setContingencyPct(x)` | — | Takes a **fraction** (0.35), not a percent, despite the name. Same for `WellCostEstimator` |
 | `Cooler.getDuty()` | **W** | Divide by 1e3 for kW |
 

@@ -75,6 +75,7 @@ public class ProcessModel implements Runnable, Serializable {
 
   /** Metadata key used for JSON round-trip inter-area stream rewiring. */
   private static final String INTER_AREA_LINKS_KEY = "interAreaLinks";
+  private static final String RECYCLE_OUTLET_LINK_KIND = "recycleOutlet";
 
   /**
    * Internal JSON reference to a stream produced inside one process area.
@@ -5188,11 +5189,13 @@ public class ProcessModel implements Runnable, Serializable {
     JsonObject areas = new JsonObject();
     IdentityHashMap<StreamInterface, AreaStreamReference> producedStreamReferences = new IdentityHashMap<>();
     Map<String, JsonObject> exportedAreas = new LinkedHashMap<>();
+    Map<String, JsonProcessExporter> areaExporters = new LinkedHashMap<>();
 
     for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
       JsonProcessExporter exporter = new JsonProcessExporter();
       JsonObject areaJson = exporter.toJsonObject(entry.getValue());
       exportedAreas.put(entry.getKey(), areaJson);
+      areaExporters.put(entry.getKey(), exporter);
       collectProducedStreamReferences(entry.getKey(), entry.getValue(), exporter, producedStreamReferences);
     }
 
@@ -5214,6 +5217,7 @@ public class ProcessModel implements Runnable, Serializable {
     root.addProperty("useFlashWarmStart", isUseFlashWarmStart());
 
     JsonArray interAreaLinks = exportInterAreaLinks(producedStreamReferences);
+    exportRecycleOutletLinks(interAreaLinks, areaExporters);
     if (interAreaLinks.size() > 0) {
       root.add(INTER_AREA_LINKS_KEY, interAreaLinks);
     }
@@ -5267,6 +5271,92 @@ public class ProcessModel implements Runnable, Serializable {
     if (streamReference != null) {
       producedStreamReferences.put(stream, new AreaStreamReference(areaName, streamReference));
     }
+  }
+
+  /**
+   * Exports links for recycles whose outlet (tear) stream is a stream unit of a process area.
+   *
+   * <p>
+   * The per-area JSON cannot express such an outlet when the stream is only wired to the recycle, so it is carried as a
+   * {@code kind = "recycleOutlet"} entry with {@code recycleArea}, {@code recycle}, {@code outletArea} and
+   * {@code outlet} fields.
+   * </p>
+   *
+   * @param links JSON array to append the recycle outlet links to
+   * @param exporters the exporters used for each area, used to find boundary streams
+   */
+  private void exportRecycleOutletLinks(JsonArray links, Map<String, JsonProcessExporter> exporters) {
+    for (Map.Entry<String, ProcessSystem> areaEntry : processes.entrySet()) {
+      for (ProcessEquipmentInterface unit : areaEntry.getValue().getUnitOperations()) {
+        if (!(unit instanceof Recycle)) {
+          continue;
+        }
+        StreamInterface outlet = ((Recycle) unit).getOutletStream();
+        if (outlet == null) {
+          continue;
+        }
+        String outletArea = null;
+        String outletReference = outlet.getName();
+        if (areaEntry.getValue().getUnit(outlet.getName()) == outlet) {
+          outletArea = areaEntry.getKey();
+        } else {
+          for (Map.Entry<String, ProcessSystem> otherEntry : processes.entrySet()) {
+            if (otherEntry.getValue().getUnit(outlet.getName()) == outlet) {
+              outletArea = otherEntry.getKey();
+              break;
+            }
+          }
+        }
+        if (outletArea == null) {
+          // The tear stream is not a unit of any area: it is exported as a boundary stream of the areas that read it.
+          for (Map.Entry<String, JsonProcessExporter> exporterEntry : exporters.entrySet()) {
+            String reference = exporterEntry.getValue().getStreamReference(outlet);
+            if (reference != null && !reference.contains(".")) {
+              outletArea = exporterEntry.getKey();
+              outletReference = reference;
+              break;
+            }
+          }
+        }
+        if (outletArea == null) {
+          continue;
+        }
+        JsonObject link = new JsonObject();
+        link.addProperty("kind", RECYCLE_OUTLET_LINK_KIND);
+        link.addProperty("recycleArea", areaEntry.getKey());
+        link.addProperty("recycle", unit.getName());
+        link.addProperty("outletArea", outletArea);
+        link.addProperty("outlet", outletReference);
+        links.add(link);
+      }
+    }
+  }
+
+  /**
+   * Applies one recycle outlet link by setting the recycle outlet to a stream of another process area.
+   *
+   * @param link JSON link with recycleArea, recycle, outletArea and outlet fields
+   * @param warnings mutable warning list to append to
+   * @return true if the outlet was set and model topology changed
+   */
+  private boolean applyRecycleOutletLink(JsonObject link, List<String> warnings) {
+    ProcessSystem recycleProcess = processes.get(getString(link, "recycleArea"));
+    ProcessSystem outletProcess = processes.get(getString(link, "outletArea"));
+    if (recycleProcess == null || outletProcess == null) {
+      warnings.add("Recycle outlet link area not found: " + getString(link, "recycleArea") + " / "
+          + getString(link, "outletArea"));
+      return false;
+    }
+    ProcessEquipmentInterface recycle = recycleProcess.getUnit(getString(link, "recycle"));
+    StreamInterface outlet = resolveAreaStreamReference(outletProcess, getString(link, "outlet"));
+    if (!(recycle instanceof Recycle) || outlet == null) {
+      warnings.add("Recycle outlet link could not be resolved: " + getString(link, "recycleArea") + "::"
+          + getString(link, "recycle") + " -> " + getString(link, "outletArea") + "::" + getString(link, "outlet"));
+      return false;
+    }
+    ((Recycle) recycle).setOutletStream(outlet);
+    recycleProcess.invalidateGraph();
+    return true;
   }
 
   /**
@@ -5558,6 +5648,9 @@ public class ProcessModel implements Runnable, Serializable {
    * @return true if the link was applied and model topology changed
    */
   private boolean applyInterAreaLink(JsonObject link, List<String> warnings) {
+    if (RECYCLE_OUTLET_LINK_KIND.equals(getString(link, "kind"))) {
+      return applyRecycleOutletLink(link, warnings);
+    }
     String sourceArea = getString(link, "sourceArea");
     String sourceReference = getString(link, "source");
     String targetArea = getString(link, "targetArea");

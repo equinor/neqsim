@@ -147,8 +147,11 @@ Common aliases accepted by the builder and validator:
 
 ### Standalone sources and connected product streams
 
-A `Stream` without `inlet` or `inlets` is a standalone source. The builder clones the root
-`fluid` (or the named `fluidRef`) for that source, then applies its stream properties. A
+A `Stream` without `inlet` or `inlets` is a standalone source. This assumes there is no
+`outletOf` alias. The builder clones the root `fluid` (or the named `fluidRef`) for that source,
+then applies its stream properties. An exported `Stream` with `outletOf` instead names an
+existing equipment outlet (for example, `Heater.outlet`); the builder attaches that outlet
+rather than cloning a source or creating a product wrapper. A
 `Stream` with an `inlet` is different: it is a named product-stream wrapper around the resolved
 upstream outlet. It keeps that outlet's live fluid identity instead of creating an independent
 source fluid.

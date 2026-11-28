@@ -98,6 +98,12 @@ public class JsonProcessBuilder {
    * correct stage (UniSim feed stage) instead of the column's default middle tray.
    */
   private final Map<String, Integer> columnFeedTrays = new LinkedHashMap<>();
+  /** Feed tray per inlet (in inlet order) for columns exported with several feeds. */
+  private final Map<String, List<Integer>> columnFeedTrayLists = new LinkedHashMap<>();
+  /** Number of feeds already wired per column. */
+  private final Map<String, Integer> columnFeedCounters = new LinkedHashMap<>();
+  /** The process that is currently being built. */
+  private ProcessSystem buildingProcess;
 
   /** Errors accumulated during build. */
   private final List<SimulationResult.ErrorDetail> errors = new ArrayList<>();
@@ -160,6 +166,7 @@ public class JsonProcessBuilder {
     namedEquipment.clear();
 
     ProcessSystem process = new ProcessSystem("json-process");
+    buildingProcess = process;
 
     // Step 1: Build fluid(s)
     SystemInterface defaultFluid = null;
@@ -1171,6 +1178,11 @@ public class JsonProcessBuilder {
     String type = unitDef.get("type").getAsString();
     String name = unitDef.has("name") ? unitDef.get("name").getAsString() : type + "_" + (index + 1);
 
+    if ("Stream".equalsIgnoreCase(type) && unitDef.has("outletOf")) {
+      // The stream is an outlet of another unit; it is attached once that unit exists (see wireOutletAlias).
+      return;
+    }
+
     try {
       ProcessEquipmentInterface equipment;
 
@@ -1282,6 +1294,23 @@ public class JsonProcessBuilder {
     if (props.has("feedTray")) {
       columnFeedTrays.put(name, props.get("feedTray").getAsInt());
     }
+    if (props.has("feedTrays") && props.get("feedTrays").isJsonArray()) {
+      List<Integer> feedTrays = new ArrayList<>();
+      for (JsonElement tray : props.getAsJsonArray("feedTrays")) {
+        feedTrays.add(tray.getAsInt());
+      }
+      columnFeedTrayLists.put(name, feedTrays);
+    }
+    try {
+      if (hasCondenser && props.has("condenserTemperature")) {
+        column.getCondenser().setOutletTemperature(props.getAsJsonArray("condenserTemperature").get(0).getAsDouble());
+      }
+      if (hasReboiler && props.has("reboilerTemperature")) {
+        column.getReboiler().setOutletTemperature(props.getAsJsonArray("reboilerTemperature").get(0).getAsDouble());
+      }
+    } catch (RuntimeException ex) {
+      warnings.add("Could not set condenser or reboiler temperature on column " + name + ": " + ex.getMessage());
+    }
     if (props.has("topPressure")) {
       column.setTopPressure(props.get("topPressure").getAsDouble());
     }
@@ -1386,7 +1415,25 @@ public class JsonProcessBuilder {
    * @return true if the unit has inlet references that need to be resolved
    */
   private boolean needsWiring(JsonObject unitDef) {
-    return unitDef.has("inlet") || unitDef.has("inlets");
+    return unitDef.has("inlet") || unitDef.has("inlets") || unitDef.has("outletOf");
+  }
+
+  /**
+   * Attaches a stream that is an outlet of another unit to the process under its own name.
+   *
+   * @param name the name the stream unit shall have
+   * @param unitDef the JSON definition holding the {@code outletOf} reference
+   * @return true if the outlet was resolved and added; false if it cannot be resolved yet
+   */
+  private boolean wireOutletAlias(String name, JsonObject unitDef) {
+    StreamInterface stream = resolveStreamReference(unitDef.get("outletOf").getAsString());
+    if (stream == null || buildingProcess == null) {
+      return false;
+    }
+    stream.setName(name);
+    buildingProcess.add(stream);
+    namedEquipment.put(name, stream);
+    return true;
   }
 
   /**
@@ -1421,6 +1468,9 @@ public class JsonProcessBuilder {
    * @return true if the unit was wired (fully, or partially when {@code allowPartial} is true)
    */
   private boolean tryWireUnit(String name, JsonObject unitDef, boolean allowPartial) {
+    if (unitDef.has("outletOf") && "Stream".equalsIgnoreCase(unitDef.get("type").getAsString())) {
+      return wireOutletAlias(name, unitDef);
+    }
     ProcessEquipmentInterface equipment = namedEquipment.get(name);
     if (equipment == null) {
       return false;
@@ -1486,6 +1536,13 @@ public class JsonProcessBuilder {
     }
 
     // Apply all properties AFTER wiring (outlet stream now exists)
+    if (equipment instanceof Recycle && unitDef.has("outlet")) {
+      StreamInterface tearStream = resolveStreamReference(unitDef.get("outlet").getAsString());
+      if (tearStream == null) {
+        return false;
+      }
+      ((Recycle) equipment).setOutletStream(tearStream);
+    }
     if (unitDef.has("properties")) {
       JsonObject props = unitDef.getAsJsonObject("properties");
       // Handle split factors specially (Splitter needs inlet stream first)
@@ -1516,6 +1573,23 @@ public class JsonProcessBuilder {
         } else {
           ((ComponentSplitter) equipment).setSplitFactors(splitFact);
         }
+      }
+      if (equipment instanceof ComponentSplitter && props.has("componentSplitFactors")
+          && props.get("componentSplitFactors").isJsonObject()
+          && ((ComponentSplitter) equipment).getInletStream() != null) {
+        // Factors keyed by component name take precedence: the component order of a rebuilt fluid can differ.
+        ComponentSplitter componentSplitter = (ComponentSplitter) equipment;
+        JsonObject byName = props.getAsJsonObject("componentSplitFactors");
+        SystemInterface inletFluid = componentSplitter.getInletStream().getFluid();
+        double[] byNameFactors = new double[inletFluid.getNumberOfComponents()];
+        java.util.Arrays.fill(byNameFactors, 1.0);
+        for (int k = 0; k < byNameFactors.length; k++) {
+          String componentName = inletFluid.getComponent(k).getComponentName();
+          if (byName.has(componentName)) {
+            byNameFactors[k] = byName.get(componentName).getAsDouble();
+          }
+        }
+        componentSplitter.setSplitFactors(byNameFactors);
       }
       if (equipment instanceof Manifold && props.has("splitFactors")) {
         JsonArray factors = props.getAsJsonArray("splitFactors");
@@ -1933,6 +2007,14 @@ public class JsonProcessBuilder {
     // column places it on its default middle tray.
     if (equipment instanceof DistillationColumn) {
       DistillationColumn column = (DistillationColumn) equipment;
+      List<Integer> feedTrays = columnFeedTrayLists.get(column.getName());
+      if (feedTrays != null) {
+        int feedIndex = columnFeedCounters.merge(column.getName(), 1, Integer::sum) - 1;
+        if (feedIndex < feedTrays.size()) {
+          column.addFeedStream(stream, feedTrays.get(feedIndex));
+          return;
+        }
+      }
       Integer feedTray = columnFeedTrays.get(column.getName());
       if (feedTray != null) {
         column.addFeedStream(stream, feedTray);
@@ -1983,7 +2065,10 @@ public class JsonProcessBuilder {
             // at construction (nested condenser/reboiler setters), not by generic
             // reflection.
             "numberOfTrays", "hasReboiler", "hasCondenser", "feedTray", "refluxRatio", "condenserDuty", "reboilerDuty",
-            "topPressure", "bottomPressure"));
+            "topPressure", "bottomPressure",
+            // Beggs and Brill pipe heat transfer settings are applied by applyBeggsAndBrillsHeatTransfer
+            "insulation", "formationTemperature", "heatTransferMode", "componentSplitFactors", "feedTrays",
+            "condenserTemperature", "reboilerTemperature"));
     if (equipment instanceof Recycle) {
       applyRecycleProperties((Recycle) equipment, properties);
     }
@@ -2022,6 +2107,37 @@ public class JsonProcessBuilder {
       }
       JsonElement value = entry.getValue();
       applyProperty(equipment, propName, value);
+    }
+    if (equipment instanceof neqsim.process.equipment.pipeline.PipeBeggsAndBrills) {
+      applyBeggsAndBrillsHeatTransfer((neqsim.process.equipment.pipeline.PipeBeggsAndBrills) equipment, properties);
+    }
+  }
+
+  /**
+   * Applies the multi-argument heat transfer settings of a Beggs and Brill pipe; the mode is applied last so that it is
+   * not overridden by the individual setters.
+   *
+   * @param pipe the pipe to configure
+   * @param props the pipe property definitions
+   */
+  private void applyBeggsAndBrillsHeatTransfer(neqsim.process.equipment.pipeline.PipeBeggsAndBrills pipe,
+      JsonObject props) {
+    try {
+      if (props.has("insulation") && props.get("insulation").isJsonObject()) {
+        JsonObject insulation = props.getAsJsonObject("insulation");
+        pipe.setInsulation(insulation.get("thickness").getAsDouble(), insulation.get("conductivity").getAsDouble());
+      }
+      if (props.has("formationTemperature") && props.get("formationTemperature").isJsonObject()) {
+        JsonObject formation = props.getAsJsonObject("formationTemperature");
+        pipe.setFormationTemperatureGradient(formation.get("inletTemperature").getAsDouble(),
+            formation.get("gradient").getAsDouble(), "K");
+      }
+      if (props.has("heatTransferMode")) {
+        pipe.setHeatTransferMode(neqsim.process.equipment.pipeline.PipeBeggsAndBrills.HeatTransferMode
+            .valueOf(props.get("heatTransferMode").getAsString()));
+      }
+    } catch (RuntimeException exception) {
+      warnings.add("Error applying heat transfer settings on " + pipe.getName() + ": " + exception.getMessage());
     }
   }
 

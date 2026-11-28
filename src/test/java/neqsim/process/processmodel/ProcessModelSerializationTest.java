@@ -17,7 +17,9 @@ import org.junit.jupiter.api.Test;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.lifecycle.ProcessModelState;
 import neqsim.thermo.system.SystemInterface;
@@ -294,6 +296,55 @@ public class ProcessModelSerializationTest {
     assertNotNull(rebuilt.get("downstream").getUnit("downstream-valve"));
     assertEquals(25, rebuilt.getMaxIterations(), "Max iterations should round-trip");
     assertEquals(1e-5, rebuilt.getFlowTolerance(), 1e-10, "Flow tolerance should round-trip");
+  }
+
+  @Test
+  public void testProcessModelJsonRoundTripKeepsCrossAreaRecycleOutlet() {
+    SystemInterface fluid = new SystemSrkEos(298.0, 20.0);
+    fluid.addComponent("methane", 0.8);
+    fluid.addComponent("n-heptane", 0.2);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(100.0, "kg/hr");
+    feed.setTemperature(25.0, "C");
+    feed.setPressure(20.0, "bara");
+    Stream seed = new Stream("tear seed", fluid.clone());
+    seed.setFlowRate(1.0, "kg/hr");
+    seed.setTemperature(25.0, "C");
+    seed.setPressure(20.0, "bara");
+    Mixer inletMixer = new Mixer("inlet mixer");
+    inletMixer.addStream(feed);
+    inletMixer.addStream(seed);
+    Separator separator = new Separator("separator", inletMixer.getOutletStream());
+    ProcessSystem areaA = new ProcessSystem("area a");
+    areaA.add(feed);
+    areaA.add(seed);
+    areaA.add(inletMixer);
+    areaA.add(separator);
+
+    Mixer returnMixer = new Mixer("return mixer");
+    returnMixer.addStream(separator.getLiquidOutStream());
+    Recycle recycle = new Recycle("liquid recycle");
+    recycle.addStream(returnMixer.getOutletStream());
+    recycle.setOutletStream(seed);
+    ProcessSystem areaB = new ProcessSystem("area b");
+    areaB.add(returnMixer);
+    areaB.add(recycle);
+
+    ProcessModel model = new ProcessModel();
+    model.add("area a", areaA);
+    model.add("area b", areaB);
+    model.run();
+
+    String json = model.toJson();
+    assertTrue(json.contains("\"kind\": \"recycleOutlet\""), "Cross-area recycle outlet should be exported");
+
+    ProcessModel rebuilt = ProcessModel.fromJson(json);
+    Recycle rebuiltRecycle = (Recycle) rebuilt.get("area b").getUnit("liquid recycle");
+    assertTrue(rebuiltRecycle.getOutletStream() == rebuilt.get("area a").getUnit("tear seed"),
+        "Rebuilt recycle should write into the seed stream of the other area");
+    assertDoesNotThrow(() -> rebuilt.run());
   }
 
   @Test
