@@ -41,4 +41,22 @@ class ComponentTypeGetterTest {
     assertTrue(fluid.getPhase(0).getComponent("methane").isHydrocarbon());
     assertFalse(fluid.getPhase(0).getComponent("nitrogen").isHydrocarbon());
   }
+
+  /**
+   * Hydrogen and argon are inert gases in the component database. They were labelled as hydrocarbons, which the old
+   * type getter hid in every system that had read a component type.
+   */
+  @Test
+  void hydrogenAndArgonAreInertGasesNotHydrocarbons() {
+    SystemInterface fluid = new SystemSrkEos(288.15, 50.0);
+    for (String name : new String[] {"hydrogen", "argon", "para-hydrogen", "ortho-hydrogen", "helium", "nitrogen"}) {
+      fluid.addComponent(name, 1.0);
+    }
+    fluid.setMixingRule("classic");
+    for (int component = 0; component < fluid.getPhase(0).getNumberOfComponents(); component++) {
+      ComponentInterface item = fluid.getPhase(0).getComponent(component);
+      assertFalse(item.isHydrocarbon(), item.getComponentName());
+      assertTrue(item.isInert(), item.getComponentName());
+    }
+  }
 }
