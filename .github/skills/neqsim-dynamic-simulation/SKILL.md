@@ -657,6 +657,20 @@ finite" stop. In annular flow a film thinner than the wall roughness no longer s
 Check the gas velocity profile after a fast refill: values near 200 m/s in trace-liquid cells mean
 the friction limits are missing from the build.
 
+For non-equilibrium condensation and evaporation without a user-supplied rate, set
+`pipe.setFilmInterphaseTransfer(new FilmInterphaseTransfer())` after
+`prepareConservativeEnergyTransientFromSteadyState()`. Each wet cell is solved with the
+Krishna-Standart film model of `neqsim.fluidmechanics` at its own holdup and phase speeds; the
+default two-resistance law relaxes every component toward local equilibrium with film-derived rate
+constants. Call `setUpdateInterval(300.0)` on long lines (a film solve costs 10–100 ms per cell)
+and read `getLastFilmInterphaseTransferResult()`: `getSlowestTimeConstantsSeconds()`,
+`getModes()`, `getFilmFailureCount()`. Do not select `TransferLaw.FILM_FLUX` on pipeline time
+steps: it is explicit and turned whole cells into oil at the onset of condensation in a 50 km
+test. Report the interface assumptions with the result (`setWallCondensation`, stratified
+correlations in every regime, laminar limit for gas at rest, 30 s fallback where no film exists)
+and run `setInterfaceAreaFactor` as a sensitivity. It requires dry gas/oil of hydrocarbons and
+inert gases and excludes `HydrocarbonPoolTransfer` and `NonEquilibriumFilmTransfer`.
+
 When `TwoFluidPipe.setIncludeMassTransfer(true)` is enabled, flash-driven transfer is phase
 resolved. In conservative-energy Euler mode on a dry gas/oil grid, use conserved component
 inventory differences from the local flashed targets, rather than assigning all new oil its final

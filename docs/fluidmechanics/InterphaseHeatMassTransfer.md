@@ -288,6 +288,14 @@ Heat and mass transfer are related through:
 
 $$\frac{h}{c_p G} Pr^{2/3} = \frac{k_m}{u} Sc^{2/3} = \frac{f}{2}$$
 
+Here $f$ is the Fanning friction factor. With the Darcy factor $f_D = 4f$ that the flow nodes return
+(64/Re, Haaland) the right-hand side is $f_D/8$. `InterphaseStratifiedFlow`, which the stratified and
+annular film nodes use, applies $f_D/8$ since 2026-11-28; before that it applied $f_D/2$, which made the
+turbulent gas-side heat and mass transfer coefficients four times too high. For a nearly smooth pipe the
+corrected form reproduces Dittus-Boelter, $0.023\,Re^{0.8}X^{1/3}$, within 20 % for $Re = 10^4$ to
+$5\times10^6$ (`InterphaseStratifiedFlowAnalogyTest`). The single-phase pipe, slug, droplet and stirred-cell
+coefficient classes still apply $f_D/2$.
+
 This allows estimation of mass transfer coefficients from heat transfer data:
 
 $$k_m = h \cdot \frac{1}{\rho c_p} \left(\frac{Sc}{Pr}\right)^{-2/3}$$
@@ -403,9 +411,11 @@ Where $[\mathbf{J}]$ is the Jacobian matrix.
 Newton solution in `KrishnaStandartFilmModel`. It is **off by default** and separate from
 `MassTransferConfig` and the transient `TwoFluidPipe` source. Enable both mass and heat
 calculation before solving. The current supported numerical range is nonreactive,
-strictly positive-composition hydrocarbon gas/oil with positive finite binary transport
-and heat conductances. Aqueous/reactive systems, exactly pure phase compositions,
-phase disappearance and strong disequilibrium are not qualified by this option.
+strictly positive-composition gas/oil of hydrocarbons and inert gases (component type
+`inert`: nitrogen, carbon dioxide, hydrogen sulfide and similar) with positive finite
+binary transport and heat conductances. Aqueous/reactive systems, exactly pure phase
+compositions, phase disappearance and strong disequilibrium are not qualified by this
+option.
 
 The unknowns are both complete interface composition vectors, every component molar
 flux and interface temperature: $3n+1$ variables. The existing fugacity, normalization
@@ -416,7 +426,9 @@ $$q_g+q_o=\sum_i N_i(\bar h_{g,i}-\bar h_{o,i}).$$
 Here $N_i$ is positive from gas to oil in mol/(m² s), $q_k$ is the existing heat-flux
 sign convention in W/m², and the EOS partial molar enthalpies use each bulk phase's
 own temperature. This local balance is not an additional total-energy source in a
-pipeline. No transient pipeline integration is enabled by the option.
+pipeline. The option itself does not advance a pipeline; the `TwoFluidPipe` closure
+`FilmInterphaseTransfer` calls it for every wet cell (see
+[TwoFluidPipe](../process/TWOFLUIDPIPE_MODEL.md#film-model-interphase-transfer)).
 
 Every equation is checked before taking a Newton step: maximum absolute log-fugacity
 residual 1e-10, composition-sum residual 1e-12, film-flux residual 1e-10 mol/(m² s),
@@ -438,12 +450,24 @@ its tested numerical range, and independently audit its results.
 repeated solves and halved Jacobian intervals. These are equation/analytical-limit
 checks, not measured transfer rates or a calibrated evaporation time.
 
-For **all routes**, a nonfinite resistance inverse now rejects instead of substituting
-an identity coefficient matrix. The stratified liquid correlation gives zero transport
-at zero liquid Reynolds number; this condition also rejects explicitly. Replacing it
-with 1 m/s conductance was not a physical stagnant-pool model. Stationary pool diffusion,
-film depth, interfacial area, heat supply, countercurrent transport and phase appearance
-still require independent closure qualification before predicting seabed pool depletion.
+For **all routes**, a nonfinite resistance inverse rejects instead of substituting an
+identity coefficient matrix.
+
+**Liquid at rest and reversed phases (2026-11-28).** The stratified liquid correlation of
+Yih and Chen gives zero transport at zero liquid Reynolds number. The coefficient is
+therefore bounded below by the diffusion limit of a laminar layer,
+$k_L \ge 3.41\,D_{ij}/\delta$, with the depth $\delta$ taken as a quarter of the liquid
+hydraulic diameter. Friction factors and transfer coefficients use the magnitude of the
+phase Reynolds number and speed, so a phase flowing backwards has the film of one flowing
+forwards. Both cases previously threw. The laminar-layer limit is a textbook result for a
+falling film at long exposure; it is not validated here against stagnant-pool data, and it
+contains no natural convection. Gas at rest keeps the laminar duct limit $Sh = 3.66$.
+Interfacial area, film depth and phase appearance still need independent closure
+qualification before predicting seabed pool depletion.
+
+Where the two bulk fluids are miscible (dense phase above the local phase envelope) no
+interface equilibrium exists and the coupled route fails by design; a caller must treat
+that state separately.
 
 ### 5.3 Numerical Stability
 

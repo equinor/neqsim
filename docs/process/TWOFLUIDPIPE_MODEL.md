@@ -799,6 +799,58 @@ calibrated and then validated against independent public multicomponent rate dat
 is a conservative parameterized screening model—not a predictive pool-depletion, physical restart,
 severe-slugging or hydraulic-pigging qualification.
 
+#### Film-model interphase transfer
+
+`FilmInterphaseTransfer` couples the conservative-energy transient to the multicomponent film model of
+the fluid-mechanics package ([interphase heat and mass transfer](../fluidmechanics/InterphaseHeatMassTransfer.md)).
+For every wet cell it builds a `StratifiedFlowNode` from the transported gas and oil compositions, the
+cell pressure and temperature, the holdup and the phase speeds, and solves the Krishna-Standart film
+(Maxwell-Stefan diffusion in both films, interface equilibrium, interface heat balance). No rate
+coefficient is supplied by the user.
+
+```java
+pipe.run();
+pipe.prepareConservativeEnergyTransientFromSteadyState();
+FilmInterphaseTransfer film = new FilmInterphaseTransfer();
+film.setUpdateInterval(300.0);          // s; hold the film coefficients of a cell this long
+pipe.setFilmInterphaseTransfer(film);   // replaces the relaxation-time source
+pipe.runTransient(60.0, id);
+FilmInterphaseTransfer.Result r = pipe.getLastFilmInterphaseTransferResult();
+double[] tau = r.getSlowestTimeConstantsSeconds();   // per film cell
+```
+
+| Setting | Default | Meaning |
+|---------|---------|---------|
+| `setTransferLaw(TWO_RESISTANCE_RELAXATION)` | default | Each component relaxes toward its local-equilibrium inventory with rate constant $\kappa_i = K_{ov,i}\,(w/A_G)\,(1 + K_i n_G/n_L)$, $1/K_{ov,i} = 1/k_{G,i} + K_i c_G/(c_L k_{L,i})$. Film coefficients $k$ and interface ratio $K_i = y_i/x_i$ come from the film solve. The step update is the exact exponential. |
+| `setTransferLaw(FILM_FLUX)` | off | Maxwell-Stefan fluxes times interface width, applied explicitly. Only for steps well below the liquid-layer time scale $\delta/k_L$ (seconds). |
+| `setUpdateInterval(s)` | 0 | Time a cell keeps its film coefficients before the film is solved again. |
+| `setWallCondensation(boolean)` | `true` | A cell with net condensation uses the gas-core perimeter as interface (vapour condenses on the whole wall); otherwise the stratified chord, or the gas-core perimeter in annular and mist flow. An assumption. |
+| `setInterfaceAreaFactor(x)` | 1 | Multiplier on the interface width, for sensitivity runs. |
+| `setMinimumHoldup(x)` | 1e-7 | Below this gas or oil volume fraction no film is solved. |
+| `setFallbackRelaxationTime(s)` | 30 | Relaxation time where no film can be solved: phase appearance, trace phases, failed film solves. |
+
+Requirements and limits:
+
+- Conservative-energy Euler, component transport and mass transfer on, no slug tracking, no other
+  finite-rate closure. Dry gas/oil of hydrocarbons and inert gases only.
+- The explicit `FILM_FLUX` law is unstable on pipeline time steps: with fluxes held for 300 s a 50 km
+  test case turned whole cells into "oil" at the onset of condensation, because a thin liquid layer
+  saturates with light components within seconds. Use the default law there.
+- One temperature per cell. The interface temperature is solved and reported, but gas and oil share the
+  cell temperature; the total-energy equation owns the latent heat.
+- Where the cell composition is single phase at equilibrium, the phase holding less mass can only lose
+  components. In dense phase the film solve fails by design (no interface) and the cell uses the
+  fallback relaxation; `Result.getFilmFailureCount()` counts these.
+- The stratified-flow correlations are used in every regime. Gas at rest has only the laminar limit, so
+  shut-in cells exchange very slowly (no natural convection).
+- Nothing is validated against measured evaporation or condensation rates.
+
+Measured 2026-11-28 on a 50 km, 1.01 m rich-gas line (10 cells, blown down from 130 to 80 bara in 2 h,
+shut in, refilled to 200 bara in 2 h), against the 30 s relaxation: 168 t of liquid at the end of
+blowdown against 191 t, and 18 t still present at 127 bara during the refill where the relaxation run has
+none. The slowest film time constant of a cell was 2 min to 2.4 h during blowdown and up to 18 h during
+the refill.
+
 The wall state can be initialized before `run()` with
 `setInitialWallTemperatureProfile(profile, "K")` (or `"C"`). The profile must match the physical
 cell count, is defensively copied, and is retained through accepted event intervals, serialization

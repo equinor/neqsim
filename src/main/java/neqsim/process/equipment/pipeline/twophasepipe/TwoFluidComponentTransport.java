@@ -908,7 +908,10 @@ public final class TwoFluidComponentTransport implements Serializable {
             continue;
           }
           double specificEnthalpyJkg = enthalpyJkg[phase][component];
-          if (!Double.isFinite(specificEnthalpyJkg) && massSource < 0.0 && sum(donorFractions[cell][phase]) > 0.0) {
+          // A phase that holds inventory but is absent from the local equilibrium flash is evaluated at its own
+          // transported composition. That covers a donor that is disappearing and, for finite-rate film transfer,
+          // a component entering a phase that equilibrium would already have removed.
+          if (!Double.isFinite(specificEnthalpyJkg) && sum(donorFractions[cell][phase]) > 0.0) {
             if (forcedDonorEnthalpyJkg[phase] == null) {
               forcedDonorEnthalpyJkg[phase] = forcedPhaseSpecificEnthalpies(localEquilibriumStates[cell],
                   donorFractions[cell][phase], phase, cell);

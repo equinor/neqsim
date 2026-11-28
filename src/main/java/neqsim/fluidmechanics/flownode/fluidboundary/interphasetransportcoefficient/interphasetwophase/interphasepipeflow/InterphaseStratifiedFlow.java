@@ -74,14 +74,33 @@ public class InterphaseStratifiedFlow extends InterphaseTwoPhasePipeFlow
   /** {@inheritDoc} */
   @Override
   public double calcWallFrictionFactor(int phase, FlowNodeInterface node) {
-    if (Math.abs(node.getReynoldsNumber(phase)) < 2000) {
-      return 64.0 / node.getReynoldsNumber(phase);
+    // The friction factor depends on the magnitude of the Reynolds number; a reversed phase has the same value.
+    double reynolds = Math.abs(node.getReynoldsNumber(phase));
+    if (reynolds < 2000) {
+      return 64.0 / reynolds;
     } else {
       return Math.pow(
-          (1.0 / (-1.8 * Math.log10(
-              6.9 / node.getReynoldsNumber(phase) + Math.pow(node.getGeometry().getRelativeRoughnes() / 3.7, 1.11)))),
+          (1.0 / (-1.8 * Math.log10(6.9 / reynolds + Math.pow(node.getGeometry().getRelativeRoughnes() / 3.7, 1.11)))),
           2.0);
     }
+  }
+
+  /**
+   * Chilton-Colburn Stanton number for a Darcy friction factor.
+   *
+   * <p>
+   * The analogy reads {@code St * X^(2/3) = f_Fanning / 2 = f_Darcy / 8}, with X the Prandtl number for heat and the
+   * Schmidt number for mass transfer. {@link #calcWallFrictionFactor(int, FlowNodeInterface)} returns the Darcy factor
+   * (64/Re, Haaland), so the divisor is 8. For a smooth pipe at Re = 1e5 this gives Nu = 225 Pr^(1/3), against 230
+   * Pr^(1/3) from Dittus-Boelter.
+   * </p>
+   *
+   * @param darcyFrictionFactor Darcy friction factor
+   * @param prandtlOrSchmidtNumber Prandtl number (heat) or Schmidt number (mass)
+   * @return Stanton number, i.e. the transfer coefficient divided by the phase speed (mass) or by rho*cp*speed (heat)
+   */
+  static double chiltonColburnStanton(double darcyFrictionFactor, double prandtlOrSchmidtNumber) {
+    return darcyFrictionFactor / 8.0 * Math.pow(prandtlOrSchmidtNumber, -2.0 / 3.0);
   }
 
   /** {@inheritDoc} */
@@ -102,8 +121,9 @@ public class InterphaseStratifiedFlow extends InterphaseTwoPhasePipeFlow
       double temp = node.getBulkSystem().getPhase(phaseNum).getCp()
           / node.getBulkSystem().getPhase(phaseNum).getMolarMass()
           / node.getBulkSystem().getPhase(phaseNum).getNumberOfMolesInPhase()
-          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getDensity() * node.getVelocity(phaseNum);
-      return 0.5 * this.calcWallFrictionFactor(phaseNum, node) * Math.pow(prandtlNumber, -2.0 / 3.0) * temp;
+          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getDensity()
+          * Math.abs(node.getVelocity(phaseNum));
+      return chiltonColburnStanton(this.calcWallFrictionFactor(phaseNum, node), prandtlNumber) * temp;
     }
   }
 
@@ -118,9 +138,10 @@ public class InterphaseStratifiedFlow extends InterphaseTwoPhasePipeFlow
       double temp = node.getBulkSystem().getPhase(phaseNum).getCp()
           / node.getBulkSystem().getPhase(phaseNum).getMolarMass()
           / node.getBulkSystem().getPhase(phaseNum).getNumberOfMolesInPhase()
-          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getDensity() * node.getVelocity(phaseNum);
+          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getDensity()
+          * Math.abs(node.getVelocity(phaseNum));
 
-      return 0.5 * this.calcWallFrictionFactor(phaseNum, node) * Math.pow(prandtlNumber, -2.0 / 3.0) * temp;
+      return chiltonColburnStanton(this.calcWallFrictionFactor(phaseNum, node), prandtlNumber) * temp;
     }
   }
 
@@ -131,60 +152,53 @@ public class InterphaseStratifiedFlow extends InterphaseTwoPhasePipeFlow
       return 3.66 / node.getHydraulicDiameter(phaseNum) / schmidtNumber
           * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity();
     } else {
-      double temp = node.getVelocity(phaseNum);
-      return 0.5 * this.calcWallFrictionFactor(phaseNum, node) * Math.pow(schmidtNumber, -2.0 / 3.0) * temp;
+      double temp = Math.abs(node.getVelocity(phaseNum));
+      return chiltonColburnStanton(this.calcWallFrictionFactor(phaseNum, node), schmidtNumber) * temp;
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Sherwood number of a laminar liquid layer at long exposure time, based on the layer depth (Bird, Stewart and
+   * Lightfoot, gas absorption into a falling film).
+   */
+  private static final double LAMINAR_LAYER_SHERWOOD = 3.41;
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Liquid side: Yih and Chen (1982), {@code k (nu^2/g)^(1/3) / D = a Re^b Sc^(1/2)}, a dimensionless relation. It
+   * tends to zero for a liquid at rest, so the coefficient is not allowed below the diffusion limit of a laminar layer,
+   * {@code 3.41 D / depth}, with the depth taken as a quarter of the liquid hydraulic diameter. Gas side: {@code 3.66 D
+   * / d_h} in laminar flow and the Chilton-Colburn analogy in turbulent flow. Both sides use the magnitude of the phase
+   * Reynolds number and speed, so a phase flowing backwards has the same coefficient as one flowing forwards.
+   * </p>
+   */
   @Override
   public double calcInterphaseMassTransferCoefficient(int phaseNum, double schmidtNumber, FlowNodeInterface node) {
-    double redMassTrans = 0;
-    double massTrans = 0;
+    double reynolds = Math.abs(node.getReynoldsNumber(phaseNum));
+    double kinematicViscosity = node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity();
+    double diffusivity = kinematicViscosity / schmidtNumber;
     if (phaseNum == 1) {
-      if (Math.abs(node.getReynoldsNumber(phaseNum)) < 300) {
-        redMassTrans = 1.099e-2 * Math.pow(node.getReynoldsNumber(phaseNum), 0.3955) * Math.pow(schmidtNumber, 0.5);
-      } else if (Math.abs(node.getReynoldsNumber(phaseNum)) < 1600) {
-        redMassTrans = 2.995e-2 * Math.pow(node.getReynoldsNumber(phaseNum), 0.2134) * Math.pow(schmidtNumber, 0.5);
+      double redMassTrans;
+      if (reynolds < 300) {
+        redMassTrans = 1.099e-2 * Math.pow(reynolds, 0.3955) * Math.pow(schmidtNumber, 0.5);
+      } else if (reynolds < 1600) {
+        redMassTrans = 2.995e-2 * Math.pow(reynolds, 0.2134) * Math.pow(schmidtNumber, 0.5);
       } else {
-        redMassTrans = 9.777e-4 * Math.pow(node.getReynoldsNumber(phaseNum), 0.6804) * Math.pow(schmidtNumber, 0.5);
+        redMassTrans = 9.777e-4 * Math.pow(reynolds, 0.6804) * Math.pow(schmidtNumber, 0.5);
       }
-      // System.out.println("redmass" + redMassTrans + " redmass " +
-      // redMassTrans/Math.sqrt(schmidtNumber) +" rey " +
-      // node.getReynoldsNumber(phase)/schmidtNumber);
-      // er usikker paa denne korreksjonen med 1e-2 - maa sjekkes opp mot artikkel av
-      // Yih og Chen (1982) - satser paa at de ga den med enhet cm/sek
-      massTrans = redMassTrans
-          * Math.pow(Math.max(
-              Math.pow(node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity(), 2.0)
-                  / gravity,
-              1e-30), -1.0 / 3.0)
-          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity() / schmidtNumber;
+      double flowing = redMassTrans * Math.pow(Math.max(Math.pow(kinematicViscosity, 2.0) / gravity, 1e-30), -1.0 / 3.0)
+          * diffusivity;
+      double depth = node.getHydraulicDiameter(phaseNum) / 4.0;
+      double diffusionLimit = depth > 0.0 ? LAMINAR_LAYER_SHERWOOD * diffusivity / depth : 0.0;
+      return Math.max(flowing, diffusionLimit);
     }
-    if (phaseNum == 0) {
-      if (Math.abs(node.getReynoldsNumber(phaseNum)) < 2300) {
-        // System.out.println("schmidt " + schmidtNumber +" phaseNum " + phaseNum);
-        // System.out.println("hyd diam " + node.getHydraulicDiameter(phaseNum) +" phaseNum "
-        // + phaseNum);
-        // System.out.println("kin visk " +
-        // node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity()
-        // +" phaseNum " + phaseNum);
-        // System.out.println("mas " +3.66 / node.getHydraulicDiameter(phaseNum) /
-        // schmidtNumber *
-        // node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity()
-        // +" phaseNum " + phaseNum);
-        massTrans = 3.66 / node.getHydraulicDiameter(phaseNum) / schmidtNumber
-            * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity();
-      } else {
-        double temp = node.getVelocity(phaseNum);
-        // System.out.println("mass " + 1e-5* 0.5 * this.calcWallFrictionFactor(phaseNum,
-        // node) * Math.pow(schmidtNumber, -2.0/3.0) * temp);
-        massTrans = 0.5 * this.calcWallFrictionFactor(phaseNum, node) * Math.pow(schmidtNumber, -2.0 / 3.0) * temp;
-      }
+    if (reynolds < 2300) {
+      return 3.66 / node.getHydraulicDiameter(phaseNum) * diffusivity;
     }
-    // System.out.println("mass "+ massTrans + " phaseNum " + phaseNum + " rey " +
-    // node.getReynoldsNumber(phaseNum) + " COMP " + );
-    return massTrans;
+    return chiltonColburnStanton(this.calcWallFrictionFactor(phaseNum, node), schmidtNumber)
+        * Math.abs(node.getVelocity(phaseNum));
   }
 
   // public double calcInterphaseMassTransferCoefficient(int phaseNum, double schmidtNumber,
