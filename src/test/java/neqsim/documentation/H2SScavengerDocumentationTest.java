@@ -25,8 +25,7 @@ import org.junit.jupiter.api.Test;
  */
 class H2SScavengerDocumentationTest {
   private static final String GUIDE = "docs/process/H2S_scavenger_guide.md";
-  private static final String MARKER =
-      "<!-- h2s-scavenger-example: triazine-quick-start -->";
+  private static final String MARKER = "<!-- h2s-scavenger-example: triazine-quick-start -->";
 
   /**
    * Read the maintained guide.
@@ -72,36 +71,19 @@ class H2SScavengerDocumentationTest {
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertTrue(compiler != null, "A JDK is required for the literal documentation example");
     StringWriter diagnostics = new StringWriter();
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
       assertTrue(
-          compiler
-              .getTask(
-                  diagnostics,
-                  manager,
-                  null,
-                  Arrays.asList(
-                      "-source",
-                      "8",
-                      "-target",
-                      "8",
-                      "-classpath",
-                      System.getProperty("java.class.path"),
-                      "-d",
-                      directory.toString()),
-                  null,
-                  manager.getJavaFileObjects(file.toFile()))
-              .call(),
+          compiler.getTask(diagnostics, manager, null,
+              Arrays.asList("-source", "8", "-target", "8", "-classpath", System.getProperty("java.class.path"), "-d",
+                  directory.toString()),
+              null, manager.getJavaFileObjects(file.toFile())).call(),
           diagnostics.toString());
     }
 
-    try (URLClassLoader loader =
-        new URLClassLoader(new URL[] {directory.toUri().toURL()}, getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {directory.toUri().toURL()},
+        getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
-      loader
-          .loadClass("H2SScavengerQuickStart")
-          .getMethod("main", String[].class)
-          .invoke(null, (Object) new String[0]);
+      loader.loadClass("H2SScavengerQuickStart").getMethod("main", String[].class).invoke(null, (Object) new String[0]);
     }
   }
 }
