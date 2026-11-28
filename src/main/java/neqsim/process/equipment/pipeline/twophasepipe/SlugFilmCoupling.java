@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import org.apache.commons.math3.util.MathArrays;
 import neqsim.process.equipment.pipeline.twophasepipe.LagrangianSlugTracker.SlugBubbleUnit;
 
 /**
@@ -163,7 +164,8 @@ public final class SlugFilmCoupling {
     }
     double[] density = phaseDensities(section);
     double liquidVolume = mean[1] / density[1] + mean[2] / density[2];
-    double totalVolume = liquidVolume + mean[0] / density[0];
+    double gasVolume = mean[0] / density[0];
+    double totalVolume = liquidVolume + gasVolume;
     double meanHoldup = liquidVolume / totalVolume;
     double upperHoldup = Math.min(1.0, meanHoldup / fraction);
     double bodyHoldup = Math.min(Math.min(0.98, targetHoldup),
@@ -173,10 +175,17 @@ public final class SlugFilmCoupling {
     }
     double[] body = new double[7];
     double[] film = new double[7];
+    // Compute contrasts before scaling by the short film length. Subtracting
+    // two rounded cell-scale inventories would amplify their rounding in the film.
+    double liquidVolumeChange = MathArrays.linearCombination(bodyHoldup, gasVolume, bodyHoldup, liquidVolume, -1.0,
+        liquidVolume);
+    double bodyToFilmLengthRatio = fraction / (1.0 - fraction);
+    double[] bodyMassChanges = new double[3];
     for (int phase = 0; phase < 3; phase++) {
-      double massScale = phase == 0 ? (1.0 - bodyHoldup) / (1.0 - meanHoldup) : bodyHoldup / meanHoldup;
-      body[phase] = mean[phase] * massScale;
-      film[phase] = (mean[phase] - fraction * body[phase]) / (1.0 - fraction);
+      double relativeChange = phase == 0 ? -liquidVolumeChange / gasVolume : liquidVolumeChange / liquidVolume;
+      bodyMassChanges[phase] = mean[phase] * relativeChange;
+      body[phase] = mean[phase] + bodyMassChanges[phase];
+      film[phase] = mean[phase] - bodyToFilmLengthRatio * bodyMassChanges[phase];
     }
     double meanKineticEnergy = kineticEnergy(mean);
     double mixtureVelocity = 0.0;
@@ -196,8 +205,10 @@ public final class SlugFilmCoupling {
       }
       for (int phase = 0; phase < 3; phase++) {
         double velocity = mean[phase] > 0.0 ? mean[phase + 3] / mean[phase] : 0.0;
-        body[phase + 3] = body[phase] * (velocity + relaxation * (mixtureVelocity - velocity));
-        film[phase + 3] = (mean[phase + 3] - fraction * body[phase + 3]) / (1.0 - fraction);
+        double velocityChange = relaxation * (mixtureVelocity - velocity);
+        double bodyMomentumChange = bodyMassChanges[phase] * velocity + body[phase] * velocityChange;
+        body[phase + 3] = mean[phase + 3] + bodyMomentumChange;
+        film[phase + 3] = mean[phase + 3] - bodyToFilmLengthRatio * bodyMomentumChange;
       }
       double bodyKinetic = kineticEnergy(body);
       double filmKinetic = kineticEnergy(film);
