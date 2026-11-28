@@ -68,6 +68,12 @@ jobs:
       - name: Qualify combined electrolyte evidence collector
         if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
         run: uv run --project devtools --locked --group test python -m pytest -q devtools/test_collect_electrolyte_evidence.py
+      - name: Qualify the moving three-phase slug refinement regression
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
+        run: >-
+          ./mvnw -B -ntp
+          -Dtest=TwoFluidPipeUnsplitRunTest#movingSlugFilmCouplingIsStableAcrossMeshAndTimeStepRefinement
+          test
       - name: Qualify the tracked-force five-second mesh and time-step matrix
         if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
         run: >-
