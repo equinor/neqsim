@@ -18,6 +18,8 @@ on:
       - 'src/main/java/neqsim/process/equipment/pipeline/twophasepipe/**'
       - 'src/test/java/neqsim/process/equipment/pipeline/twophasepipe/TwoFluidUnsplitTengesdalPreparationTest.java'
       - 'docs/process/H2S_scavenger_guide.md'
+      - 'docs/thermo/gerg2008_eoscg.md'
+      - 'src/test/java/neqsim/thermo/util/gerg/NeqSimGERG2008HeavyEndsTest.java'
       - 'docs/test_h2s_scavenger_documentation.py'
       - 'src/test/java/neqsim/documentation/H2SScavengerDocumentationTest.java'
       - '.github/workflows/ai-production-restart-qualification.yml'
@@ -228,3 +230,16 @@ jobs:
           name: slug-precision-control-${{ github.run_attempt }}
           path: target/restart-qualification-logs/pre-precision-control.log
           if-no-files-found: error
+
+  gerg-heavy-ends:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Qualify combined GERG heavy-end mapping and molar-mass lumping
+        run: ./mvnw -B -ntp -Dtest=NeqSimGERG2008HeavyEndsTest test
