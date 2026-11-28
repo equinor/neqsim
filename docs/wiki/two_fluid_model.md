@@ -60,9 +60,11 @@ experimental and off by default. With explicit conservative Lagrangian tracking,
 transaction now leaves mean-cell friction on untracked cells and applies reconstructed body/film
 friction once after a tracked step passes nonlinear and conservation checks. A first geometric
 overlap owns that implicit source before body/film contrast is admissible and uses the unchanged
-mean-cell friction closure, so Newton trial state cannot switch the owner at cell entry. Momentum
-probes at exactly zero phase mass contribute to the nonlinear momentum residual while the face
-and source states keep that phase absent. If line search stalls at a closure transition,
+mean-cell friction closure, so Newton trial state cannot switch the owner at cell entry.
+For a nearly full body cell, film mass and momentum use the body-to-cell differences before
+division by film length. This avoids amplifying rounding in the reconstructed face state.
+Momentum probes at exactly zero phase mass contribute to the nonlinear momentum residual while
+the face and source states keep that phase absent. If line search stalls at a closure transition,
 the tracked cell-only solver can restart Newton once within its existing iteration budget.
 The resulting endpoint must pass the original nonlinear and conservation checks. Rejected
 attempts publish neither marker motion nor source impulse. Keep

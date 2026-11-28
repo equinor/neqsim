@@ -616,8 +616,12 @@ to the selected NeqSim thermodynamic system. Turning off solid checks on the cal
 disable the defensive assessment or establish absence of solids outside the checked stations.
 The selected-component flash conserves non-solid component inventory when precipitation collapses
 the fluid split to one carrier phase, including defensive clones of initialized process states.
-This removes an initialization-path-dependent screening defect; it does not add mixture-solid
-source physics or make a solid-bearing release result usable.
+It searches gas and liquid cubic-EOS roots independently and pins the selected root during each
+fugacity trial. The methane/CO2 case at 180 K and 2 bara therefore returns a conservative
+`SOLID_RISK` assessment instead of crossing discontinuously to a metastable liquid root; nearby
+pressure/temperature regressions retain fugacity and component closure. A case with no continuous
+bracket on either root still fails closed. This removes an initialization-path-dependent screening
+defect; it does not add mixture-solid source physics or make a solid-bearing release result usable.
 
 The HEM manifest also retains one independent experimental accuracy case without converting it
 into qualification. Table 1 of Witlox et al., *Journal of Hazardous Materials* 142 (2007)

@@ -26,6 +26,31 @@ public class ComponentHydrate extends Component {
   // double[][] emptyHydrateVapourPressureConstant = {{ 17.5061457754,
   // -6030.6886435166},{17.332, -6017.6}}; //fitted (1990)
   int hydrateStructure = 0;
+  /** Lattice restriction for the current incipient-temperature solve (zero means automatic). */
+  private int latticeConstraint;
+
+  /**
+   * Restricts a host-water fugacity evaluation to one lattice or enables comparison of both.
+   * 
+   * @param structure 0 for automatic selection, 1 for sI or 2 for sII
+   */
+  public void setRequestedStructure(int structure) {
+    if (structure < 0 || structure > 2) {
+      throw new IllegalArgumentException("Expected automatic, sI or sII");
+    }
+    latticeConstraint = structure;
+  }
+
+  /** @return first zero-based candidate lattice */
+  protected int firstCandidateStructure() {
+    return latticeConstraint == 0 ? 0 : latticeConstraint - 1;
+  }
+
+  /** @return last zero-based candidate lattice */
+  protected int lastCandidateStructure() {
+    return latticeConstraint == 0 ? 1 : latticeConstraint - 1;
+  }
+
   double[][] coordNumb = new double[2][2]; // [structure][cavitytype]
   double[][] cavRadius = new double[2][2]; // [structure][cavitytype]
   double[][] cavNumb = new double[2][2]; // [structure][cavitytype]

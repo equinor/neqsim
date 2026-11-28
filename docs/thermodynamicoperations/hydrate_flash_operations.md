@@ -207,6 +207,11 @@ void hydrateFormationTemperature(double initialGuess)
 void hydrateFormationTemperature(int structure)  // 0=ice, 1=sI, 2=sII
 ```
 
+For SRK-CPA and the standard PVTsim hydrate model, the integer overload holds the chosen lattice
+through the temperature iteration and its independent equilibrium check. The no-argument overload
+selects the lower host-water fugacity of sI and sII. See the [structure comparison and inhibitor
+benchmark](../thermo/hydrate_models.md#structure-selection) for measured temperature errors.
+
 **Example:**
 ```java
 SystemInterface fluid = new SystemSrkCPAstatoil(280.0, 100.0);

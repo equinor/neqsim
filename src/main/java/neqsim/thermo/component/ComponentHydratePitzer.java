@@ -46,6 +46,7 @@ public class ComponentHydratePitzer extends ComponentHydratePVTsim {
    *
    * @param structure 0 for automatic selection, 1 for sI, 2 for sII
    */
+  @Override
   public void setRequestedStructure(int structure) {
     if (structure < 0 || structure > 2) {
       throw new IllegalArgumentException("Hydrate structure must be 0 (automatic), 1 or 2");

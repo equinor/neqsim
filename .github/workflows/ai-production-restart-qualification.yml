@@ -45,7 +45,7 @@ jobs:
       - name: Qualify integrated compositional and two-fluid inventory contracts
         run: >-
           ./mvnw -B -ntp
-          -Dtest=CompositionalLinePackPipeTest#twoFluidPipeLiquidMassIncludesDenseBrine+twoFluidPipeLiquidInventoryRejectsUnknownUnit+blowdownFormsRetrogradeLiquidAndGuardStaysShut,StratifiedLiquidMomentumTest,TwoFluidUnsplitModelAdapterTest
+          -Dtest=CompositionalLinePackPipeTest#twoFluidPipeLiquidMassIncludesDenseBrine+twoFluidPipeLiquidInventoryRejectsUnknownUnit+blowdownFormsRetrogradeLiquidAndGuardStaysShut,StratifiedLiquidMomentumTest,TwoFluidUnsplitModelAdapterTest,SlugFilmCouplingTest
           test
       - name: Qualify combined process rollback, wet UMR flash and reconciliation
         if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
@@ -124,3 +124,26 @@ jobs:
           name: combined-kcl-loading-assessment
           path: target/co2-kcl-mousavi-loading-kernel-assessment.csv
           if-no-files-found: error
+  hydrate-solid:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Qualify combined hydrate lattice and chemical management
+        run: >-
+          ./mvnw -B -ntp
+          -Dtest=HydrateChemicalManagementTest,HydrateLatticeSelectionTest
+          -DexcludedTestGroups=
+          test
+      - name: Qualify combined solid root and safety source term
+        if: ${{ !cancelled() }}
+        run: >-
+          ./mvnw -B -ntp
+          -Dtest=SolidFlash1Test,ReleaseSolidRiskAssessmentTest
+          -DexcludedTestGroups=
+          test

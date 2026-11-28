@@ -171,6 +171,38 @@ class SlugFilmCouplingTest {
     assertPartition(section.getStateVector(), result);
   }
 
+  /** Verify the film state when its length is small enough to amplify cell-scale rounding. */
+  @Test
+  void testThinFilmRetainsMassAndMomentumPrecision() {
+    TwoFluidSection section = cell(0.9, 0.0);
+    section.setPosition(0.5);
+    section.setLength(1.0);
+    section.setDiameter(2.0 / Math.sqrt(Math.PI));
+    section.setGasDensity(1.0);
+    section.setOilDensity(1.0);
+    section.setWaterDensity(1.0);
+    double filmFraction = Math.scalb(1.0, -28);
+    double bodyLiquidMass = 0.9;
+    double meanLiquidMass = bodyLiquidMass - (bodyLiquidMass - 0.47) * filmFraction;
+    double meanGasMass = 1.0 - meanLiquidMass;
+    double[] mean = {meanGasMass, meanLiquidMass, 0.0, 0.5 * meanGasMass, 0.5 * meanLiquidMass, 0.0, 200000.0};
+    section.setConservativeEndpoint(mean, 1.0e-8);
+
+    SlugFilmCoupling.Reconstruction result = SlugFilmCoupling.reconstruct(section,
+        Collections.singletonList(slug(filmFraction, 1.0)));
+
+    assertTrue(result.isActive());
+    assertEquals(1.0 - filmFraction, result.getBodyFraction(), 0.0);
+    double[] film = result.getFilmConservativeState();
+    // Evaluate the balance from the stored input, since meanLiquidMass already includes rounding.
+    double expectedLiquid = bodyLiquidMass + (meanLiquidMass - bodyLiquidMass) / filmFraction;
+    assertEquals(expectedLiquid, film[1], 2.0e-15);
+    assertEquals(1.0 - expectedLiquid, film[0], 2.0e-15);
+    assertEquals(0.5 * expectedLiquid, film[4], 2.0e-15);
+    assertEquals(0.5 * (1.0 - expectedLiquid), film[3], 2.0e-15);
+    assertPartition(mean, result);
+  }
+
   /**
    * Assert the complete conservative decomposition and phase positivity.
    *
