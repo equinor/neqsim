@@ -6199,6 +6199,45 @@ public class TwoFluidPipe extends Pipeline {
     }
   }
 
+  /**
+   * Complete the disappearance of phases whose transported inventory is below one molecule in a cell.
+   *
+   * <p>
+   * The component transport moves the sub-molecular inventory to the dominant phase of the cell. This method applies
+   * the same transfer to the hydrodynamic state: the vanished phase's mass and momentum per length are added to the
+   * receiver and set to exactly zero, so cell mass, momentum and total energy are unchanged. Without this step an
+   * equilibrium relaxation toward an absent phase leaves a geometrically decaying, eventually subnormal inventory whose
+   * volume fraction underflows and stops the conservative endpoint recovery.
+   * </p>
+   *
+   * @param sourceMassKg accepted gas, oil and water interphase source ledger in kg, updated in place
+   */
+  private void completePhaseDisappearance(double[] sourceMassKg) {
+    double[][] transferKg = componentTransport.absorbSubmolecularPhases();
+    for (int cell = 0; cell < numberOfSections; cell++) {
+      int receiver = -1;
+      for (int phase = 0; phase < 3; phase++) {
+        if (transferKg[cell][phase] > 0.0) {
+          receiver = phase;
+        }
+      }
+      if (receiver < 0) {
+        continue;
+      }
+      double[] state = sections[cell].getStateVector();
+      for (int phase = 0; phase < 3; phase++) {
+        if (transferKg[cell][phase] < 0.0) {
+          state[receiver] += state[phase];
+          state[receiver + 3] += state[phase + 3];
+          state[phase] = 0.0;
+          state[phase + 3] = 0.0;
+        }
+        sourceMassKg[phase] += transferKg[cell][phase];
+      }
+      sections[cell].setStateVector(state);
+    }
+  }
+
   /** Recover the EOS state at each actual transported gas, oil and aqueous composition. */
   private void recoverConservativeThermodynamics() {
     for (int cell = 0; cell < numberOfSections; cell++) {
@@ -7857,6 +7896,9 @@ public class TwoFluidPipe extends Pipeline {
             weightedLatentHeatSources, sections,
             activeInletBoundaryFluid == null ? getInletStream().getFluid() : activeInletBoundaryFluid,
             outletBoundaryFluid, referenceFluid, componentConservationTolerance);
+        if (useConservativeEnergyRecovery) {
+          completePhaseDisappearance(integratedSourceMassKg);
+        }
       }
       if (useConservativeEnergyRecovery) {
         recoverConservativeThermodynamics();

@@ -147,3 +147,23 @@ jobs:
           -Dtest=SolidFlash1Test,ReleaseSolidRiskAssessmentTest
           -DexcludedTestGroups=
           test
+  phase-disappearance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Qualify trace inventory and vanishing-film wall force
+        run: ./mvnw -B -ntp -Dtest=TwoFluidComponentTraceInventoryTest,WallFrictionTest test
+      - name: Qualify conservative blowdown, refill and complete phase disappearance
+        if: ${{ !cancelled() }}
+        run: >-
+          ./mvnw -B -ntp
+          -Dtest=TwoFluidPipePhaseDisappearanceTest
+          -Dgroups=slow
+          -DexcludedTestGroups=
+          test

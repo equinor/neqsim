@@ -1,7 +1,7 @@
 ---
 name: neqsim-dynamic-simulation
 description: "Dynamic simulation guidance for NeqSim. USE WHEN: running transient simulations, modeling startup/shutdown, tuning PID controllers, analyzing pressure/level dynamics, performing blowdown/depressurization, or setting up measurement devices and control loops. Covers runTransient, DynamicProcessHelper, controller tuning, and dynamic equipment configuration."
-last_verified: "2026-11-27"
+last_verified: "2026-11-28"
 ---
 
 # Dynamic Simulation Guidance
@@ -653,6 +653,16 @@ Read the
 before selecting a steady or transient configuration. It is the canonical
 distinction between implemented, numerically verified, experimentally qualified,
 failed, and unsupported behavior.
+
+A phase that has relaxed to less than one molecule in a cell is merged, with its momentum, into the
+dominant phase after each accepted conservative-energy substep, so a revaporised liquid ends at
+exactly zero instead of decaying to a subnormal mass that stops the run about 740 relaxation times
+later. Expect `getFinalMassKg(Phase.OIL) == 0.0` and `SINGLE_PHASE_GAS` once the liquid is gone; do
+not add a holdup floor or shorten the run to avoid the old "Endpoint primitive values must be
+finite" stop. In annular flow a film thinner than the wall roughness no longer shields the wall
+(gas wall shear on the exposed fraction `1 - delta / roughness`, full dry-wall shear below 1e-10 m).
+Check the gas velocity profile after a fast refill: values near 200 m/s in trace-liquid cells mean
+the friction limits are missing from the build.
 
 When `TwoFluidPipe.setIncludeMassTransfer(true)` is enabled, flash-driven transfer is phase
 resolved. In conservative-energy Euler mode on a dry gas/oil grid, use conserved component

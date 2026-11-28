@@ -30,6 +30,12 @@ public class WallFriction implements Serializable {
   /** Default pipe roughness (m). */
   private double defaultRoughness = 4.6e-5;
 
+  /**
+   * Smallest annular film thickness (m) that can cover the wall. It is of the order of one molecular diameter; a
+   * thinner film is not a film and the wall is dry.
+   */
+  private static final double MINIMUM_ANNULAR_FILM_THICKNESS = 1.0e-10;
+
   /** Geometry calculator for stratified flow. */
   private GeometryCalculator geometryCalc;
 
@@ -272,7 +278,13 @@ public class WallFriction implements Serializable {
    * Calculate wall friction for annular flow.
    *
    * <p>
-   * Liquid film on wall, gas in core. Film friction dominates.
+   * Liquid film on wall, gas in core. Film friction dominates once the film submerges the wall roughness. A film
+   * thinner than the roughness height leaves the roughness elements exposed to the gas core, so the gas keeps the
+   * single-phase wall shear on the exposed wall fraction {@code 1 - delta / roughness}; this linear exposure is a
+   * modelling assumption, not a fitted correlation. A film thinner than {@link #MINIMUM_ANNULAR_FILM_THICKNESS} cannot
+   * exist: the wall is dry and the gas carries the full single-phase wall shear. Without these limits a vanishing film
+   * leaves both phases almost or entirely without wall friction, because the gas core has no wall contact and the film
+   * shear is not evaluated.
    * </p>
    *
    * @param vG gas velocity [m/s]
@@ -293,8 +305,13 @@ public class WallFriction implements Serializable {
     // Film thickness
     double delta = geometryCalc.calcAnnularFilmThickness(alphaL, D);
 
+    if (!(delta > MINIMUM_ANNULAR_FILM_THICKNESS)) {
+      // No film can exist below a molecular diameter: dry wall, single-phase gas wall shear.
+      return calcSinglePhaseGasFriction(vG, rhoG, muG, D, eps);
+    }
+
     // Liquid film: use film thickness as characteristic length
-    if (delta > 1e-10 && Math.abs(vL) > 1e-10) {
+    if (Math.abs(vL) > 1e-10) {
       // Film Reynolds number based on film thickness
       result.liquidReynolds = rhoL * Math.abs(vL) * delta / muL;
 
@@ -315,6 +332,15 @@ public class WallFriction implements Serializable {
       // Very small wall friction for gas in annular (contact via entrained droplets)
       result.gasFrictionFactor = 0.001; // Minimal
       result.gasWallShear = 0;
+    }
+
+    // Roughness elements protrude through a film thinner than the wall roughness and stay in the gas core.
+    double exposedWallFraction = eps > delta ? 1.0 - delta / eps : 0.0;
+    if (exposedWallFraction > 0.0) {
+      WallFrictionResult dryWall = calcSinglePhaseGasFriction(vG, rhoG, muG, D, eps);
+      result.gasReynolds = dryWall.gasReynolds;
+      result.gasFrictionFactor = dryWall.gasFrictionFactor;
+      result.gasWallShear = exposedWallFraction * dryWall.gasWallShear;
     }
 
     return result;

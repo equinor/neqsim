@@ -212,7 +212,10 @@ in t and m3, where it sits, the two-fluid liquid transport result with both liqu
 liquid leaving the outlet during blowdown, and the delivery policy. A restart must keep the
 outlet above the local dew point of the gas reaching it, not only the feed cricondenbar. State that
 slug flow, annular films, terrain slugging and finite-rate evaporation are not modelled, and that the
-results are not validated against measured pipeline data.
+results are not validated against measured pipeline data. Repeat the base case in the `TwoFluidPipe`
+conservative-energy transient (set-up in the same skill section) and report both models side by side:
+liquid through the outlet in blowdown, liquid in the line, the liquid-free time after restart and the
+flow regimes `TwoFluidPipe` assigns to the wet cells.
 
 For riser-induced (severe) slugging questions use the two screens described in the
 `neqsim-flow-assurance` skill: `TwoFluidPipe.evaluateSevereSluggingSystem(riserBaseSection)`

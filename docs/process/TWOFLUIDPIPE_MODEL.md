@@ -1249,6 +1249,31 @@ Where λL = no-slip liquid holdup, Fr = Froude number = v²/(g×D)
 
 These values regularize local constitutive equations; they do not declare that a phase is present. The implementation is literature-inspired and does not claim numerical equivalence with OLGA, LedaFlow, or another commercial simulator.
 
+**Completed disappearance in the conservative-energy transient.** Equilibrium relaxation removes a phase whose
+equilibrium target is zero geometrically: each step takes the fraction `dt / relaxationTime` of what is left, so the
+inventory approaches zero without reaching it. In the conservative-energy route a phase that holds less than one
+molecule in a cell (sum of component mass over molar mass, times the Avogadro constant, below one) is therefore merged
+into the phase holding the most moles in that cell after every accepted substep. Component masses, phase mass and phase
+momentum move together and the phase is left at exactly zero; cell mass, momentum and total energy are unchanged, and
+the transfer is entered in the interphase ledgers. Positive traces of one molecule or more are transported as before.
+Before this step existed (found 2026-11-28) a revaporised liquid decayed to a subnormal mass about 740 relaxation times
+after it had physically gone, its volume fraction underflowed to zero and the run stopped with "Endpoint primitive
+values must be finite": 5.7 h into the restart of a 707 km rich-gas line at the default 30 s relaxation time.
+
+**Annular wall friction with a vanishing film.** The annular closure keeps the gas core off the wall and sends its
+friction through the film. Two limits now apply:
+
+- A film thinner than the wall roughness leaves the roughness elements in the gas core. The gas carries the
+  single-phase wall shear on the exposed fraction `1 - delta / roughness`. The linear exposure is a modelling
+  assumption, not a fitted correlation.
+- A film thinner than `1e-10` m (about one molecular diameter) is not a film. The wall is dry and the gas carries the
+  full single-phase wall shear.
+
+Before these limits a trace film (holdup below about `4e-10` in a 1 m bore) left both phases with zero wall force. In a
+60 s pressure refill of a 5 km, 1.01 m line the inlet-cell gas then reached 196 m/s; with the limits it peaks at 48 m/s
+and the cell pressure no longer jumps by 10 bar when the trace phase disappears. On the 707 km depressurisation and
+restart the trace-liquid cells were stratified or slug, never annular, so that case was not affected.
+
 ### Stratified Flow Holdup
 The `calculateStratifiedHoldupMomentumBalance()` method calculates liquid holdup from momentum balance:
 
