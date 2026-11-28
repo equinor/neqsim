@@ -6,7 +6,14 @@ on:
     paths:
       - 'examples/production-decision/**'
       - 'src/main/java/neqsim/process/equipment/pipeline/TwoFluidPipe.java'
+      - 'src/main/java/neqsim/process/equipment/pipeline/CompositionalLinePackPipe.java'
+      - 'src/main/java/neqsim/process/equipment/pipeline/StratifiedLiquidMomentum.java'
+      - 'src/main/java/neqsim/process/equipment/pipeline/RetrogradeDewPointScanner.java'
+      - 'src/main/java/neqsim/process/equipment/pipeline/DewPointGuardedOutletController.java'
+      - 'src/test/java/neqsim/process/equipment/pipeline/CompositionalLinePackPipeTest.java'
+      - 'src/test/java/neqsim/process/equipment/pipeline/StratifiedLiquidMomentumTest.java'
       - 'src/main/java/neqsim/process/equipment/pipeline/twophasepipe/**'
+      - 'src/test/java/neqsim/process/equipment/pipeline/twophasepipe/TwoFluidUnsplitTengesdalPreparationTest.java'
       - '.github/workflows/ai-production-restart-qualification.yml'
 
 permissions:
@@ -33,8 +40,15 @@ jobs:
           enable-cache: true
           cache-dependency-glob: devtools/uv.lock
       - name: Compile the PR physics and resolve its runtime classpath
+        id: compile
         run: ./mvnw -B -ntp -DskipTests compile dependency:build-classpath -Dmdep.outputFile=target/restart-classpath.txt
+      - name: Qualify integrated compositional and two-fluid inventory contracts
+        run: >-
+          ./mvnw -B -ntp
+          -Dtest=CompositionalLinePackPipeTest#twoFluidPipeLiquidMassIncludesDenseBrine+twoFluidPipeLiquidInventoryRejectsUnknownUnit+blowdownFormsRetrogradeLiquidAndGuardStaysShut,StratifiedLiquidMomentumTest,TwoFluidUnsplitModelAdapterTest
+          test
       - name: Qualify the tracked-force five-second mesh and time-step matrix
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
         run: >-
           ./mvnw -B -ntp
           -Dtest=TwoFluidUnsplitTengesdalPreparationTest#fiveSecondTrackedSubcellForceRiserQualificationMustCompleteTheWholeInterval
@@ -42,7 +56,8 @@ jobs:
           -DexcludedTestGroups=
           -Dneqsim.unsplit.tengesdal.tracked-force-qualification=true
           test
-      - name: Qualify tracked-force 180 second tracked-cell entry
+      - name: Qualify tracked-force 180 second mesh and time-step matrix
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
         run: >-
           ./mvnw -B -ntp
           -Dtest=TwoFluidUnsplitTengesdalPreparationTest#trackedSubcellForceLongIntervalMustCompleteConservatively
@@ -50,7 +65,17 @@ jobs:
           -DexcludedTestGroups=
           -Dneqsim.unsplit.tengesdal.tracked-force-long-qualification=true
           test
+      - name: Qualify tracked-force 600 second mesh and time-step matrix
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
+        run: >-
+          ./mvnw -B -ntp
+          -Dtest=TwoFluidUnsplitTengesdalPreparationTest#trackedSubcellForceSustainedIntervalMustCompleteConservatively
+          -Dgroups=slow
+          -DexcludedTestGroups=
+          -Dneqsim.unsplit.tengesdal.tracked-force-sustained-qualification=true
+          test
       - name: Exercise the installed restart, instrument holdouts and blind decisions
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
         run: |
           export NEQSIM_CLASSPATH="$PWD/target/classes:$(cat target/restart-classpath.txt)"
           uv run --project devtools --locked python -m unittest discover -s examples/production-decision -v

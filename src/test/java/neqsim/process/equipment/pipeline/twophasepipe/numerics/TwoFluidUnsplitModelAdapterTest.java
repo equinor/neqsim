@@ -13,6 +13,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Collections;
+import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
 import neqsim.process.equipment.pipeline.twophasepipe.LagrangianSlugTracker.SlugBubbleUnit;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations.MassBalanceRate;
@@ -261,6 +262,42 @@ class TwoFluidUnsplitModelAdapterTest {
     assertTrue(state[0][0] >= 0.0);
     assertTrue(state[0][1] >= 0.0);
     assertTrue(pressure[0] > 0.0);
+  }
+
+  @Test
+  void regimeActiveSetFreezesResidualProbesAndRefreshesBetweenNewtonIterates() {
+    TwoFluidSection[] accepted = {section(0.0)};
+    TwoFluidConservationEquations equations = isothermalEquations();
+    TwoFluidSection classified = accepted[0].clone();
+    equations.getFlowRegimeDetector().classify(classified);
+    FlowRegime seed = classified.getFlowRegime() == FlowRegime.SLUG ? FlowRegime.ANNULAR : FlowRegime.SLUG;
+    accepted[0].setFlowRegime(seed);
+    accepted[0].setRegimeWeights(null);
+    double[][] state = states(accepted);
+    double[] pressure = pressures(accepted);
+    TwoFluidUnsplitModelAdapter adapter = new TwoFluidUnsplitModelAdapter(equations, accepted, 10.0,
+        (cell, conservativeState, cellPressure, time) -> new double[] {40.0, 700.0, 1000.0}, 0.0, false, true);
+
+    UnsplitTransientSolver.Evaluation frozen = adapter.evaluate(state, pressure, state, pressure, 2.0, Double.NaN,
+        false);
+    TwoFluidSection[] frozenSections = cloneSections(accepted);
+    equations.applyState(frozenSections, state);
+    double[][] expectedFrozen = equations.evaluateTransactionalWithFrozenRegimes(frozenSections, 10.0).getRates();
+    assertMatrixEquals(expectedFrozen, frozen.copyConservativeRates());
+
+    assertFalse(adapter.updateActiveSet(state, pressure));
+    UnsplitTransientSolver.Evaluation staged = adapter.evaluate(state, pressure, state, pressure, 2.0, Double.NaN,
+        false);
+    assertMatrixEquals(expectedFrozen, staged.copyConservativeRates());
+    adapter.beginLinearization(state, pressure);
+    UnsplitTransientSolver.Evaluation refreshed = adapter.evaluate(state, pressure, state, pressure, 2.0, Double.NaN,
+        false);
+    adapter.endLinearization();
+    TwoFluidSection[] refreshedSections = cloneSections(accepted);
+    equations.applyState(refreshedSections, state);
+    double[][] expectedRefreshed = equations.evaluateTransactional(refreshedSections, 10.0).getRates();
+    assertMatrixEquals(expectedRefreshed, refreshed.copyConservativeRates());
+    assertFalse(adapter.updateActiveSet(state, pressure));
   }
 
   @Test

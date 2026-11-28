@@ -34,7 +34,14 @@ reconstructed body/film friction source; ordinary friction remains owned by untr
 the accepted ledger records the passive momentum impulse. The default 0.1 s 16/24-cell startup matrix
 checks rollback, mass closure and time-step refinement. Run the opt-in tracking-enabled five-second
 16/0.1, 16/0.05 and 24/0.05 matrix as the next hosted numerical gate before any 180/600 s or
-settled-cycle claim. Completion and an enforced sign alone do not promote the experimental gate.
+settled-cycle claim. After it passes, run the same three discretizations over both 180 and 600 s.
+Require whole-interval publication without rejected nonlinear attempts, phase conservation, positive
+finite pressure, through-flow and inventories, and the declared 15% pressure/through-flow/inventory
+spread bound. Completion and an enforced sign alone do not promote the experimental gate.
+For the tracking-enabled unsplit path, retain one flow-regime/transition-weight active set within each
+Jacobian and line search, refresh it only after an accepted Newton iterate, and require endpoint
+verification against the unchanged conservative operator. Do not replace this with whole-step regime
+lagging or a looser residual tolerance.
 
 ## Extend the existing unit operation
 
