@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 /** Tests the S8 checkpoint-transition-chain checkpoint-transition-chain checkpoint documentation contract. */
 class S8QualifiedTransitionChainCheckpointDocumentationTest {
   private static final Path DOCUMENT = Paths.get("docs", "chemicalreactions",
-      "h2s_oxygen_s8_stream_application_batch_reconciliation_checkpoint_manifest_transition_chain_transition_ledger_transition_chain_checkpoint_transition_chain_checkpoint_transition_chain_checkpoint.md");
+      "s8_manifest_transition_chain_transition_ledger_transition_chain_checkpoint_transition_chain_checkpoint_transition_chain_checkpoint.md");
 
   /** Verify the public contract, evidence boundary and executable example remain documented. */
   @Test

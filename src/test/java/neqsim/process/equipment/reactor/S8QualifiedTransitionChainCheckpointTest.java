@@ -28,7 +28,7 @@ class S8QualifiedTransitionChainCheckpointTest {
   /** Verify a checkpoint retains every upstream identity, endpoint and exact count closure. */
   @Test
   void testCheckpointRetainsQualifiedChainEvidence() {
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.Result chain = checkpointTransitionChainCheckpointTransitionChain();
+    S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.Result chain = checkpointTransitionChainCheckpointTransitionChain();
     S8QualifiedTransitionChainCheckpoint.Result checkpoint = S8QualifiedTransitionChainCheckpoint
         .create("checkpoint-transition-chain-checkpoint-transition-chain-checkpoint-A", 31L, chain);
 
@@ -58,7 +58,7 @@ class S8QualifiedTransitionChainCheckpointTest {
   /** Verify deterministic serialization and defensive raw-digest copies. */
   @Test
   void testCheckpointIsDeterministicSerializableAndDefensive() throws Exception {
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.Result chain = checkpointTransitionChainCheckpointTransitionChain();
+    S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.Result chain = checkpointTransitionChainCheckpointTransitionChain();
     S8QualifiedTransitionChainCheckpoint.Result first = S8QualifiedTransitionChainCheckpoint
         .create("checkpoint-transition-chain-checkpoint-transition-chain-checkpoint-A", 31L, chain);
     S8QualifiedTransitionChainCheckpoint.Result repeated = S8QualifiedTransitionChainCheckpoint
@@ -84,7 +84,7 @@ class S8QualifiedTransitionChainCheckpointTest {
   /** Verify missing inputs and caller-owned identity or sequence drift fail closed. */
   @Test
   void testMissingInputsAndIdentityDriftFailClosed() {
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.Result chain = checkpointTransitionChainCheckpointTransitionChain();
+    S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.Result chain = checkpointTransitionChainCheckpointTransitionChain();
     S8QualifiedTransitionChainCheckpoint.Result checkpoint = S8QualifiedTransitionChainCheckpoint
         .create("checkpoint-transition-chain-checkpoint-transition-chain-checkpoint-A", 31L, chain);
 
@@ -102,78 +102,75 @@ class S8QualifiedTransitionChainCheckpointTest {
   }
 
   /** Build one qualified checkpoint-transition-chain checkpoint-transition chain. */
-  private static AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.Result checkpointTransitionChainCheckpointTransitionChain() {
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChain.Result prior = checkpointTransitionChain(
+  private static S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.Result checkpointTransitionChainCheckpointTransitionChain() {
+    S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChain.Result prior = checkpointTransitionChain(
         false);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChain.Result candidate = checkpointTransitionChain(
+    S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChain.Result candidate = checkpointTransitionChain(
         true);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpoint.Result priorCheckpoint = checkpoint(
+    S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpoint.Result priorCheckpoint = checkpoint(
         "checkpoint-series-A", 17L, prior);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpoint.Result candidateCheckpoint = checkpoint(
+    S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpoint.Result candidateCheckpoint = checkpoint(
         "checkpoint-series-A", 18L, candidate);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpoint.Result laterCheckpoint = checkpoint(
+    S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpoint.Result laterCheckpoint = checkpoint(
         "checkpoint-series-A", 20L, candidate);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransition.Result first = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransition
+    S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransition.Result first = S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransition
         .create(prior, priorCheckpoint, candidate, candidateCheckpoint);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransition.Result second = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransition
+    S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransition.Result second = S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransition
         .create(candidate, candidateCheckpoint, candidate, laterCheckpoint);
-    return AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain
+    return S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain
         .create("checkpoint-transition-chain-checkpoint-transition-chain-A", Arrays.asList(first, second));
   }
 
   /** Build a qualified checkpoint-transition chain prefix or strict extension. */
-  private static AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChain.Result checkpointTransitionChain(
+  private static S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChain.Result checkpointTransitionChain(
       boolean includeThirdTransition) {
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChain.Result prior = priorTransitionChain();
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChain.Result candidate = transitionChain();
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpoint.Result priorCheckpoint = checkpoint(
+    S8ManifestTransitionChainTransitionLedgerTransitionChain.Result prior = priorTransitionChain();
+    S8ManifestTransitionChainTransitionLedgerTransitionChain.Result candidate = transitionChain();
+    S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpoint.Result priorCheckpoint = checkpoint(
         "checkpoint-series-A", 17L, prior);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpoint.Result candidateCheckpoint = checkpoint(
+    S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpoint.Result candidateCheckpoint = checkpoint(
         "checkpoint-series-A", 18L, candidate);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpoint.Result laterCheckpoint = checkpoint(
+    S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpoint.Result laterCheckpoint = checkpoint(
         "checkpoint-series-A", 20L, candidate);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpoint.Result latestCheckpoint = checkpoint(
+    S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpoint.Result latestCheckpoint = checkpoint(
         "checkpoint-series-A", 21L, candidate);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransition.Result first = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransition
+    S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransition.Result first = S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransition
         .create(prior, priorCheckpoint, candidate, candidateCheckpoint);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransition.Result second = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransition
+    S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransition.Result second = S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransition
         .create(candidate, candidateCheckpoint, candidate, laterCheckpoint);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransition.Result third = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransition
+    S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransition.Result third = S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransition
         .create(candidate, laterCheckpoint, candidate, latestCheckpoint);
-    return AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChain
-        .create("checkpoint-transition-chain-A",
-            includeThirdTransition ? Arrays.asList(first, second, third) : Arrays.asList(first, second));
+    return S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChain.create(
+        "checkpoint-transition-chain-A",
+        includeThirdTransition ? Arrays.asList(first, second, third) : Arrays.asList(first, second));
   }
 
   /** Create one checkpoint for a qualified checkpoint-transition chain. */
-  private static AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpoint.Result checkpoint(
+  private static S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpoint.Result checkpoint(
       String identifier, long sequence,
-      AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChain.Result chain) {
-    return AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpoint
+      S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChain.Result chain) {
+    return S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpoint
         .create(identifier, sequence, chain);
   }
 
   /** Create one checkpoint for a qualified transition chain. */
-  private static AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpoint.Result checkpoint(
-      String identifier, long sequence,
-      AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChain.Result chain) {
-    return AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpoint
-        .create(identifier, sequence, chain);
+  private static S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpoint.Result checkpoint(String identifier,
+      long sequence, S8ManifestTransitionChainTransitionLedgerTransitionChain.Result chain) {
+    return S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpoint.create(identifier, sequence, chain);
   }
 
   /** Build the qualified prefix of the transition-ledger transition chain. */
-  private static AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChain.Result priorTransitionChain() {
+  private static S8ManifestTransitionChainTransitionLedgerTransitionChain.Result priorTransitionChain() {
     TransitionFixtures fixtures = transitionFixtures("ledger-A", "chain-A", "manifest-A");
-    return AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChain
-        .create("ledger-transition-chain-A", Arrays.asList(fixtures.firstTransition, fixtures.secondTransition));
+    return S8ManifestTransitionChainTransitionLedgerTransitionChain.create("ledger-transition-chain-A",
+        Arrays.asList(fixtures.firstTransition, fixtures.secondTransition));
   }
 
   /** Build one qualified transition-ledger transition chain. */
-  private static AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChain.Result transitionChain() {
+  private static S8ManifestTransitionChainTransitionLedgerTransitionChain.Result transitionChain() {
     TransitionFixtures fixtures = transitionFixtures("ledger-A", "chain-A", "manifest-A");
-    return AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChain
-        .create("ledger-transition-chain-A",
-            Arrays.asList(fixtures.firstTransition, fixtures.secondTransition, fixtures.unchangedTransition));
+    return S8ManifestTransitionChainTransitionLedgerTransitionChain.create("ledger-transition-chain-A",
+        Arrays.asList(fixtures.firstTransition, fixtures.secondTransition, fixtures.unchangedTransition));
   }
 
   /** Build three adjacent ledger-transition receipts. */
@@ -195,43 +192,39 @@ class S8QualifiedTransitionChainCheckpointTest {
         manifestIdentifier, first, second, third);
     AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.Result state3 = manifest(
         manifestIdentifier, first, second, third, fourth);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransition.Result append1 = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransition
-        .create(state0, state1);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransition.Result unchanged = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransition
-        .create(state1, state1);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransition.Result append2 = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransition
-        .create(state1, state2);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransition.Result append3 = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransition
-        .create(state2, state3);
+    S8ManifestTransition.Result append1 = S8ManifestTransition.create(state0, state1);
+    S8ManifestTransition.Result unchanged = S8ManifestTransition.create(state1, state1);
+    S8ManifestTransition.Result append2 = S8ManifestTransition.create(state1, state2);
+    S8ManifestTransition.Result append3 = S8ManifestTransition.create(state2, state3);
 
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChain.Result chain0 = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChain
-        .create(chainIdentifier, Collections.singletonList(append1));
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChain.Result chain1 = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChain
-        .create(chainIdentifier, Arrays.asList(append1, unchanged));
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChain.Result chain2 = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChain
-        .create(chainIdentifier, Arrays.asList(append1, unchanged, append2));
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChain.Result chain3 = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChain
-        .create(chainIdentifier, Arrays.asList(append1, unchanged, append2, append3));
+    S8ManifestTransitionChain.Result chain0 = S8ManifestTransitionChain.create(chainIdentifier,
+        Collections.singletonList(append1));
+    S8ManifestTransitionChain.Result chain1 = S8ManifestTransitionChain.create(chainIdentifier,
+        Arrays.asList(append1, unchanged));
+    S8ManifestTransitionChain.Result chain2 = S8ManifestTransitionChain.create(chainIdentifier,
+        Arrays.asList(append1, unchanged, append2));
+    S8ManifestTransitionChain.Result chain3 = S8ManifestTransitionChain.create(chainIdentifier,
+        Arrays.asList(append1, unchanged, append2, append3));
 
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition.Result chainReceipt1 = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition
-        .create(chain0, chain1);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition.Result chainReceipt2 = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition
-        .create(chain1, chain2);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition.Result chainReceipt3 = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition
-        .create(chain2, chain3);
+    S8ManifestTransitionChainTransition.Result chainReceipt1 = S8ManifestTransitionChainTransition.create(chain0,
+        chain1);
+    S8ManifestTransitionChainTransition.Result chainReceipt2 = S8ManifestTransitionChainTransition.create(chain1,
+        chain2);
+    S8ManifestTransitionChainTransition.Result chainReceipt3 = S8ManifestTransitionChainTransition.create(chain2,
+        chain3);
 
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedger.Result ledger0 = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedger
+    S8ManifestTransitionChainTransitionLedger.Result ledger0 = S8ManifestTransitionChainTransitionLedger
         .create(ledgerIdentifier, Collections.singletonList(chainReceipt1));
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedger.Result ledger1 = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedger
+    S8ManifestTransitionChainTransitionLedger.Result ledger1 = S8ManifestTransitionChainTransitionLedger
         .create(ledgerIdentifier, Arrays.asList(chainReceipt1, chainReceipt2));
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedger.Result ledger2 = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedger
+    S8ManifestTransitionChainTransitionLedger.Result ledger2 = S8ManifestTransitionChainTransitionLedger
         .create(ledgerIdentifier, Arrays.asList(chainReceipt1, chainReceipt2, chainReceipt3));
 
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransition.Result firstTransition = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransition
+    S8ManifestTransitionChainTransitionLedgerTransition.Result firstTransition = S8ManifestTransitionChainTransitionLedgerTransition
         .create(ledger0, ledger1);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransition.Result secondTransition = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransition
+    S8ManifestTransitionChainTransitionLedgerTransition.Result secondTransition = S8ManifestTransitionChainTransitionLedgerTransition
         .create(ledger1, ledger2);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransition.Result unchangedTransition = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransition
+    S8ManifestTransitionChainTransitionLedgerTransition.Result unchangedTransition = S8ManifestTransitionChainTransitionLedgerTransition
         .create(ledger2, ledger2);
     return new TransitionFixtures(firstTransition, secondTransition, unchangedTransition);
   }
@@ -314,29 +307,28 @@ class S8QualifiedTransitionChainCheckpointTest {
   }
 
   /** Serialize and restore one checkpoint-transition-chain checkpoint-transition receipt. */
-  private static AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransition.Result serializeTransition(
-      AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransition.Result result)
+  private static S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransition.Result serializeTransition(
+      S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransition.Result result)
       throws Exception {
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
       output.writeObject(result);
     }
     try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
-      return (AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransition.Result) input
+      return (S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransition.Result) input
           .readObject();
     }
   }
 
   /** Adjacent ledger-transition receipts. */
   private static final class TransitionFixtures {
-    private final AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransition.Result firstTransition;
-    private final AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransition.Result secondTransition;
-    private final AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransition.Result unchangedTransition;
+    private final S8ManifestTransitionChainTransitionLedgerTransition.Result firstTransition;
+    private final S8ManifestTransitionChainTransitionLedgerTransition.Result secondTransition;
+    private final S8ManifestTransitionChainTransitionLedgerTransition.Result unchangedTransition;
 
-    private TransitionFixtures(
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransition.Result firstTransition,
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransition.Result secondTransition,
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransition.Result unchangedTransition) {
+    private TransitionFixtures(S8ManifestTransitionChainTransitionLedgerTransition.Result firstTransition,
+        S8ManifestTransitionChainTransitionLedgerTransition.Result secondTransition,
+        S8ManifestTransitionChainTransitionLedgerTransition.Result unchangedTransition) {
       this.firstTransition = firstTransition;
       this.secondTransition = secondTransition;
       this.unchangedTransition = unchangedTransition;

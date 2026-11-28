@@ -28,6 +28,14 @@ repos:
         pass_filenames: false
         stages: [pre-push]
         verbose: false
+      - id: windows-path-length-check
+        name: Windows Path Length Guard
+        entry: uv run --project devtools --locked devtools/check_path_lengths.py
+        language: system
+        always_run: true
+        pass_filenames: false
+        stages: [pre-push]
+        verbose: false
 
   - repo: local
     hooks:
