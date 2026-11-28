@@ -1,6 +1,7 @@
 ---
 title: H2S Scavenger Unit Operation
 description: Guide to using the H2S scavenger unit operation for modeling chemical scavenging of hydrogen sulfide from gas streams. Covers scavenger types, injection rate sizing, efficiency correlations, and cost estimation.
+keywords: "H2S scavenger, triazine, sour gas, chemical treatment, injection rate, process simulation"
 ---
 
 # H2S Scavenger Unit Operation
@@ -36,42 +37,75 @@ Five scavenger types are supported, each with different characteristics:
 
 ### Java Example
 
+<!-- h2s-scavenger-example: triazine-quick-start -->
+
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.absorber.H2SScavenger;
 import neqsim.process.equipment.absorber.H2SScavenger.ScavengerType;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
-// Create sour gas
-SystemSrkEos sourGas = new SystemSrkEos(273.15 + 40.0, 50.0);
-sourGas.addComponent("methane", 0.90);
-sourGas.addComponent("ethane", 0.04);
-sourGas.addComponent("H2S", 0.005);  // 5000 ppm
-sourGas.addComponent("CO2", 0.015);
-sourGas.setMixingRule("classic");
+public final class H2SScavengerQuickStart {
+  private static final Logger logger =
+      LogManager.getLogger(H2SScavengerQuickStart.class);
 
-// Create stream
-Stream feed = new Stream("Sour Gas", sourGas);
-feed.setFlowRate(100000.0, "Sm3/day");
+  private H2SScavengerQuickStart() {}
 
-// Add H2S scavenger
-H2SScavenger scavenger = new H2SScavenger("MEA-Triazine Injection", feed);
-scavenger.setScavengerType(ScavengerType.TRIAZINE);
-scavenger.setScavengerInjectionRate(50.0, "l/hr");
-scavenger.setScavengerConcentration(0.5);  // 50% active ingredient
+  public static void main(String[] args) {
+    SystemSrkEos sourGas = new SystemSrkEos(273.15 + 40.0, 50.0);
+    sourGas.addComponent("methane", 0.90);
+    sourGas.addComponent("ethane", 0.04);
+    sourGas.addComponent("H2S", 0.005);
+    sourGas.addComponent("CO2", 0.015);
+    sourGas.setMixingRule("classic");
 
-// Build and run process
-ProcessSystem process = new ProcessSystem();
-process.add(feed);
-process.add(scavenger);
-process.run();
+    Stream feed = new Stream("Sour Gas", sourGas);
+    feed.setFlowRate(100000.0, "Sm3/day");
 
-// Get results
-System.out.println("Inlet H2S: " + scavenger.getInletH2SConcentration() + " ppm");
-System.out.println("Outlet H2S: " + scavenger.getOutletH2SConcentration() + " ppm");
-System.out.println("Removal Efficiency: " + scavenger.getH2SRemovalEfficiencyPercent() + "%");
+    H2SScavenger scavenger =
+        new H2SScavenger("MEA-Triazine Injection", feed);
+    scavenger.setScavengerType(ScavengerType.TRIAZINE);
+    scavenger.setScavengerInjectionRate(50.0, "l/hr");
+    scavenger.setScavengerConcentration(0.5);
+
+    ProcessSystem process = new ProcessSystem("H2S treatment");
+    process.add(feed);
+    process.add(scavenger);
+    process.run();
+
+    double inletPpm = scavenger.getInletH2SConcentration();
+    double outletPpm = scavenger.getOutletH2SConcentration();
+    double removalPercent = scavenger.getH2SRemovalEfficiencyPercent();
+    double consumptionKgPerHour =
+        scavenger.getActualScavengerConsumption("kg/hr");
+    String json = scavenger.toJson();
+
+    assert Double.isFinite(inletPpm) && inletPpm > 0.0;
+    assert Double.isFinite(outletPpm) && outletPpm < inletPpm;
+    assert removalPercent > 0.0 && removalPercent < 100.0;
+    assert consumptionKgPerHour > 0.0;
+    assert json.contains("\\\"injectionRateUnit\\\":\\\"l/hr\\\"");
+    assert json.contains("\\\"h2sRemovedKgPerHr\\\":");
+
+    logger.info(
+        "H2S scavenger: inlet={} ppm, outlet={} ppm, removal={}%, consumption={} kg/hr",
+        inletPpm, outletPpm, removalPercent, consumptionKgPerHour);
+  }
+}
 ```
+
+The literal program is compiled with Java 8 settings and run with assertions enabled by
+[`H2SScavengerDocumentationTest`](../../src/test/java/neqsim/documentation/H2SScavengerDocumentationTest.java):
+
+```bash
+./mvnw -Dtest=H2SScavengerDocumentationTest test
+```
+
+The component amounts are normalized internally; the example therefore verifies removal from
+the simulated inlet rather than treating the unnormalized input amount as an exact ppm specification.
 
 ### Python Example (via neqsim-python)
 
@@ -113,6 +147,10 @@ process.run()
 print(f"Inlet H2S: {scavenger.getInletH2SConcentration():.1f} ppm")
 print(f"Outlet H2S: {scavenger.getOutletH2SConcentration():.1f} ppm")
 print(f"Efficiency: {scavenger.getH2SRemovalEfficiencyPercent():.1f}%")
+print(
+    "Consumption: "
+    f"{scavenger.getActualScavengerConsumption('kg/hr'):.3f} kg/hr"
+)
 ```
 
 ## Configuration Parameters
@@ -143,27 +181,34 @@ double requiredRate = scavenger.calculateRequiredInjectionRate();  // l/hr
 
 ## Efficiency Correlation
 
-The removal efficiency is calculated using an empirical correlation:
+The implementation first converts the configured injection rate to kg/h and applies the active
+ingredient mass fraction. For active scavenger rate $\dot m_s$, inlet H2S mass flow $\dot m_{H_2S}$,
+and the scavenger-type stoichiometric mass ratio $S$, define the dose ratio
 
-$$
-\eta = \eta_{base} \times f_{excess} \times f_{contact} \times f_{temp} \times f_{mix}
-$$
+$$D=\frac{\dot m_s}{S\,\dot m_{H_2S}}$$
 
-Where:
+The reported excess is $D-1$; a negative value is an under-dose. The dose factor is piecewise:
 
-| Factor | Description | Formula |
-|--------|-------------|---------|
-| $\eta_{base}$ | Base efficiency per scavenger type | From literature |
-| $f_{excess}$ | Excess ratio correction | $1 - e^{-k \cdot R_{excess}}$ |
-| $f_{contact}$ | Contact time factor | $(t/30)^{0.3}$, capped at 1.2 |
-| $f_{temp}$ | Temperature factor | Optimum at 40°C |
-| $f_{mix}$ | Mixing efficiency | User input (0-1) |
+$$f_{dose}=\begin{cases}0.9D,&D<1\\1-\exp[-k(D-0.5)],&D\geq1\end{cases}$$
 
-The excess ratio $R_{excess}$ is:
+The kinetic constant $k$ is 1.8 for triazine, 1.5 for glyoxal, 1.2 for iron sponge,
+2.5 for caustic, and 3.0 for liquid redox. The other implemented factors are
 
-$$
-R_{excess} = \frac{\text{Scavenger injected}}{\text{Stoichiometric requirement}} - 1
-$$
+$$f_{contact}=1-\exp(-t/15\,\mathrm{s})$$
+
+$$f_{mix}=0.5+0.5\,\epsilon_{mix}$$
+
+and the temperature factor, with $T_C$ in degrees Celsius,
+
+$$f_T=\begin{cases}0.7+0.03T_C,&T_C<10\\1,&10\leq T_C\leq80\\1-0.005(T_C-80),&T_C>80\end{cases}$$
+
+The final removal fraction is
+
+$$\eta=\operatorname{clamp}(\eta_{base}f_{dose}f_{contact}f_Tf_{mix},0,0.999)$$
+
+These equations document the current screening implementation; they are not independent vendor
+performance correlations. Pressure is accepted by the internal calculation interface but does not
+currently add a correction factor. Revalidate the guide and regression if the implementation changes.
 
 ## Output Methods
 
@@ -181,7 +226,7 @@ $$
 
 | Method | Description | Units |
 |--------|-------------|-------|
-| `getActualScavengerConsumption()` | Scavenger consumed reacting with H2S | kg/hr |
+| `getActualScavengerConsumption(unit)` | Scavenger consumed reacting with H2S | `kg/hr`, `lb/hr` |
 | `getScavengerExcess()` | Excess over stoichiometric | fraction |
 
 ### Cost Estimation
@@ -196,22 +241,22 @@ double annualCost = dailyCost * 365;
 
 ## JSON Output
 
-The `toJson()` method provides comprehensive results:
+The `toJson()` response uses the following literal field names. Numerical values below are
+illustrative; calculate decisions from the configured case rather than this sample.
 
 ```json
 {
-  "equipmentName": "H2S Scavenger",
+  "name": "MEA-Triazine Injection",
   "scavengerType": "MEA-Triazine",
-  "injectionRate_l_hr": 50.0,
-  "scavengerConcentration": 0.5,
-  "inletH2S_ppm": 5000.0,
-  "outletH2S_ppm": 125.3,
-  "removalEfficiencyPercent": 97.5,
-  "h2sRemoved_kg_hr": 12.4,
-  "scavengerConsumption_kg_hr": 55.8,
-  "excessRatio": 1.25,
-  "contactTime_s": 30.0,
-  "mixingEfficiency": 0.85
+  "injectionRate": 50.0,
+  "injectionRateUnit": "l/hr",
+  "concentration": 0.5,
+  "inletH2Sppm": 5208.3,
+  "outletH2Sppm": 4560.0,
+  "removalEfficiencyPercent": 12.4,
+  "h2sRemovedKgPerHr": 4.1,
+  "scavengerConsumptionKgPerHr": 18.4,
+  "scavengerExcessPercent": -82.0
 }
 ```
 
