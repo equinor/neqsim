@@ -202,12 +202,14 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
   public void calcSum2Comp() {
     UNIFACgroup[] unifacGroupsLocal = getUnifacGroups();
     for (int i = 0; i < unifacGroupsLocal.length; i++) {
-      sum2Comp[i] = 0;
-      sum2Mix[i] = 0;
+      double pureSum = 0.0;
+      double mixtureSum = 0.0;
       for (int j = 0; j < unifacGroupsLocal.length; j++) {
-        sum2Comp[i] += unifacGroupsLocal[j].getQComp() * tempExpaij[j][i];
-        sum2Mix[i] += unifacGroupsLocal[j].getQMix() * tempExpaij[j][i];
+        pureSum += unifacGroupsLocal[j].getQComp() * tempExpaij[j][i];
+        mixtureSum += unifacGroupsLocal[j].getQMix() * tempExpaij[j][i];
       }
+      sum2Comp[i] = pureSum;
+      sum2Mix[i] = mixtureSum;
     }
   }
 
@@ -254,14 +256,12 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
   /** {@inheritDoc} */
   @Override
   public void calclnGammak(int k, PhaseInterface phase) {
-    double sum1Comp = 0.0;
-    double sum1Mix = 0.0;
+    double sum1Comp = sum2Comp[k];
+    double sum1Mix = sum2Mix[k];
     double sum3Comp = 0.0;
     double sum3Mix = 0.0;
     UNIFACgroup[] unifacGroupsLocal = getUnifacGroups();
     for (int i = 0; i < unifacGroupsLocal.length; i++) {
-      sum1Comp += unifacGroupsLocal[i].getQComp() * tempExpaij[i][k];
-      sum1Mix += unifacGroupsLocal[i].getQMix() * tempExpaij[i][k];
       sum3Comp += unifacGroupsLocal[i].getQComp() * tempExpaij[k][i] / sum2Comp[i];
       sum3Mix += unifacGroupsLocal[i].getQMix() * tempExpaij[k][i] / sum2Mix[i];
     }
@@ -306,12 +306,12 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
   public void calclnGammakdTdT(int k, PhaseInterface phase) {
-    double sum1Comp = 0.0;
-    double sum1CompdT = 0.0;
-    double sum1CompdTdT = 0.0;
-    double sum1Mix = 0.0;
-    double sum1MixdT = 0.0;
-    double sum1MixdTdT = 0.0;
+    double sum1Comp = sum2Comp[k];
+    double sum1CompdT = sum2CompdT[k];
+    double sum1CompdTdT = sum2CompdTdT[k];
+    double sum1Mix = sum2Mix[k];
+    double sum1MixdT = sum2MixdT[k];
+    double sum1MixdTdT = sum2MixdTdT[k];
     double sum2Comp2;
     double sum2Mix2;
     double sum3Comp = 0;
@@ -320,8 +320,6 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
     double sum3MixdT = 0.0;
     double tempSqared = phase.getTemperature() * phase.getTemperature();
     double temp3pow = tempSqared * phase.getTemperature();
-    double Xsum1CompdT;
-    double Xsum1MixdT;
     double vComp;
     double der;
     double vdTComp;
@@ -329,34 +327,12 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
     double vMix;
     double vdTMix;
     double vdTdTMix;
-    double tempVar1;
     double tempVar2;
-    double tempVar1dT;
     double tempVar2dT;
     UNIFACgroup[] unifacGroupsLocal = getUnifacGroups();
     for (int i = 0; i < unifacGroupsLocal.length; i++) {
-      tempVar1 = getaij(unifacGroupsLocal[i].getGroupIndex(), unifacGroupsLocal[k].getGroupIndex());
       tempVar2 = getaij(unifacGroupsLocal[k].getGroupIndex(), unifacGroupsLocal[i].getGroupIndex());
-      tempVar1dT = getaijdT(unifacGroupsLocal[i].getGroupIndex(), unifacGroupsLocal[k].getGroupIndex());
       tempVar2dT = getaijdT(unifacGroupsLocal[k].getGroupIndex(), unifacGroupsLocal[i].getGroupIndex());
-      sum1Comp += unifacGroupsLocal[i].getQComp() * tempExpaij[i][k];
-      Xsum1CompdT = unifacGroupsLocal[i].getQComp() * (tempVar1 / tempSqared - tempVar1dT / phase.getTemperature())
-          * tempExpaij[i][k];
-      sum1CompdT += Xsum1CompdT;
-      der = tempVar1dT / tempSqared - 2.0 * tempVar1 / temp3pow
-          - getaijdTdT(unifacGroupsLocal[i].getGroupIndex(), unifacGroupsLocal[k].getGroupIndex())
-              / phase.getTemperature()
-          + tempVar1dT / tempSqared;
-      sum1CompdTdT += (tempVar1 / tempSqared - tempVar1dT / phase.getTemperature()) * Xsum1CompdT
-          + der * unifacGroupsLocal[i].getQComp() * tempExpaij[i][k];
-
-      sum1Mix += unifacGroupsLocal[i].getQMix() * tempExpaij[i][k];
-      Xsum1MixdT = unifacGroupsLocal[i].getQMix() * (tempVar1 / tempSqared - tempVar1dT / phase.getTemperature())
-          * tempExpaij[i][k];
-      sum1MixdT += Xsum1MixdT;
-      sum1MixdTdT += (tempVar1 / tempSqared - tempVar1dT / phase.getTemperature()) * Xsum1MixdT
-          + der * unifacGroupsLocal[i].getQMix() * tempExpaij[i][k];
-
       vComp = unifacGroupsLocal[i].getQComp() * tempExpaij[k][i];
       vdTComp = unifacGroupsLocal[i].getQComp() * (tempVar2 / tempSqared - tempVar2dT / phase.getTemperature())
           * tempExpaij[k][i];

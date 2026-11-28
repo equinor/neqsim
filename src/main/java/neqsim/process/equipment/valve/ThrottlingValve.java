@@ -583,11 +583,10 @@ public class ThrottlingValve extends TwoPortEquipment
         // by actual hydraulic flow below, or restored to exact zero in finally.
         inStream.getThermoSystem().setTotalNumberOfMoles(1.0);
       }
-      inStream.getFluid().initProperties();
-      thermoSystem = inStream.getThermoSystem().clone();
-
-      thermoSystem.init(2);
-      double enthalpy = thermoSystem.getEnthalpy();
+      SystemInterface inletFluid = inStream.getThermoSystem();
+      inletFluid.initProperties();
+      double enthalpy = inletFluid.getEnthalpy();
+      thermoSystem = inletFluid.clone();
 
       double outPres = getOutletStream().getPressure("bara");
       pressure = getOutletStream().getPressure(pressureUnit);
@@ -615,7 +614,6 @@ public class ThrottlingValve extends TwoPortEquipment
       }
       // update outlet pressure if required
       if (valveKvSet && isCalcPressure) {
-        inStream.getFluid().initProperties();
         outPres = calculateOutletPressure(adjustKv);
         thermoSystem.setPressure(outPres, "bara");
         setCalculatedOutletPressure(outPres);
@@ -1080,9 +1078,9 @@ public class ThrottlingValve extends TwoPortEquipment
     protected TransientState(ThrottlingValve source) {
       stateIdentity = source.getTransientStateIdentity();
       baseState = source.captureBaseTransientState();
-      thermoSystem = cloneSystem(source.thermoSystem);
       thermoSystemIsOutletSystem = source.outStream != null
           && source.thermoSystem == source.outStream.getThermoSystem();
+      thermoSystem = thermoSystemIsOutletSystem ? null : cloneSystem(source.thermoSystem);
       outletState = ((Stream) source.outStream).captureTransientState();
       valveKvSet = source.valveKvSet;
       isoThermal = source.isoThermal;

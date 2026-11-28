@@ -273,19 +273,19 @@ public class DataReconciliationEngine implements java.io.Serializable {
       y.set(i, 0, variables.get(i).getMeasuredValue());
     }
 
-    // Build covariance matrix V = diag(sigma^2) (n x n)
-    SimpleMatrix bigV = new SimpleMatrix(n, n);
-    for (int i = 0; i < n; i++) {
-      double sigma = variables.get(i).getUncertainty();
-      bigV.set(i, i, sigma * sigma);
+    // V is diagonal. Scale the columns of A directly to form A*V.
+    double[] variances = new double[n];
+    for (int j = 0; j < n; j++) {
+      double sigma = variables.get(j).getUncertainty();
+      variances[j] = sigma * sigma;
     }
-
-    // Build constraint matrix A (m x n)
     SimpleMatrix bigA = new SimpleMatrix(m, n);
+    SimpleMatrix aTimesV = new SimpleMatrix(m, n);
     for (int i = 0; i < m; i++) {
       double[] row = constraintRows.get(i);
       for (int j = 0; j < n; j++) {
         bigA.set(i, j, row[j]);
+        aTimesV.set(i, j, row[j] * variances[j]);
       }
     }
 
@@ -298,14 +298,13 @@ public class DataReconciliationEngine implements java.io.Serializable {
 
     // Solve: x_adj = y - V * A^T * solve(A * V * A^T, A * y)
     // Step 1: A * V * A^T (m x m)
-    SimpleMatrix aTimesV = bigA.mult(bigV);
     SimpleMatrix avat = aTimesV.mult(bigA.transpose());
 
     // Step 2: solve(AVAT, A*y) without forming AVAT^-1
     SimpleMatrix lagrangeMultipliers = avat.solve(rBefore);
 
     // Step 3: correction = V * A^T * solve(AVAT, A*y)
-    SimpleMatrix vAt = bigV.mult(bigA.transpose());
+    SimpleMatrix vAt = aTimesV.transpose();
     SimpleMatrix correction = vAt.mult(lagrangeMultipliers);
 
     // Step 4: reconciled = y - correction
@@ -334,10 +333,7 @@ public class DataReconciliationEngine implements java.io.Serializable {
     // Gross error detection via normalized residuals
     // Covariance of adjustments: V_adj = V - V * A^T * solve(AVAT, A * V)
     SimpleMatrix solvedAv = avat.solve(aTimesV);
-    SimpleMatrix projectionM = vAt.mult(solvedAv);
-    SimpleMatrix vAdj = bigV.minus(projectionM);
-
-    detectGrossErrors(n, vAdj);
+    detectGrossErrors(n, m, aTimesV, solvedAv);
 
     // Build result
     ReconciliationResult result = new ReconciliationResult(variables);
@@ -382,14 +378,21 @@ public class DataReconciliationEngine implements java.io.Serializable {
    * </p>
    *
    * @param n number of variables
-   * @param vAdj covariance matrix of reconciled adjustments (V - V*A^T*(AVA^T)^-1*A*V)
+   * @param constraintCount number of rows in the constraint matrix
+   * @param aTimesV covariance-weighted constraint matrix
+   * @param solvedAv solution of (A*V*A^T)*X = A*V
    */
-  private void detectGrossErrors(int n, SimpleMatrix vAdj) {
+  private void detectGrossErrors(int n, int constraintCount, SimpleMatrix aTimesV, SimpleMatrix solvedAv) {
     for (int i = 0; i < n; i++) {
       ReconciliationVariable v = variables.get(i);
       double sigma = v.getUncertainty();
       double vii = sigma * sigma;
-      double vadjii = vAdj.get(i, i);
+      // Only diagonal elements of the projected covariance enter the normalized residual.
+      double projection = 0.0;
+      for (int k = 0; k < constraintCount; k++) {
+        projection += aTimesV.get(k, i) * solvedAv.get(k, i);
+      }
+      double vadjii = vii - projection;
       double denominator = vii - vadjii;
 
       double normalizedResidual = 0.0;

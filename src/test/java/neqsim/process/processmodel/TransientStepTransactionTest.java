@@ -67,6 +67,34 @@ public class TransientStepTransactionTest extends neqsim.NeqSimTest {
     assertEquals(5.0, rejectedUnit.getValue(), TOLERANCE);
   }
 
+  /** Eviction, truncation and clearing in a trial must restore the complete original history on rollback. */
+  @Test
+  void historyRollbackRestoresEvictedRowsAndCapacity() {
+    ProcessSystem process = createProcess("history", new StatefulTestUnit("state", "history/state", 1.0));
+    process.setHistoryCapacity(3);
+    for (int i = 0; i < 3; i++) {
+      process.runTransient(1.0, UUID.randomUUID());
+    }
+    String[][] original = process.getHistorySnapshot();
+    try (TransientStepTransaction trial = process.beginTransientStepTransaction()) {
+      process.runTransient(1.0, UUID.randomUUID());
+      process.setHistoryCapacity(1);
+      process.clearHistory();
+      process.runTransient(1.0, UUID.randomUUID());
+      trial.rollback();
+    }
+    assertTrue(java.util.Arrays.deepEquals(original, process.getHistorySnapshot()));
+    assertEquals(3, process.getHistoryCapacity());
+
+    try (TransientStepTransaction trial = process.beginTransientStepTransaction()) {
+      process.runTransient(1.0, UUID.randomUUID());
+      trial.commit();
+    }
+    String[][] committed = process.getHistorySnapshot();
+    assertEquals(original[1][0], committed[0][0]);
+    assertEquals("4.0", committed[2][0]);
+  }
+
   /**
    * A later-area failure restores every earlier area and the one shared scheduler.
    */
