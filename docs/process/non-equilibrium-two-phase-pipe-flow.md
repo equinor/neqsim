@@ -420,39 +420,37 @@ the start; same sequence):
   constants. The run took 28 min against 5 min in equilibrium mode.
 
 **707 km rich-gas export line** (1.01 m bore, real seabed profile, 25 cells; inlet shut, line settled at 130 bara and
-blown down through the outlet to 84 bara average in 16 h, held 12 h, repressurised from the inlet with the outlet
-shut for 17 h and then opened; 60 s steps, film update every 300 s; 2026-11-28):
+blown down through the outlet to 81 bara average in 16 h, held 12 h, repressurised from the inlet with the outlet
+shut for 17 h and then opened; 60 s reporting interval, CFL 0.075, film update every 300 s; 2026-11-28):
 
-| Quantity | 30 s relaxation | Film interface | Film and droplets | Film, no bulk split |
-|----------|-----------------|----------------|-------------------|---------------------|
-| Liquid at end of blowdown (t) | 1,660 | 1,659 | 1,662 | 1,356 |
-| Liquid through the outlet in blowdown (t) | 1,057 | 1,053 | 1,059 | 1,057 |
-| Liquid at end of the 12 h hold (t) | 1,141 | 1,551 | 1,417 | 1,334 |
-| Liquid 6 h after restart (t) | 402 | 749 | 621 | 949 |
-| Liquid 12 h after restart (t) | 17 | 142 | 66 | 280 |
-| Line free of liquid (h after restart) | 12.8 | 20.5 | 17.3 | 19.0 |
-| Film solves / failed | – | 16,855 / 9 | 16,380 / 5 | 17,349 / 51 |
-| Computer time (min) | 18 | 27 | 27 | 30 |
+| Quantity | Equilibrium (30 s relaxation) | Film interface | Film and droplets |
+|----------|-------------------------------|----------------|-------------------|
+| Liquid at end of blowdown (t) | 1,993 | 1,992 | 1,999 |
+| Liquid through the outlet in blowdown (t) | 933 | 933 | 939 |
+| Liquid at end of the 12 h hold (t) | 1,440 | 1,778 | 1,690 |
+| Liquid 6 h after restart (t) | 626 | 949 | 697 |
+| Liquid 12 h after restart (t) | 109 | 265 | 240 |
+| Liquid in the line when the outlet opens (t) | 0 | 110 | 12 |
+| Line free of liquid (h after restart) | 14.8 | 20.5 | 18.0 |
+| Liquid delivered in restart (t) | 0 | 0.56 | 0 |
+| Film solves / failed | – | 20,131 / 80 | 30,268 / 55 |
+| Computer time (min) | 44 | 73 | 77 |
 
-- **Blowdown:** the same liquid as the equilibrium run, within 0.2 %. Without the bulk split the line would hold
-  18 % less, because condensation would have to diffuse to the wall. That column is a sensitivity, not a
-  prediction.
-- **Hold:** with relaxation a third of the liquid evaporates again in 12 h as the line settles and warms. With
-  the film model 7 to 15 % does: the gas is nearly at rest and the interface is small.
-- **Restart:** the liquid lasts 4.5 to 8 h longer. The last 110 t sits in the 85 km before the closed outlet,
-  where the gas moves at 0.1 to 0.6 m/s at 115 to 135 bara and the characteristic times are 6 to 40 h. While the
-  outlet stays shut it is barely shrinking.
+- **Blowdown:** the same liquid as in equilibrium, within 0.3 %. In an earlier run without the bulk split the
+  line held 18 % less, because condensation had to diffuse to the wall.
+- **Hold:** in equilibrium 28 % of the liquid evaporates again in 12 h as the line settles and warms. With the
+  film model 11 to 15 % does: the gas is nearly at rest and the interface is small.
+- **Restart:** the liquid lasts 3 to 6 h longer. The last 100 t sits in the 85 km before the closed outlet, where
+  the gas moves at 0.1 to 0.6 m/s at 115 to 135 bara.
 - **Consequence for the case:** the outlet-opening time was taken from an equilibrium study. With the film
-  interface 104 t of liquid is then within 85 km of the outlet (13 t with droplets). None reached the outlet
-  (0.002 t), but only because the prescribed outlet pressure is at first above the line pressure of this model,
-  so 220 to 440 t of dry gas flows in through the outlet for 1.2 to 1.5 h and evaporates most of it before
-  delivery starts. That is a property of the boundary condition, not evidence that opening then is safe.
+  interface 110 t of liquid is then still in the line and 0.56 t is delivered. That amount is small only because
+  the prescribed outlet pressure is at first above the line pressure of this model, so 66 to 89 t of dry gas flows
+  in through the outlet for about an hour and evaporates liquid near it. That is a property of the boundary
+  condition, not evidence that opening then is safe.
 - **Droplets** bound the interfacial area from above; the truth is between the two non-equilibrium columns.
-- In the two non-equilibrium columns at most one cell was miscible at a time, holding up to 9 t.
-- With the droplet interface, and without the bulk split, the line took in 1.9 % and 2.4 % more gas during the
-  restart than the other two runs at the same end pressures. The cause is not established. Compare liquid amounts between
-  the columns, not flows.
-- The runs are not mesh-converged (see [TwoFluidPipe model](TWOFLUIDPIPE_MODEL.md)).
+- The three runs use the same internal step. At this step `TwoFluidPipe` is still not converged in time (see
+  [TwoFluidPipe model](TWOFLUIDPIPE_MODEL.md)): read the differences between the columns, not the absolute values.
+  At CFL 0.3 the same comparison gave 12.8, 20.5 and 17.3 h for the liquid-free time.
 
 ## Limits
 
