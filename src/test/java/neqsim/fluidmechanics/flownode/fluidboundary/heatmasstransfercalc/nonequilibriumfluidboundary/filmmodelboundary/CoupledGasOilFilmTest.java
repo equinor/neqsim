@@ -81,16 +81,28 @@ class CoupledGasOilFilmTest {
     }
   }
 
-  /** Checks nearby finite liquid speeds and explicit rejection of unsupported countercurrent transport. */
+  /**
+   * Checks nearby finite liquid speeds, and that a liquid flowing backwards has the film of one flowing forwards at the
+   * same speed: the transfer coefficients depend on the magnitude of the phase Reynolds number.
+   */
   @Test
-  void nearbyLiquidVelocitiesRetainFullResidualAcceptance() {
+  void nearbyAndReversedLiquidVelocitiesRetainFullResidualAcceptance() {
     for (double velocity : new double[] {0.005, 0.02}) {
       FilmProbe film = fixture(true, 277.15, 50.0, 1.0, velocity, 0.01, 1.0);
       film.solve();
       film.assertResiduals();
     }
-    FilmProbe reverse = fixture(true, 277.15, 50.0, 1.0, -0.01, 0.01, 1.0);
-    assertThrows(IllegalStateException.class, reverse::solve);
+    FilmProbe forward = fixture(true, 277.15, 50.0, 1.0, 0.01, 0.01, 1.0);
+    forward.solve();
+    FilmProbe reverse = fixture(true, 277.15, 50.0, 1.0, 0.01, 0.01, 1.0);
+    reverse.reverseLiquidMotion();
+    reverse.solve();
+    reverse.assertResiduals();
+    double[] forwardFlux = forward.calcFluxes();
+    double[] reverseFlux = reverse.calcFluxes();
+    for (int component = 0; component < forwardFlux.length; component++) {
+      assertEquals(forwardFlux[component], reverseFlux[component], 1.0e-9 * Math.abs(forwardFlux[component]) + 1.0e-14);
+    }
   }
 
   /**
@@ -131,32 +143,60 @@ class CoupledGasOilFilmTest {
     assertTrue(Math.abs(film.getInterphaseHeatFlux(0)) > 1.0);
   }
 
-  /** Rejects the zero-Re liquid correlation instead of substituting a unit conductance. */
+  /**
+   * A liquid at rest transfers at the diffusion limit of a laminar layer, 3.41 D / depth, instead of the zero of the
+   * flowing-film correlation. The film still satisfies every residual and the liquid-side coefficient is below that of
+   * the moving liquid.
+   */
   @Test
-  void zeroLiquidTransportRejectsAndRestoresPublishedInterfaceState() {
+  void liquidAtRestUsesTheLaminarLayerDiffusionLimit() {
     FilmProbe film = fixture(true, 277.15, 50.0, 1.0, 0.01, 0.01, 1.0);
     film.solve();
-    SystemInterface before = film.getInterphaseSystem().clone();
-    double temperature = before.getTemperature();
-    double gasHeat = film.getInterphaseHeatFlux(0);
-    double oilHeat = film.getInterphaseHeatFlux(1);
-    double[] flux = film.calcFluxes();
+    double movingCoefficient = film.getBinaryMassTransferCoefficient(1, 0, 5);
     film.stopLiquidMotion();
-    IllegalStateException error = assertThrows(IllegalStateException.class, film::solve);
-    assertTrue(error.getMessage().contains("positive finite binary transfer"));
-    assertEquals(temperature, film.getInterphaseSystem().getTemperature(), 0.0);
-    for (int component = 0; component < flux.length; component++) {
-      assertEquals(flux[component], film.getInterphaseMolarFlux(component), 0.0);
+    film.solve();
+    film.assertResiduals();
+    double restingCoefficient = film.getBinaryMassTransferCoefficient(1, 0, 5);
+    assertTrue(restingCoefficient > 0.0 && restingCoefficient < movingCoefficient,
+        "resting " + restingCoefficient + " moving " + movingCoefficient);
+    assertEquals(3.41 * film.liquidDiffusivity(0, 5) / (film.liquidHydraulicDiameter() / 4.0), restingCoefficient,
+        1.0e-10 * restingCoefficient);
+    assertTrue(Double.isFinite(film.getInterphaseSystem().getTemperature()));
+  }
+
+  /** Nitrogen and carbon dioxide are accepted beside hydrocarbons; equilibrium still gives no flux. */
+  @Test
+  void inertGasesAreAcceptedAndEquilibriumGivesNoFlux() {
+    SystemInterface fluid = new SystemSrkEos(277.15, 60.0);
+    String[] names = {"nitrogen", "CO2", "methane", "ethane", "propane", "n-butane", "n-heptane"};
+    double[] fractions = {0.005, 0.08, 0.80, 0.07, 0.03, 0.01, 0.005};
+    for (int component = 0; component < names.length; component++) {
+      fluid.addComponent(names[component], fractions[component]);
     }
-    assertEquals(gasHeat, film.getInterphaseHeatFlux(0), 0.0);
-    assertEquals(oilHeat, film.getInterphaseHeatFlux(1), 0.0);
-    for (int phase = 0; phase < 2; phase++) {
-      for (int component = 0; component < flux.length; component++) {
-        assertEquals(before.getPhase(phase).getComponent(component).getx(),
-            film.getInterphaseSystem().getPhase(phase).getComponent(component).getx(), 0.0);
-      }
+    fluid.setMixingRule("classic");
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.initProperties();
+    assertEquals(2, fluid.getNumberOfPhases());
+    PipeData pipe = new PipeData(1.0148, 1.0e-5);
+    pipe.setNodeLength(1.0);
+    StratifiedFlowNode node = new StratifiedFlowNode(fluid, pipe);
+    node.setPhaseFraction(0, 0.99);
+    node.setPhaseFraction(1, 0.01);
+    node.setVelocity(0, 2.0);
+    node.setVelocity(1, 0.3);
+    node.init();
+    FilmProbe film = new FilmProbe(node, 1.0);
+    film.setCoupledMassHeatTransferEnabled(true);
+    film.setHeatTransferCalc(true);
+    film.setMassTransferCalc(true);
+    film.useFiniteFluxCorrection(true);
+    film.useThermodynamicCorrections(true);
+    film.solve();
+    film.assertResiduals();
+    for (int component = 0; component < names.length; component++) {
+      assertEquals(0.0, film.getInterphaseMolarFlux(component), 1.0e-8, names[component]);
     }
-    assertTrue(Double.isFinite(film.getBulkSystem().getPressure()));
+    assertEquals(277.15, film.getInterphaseSystem().getTemperature(), 1.0e-6);
   }
 
   /**
@@ -238,10 +278,32 @@ class CoupledGasOilFilmTest {
       return differenceScale * super.coupledFilmDifferenceStep(state, column);
     }
 
-    /** Stops the liquid motion to exercise rejection after a valid nonzero result. */
+    /** Stops the liquid motion after a valid nonzero result. */
     private void stopLiquidMotion() {
       flowNode.setVelocity(1, 0.0);
       flowNode.init();
+    }
+
+    /** Reverses the liquid velocity without changing the phase amounts. */
+    private void reverseLiquidMotion() {
+      flowNode.setVelocity(1, -flowNode.getVelocity(1));
+    }
+
+    /**
+     * Binary liquid diffusivity implied by the Schmidt number used for the coefficient.
+     *
+     * @param first first component
+     * @param second second component
+     * @return diffusivity in m2/s
+     */
+    private double liquidDiffusivity(int first, int second) {
+      return bulkSystem.getPhase(1).getPhysicalProperties().getKinematicViscosity()
+          / binarySchmidtNumber[1][first][second];
+    }
+
+    /** @return liquid hydraulic diameter of the node in m */
+    private double liquidHydraulicDiameter() {
+      return flowNode.getHydraulicDiameter(1);
     }
 
     /** Independently checks fugacity equality, normalizations, both films and interface heat balance. */

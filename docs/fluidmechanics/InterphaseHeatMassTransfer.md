@@ -288,6 +288,47 @@ Heat and mass transfer are related through:
 
 $$\frac{h}{c_p G} Pr^{2/3} = \frac{k_m}{u} Sc^{2/3} = \frac{f}{2}$$
 
+Here $f$ is the Fanning friction factor. With the Darcy factor $f_D = 4f$ that the flow nodes return
+(64/Re, Haaland) the right-hand side is $f_D/8$. All transport-coefficient classes (single-phase pipe,
+stratified and annular, slug, droplet, stirred cell) apply $f_D/8$ since 2026-11-28 through
+`InterphaseTransportCoefficientBaseClass.chiltonColburnStanton`. Before that they applied $f_D/2$, which
+made every turbulent wall and gas-side interphase heat and mass transfer coefficient four times too high.
+For a nearly smooth pipe the corrected form reproduces Dittus-Boelter, $0.023\,Re^{0.8}X^{1/3}$, within
+20 % for $Re = 10^4$ to $5\times10^6$ (`ChiltonColburnAnalogyTest`, `InterphaseStratifiedFlowAnalogyTest`).
+The slug class keeps its own factors on top (1.2 on friction, 1.4 to 2.0 on transfer).
+
+**Stratified and annular interphase coefficients (2026-11-28).** `InterphaseStratifiedFlow` and
+`InterphaseAnnularFlow` now build the interphase coefficients as follows.
+
+| Side | Mass transfer | Heat transfer |
+|------|---------------|---------------|
+| Gas, turbulent | $k_G = (f_i/8)\,Sc^{-2/3}\,\lvert u_G\rvert$ | $h_G = (f_i/8)\,Pr^{-2/3}\,\rho c_p \lvert u_G\rvert$ |
+| Gas, laminar ($Re < 2300$) | $Sh = 3.66$ | $Nu = 3.66$ |
+| Gas, natural convection | $k = 0.15\,(g\,\Delta\rho/\rho)^{1/3}\nu^{1/3}Sc^{-2/3}$ | same with $Pr$, times $\rho c_p$ |
+| Liquid film | Yih and Chen: $k_L(\nu^2/g)^{1/3}/D = a\,Re^b\,Sc^{1/2}$ | $h_L(\nu^2/g)^{1/3}/\lambda = a\,Re^b\,Pr^{1/2}$ |
+| Liquid at rest | $k_L \ge 3.41\,D/\delta$ | $h_L \ge 3.41\,\lambda/\delta$ |
+
+- $f_i$ is the **interfacial** Darcy friction factor, because the gas exchanges with the liquid surface and
+  not with the pipe wall: $f_i = f_w(1 + 75\alpha_L)$ in stratified flow and the Wallis form
+  $f_i = f_w(1 + 300\,\delta/D)$, capped at 50, in annular flow. Wall coefficients keep $f_w$.
+- Forced and natural convection on the gas side combine as $(k_f^3 + k_n^3)^{1/3}$. The natural-convection
+  relation is the turbulent one for an unstably stratified horizontal layer (McAdams; the length cancels).
+  $\Delta\rho$ is the gas density difference between the bulk and the interface of the current film solution.
+  In stratified flow it counts only when the interface gas is lighter than the bulk gas; a heavier interface
+  gas, as above an evaporating condensate, is stably stratified and gives none. Around an annular film either
+  sign counts.
+- The liquid-side heat transfer coefficient is the heat counterpart of the liquid-side mass transfer
+  coefficient (same film correlation with $Pr$ for $Sc$). Before, it used the gas-type analogy on the liquid
+  Reynolds number, which gave interface temperatures up to 1 K from the bulk at the pipe states of a 707 km
+  rich-gas case; with the consistent form they are within 0.1 K.
+- None of these closures is validated here against measured interphase transfer in pipes.
+
+Results that depend on these coefficients change. A turbulent inner-film heat transfer coefficient is now a
+quarter of its old value, so a pipe whose heat loss is controlled by the inner film loses heat more slowly;
+where an outer resistance dominates (insulation, burial, an overall coefficient of a few W/m²K) the overall
+coefficient hardly moves. Friction factors and transfer coefficients also use the magnitude of the phase
+Reynolds number and speed, so a reversed phase no longer gives a negative or undefined coefficient.
+
 This allows estimation of mass transfer coefficients from heat transfer data:
 
 $$k_m = h \cdot \frac{1}{\rho c_p} \left(\frac{Sc}{Pr}\right)^{-2/3}$$
@@ -403,9 +444,11 @@ Where $[\mathbf{J}]$ is the Jacobian matrix.
 Newton solution in `KrishnaStandartFilmModel`. It is **off by default** and separate from
 `MassTransferConfig` and the transient `TwoFluidPipe` source. Enable both mass and heat
 calculation before solving. The current supported numerical range is nonreactive,
-strictly positive-composition hydrocarbon gas/oil with positive finite binary transport
-and heat conductances. Aqueous/reactive systems, exactly pure phase compositions,
-phase disappearance and strong disequilibrium are not qualified by this option.
+strictly positive-composition gas/oil of hydrocarbons and inert gases (component type
+`inert`: nitrogen, carbon dioxide, hydrogen sulfide and similar) with positive finite
+binary transport and heat conductances. Aqueous/reactive systems, exactly pure phase
+compositions, phase disappearance and strong disequilibrium are not qualified by this
+option.
 
 The unknowns are both complete interface composition vectors, every component molar
 flux and interface temperature: $3n+1$ variables. The existing fugacity, normalization
@@ -416,7 +459,9 @@ $$q_g+q_o=\sum_i N_i(\bar h_{g,i}-\bar h_{o,i}).$$
 Here $N_i$ is positive from gas to oil in mol/(m² s), $q_k$ is the existing heat-flux
 sign convention in W/m², and the EOS partial molar enthalpies use each bulk phase's
 own temperature. This local balance is not an additional total-energy source in a
-pipeline. No transient pipeline integration is enabled by the option.
+pipeline. The option itself does not advance a pipeline; the `TwoFluidPipe` closure
+`FilmInterphaseTransfer` calls it for every wet cell (see
+[TwoFluidPipe](../process/TWOFLUIDPIPE_MODEL.md#film-model-interphase-transfer)).
 
 Every equation is checked before taking a Newton step: maximum absolute log-fugacity
 residual 1e-10, composition-sum residual 1e-12, film-flux residual 1e-10 mol/(m² s),
@@ -438,12 +483,35 @@ its tested numerical range, and independently audit its results.
 repeated solves and halved Jacobian intervals. These are equation/analytical-limit
 checks, not measured transfer rates or a calibrated evaporation time.
 
-For **all routes**, a nonfinite resistance inverse now rejects instead of substituting
-an identity coefficient matrix. The stratified liquid correlation gives zero transport
-at zero liquid Reynolds number; this condition also rejects explicitly. Replacing it
-with 1 m/s conductance was not a physical stagnant-pool model. Stationary pool diffusion,
-film depth, interfacial area, heat supply, countercurrent transport and phase appearance
-still require independent closure qualification before predicting seabed pool depletion.
+For **all routes**, a nonfinite resistance inverse rejects instead of substituting an
+identity coefficient matrix.
+
+**Liquid at rest and reversed phases (2026-11-28).** The stratified liquid correlation of
+Yih and Chen gives zero transport at zero liquid Reynolds number. The coefficient is
+therefore bounded below by the diffusion limit of a laminar layer,
+$k_L \ge 3.41\,D_{ij}/\delta$, with the depth $\delta$ taken as a quarter of the liquid
+hydraulic diameter. Friction factors and transfer coefficients use the magnitude of the
+phase Reynolds number and speed, so a phase flowing backwards has the film of one flowing
+forwards. Both cases previously threw. The laminar-layer limit is a textbook result for a
+falling film at long exposure; it is not validated here against stagnant-pool data, and it
+contains no natural convection. Gas at rest keeps the laminar duct limit $Sh = 3.66$.
+Interfacial area, film depth and phase appearance still need independent closure
+qualification before predicting seabed pool depletion.
+
+**Interface start when the bulk is single phase (2026-11-28).** `initInterphaseSystem()`
+flashes the bulk as a whole to start the interface. A liquid evaporating into gas that can
+hold all of it is single phase as a whole, although an interface exists. The start then
+used the bulk compositions, which are not in equilibrium with each other. It now flashes
+mixtures of the two bulk phases (50, 25, 75, 10 and 90 mol% liquid) and takes the first
+that splits: a tie line on the mixing line (`InterfaceTieLineInitialisationTest`: equal
+fugacities to 1e-6). In a 50 km blowdown and refill test this cut failed coupled solves
+from 11 to 5 of about 600.
+
+Where the two bulk fluids are miscible at first contact (no mixture of them splits; above
+the critical pressure of the mixing line) no interface equilibrium exists. The coupled
+route then fails, or converges to an interface with identical phases on its two sides and
+a meaningless flux. A caller must test for miscibility and treat that state separately;
+`FilmInterphaseTransfer` does (mode `MISCIBLE`).
 
 ### 5.3 Numerical Stability
 

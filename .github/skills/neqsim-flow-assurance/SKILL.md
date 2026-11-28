@@ -96,10 +96,18 @@ computed here.
 For local dry hydrocarbon gas/oil interface investigations, the existing film boundary
 has a default-off `setCoupledMassHeatTransferEnabled(true)` numerical option. Read
 `docs/fluidmechanics/InterphaseHeatMassTransfer.md` for its residual gates and limited
-positive-composition/finite-transport range. It is not connected to the transient
-`TwoFluidPipe` source. Zero liquid Reynolds number currently gives an unsupported
-stratified transfer coefficient and rejects; never interpret the old unit-matrix
-fallback as stationary-pool evaporation. Keep #4674 physical boundary/full-cycle and
+positive-composition/finite-transport range. Since 2026-11-28 it accepts inert gases
+(N2, CO2, H2S) beside hydrocarbons, a liquid at rest uses the laminar-layer diffusion
+limit `3.41 D / depth`, reversed phases use the magnitude of their Reynolds number, and
+the turbulent gas-side coefficients use the Darcy friction factor divided by eight (they
+were four times too high). When the bulk as a whole is single phase (liquid evaporating
+into gas that can hold all of it) the interface now starts from a tie line of a gas/liquid
+mixture that splits. Above the critical pressure of the gas/liquid mixing line the two are
+miscible and the film has no meaning: test for it before solving. The opt-in
+`FilmInterphaseTransfer` closure does, and connects the film to the
+transient `TwoFluidPipe` source (skill `neqsim-dynamic-simulation`). The stagnant-liquid
+limit is not validated against pool data and has no natural convection, so do not quote
+a stationary-pool evaporation time from it. Keep #4674 physical boundary/full-cycle and
 #4675 heat/area/diffusion qualification separate from numerical convergence.
 
 ## 1. Hydrate Analysis

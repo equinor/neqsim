@@ -37,6 +37,8 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   private static final long serialVersionUID = 1001;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(FluidBoundary.class);
+  /** Liquid mole shares of the bulk gas/liquid mixtures flashed to find an interface tie line. */
+  private static final double[] MIXING_LINE_LIQUID_SHARES = {0.5, 0.25, 0.75, 0.1, 0.9};
 
   protected FlowNodeInterface flowNode;
   protected SystemInterface bulkSystem;
@@ -112,7 +114,17 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
     ThermodynamicOperations interphaseOps = new ThermodynamicOperations(interphaseSystem);
     interphaseOps.TPflash();
 
-    // If TPflash results in single phase, restore two-phase interface using bulk compositions
+    // The bulk as a whole can be single phase at equilibrium while gas and liquid still meet at an interface (a liquid
+    // evaporating into unsaturated gas). A mixture of the two bulk phases that does split gives a tie line to start
+    // from.
+    if (interphaseSystem.getNumberOfPhases() < 2) {
+      SystemInterface tieLine = findTieLineOnMixingLine(interphaseSystem.getTemperature());
+      if (tieLine != null) {
+        interphaseSystem = tieLine;
+      }
+    }
+
+    // If no mixture of the bulk phases splits, restore a two-phase interface using bulk compositions
     if (interphaseSystem.getNumberOfPhases() < 2) {
       interphaseSystem.setNumberOfPhases(2);
       // Copy bulk compositions to interface - the driving force will come from concentration
@@ -125,6 +137,36 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
       }
       interphaseSystem.init(3);
     }
+  }
+
+  /**
+   * Search the mixing line between the two bulk phases for a mixture that splits in two phases.
+   *
+   * @param temperature flash temperature in K
+   * @return flashed two-phase system with gas and liquid on a tie line, or null when no tested mixture splits
+   */
+  private SystemInterface findTieLineOnMixingLine(double temperature) {
+    int count = bulkSystem.getPhase(0).getNumberOfComponents();
+    for (double liquidShare : MIXING_LINE_LIQUID_SHARES) {
+      try {
+        SystemInterface trial = bulkSystem.clone();
+        double[] composition = new double[count];
+        for (int component = 0; component < count; component++) {
+          composition[component] = (1.0 - liquidShare) * bulkSystem.getPhase(0).getComponent(component).getx()
+              + liquidShare * bulkSystem.getPhase(1).getComponent(component).getx();
+        }
+        trial.setMolarComposition(composition);
+        trial.setTemperature(temperature);
+        new ThermodynamicOperations(trial).TPflash();
+        if (trial.getNumberOfPhases() == 2) {
+          trial.init(3);
+          return trial;
+        }
+      } catch (RuntimeException exception) {
+        logger.debug("Mixing-line flash failed at liquid share {}: {}", liquidShare, exception.getMessage());
+      }
+    }
+    return null;
   }
 
   /**

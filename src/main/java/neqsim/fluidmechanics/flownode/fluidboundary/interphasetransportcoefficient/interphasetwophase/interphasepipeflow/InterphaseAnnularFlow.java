@@ -76,4 +76,33 @@ public class InterphaseAnnularFlow extends InterphaseStratifiedFlow {
       }
     }
   }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Wallis (1969): the liquid film roughens the gas core, {@code f_i = f_wall (1 + 300 delta / D)} with the film
+   * thickness {@code delta = (D/2)(1 - sqrt(1 - alpha_L))}. The factor is capped at 50, as in the annular closure of
+   * the two-fluid pipe model.
+   * </p>
+   */
+  @Override
+  public double calcInterPhaseFrictionFactor(int phase, FlowNodeInterface node) {
+    double liquidFraction = Math.max(0.0, Math.min(1.0, node.getPhaseFraction(1)));
+    double relativeFilmThickness = 0.5 * (1.0 - Math.sqrt(1.0 - liquidFraction));
+    return Math.min(1.0 + 300.0 * relativeFilmThickness, 50.0) * calcWallFrictionFactor(phase, node);
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * The film surrounds the gas core, so part of the interface is unstably stratified whichever of the two gas densities
+   * is larger.
+   * </p>
+   */
+  @Override
+  protected double unstableDensityDifference(double bulkDensity, double interfaceDensity) {
+    return Math.abs(bulkDensity - interfaceDensity);
+  }
 }

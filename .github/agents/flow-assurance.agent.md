@@ -216,6 +216,11 @@ results are not validated against measured pipeline data. Repeat the base case i
 conservative-energy transient (set-up in the same skill section) and report both models side by side:
 liquid through the outlet in blowdown, liquid in the line, the liquid-free time after restart and the
 flow regimes `TwoFluidPipe` assigns to the wet cells.
+Where the question is how long liquid survives the restart, also run the `TwoFluidPipe` case with
+`FilmInterphaseTransfer` (skill `neqsim-dynamic-simulation`; `docs/process/non-equilibrium-two-phase-pipe-flow.md`):
+condensation in a blowdown follows equilibrium through fog formation, but evaporation into the incoming gas is
+limited by the interface, so the equilibrium liquid-free time is a lower estimate. Run it with and without the
+droplet field as bounds on the interfacial area, and report liquid in miscible cells apart from immiscible liquid.
 
 For riser-induced (severe) slugging questions use the two screens described in the
 `neqsim-flow-assurance` skill: `TwoFluidPipe.evaluateSevereSluggingSystem(riserBaseSection)`

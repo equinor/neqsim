@@ -815,6 +815,25 @@ calibrated and then validated against independent public multicomponent rate dat
 is a conservative parameterized screening model—not a predictive pool-depletion, physical restart,
 severe-slugging or hydraulic-pigging qualification.
 
+#### Film-model interphase transfer
+
+`FilmInterphaseTransfer` replaces the relaxation time with non-equilibrium transfer rates from the
+multicomponent film model of the fluid-mechanics package. The model, its settings, verification, measured
+effects and limits are described in
+[Non-equilibrium two-phase pipe flow](non-equilibrium-two-phase-pipe-flow.md).
+
+```java
+pipe.run();
+pipe.prepareConservativeEnergyTransientFromSteadyState();
+FilmInterphaseTransfer film = new FilmInterphaseTransfer();
+film.setUpdateInterval(300.0);          // s; hold the film coefficients of a cell this long
+pipe.setFilmInterphaseTransfer(film);   // replaces the relaxation-time source
+pipe.runTransient(60.0, id);
+```
+
+It requires conservative-energy Euler with component transport and mass transfer, no slug tracking and no
+other finite-rate closure, and dry gas/oil of hydrocarbons and inert gases.
+
 The wall state can be initialized before `run()` with
 `setInitialWallTemperatureProfile(profile, "K")` (or `"C"`). The profile must match the physical
 cell count, is defensively copied, and is retained through accepted event intervals, serialization

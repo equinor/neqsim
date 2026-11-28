@@ -16,6 +16,13 @@ on:
       - 'src/test/java/neqsim/process/equipment/pipeline/TwoFluidPipePhaseDisappearanceTest.java'
       - 'src/test/java/neqsim/process/equipment/pipeline/TwoFluidComponentTraceInventoryTest.java'
       - 'src/main/java/neqsim/process/equipment/pipeline/twophasepipe/**'
+      - 'src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/**'
+      - 'src/test/java/neqsim/fluidmechanics/flownode/fluidboundary/**'
+      - 'src/main/java/neqsim/thermo/component/Component.java'
+      - 'src/main/resources/data/COMP.csv'
+      - 'src/test/java/neqsim/thermo/component/ComponentTypeGetterTest.java'
+      - 'src/test/java/neqsim/process/equipment/pipeline/TwoFluidPipeFilmInterphaseTransferTest.java'
+      - 'src/test/java/neqsim/process/equipment/pipeline/twophasepipe/FilmInterphaseTransferTest.java'
       - 'src/test/java/neqsim/process/equipment/pipeline/twophasepipe/TwoFluidUnsplitTengesdalPreparationTest.java'
       - 'docs/process/H2S_scavenger_guide.md'
       - 'docs/thermo/gerg2008_eoscg.md'
@@ -260,3 +267,27 @@ jobs:
           cache: maven
       - name: Qualify combined GERG heavy-end mapping and molar-mass lumping
         run: ./mvnw -B -ntp -Dtest=NeqSimGERG2008HeavyEndsTest,GergEoscgDocumentationTest test
+
+  film-interphase-transfer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Qualify coupled film and transfer correlations
+        run: >-
+          ./mvnw -B -ntp
+          -Dtest=CoupledGasOilFilmTest,InterfaceTieLineInitialisationTest,ChiltonColburnAnalogyTest,InterphaseStratifiedFlowAnalogyTest
+          -DexcludedTestGroups=
+          test
+      - name: Qualify conservative pipe coupling and component classification
+        if: ${{ !cancelled() }}
+        run: >-
+          ./mvnw -B -ntp
+          -Dtest=TwoFluidPipeFilmInterphaseTransferTest,FilmInterphaseTransferTest,ComponentTypeGetterTest,ComponentDatabaseIntegrityTest
+          -DexcludedTestGroups=
+          test
