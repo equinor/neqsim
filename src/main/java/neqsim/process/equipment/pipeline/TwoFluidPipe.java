@@ -24,6 +24,7 @@ import neqsim.process.equipment.pipeline.twophasepipe.SlugTracker;
 import neqsim.process.equipment.pipeline.twophasepipe.ThermodynamicCoupling;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidComponentTransport;
 import neqsim.process.equipment.pipeline.twophasepipe.NonEquilibriumFilmTransfer;
+import neqsim.process.equipment.pipeline.twophasepipe.FilmInterphaseTransfer;
 import neqsim.process.equipment.pipeline.twophasepipe.HydrocarbonPoolTransfer;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
@@ -1123,6 +1124,12 @@ public class TwoFluidPipe extends Pipeline {
 
   /** Diagnostics from the latest accepted pool-transfer stage. */
   private HydrocarbonPoolTransfer.Result lastHydrocarbonPoolTransferResult;
+
+  /** Opt-in non-equilibrium gas/oil transfer from the multicomponent film model. */
+  private FilmInterphaseTransfer filmInterphaseTransfer;
+
+  /** Diagnostics from the latest film-transfer stage. */
+  private FilmInterphaseTransfer.Result lastFilmInterphaseTransferResult;
 
   /** Independently specified residual liquid, cloned on configuration. */
   private SystemInterface initialAqueousFluid;
@@ -5655,6 +5662,7 @@ public class TwoFluidPipe extends Pipeline {
     lastThermalEnergyBalanceReport = null;
     lastComponentConservationReport = null;
     lastHydrocarbonPoolTransferResult = null;
+    lastFilmInterphaseTransferResult = null;
     componentConservationReports.clear();
     componentConservationTimes.clear();
     transientOutletBackflowClamped = false;
@@ -6196,6 +6204,45 @@ public class TwoFluidPipe extends Pipeline {
     if (outletCorrectionKg[0] < 0.0) {
       throw new IllegalStateException("Gas-only outlet pressure correction attempted gas inflow without an external "
           + "thermodynamic donor; configure setOutletBoundaryFluid(...) before repressurization");
+    }
+  }
+
+  /**
+   * Complete the disappearance of phases whose transported inventory is below one molecule in a cell.
+   *
+   * <p>
+   * The component transport moves the sub-molecular inventory to the dominant phase of the cell. This method applies
+   * the same transfer to the hydrodynamic state: the vanished phase's mass and momentum per length are added to the
+   * receiver and set to exactly zero, so cell mass, momentum and total energy are unchanged. Without this step an
+   * equilibrium relaxation toward an absent phase leaves a geometrically decaying, eventually subnormal inventory whose
+   * volume fraction underflows and stops the conservative endpoint recovery.
+   * </p>
+   *
+   * @param sourceMassKg accepted gas, oil and water interphase source ledger in kg, updated in place
+   */
+  private void completePhaseDisappearance(double[] sourceMassKg) {
+    double[][] transferKg = componentTransport.absorbSubmolecularPhases();
+    for (int cell = 0; cell < numberOfSections; cell++) {
+      int receiver = -1;
+      for (int phase = 0; phase < 3; phase++) {
+        if (transferKg[cell][phase] > 0.0) {
+          receiver = phase;
+        }
+      }
+      if (receiver < 0) {
+        continue;
+      }
+      double[] state = sections[cell].getStateVector();
+      for (int phase = 0; phase < 3; phase++) {
+        if (transferKg[cell][phase] < 0.0) {
+          state[receiver] += state[phase];
+          state[receiver + 3] += state[phase + 3];
+          state[phase] = 0.0;
+          state[phase + 3] = 0.0;
+        }
+        sourceMassKg[phase] += transferKg[cell][phase];
+      }
+      sections[cell].setStateVector(state);
     }
   }
 
@@ -7145,6 +7192,8 @@ public class TwoFluidPipe extends Pipeline {
     nonEquilibriumFilmTransfer = candidate.nonEquilibriumFilmTransfer;
     hydrocarbonPoolTransfer = candidate.hydrocarbonPoolTransfer;
     lastHydrocarbonPoolTransferResult = candidate.lastHydrocarbonPoolTransferResult;
+    filmInterphaseTransfer = candidate.filmInterphaseTransfer;
+    lastFilmInterphaseTransferResult = candidate.lastFilmInterphaseTransferResult;
     initialAqueousFluid = candidate.initialAqueousFluid;
     initialAqueousHoldup = candidate.initialAqueousHoldup;
     enableHeatTransfer = candidate.enableHeatTransfer;
@@ -7274,6 +7323,12 @@ public class TwoFluidPipe extends Pipeline {
         || enableSlugTracking || nonEquilibriumFilmTransfer != null)) {
       throw new IllegalStateException("Hydrocarbon pool transfer requires conservative-energy Euler with component "
           + "and mass transfer, disabled slug tracking, and no aqueous-film transfer");
+    }
+    if (filmInterphaseTransfer != null && (!componentTransportEnabled || !includeMassTransfer
+        || !useConservativeEnergyRecovery || timeIntegrator.getMethod() != TimeIntegrator.Method.EULER
+        || enableSlugTracking || nonEquilibriumFilmTransfer != null || hydrocarbonPoolTransfer != null)) {
+      throw new IllegalStateException("Film interphase transfer requires conservative-energy Euler with component "
+          + "and mass transfer, disabled slug tracking, and no other finite-rate transfer closure");
     }
     if (componentTransportEnabled && includeMassTransfer && slugTrackingMode == SlugTrackingMode.CONSERVATIVE_LAGRANGIAN
         && getTimeIntegrationStageWeights().length > 1) {
@@ -7482,6 +7537,7 @@ public class TwoFluidPipe extends Pipeline {
       final double[] conservativeGravityRateW = new double[1];
       final double[][] correctionBoundaryPhaseEnergyJ = new double[2][3];
 
+      final double filmTransferTime = simulationTime + acceptedElapsedTime;
       TimeIntegrator.RHSFunction rhs = (state, t) -> {
         equations.applyState(sections, state);
         // Boundary conditions are part of the semi-discrete operator and must be
@@ -7507,6 +7563,13 @@ public class TwoFluidPipe extends Pipeline {
                 localEquilibriumStates, dtFinal);
             finiteRateSources = poolResult.getSourcesKgPerMetreSecond();
             lastHydrocarbonPoolTransferResult = poolResult;
+            equilibriumRelaxation = true;
+            equations.setComponentMassTransferSources(finiteRateSources);
+          } else if (filmInterphaseTransfer != null) {
+            FilmInterphaseTransfer.Result filmResult = filmInterphaseTransfer.calculate(componentTransport, sections,
+                referenceFluid, localEquilibriumStates, filmTransferTime, dtFinal);
+            finiteRateSources = filmResult.getSourcesKgPerMetreSecond();
+            lastFilmInterphaseTransferResult = filmResult;
             equilibriumRelaxation = true;
             equations.setComponentMassTransferSources(finiteRateSources);
           } else if (useConservativeEnergyRecovery) {
@@ -7857,6 +7920,9 @@ public class TwoFluidPipe extends Pipeline {
             weightedLatentHeatSources, sections,
             activeInletBoundaryFluid == null ? getInletStream().getFluid() : activeInletBoundaryFluid,
             outletBoundaryFluid, referenceFluid, componentConservationTolerance);
+        if (useConservativeEnergyRecovery) {
+          completePhaseDisappearance(integratedSourceMassKg);
+        }
       }
       if (useConservativeEnergyRecovery) {
         recoverConservativeThermodynamics();
@@ -9913,7 +9979,7 @@ public class TwoFluidPipe extends Pipeline {
    * @param closure immutable closure, or null to retain the default equilibrium-relaxation path
    */
   public void setNonEquilibriumFilmTransfer(NonEquilibriumFilmTransfer closure) {
-    if (closure != null && hydrocarbonPoolTransfer != null) {
+    if (closure != null && (hydrocarbonPoolTransfer != null || filmInterphaseTransfer != null)) {
       throw new IllegalStateException("Aqueous-film and hydrocarbon-pool transfer cannot own the same stage");
     }
     nonEquilibriumFilmTransfer = closure;
@@ -9930,11 +9996,39 @@ public class TwoFluidPipe extends Pipeline {
    * @param closure immutable closure, or null to retain equilibrium relaxation
    */
   public void setHydrocarbonPoolTransfer(HydrocarbonPoolTransfer closure) {
-    if (closure != null && nonEquilibriumFilmTransfer != null) {
+    if (closure != null && (nonEquilibriumFilmTransfer != null || filmInterphaseTransfer != null)) {
       throw new IllegalStateException("Hydrocarbon-pool and aqueous-film transfer cannot own the same stage");
     }
     hydrocarbonPoolTransfer = closure;
     lastHydrocarbonPoolTransferResult = null;
+  }
+
+  /**
+   * Select non-equilibrium gas/oil transfer from the multicomponent film model of the fluid-mechanics package.
+   *
+   * <p>
+   * Opt-in. It requires conservative-energy recovery, named-component transport, mass transfer and the Euler
+   * integrator, and replaces the relaxation-time source: each wet cell exchanges components at the Maxwell-Stefan film
+   * fluxes for its own flow state. See {@link FilmInterphaseTransfer} for scope and assumptions.
+   * </p>
+   *
+   * @param closure film-transfer closure, or null to retain equilibrium relaxation
+   */
+  public void setFilmInterphaseTransfer(FilmInterphaseTransfer closure) {
+    if (closure != null && (nonEquilibriumFilmTransfer != null || hydrocarbonPoolTransfer != null)) {
+      throw new IllegalStateException("Only one finite-rate transfer closure can own a stage");
+    }
+    filmInterphaseTransfer = closure;
+    lastFilmInterphaseTransferResult = null;
+  }
+
+  /**
+   * Get diagnostics from the latest film-transfer source stage.
+   *
+   * @return result, or null before a film-transfer transient has run
+   */
+  public FilmInterphaseTransfer.Result getLastFilmInterphaseTransferResult() {
+    return lastFilmInterphaseTransferResult;
   }
 
   /**

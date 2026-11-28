@@ -1440,6 +1440,19 @@ public class TwoFluidConservationEquations implements Serializable {
    * @return Time derivatives [nCells][NUM_EQUATIONS]
    */
   public double[][] calcRHS(TwoFluidSection[] sections, double dx) {
+    return calcRHS(sections, dx, true);
+  }
+
+  /**
+   * Calculate the right-hand side with explicit ownership of regime classification.
+   *
+   * @param sections trial pipe sections
+   * @param dx representative cell size in m
+   * @param classifyFlowRegimes true to classify from the trial state, false to retain each section's supplied regime
+   * and blend weights
+   * @return time derivatives with seven columns per cell
+   */
+  private double[][] calcRHS(TwoFluidSection[] sections, double dx, boolean classifyFlowRegimes) {
     validatePressureInterpolationConfiguration();
     int nCells = sections.length;
     double[][] dUdt = new double[nCells][NUM_EQUATIONS];
@@ -1447,7 +1460,7 @@ public class TwoFluidConservationEquations implements Serializable {
         : EMPTY_PHASE_FORCE_MATRIX;
 
     // First pass: update flow regimes, geometry, and closure relations
-    updateClosureRelations(sections);
+    updateClosureRelations(sections, classifyFlowRegimes);
 
     // Calculate fluxes at each interface (nCells-1 interfaces between cells)
     double[][] fluxes = calcInterfaceFluxes(sections, dx);
@@ -1578,10 +1591,42 @@ public class TwoFluidConservationEquations implements Serializable {
    * @return immutable trial derivatives and phase-resolved ledgers
    */
   public synchronized TransactionalEvaluation evaluateTransactional(TwoFluidSection[] sections, double dx) {
+    return evaluateTransactional(sections, dx, true);
+  }
+
+  /**
+   * Evaluate one trial while retaining the regime and blend weights supplied by each section.
+   *
+   * <p>
+   * This is the active-set counterpart of {@link #evaluateTransactional(TwoFluidSection[], double)}. It updates all
+   * continuous closure properties and geometry, but does not reclassify flow regime inside residual or finite-
+   * difference probes. The caller owns refreshing the retained choices between nonlinear iterates. Diagnostics remain
+   * transactional and the conservative flux/source equations are unchanged.
+   * </p>
+   *
+   * @param sections trial sections carrying the frozen regime choices
+   * @param dx representative cell size in m
+   * @return immutable trial derivatives and phase-resolved ledgers
+   */
+  public synchronized TransactionalEvaluation evaluateTransactionalWithFrozenRegimes(TwoFluidSection[] sections,
+      double dx) {
+    return evaluateTransactional(sections, dx, false);
+  }
+
+  /**
+   * Evaluate one transactional trial with caller-owned regime classification.
+   *
+   * @param sections trial sections
+   * @param dx representative cell size in m
+   * @param classifyFlowRegimes true to classify from the trial state, false to retain supplied choices
+   * @return immutable trial derivatives and phase-resolved ledgers
+   */
+  private TransactionalEvaluation evaluateTransactional(TwoFluidSection[] sections, double dx,
+      boolean classifyFlowRegimes) {
     DiagnosticSnapshot saved = new DiagnosticSnapshot();
     try {
       outletBackflowClamped = false;
-      double[][] rates = calcRHS(sections, dx);
+      double[][] rates = classifyFlowRegimes ? calcRHS(sections, dx) : calcRHS(sections, dx, false);
       return new TransactionalEvaluation(rates, lastMassBalanceRate, lastPhaseMassFaceFluxes, lastEnergyFaceFluxes,
           lastBoundaryPhaseMomentumFluxes, lastBoundaryPhasePressureForces, lastDirectionalPhaseFaceFluxes,
           lastPhaseMassSourcesPerLength, lastMomentumSourceForcesPerLength,
@@ -2451,13 +2496,25 @@ public class TwoFluidConservationEquations implements Serializable {
    * @param sections array of pipe sections to update
    */
   private void updateClosureRelations(TwoFluidSection[] sections) {
+    updateClosureRelations(sections, true);
+  }
+
+  /**
+   * Update continuous closures, optionally retaining caller-owned regime choices.
+   *
+   * @param sections trial sections
+   * @param classifyFlowRegimes true to classify from the trial state, false to retain supplied choices
+   */
+  private void updateClosureRelations(TwoFluidSection[] sections, boolean classifyFlowRegimes) {
     for (TwoFluidSection sec : sections) {
       boolean wasGasAgitated = TwoFluidSection.isGasAgitatedLiquid(sec.getFlowRegime());
       sec.updateThreePhaseProperties();
 
       // Classify once so transient sources consume the same continuous transition
       // weights as the steady hold-up calculation.
-      flowRegimeDetector.classify(sec);
+      if (classifyFlowRegimes) {
+        flowRegimeDetector.classify(sec);
+      }
       if (TwoFluidSection.isGasAgitatedLiquid(sec.getFlowRegime()) != wasGasAgitated) {
         // The oil-water mixing scale depends on the gas-liquid regime just classified. Re-detect so the oil-water
         // drag of this evaluation uses the regime its other closures use, not the previous one (#5046).

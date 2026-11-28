@@ -6,7 +6,30 @@ on:
     paths:
       - 'examples/production-decision/**'
       - 'src/main/java/neqsim/process/equipment/pipeline/TwoFluidPipe.java'
+      - 'src/main/java/neqsim/process/equipment/pipeline/CompositionalLinePackPipe.java'
+      - 'src/main/java/neqsim/process/equipment/pipeline/StratifiedLiquidMomentum.java'
+      - 'src/main/java/neqsim/process/equipment/pipeline/RetrogradeDewPointScanner.java'
+      - 'src/main/java/neqsim/process/equipment/pipeline/DewPointGuardedOutletController.java'
+      - 'src/test/java/neqsim/process/equipment/pipeline/CompositionalLinePackPipeTest.java'
+      - 'src/test/java/neqsim/process/equipment/pipeline/StratifiedLiquidMomentumTest.java'
+      - 'src/test/java/neqsim/process/equipment/pipeline/TwoFluidPipeUnsplitRunTest.java'
+      - 'src/test/java/neqsim/process/equipment/pipeline/TwoFluidPipePhaseDisappearanceTest.java'
+      - 'src/test/java/neqsim/process/equipment/pipeline/TwoFluidComponentTraceInventoryTest.java'
       - 'src/main/java/neqsim/process/equipment/pipeline/twophasepipe/**'
+      - 'src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/**'
+      - 'src/test/java/neqsim/fluidmechanics/flownode/fluidboundary/**'
+      - 'src/main/java/neqsim/thermo/component/Component.java'
+      - 'src/main/resources/data/COMP.csv'
+      - 'src/test/java/neqsim/thermo/component/ComponentTypeGetterTest.java'
+      - 'src/test/java/neqsim/process/equipment/pipeline/TwoFluidPipeFilmInterphaseTransferTest.java'
+      - 'src/test/java/neqsim/process/equipment/pipeline/twophasepipe/FilmInterphaseTransferTest.java'
+      - 'src/test/java/neqsim/process/equipment/pipeline/twophasepipe/TwoFluidUnsplitTengesdalPreparationTest.java'
+      - 'docs/process/H2S_scavenger_guide.md'
+      - 'docs/thermo/gerg2008_eoscg.md'
+      - 'src/test/java/neqsim/thermo/util/gerg/NeqSimGERG2008HeavyEndsTest.java'
+      - 'src/test/java/neqsim/documentation/GergEoscgDocumentationTest.java'
+      - 'docs/test_h2s_scavenger_documentation.py'
+      - 'src/test/java/neqsim/documentation/H2SScavengerDocumentationTest.java'
       - '.github/workflows/ai-production-restart-qualification.yml'
 
 permissions:
@@ -33,24 +56,268 @@ jobs:
           enable-cache: true
           cache-dependency-glob: devtools/uv.lock
       - name: Compile the PR physics and resolve its runtime classpath
+        id: compile
         run: ./mvnw -B -ntp -DskipTests compile dependency:build-classpath -Dmdep.outputFile=target/restart-classpath.txt
+      - name: Qualify integrated compositional and two-fluid inventory contracts
+        run: >-
+          ./mvnw -B -ntp
+          -Dtest=CompositionalLinePackPipeTest#twoFluidPipeLiquidMassIncludesDenseBrine+twoFluidPipeLiquidInventoryRejectsUnknownUnit+blowdownFormsRetrogradeLiquidAndGuardStaysShut,StratifiedLiquidMomentumTest,TwoFluidUnsplitModelAdapterTest,SlugFilmCouplingTest
+          test
+      - name: Qualify combined process rollback, wet UMR flash and reconciliation
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
+        run: >-
+          ./mvnw -B -ntp
+          -Dtest=TransientStepTransactionTest,PhaseGEUnifacUMRPRUTest,DataReconciliationEngineTest
+          test
+      - name: Qualify combined heat capacity and model selection contracts (Python)
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
+        run: uv run --project devtools --locked --group test python -m pytest -q devtools/test_copied_component_cp.py docs/test_mathematical_models_documentation.py
+      - name: Qualify combined heat capacity and model selection contracts (Java)
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
+        run: >-
+          ./mvnw -B -ntp
+          -Dtest=WaterCpPlaceholderRegressionTest,ComponentDatabaseIntegrityTest,MathematicalModelsDocumentationTest
+          test
+      - name: Qualify finer hydraulic mesh receipts
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
+        run: ./mvnw -B -ntp -Dtest=NetworkHydraulicModelComparisonTest test
+      - name: Qualify combined electrolyte evidence collector
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
+        run: uv run --project devtools --locked --group test python -m pytest -q devtools/test_collect_electrolyte_evidence.py
+      - name: Qualify the moving three-phase slug refinement regression
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
+        shell: bash
+        run: |
+          mkdir -p target/restart-qualification-logs
+          ./mvnw -B -ntp -Dtest=TwoFluidPipeUnsplitRunTest#movingSlugFilmCouplingIsStableAcrossMeshAndTimeStepRefinement test 2>&1 | tee target/restart-qualification-logs/moving-three-phase.log
       - name: Qualify the tracked-force five-second mesh and time-step matrix
-        run: >-
-          ./mvnw -B -ntp
-          -Dtest=TwoFluidUnsplitTengesdalPreparationTest#fiveSecondTrackedSubcellForceRiserQualificationMustCompleteTheWholeInterval
-          -Dgroups=slow
-          -DexcludedTestGroups=
-          -Dneqsim.unsplit.tengesdal.tracked-force-qualification=true
-          test
-      - name: Qualify tracked-force 180 second tracked-cell entry
-        run: >-
-          ./mvnw -B -ntp
-          -Dtest=TwoFluidUnsplitTengesdalPreparationTest#trackedSubcellForceLongIntervalMustCompleteConservatively
-          -Dgroups=slow
-          -DexcludedTestGroups=
-          -Dneqsim.unsplit.tengesdal.tracked-force-long-qualification=true
-          test
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
+        shell: bash
+        run: |
+          mkdir -p target/restart-qualification-logs
+          ./mvnw -B -ntp -Dtest=TwoFluidUnsplitTengesdalPreparationTest#fiveSecondTrackedSubcellForceRiserQualificationMustCompleteTheWholeInterval -Dgroups=slow -DexcludedTestGroups= -Dneqsim.unsplit.tengesdal.tracked-force-qualification=true test 2>&1 | tee target/restart-qualification-logs/tracked-5s.log
+      - name: Qualify tracked-force 180 second mesh and time-step matrix
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
+        shell: bash
+        run: |
+          mkdir -p target/restart-qualification-logs
+          ./mvnw -B -ntp -Dtest=TwoFluidUnsplitTengesdalPreparationTest#trackedSubcellForceLongIntervalMustCompleteConservatively -Dgroups=slow -DexcludedTestGroups= -Dneqsim.unsplit.tengesdal.tracked-force-long-qualification=true test 2>&1 | tee target/restart-qualification-logs/tracked-180s.log
+      - name: Qualify tracked-force 600 second mesh and time-step matrix
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
+        shell: bash
+        run: |
+          mkdir -p target/restart-qualification-logs
+          ./mvnw -B -ntp -Dtest=TwoFluidUnsplitTengesdalPreparationTest#trackedSubcellForceSustainedIntervalMustCompleteConservatively -Dgroups=slow -DexcludedTestGroups= -Dneqsim.unsplit.tengesdal.tracked-force-sustained-qualification=true test 2>&1 | tee target/restart-qualification-logs/tracked-600s.log
       - name: Exercise the installed restart, instrument holdouts and blind decisions
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
         run: |
           export NEQSIM_CLASSPATH="$PWD/target/classes:$(cat target/restart-classpath.txt)"
           uv run --project devtools --locked python -m unittest discover -s examples/production-decision -v
+      - name: Retain independent nonlinear qualification logs
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: combined-nonlinear-qualification-${{ github.run_attempt }}
+          path: target/restart-qualification-logs/*.log
+          if-no-files-found: error
+  electrolyte-loading:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Evaluate frozen KCl loading-family holdout
+        run: >-
+          ./mvnw -B -ntp
+          -Dtest=KClCO2MousaviLoadingKernelAssessmentTest
+          -Dgroups=slow
+          -DexcludedTestGroups=
+          test
+      - name: Retain combined KCl loading evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: combined-kcl-loading-assessment
+          path: target/co2-kcl-mousavi-loading-kernel-assessment.csv
+          if-no-files-found: error
+  hydrate-solid:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Qualify combined hydrate lattice and chemical management
+        run: >-
+          ./mvnw -B -ntp
+          -Dtest=HydrateChemicalManagementTest,HydrateLatticeSelectionTest
+          -DexcludedTestGroups=
+          test
+      - name: Qualify combined solid root and safety source term
+        if: ${{ !cancelled() }}
+        run: >-
+          ./mvnw -B -ntp
+          -Dtest=SolidFlash1Test,ReleaseSolidRiskAssessmentTest
+          -DexcludedTestGroups=
+          test
+  phase-disappearance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Qualify trace inventory and vanishing-film wall force
+        run: ./mvnw -B -ntp -Dtest=TwoFluidComponentTraceInventoryTest,WallFrictionTest test
+      - name: Qualify conservative blowdown, refill and complete phase disappearance
+        if: ${{ !cancelled() }}
+        run: >-
+          ./mvnw -B -ntp
+          -Dtest=TwoFluidPipePhaseDisappearanceTest
+          -Dgroups=slow
+          -DexcludedTestGroups=
+          test
+
+  h2s-documentation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - uses: astral-sh/setup-uv@v10.4.0
+        with:
+          python-version: '3.13'
+          enable-cache: true
+          cache-dependency-glob: devtools/uv.lock
+      - name: Qualify combined H2S guide and source contracts
+        run: uv run --project devtools --locked --group test python -m pytest -q docs/test_h2s_scavenger_documentation.py
+      - name: Compile and run the documented example
+        if: ${{ !cancelled() }}
+        run: ./mvnw -B -ntp -Dtest=H2SScavengerDocumentationTest test
+  slug-precision-control:
+    # Completed negative controls remain reproducible on demand; the primary job retains every gate.
+    if: github.event_name == 'workflow_dispatch'
+    strategy:
+      fail-fast: false
+      matrix:
+        reconstruction: [original, mass-only, momentum-only]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Prepare exact arithmetic control in disposable checkout
+        id: restore_control
+        shell: bash
+        env:
+          RECONSTRUCTION: ${{ matrix.reconstruction }}
+        run: |
+          git fetch --depth=1 origin 963e2f57d641ab35088be5a3b274eafeb4cd9281 9d634c5b6d6b3c6b4ab73e4489d38cd15162cf4b
+          test "$(git show 963e2f57d641ab35088be5a3b274eafeb4cd9281:src/main/java/neqsim/process/equipment/pipeline/twophasepipe/SlugFilmCoupling.java | git hash-object --stdin)" = 5df9be6c42a58474e3c84cbe82c443c2e9e36d6e
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          import subprocess
+          path = Path("src/main/java/neqsim/process/equipment/pipeline/twophasepipe/SlugFilmCoupling.java")
+          mode = os.environ["RECONSTRUCTION"]
+          original = subprocess.check_output(["git", "show", "963e2f57d641ab35088be5a3b274eafeb4cd9281:" + str(path)], text=True)
+          current = subprocess.check_output(["git", "show", "9d634c5b6d6b3c6b4ab73e4489d38cd15162cf4b:" + str(path)], text=True)
+          assert subprocess.check_output(["git", "rev-parse", "9d634c5b6d6b3c6b4ab73e4489d38cd15162cf4b:" + str(path)], text=True).strip() == "cd23e5d21f8bdb9c9de2437237d2d60fb3e4fa84"
+          def replace_once(source, before, after):
+              assert source.count(before) == 1, "Expected one exact arithmetic block"
+              return source.replace(before, after, 1)
+          if mode == "original":
+              result = original
+          elif mode == "mass-only":
+              result = replace_once(current, "        double velocityChange = relaxation * (mixtureVelocity - velocity);\n        double bodyMomentumChange = bodyMassChanges[phase] * velocity + body[phase] * velocityChange;\n        body[phase + 3] = mean[phase + 3] + bodyMomentumChange;\n        film[phase + 3] = mean[phase + 3] - bodyToFilmLengthRatio * bodyMomentumChange;\n", "        body[phase + 3] = body[phase] * (velocity + relaxation * (mixtureVelocity - velocity));\n        film[phase + 3] = (mean[phase + 3] - fraction * body[phase + 3]) / (1.0 - fraction);\n")
+          else:
+              assert mode == "momentum-only"
+              result = replace_once(current, "    // Compute contrasts before scaling by the short film length. Subtracting\n    // two rounded cell-scale inventories would amplify their rounding in the film.\n    double liquidVolumeChange = MathArrays.linearCombination(bodyHoldup, gasVolume, bodyHoldup, liquidVolume, -1.0,\n        liquidVolume);\n    double bodyToFilmLengthRatio = fraction / (1.0 - fraction);\n    double[] bodyMassChanges = new double[3];\n    for (int phase = 0; phase < 3; phase++) {\n      double relativeChange = phase == 0 ? -liquidVolumeChange / gasVolume : liquidVolumeChange / liquidVolume;\n      bodyMassChanges[phase] = mean[phase] * relativeChange;\n      body[phase] = mean[phase] + bodyMassChanges[phase];\n      film[phase] = mean[phase] - bodyToFilmLengthRatio * bodyMassChanges[phase];\n    }\n", "    for (int phase = 0; phase < 3; phase++) {\n      double massScale = phase == 0 ? (1.0 - bodyHoldup) / (1.0 - meanHoldup) : bodyHoldup / meanHoldup;\n      body[phase] = mean[phase] * massScale;\n      film[phase] = (mean[phase] - fraction * body[phase]) / (1.0 - fraction);\n    }\n    double bodyToFilmLengthRatio = fraction / (1.0 - fraction);\n    double[] bodyMassChanges = new double[3];\n    for (int phase = 0; phase < 3; phase++) {\n      bodyMassChanges[phase] = body[phase] - mean[phase];\n    }\n")
+              result = replace_once(result, "    double gasVolume = mean[0] / density[0];\n    double totalVolume = liquidVolume + gasVolume;\n", "    double totalVolume = liquidVolume + mean[0] / density[0];\n")
+              result = replace_once(result, "import org.apache.commons.math3.util.MathArrays;\n", "")
+          path.write_text(result)
+          print("Diagnostic reconstruction:", mode)
+          PY
+          git diff --stat
+      - name: Run identical moving three-phase regression on control
+        shell: bash
+        run: |
+          mkdir -p target/restart-qualification-logs
+          ./mvnw -B -ntp -Dtest=TwoFluidPipeUnsplitRunTest#movingSlugFilmCouplingIsStableAcrossMeshAndTimeStepRefinement test 2>&1 | tee target/restart-qualification-logs/pre-precision-control.log
+      - name: Run identical five-second tracked-force matrix on control
+        if: ${{ !cancelled() && steps.restore_control.outcome == 'success' }}
+        shell: bash
+        run: |
+          ./mvnw -B -ntp -Dtest=TwoFluidUnsplitTengesdalPreparationTest#fiveSecondTrackedSubcellForceRiserQualificationMustCompleteTheWholeInterval -Dgroups=slow -DexcludedTestGroups= -Dneqsim.unsplit.tengesdal.tracked-force-qualification=true test 2>&1 | tee target/restart-qualification-logs/control-5s.log
+      - name: Run identical 180-second tracked-force matrix on control
+        if: ${{ !cancelled() && steps.restore_control.outcome == 'success' }}
+        shell: bash
+        run: |
+          ./mvnw -B -ntp -Dtest=TwoFluidUnsplitTengesdalPreparationTest#trackedSubcellForceLongIntervalMustCompleteConservatively -Dgroups=slow -DexcludedTestGroups= -Dneqsim.unsplit.tengesdal.tracked-force-long-qualification=true test 2>&1 | tee target/restart-qualification-logs/control-180s.log
+      - name: Run identical 600-second tracked-force matrix on control
+        if: ${{ !cancelled() && steps.restore_control.outcome == 'success' }}
+        shell: bash
+        run: |
+          ./mvnw -B -ntp -Dtest=TwoFluidUnsplitTengesdalPreparationTest#trackedSubcellForceSustainedIntervalMustCompleteConservatively -Dgroups=slow -DexcludedTestGroups= -Dneqsim.unsplit.tengesdal.tracked-force-sustained-qualification=true test 2>&1 | tee target/restart-qualification-logs/control-600s.log
+      - name: Retain control logs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: slug-precision-control-${{ matrix.reconstruction }}-${{ github.run_attempt }}
+          path: target/restart-qualification-logs/*.log
+          if-no-files-found: error
+
+  gerg-heavy-ends:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Qualify combined GERG heavy-end mapping and molar-mass lumping
+        run: ./mvnw -B -ntp -Dtest=NeqSimGERG2008HeavyEndsTest,GergEoscgDocumentationTest test
+
+  film-interphase-transfer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Qualify coupled film and transfer correlations
+        run: >-
+          ./mvnw -B -ntp
+          -Dtest=CoupledGasOilFilmTest,InterfaceTieLineInitialisationTest,ChiltonColburnAnalogyTest,InterphaseStratifiedFlowAnalogyTest
+          -DexcludedTestGroups=
+          test
+      - name: Qualify conservative pipe coupling and component classification
+        if: ${{ !cancelled() }}
+        run: >-
+          ./mvnw -B -ntp
+          -Dtest=TwoFluidPipeFilmInterphaseTransferTest,FilmInterphaseTransferTest,ComponentTypeGetterTest,ComponentDatabaseIntegrityTest
+          -DexcludedTestGroups=
+          test

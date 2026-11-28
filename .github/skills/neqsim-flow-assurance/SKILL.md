@@ -1,7 +1,7 @@
 ---
 name: neqsim-flow-assurance
 description: "Flow assurance patterns for NeqSim. USE WHEN: predicting hydrate, wax, asphaltene, CO2/H2S corrosion (NORSOK M-506), mineral scale and brine mixing, valve scale drift and remediation, sulfur S8 deposition, metal-loss screening, pipeline hydraulics, DNV-RP-F109/F105/F104/F110/F114 screening, water hammer, slug flow, thermal analysis or inhibitor dosing. Code patterns plus the governing standards for every threat."
-last_verified: "2026-11-27"
+last_verified: "2026-11-28"
 ---
 
 # Flow Assurance Analysis with NeqSim
@@ -30,7 +30,15 @@ reconstructed body/film friction owner while untracked cells retain ordinary fri
 16/24-cell startup matrix checks rollback, passive impulse, mass closure and time-step refinement.
 Run the opt-in tracking-enabled five-second 16/0.1, 16/0.05 and 24/0.05 matrix as the next hosted
 numerical gate. Do not advance to tracking-enabled 180/600 s publication or the experimental cycle
-gates until it passes; completion and an enforced sign alone are not physical qualification.
+gates until it passes. The tracking-enabled long gate then repeats 16/0.1, 16/0.05 and 24/0.05 over
+both 180 and 600 s, checking complete publication, zero rejected attempts, phase conservation,
+positive finite pressure, through-flow and inventories, and no more than 15% pressure,
+through-flow or inventory spread from 16/0.1. Completion and an enforced sign alone are not physical
+qualification.
+The tracking-enabled unsplit path freezes one flow-regime/transition-weight active set within a
+Jacobian and line search, refreshes it after an accepted Newton iterate, and re-verifies the unchanged
+conservative endpoint equations. Whole-step regime lagging, relaxed tolerances or extra timestep
+halving are not substitutes for this ownership.
 
 > A complete study report with pipeline drawings (route, profiles, hydrate margin, threat matrix,
 > validation) is produced by `neqsim flow-assurance-report` — see the
@@ -88,10 +96,18 @@ computed here.
 For local dry hydrocarbon gas/oil interface investigations, the existing film boundary
 has a default-off `setCoupledMassHeatTransferEnabled(true)` numerical option. Read
 `docs/fluidmechanics/InterphaseHeatMassTransfer.md` for its residual gates and limited
-positive-composition/finite-transport range. It is not connected to the transient
-`TwoFluidPipe` source. Zero liquid Reynolds number currently gives an unsupported
-stratified transfer coefficient and rejects; never interpret the old unit-matrix
-fallback as stationary-pool evaporation. Keep #4674 physical boundary/full-cycle and
+positive-composition/finite-transport range. Since 2026-11-28 it accepts inert gases
+(N2, CO2, H2S) beside hydrocarbons, a liquid at rest uses the laminar-layer diffusion
+limit `3.41 D / depth`, reversed phases use the magnitude of their Reynolds number, and
+the turbulent gas-side coefficients use the Darcy friction factor divided by eight (they
+were four times too high). When the bulk as a whole is single phase (liquid evaporating
+into gas that can hold all of it) the interface now starts from a tie line of a gas/liquid
+mixture that splits. Above the critical pressure of the gas/liquid mixing line the two are
+miscible and the film has no meaning: test for it before solving. The opt-in
+`FilmInterphaseTransfer` closure does, and connects the film to the
+transient `TwoFluidPipe` source (skill `neqsim-dynamic-simulation`). The stagnant-liquid
+limit is not validated against pool data and has no natural convection, so do not quote
+a stationary-pool evaporation time from it. Keep #4674 physical boundary/full-cycle and
 #4675 heat/area/diffusion qualification separate from numerical convergence.
 
 ## 1. Hydrate Analysis
@@ -559,9 +575,18 @@ double liquidKg = pipe.getLiquidInventory("kg");            // "kg", "tonnes", "
 - **Blowdown from the receiving end delivers liquid.** On the 707 km case the two-fluid transport sent
   1,177 t of condensate through the outlet during blowdown to 80 bara average (bounds: 0 immobile, 2,072 t
   no-slip; 2026-11-27). Report it; the guard only protects the restart.
-- **`TwoFluidPipe` transient cannot run this sequence yet.** Probed 2026-11-27 with a closed inlet and a
-  130→30 bara outlet ramp: it stopped at 10 s (time step collapse, 5 km) and at 180 s (outlet backflow without
-  an outlet composition, 50 km). Use it for steady cross-checks only.
+- **`TwoFluidPipe` runs this sequence too; use it to check the line-pack base case.** Set it up as: steady
+  `run()`, `prepareConservativeEnergyTransientFromSteadyState()`, `closeInlet()`, then
+  `setGasOnlyOutletTakeoff(true)` or `setOutletBoundaryFluid(...)` with `setAllowOutletPhaseBackflow(true)`;
+  undo those before `closeOutlet()`; restart with `CONSTANT_PRESSURE` inlet, `setInletBoundaryFluid(...)` and
+  `setInletPressure(Pa)`. Without that set-up it stops within minutes (10 s and 180 s in a 2026-11-27 probe);
+  that is a set-up error. Measured 2026-11-28 on the 707 km case, 50 cells, end pressures from the line-pack
+  base case: 1,092 t of liquid through the outlet in blowdown (line-pack 1,167 t), 1,878 t in the line at
+  the end of blowdown (2,152 t), line liquid-free 14.2 h after restart (16.5 h), 19.5 h with a gas-only
+  outlet; 84.5 h simulated in 59 min. It removed 2.5 % less mass in blowdown and stayed 4 K warmer, so it
+  condensed less. From 25 to 50 cells these results moved 3–17 % toward the line-pack values (1,057 t,
+  1,660 t, 12.3 h and 18.5 h at 25 cells), so run a mesh pair and say `TwoFluidPipe` is not mesh-converged
+  at 50 cells. Report both models and say that neither is validated against field data.
 - Equilibrium is instantaneous, so "line liquid-free" times are optimistic. Slug flow, annular films and
   terrain slugging are not modelled, and nothing here is validated against measured pipeline data.
 

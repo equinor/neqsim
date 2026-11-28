@@ -1,7 +1,7 @@
 ---
 name: neqsim-dynamic-simulation
 description: "Dynamic simulation guidance for NeqSim. USE WHEN: running transient simulations, modeling startup/shutdown, tuning PID controllers, analyzing pressure/level dynamics, performing blowdown/depressurization, or setting up measurement devices and control loops. Covers runTransient, DynamicProcessHelper, controller tuning, and dynamic equipment configuration."
-last_verified: "2026-11-27"
+last_verified: "2026-11-28"
 ---
 
 # Dynamic Simulation Guidance
@@ -34,7 +34,14 @@ reconstructed body/film friction source; ordinary friction remains owned by untr
 the accepted ledger records the passive momentum impulse. The default 0.1 s 16/24-cell startup matrix
 checks rollback, mass closure and time-step refinement. Run the opt-in tracking-enabled five-second
 16/0.1, 16/0.05 and 24/0.05 matrix as the next hosted numerical gate before any 180/600 s or
-settled-cycle claim. Completion and an enforced sign alone do not promote the experimental gate.
+settled-cycle claim. After it passes, run the same three discretizations over both 180 and 600 s.
+Require whole-interval publication without rejected nonlinear attempts, phase conservation, positive
+finite pressure, through-flow and inventories, and the declared 15% pressure/through-flow/inventory
+spread bound. Completion and an enforced sign alone do not promote the experimental gate.
+For the tracking-enabled unsplit path, retain one flow-regime/transition-weight active set within each
+Jacobian and line search, refresh it only after an accepted Newton iterate, and require endpoint
+verification against the unchanged conservative operator. Do not replace this with whole-step regime
+lagging or a looser residual tolerance.
 
 ## Extend the existing unit operation
 
@@ -646,6 +653,46 @@ Read the
 before selecting a steady or transient configuration. It is the canonical
 distinction between implemented, numerically verified, experimentally qualified,
 failed, and unsupported behavior.
+
+A phase that has relaxed to less than one molecule in a cell is merged, with its momentum, into the
+dominant phase after each accepted conservative-energy substep, so a revaporised liquid ends at
+exactly zero instead of decaying to a subnormal mass that stops the run about 740 relaxation times
+later. Expect `getFinalMassKg(Phase.OIL) == 0.0` and `SINGLE_PHASE_GAS` once the liquid is gone; do
+not add a holdup floor or shorten the run to avoid the old "Endpoint primitive values must be
+finite" stop. In annular flow a film thinner than the wall roughness no longer shields the wall
+(gas wall shear on the exposed fraction `1 - delta / roughness`, full dry-wall shear below 1e-10 m).
+Check the gas velocity profile after a fast refill: values near 200 m/s in trace-liquid cells mean
+the friction limits are missing from the build.
+
+For non-equilibrium condensation and evaporation without a user-supplied rate, set
+`pipe.setFilmInterphaseTransfer(new FilmInterphaseTransfer())` after
+`prepareConservativeEnergyTransientFromSteadyState()`. Each wet cell is solved with the
+Krishna-Standart film model of `neqsim.fluidmechanics` at its own holdup and phase speeds; the
+default law starts every component at its Maxwell-Stefan film flux and approaches local equilibrium
+exponentially, so it is stable on pipeline steps. Three routes are kept apart: a phase that is
+unstable on its own splits in its bulk (gas below its dew point sheds fog, oil above its bubble
+point flashes; `setBulkPhaseSplit`, 30 s split time), two stable phases exchange through the film,
+and phases that are miscible at first contact mix with the radial turbulent mixing time
+(`CellMode.MISCIBLE`, `setMiscibleMixingTime`). So a blowdown condenses close to equilibrium, while
+evaporation during repressurisation is interface-limited: expect liquid to outlast the equilibrium
+prediction in a refill. Do not switch the bulk split off except to show its effect. Read
+`docs/process/non-equilibrium-two-phase-pipe-flow.md` first. Interfacial area is the largest
+uncertainty: run the case twice, with `setDropletField(false)` (default, film interface only) and
+`setDropletField(true)` (entrained droplets, close to equilibrium wherever the gas moves), and
+report both as bounds. Call `setUpdateInterval(300.0)` on long lines (a film solve costs 10–100 ms per cell)
+and read `getLastFilmInterphaseTransferResult()`: `getSlowestTimeConstantsSeconds()`,
+`getCharacteristicTimesSeconds()`, `getModes()`, `getFogRatesKgPerMetreSecond()`,
+`getFlashingRatesKgPerMetreSecond()`, `getMiscibleMixingTimesSeconds()`, `getCounterEquilibrium()`,
+`getFilmFailureCount()`. Liquid in a `MISCIBLE` cell is a rich dense layer, not a second phase:
+report it apart from immiscible liquid. Do not select
+`TransferLaw.FILM_FLUX` on pipeline time steps: it is explicit and turned whole cells into oil at
+the onset of condensation in a 50 km test. `TWO_RESISTANCE_RELAXATION` overstates the rates of butane
+to heptane by a factor of 2 to 8 against the film flux. Report the interface assumptions with the result (`setWallCondensation`, regime-specific
+film nodes via `setRegimeSpecificFilm`, interfacial-friction analogy with natural convection on
+the gas side, 30 s fallback where no film exists) and run `setInterfaceAreaFactor` as a
+sensitivity. The fallback, not a film rate, removes the last liquid once the local pressure passes
+the phase envelope, so quote that liquid-free time as a lower estimate. It requires dry gas/oil of hydrocarbons and
+inert gases and excludes `HydrocarbonPoolTransfer` and `NonEquilibriumFilmTransfer`.
 
 When `TwoFluidPipe.setIncludeMassTransfer(true)` is enabled, flash-driven transfer is phase
 resolved. In conservative-energy Euler mode on a dry gas/oil grid, use conserved component

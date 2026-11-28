@@ -20,6 +20,8 @@ public final class TwoFluidComponentTransport implements Serializable {
   private static final int PHASE_COUNT = 3;
   private static final double MASS_FLOOR_KG = 1.0e-12;
   private static final double MASS_SYNCHRONIZATION_ABSOLUTE_TOLERANCE_KG = 1.0e-10;
+  /** Avogadro constant in molecules per mole. */
+  private static final double AVOGADRO_PER_MOL = 6.02214076e23;
 
   private final String[] componentNames;
   private final double[] componentMolarMassKgMol;
@@ -164,6 +166,64 @@ public final class TwoFluidComponentTransport implements Serializable {
     fluid.setPhaseType(0, forcedPhaseType(phase));
     fluid.initProperties();
     return fluid;
+  }
+
+  /**
+   * Complete the disappearance of every phase that holds less than one molecule in a cell.
+   *
+   * <p>
+   * Equilibrium relaxation removes a phase whose equilibrium target is zero geometrically, so its inventory approaches
+   * zero without reaching it. After several hundred relaxation times the remaining mass is subnormal, its volume
+   * fraction underflows to zero and the conservative endpoint can no longer be represented. A phase inventory below one
+   * molecule is not a phase: its whole component inventory is moved to the phase holding the most moles in the same
+   * cell. Total component mass is unchanged, and the move is recorded in the interphase ledgers. The caller owns the
+   * matching hydrodynamic phase mass and momentum transfer.
+   * </p>
+   *
+   * @return cell/phase mass changes in kg; negative for an absorbed phase, positive for its receiver, zero otherwise
+   */
+  public double[][] absorbSubmolecularPhases() {
+    double[][] transferKg = new double[cellCount][PHASE_COUNT];
+    boolean ownsInventory = false;
+    for (int cell = 0; cell < cellCount; cell++) {
+      double[] moles = new double[PHASE_COUNT];
+      int receiver = GAS;
+      for (int phase = 0; phase < PHASE_COUNT; phase++) {
+        for (int component = 0; component < componentNames.length; component++) {
+          moles[phase] += componentInventoryKg[cell][phase][component] / componentMolarMassKgMol[component];
+        }
+        if (moles[phase] > moles[receiver]) {
+          receiver = phase;
+        }
+      }
+      if (!(moles[receiver] * AVOGADRO_PER_MOL >= 1.0)) {
+        continue;
+      }
+      for (int phase = 0; phase < PHASE_COUNT; phase++) {
+        if (phase == receiver || !(moles[phase] > 0.0) || moles[phase] * AVOGADRO_PER_MOL >= 1.0) {
+          continue;
+        }
+        if (!ownsInventory) {
+          // Accepted inventories may be shared read-only with an earlier snapshot.
+          componentInventoryKg = copy(componentInventoryKg);
+          ownsInventory = true;
+        }
+        for (int component = 0; component < componentNames.length; component++) {
+          double massKg = componentInventoryKg[cell][phase][component];
+          componentInventoryKg[cell][receiver][component] += massKg;
+          componentInventoryKg[cell][phase][component] = 0.0;
+          transferKg[cell][phase] -= massKg;
+          transferKg[cell][receiver] += massKg;
+          if (intervalInterphaseTransferKg != null) {
+            intervalInterphaseTransferKg[phase][component] -= massKg;
+            intervalInterphaseTransferKg[receiver][component] += massKg;
+            intervalCellInterphaseTransferKg[cell][phase][component] -= massKg;
+            intervalCellInterphaseTransferKg[cell][receiver][component] += massKg;
+          }
+        }
+      }
+    }
+    return transferKg;
   }
 
   /** Reset per-call boundary and interphase ledgers while retaining distributed inventories. */
@@ -848,7 +908,10 @@ public final class TwoFluidComponentTransport implements Serializable {
             continue;
           }
           double specificEnthalpyJkg = enthalpyJkg[phase][component];
-          if (!Double.isFinite(specificEnthalpyJkg) && massSource < 0.0 && sum(donorFractions[cell][phase]) > 0.0) {
+          // A phase that holds inventory but is absent from the local equilibrium flash is evaluated at its own
+          // transported composition. That covers a donor that is disappearing and, for finite-rate film transfer,
+          // a component entering a phase that equilibrium would already have removed.
+          if (!Double.isFinite(specificEnthalpyJkg) && sum(donorFractions[cell][phase]) > 0.0) {
             if (forcedDonorEnthalpyJkg[phase] == null) {
               forcedDonorEnthalpyJkg[phase] = forcedPhaseSpecificEnthalpies(localEquilibriumStates[cell],
                   donorFractions[cell][phase], phase, cell);

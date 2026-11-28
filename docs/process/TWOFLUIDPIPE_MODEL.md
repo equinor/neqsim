@@ -47,6 +47,12 @@ untracked cells and applies reconstructed body/film friction once to accepted tr
 A first geometric overlap owns that implicit source even before an admissible body/film contrast
 can be reconstructed; that threshold cell uses its unchanged mean-cell friction closure. This keeps
 the friction owner independent of Newton's trial state while a marker enters a new cell.
+The integration-only arithmetic candidate retains the original mass partition for ordinary film lengths and
+uses the compensated mass contrast when the film fraction is below 2^-10, where division can amplify
+rounding by more than 1024. Momentum retains the contrast form. The 2026-11-28 controlled comparison
+(run 46170536957) found that momentum-only passed the moving three-phase and five-second cases, but
+all sustained 180/600 s cases remained unqualified. The conditioning switch is a candidate, not a
+validated solver recommendation; all original partition and transient acceptance gates still apply.
 The nonlinear momentum residual retains probes at exactly zero phase mass. The physical face
 and source states keep that phase absent, preserving the tracked reconstruction of the other
 phases. Accepted endpoints require zero momentum for every absent phase. If the tracked cell-only solve exhausts line search at a closure
@@ -60,7 +66,20 @@ Tengesdal startup probe uses this configuration at 16 cells with 0.1 and 0.05 s 
 An opt-in tracking-enabled five-second gate now repeats the same 16/0.1, 16/0.05 and
 24/0.05 mesh/time-step matrix with the accepted marker and subcell-force owner. It must
 complete conservatively before any tracking-enabled 180/600 s publication or experimental-cycle
-claim; an enforced sign or a short startup alone is not qualification.
+claim; an enforced sign or a short startup alone is not qualification. The subsequent numerical
+gate repeats those three discretizations over both 180 and 600 s. Every run must publish the whole
+interval without rejected nonlinear attempts, retain positive finite pressure and phase inventories,
+close each phase balance, and sustain positive cumulative through-flow. Inlet pressure, cumulative
+outlet mass, and final gas and combined-liquid inventories must remain within a predeclared 15% spread
+from the 16-cell/0.1 s result. This is a numerical seeded-marker gate, not experimental severe-slugging
+qualification.
+
+For the tracking-enabled unsplit path, flow-regime selection is now a bounded nonlinear active set.
+Each finite-difference Jacobian and its line search retain one dominant regime and transition-weight
+set, then refresh those choices after an accepted Newton iterate. The converged endpoint is still
+verified against the same conservative flux/source equations; this removes regime-switch noise from
+one linearization without lagging the regime for a complete time step or changing any acceptance
+tolerance.
 
 The earlier 65.163 kPa inlet-pressure amplitude is below
 the unchanged 68.6 kPa lower bound; the unchanged liquid-trough detector finds no
@@ -799,6 +818,25 @@ calibrated and then validated against independent public multicomponent rate dat
 is a conservative parameterized screening model—not a predictive pool-depletion, physical restart,
 severe-slugging or hydraulic-pigging qualification.
 
+#### Film-model interphase transfer
+
+`FilmInterphaseTransfer` replaces the relaxation time with non-equilibrium transfer rates from the
+multicomponent film model of the fluid-mechanics package. The model, its settings, verification, measured
+effects and limits are described in
+[Non-equilibrium two-phase pipe flow](non-equilibrium-two-phase-pipe-flow.md).
+
+```java
+pipe.run();
+pipe.prepareConservativeEnergyTransientFromSteadyState();
+FilmInterphaseTransfer film = new FilmInterphaseTransfer();
+film.setUpdateInterval(300.0);          // s; hold the film coefficients of a cell this long
+pipe.setFilmInterphaseTransfer(film);   // replaces the relaxation-time source
+pipe.runTransient(60.0, id);
+```
+
+It requires conservative-energy Euler with component transport and mass transfer, no slug tracking and no
+other finite-rate closure, and dry gas/oil of hydrocarbons and inert gases.
+
 The wall state can be initialized before `run()` with
 `setInitialWallTemperatureProfile(profile, "K")` (or `"C"`). The profile must match the physical
 cell count, is defensively copied, and is retained through accepted event intervals, serialization
@@ -1232,6 +1270,31 @@ Where λL = no-slip liquid holdup, Fr = Froude number = v²/(g×D)
 - Adaptive-minimum and disabled-minimum modes impose no absolute holdup floor. Oil and water split fractions are allowed to reach exact endpoints of zero and one.
 
 These values regularize local constitutive equations; they do not declare that a phase is present. The implementation is literature-inspired and does not claim numerical equivalence with OLGA, LedaFlow, or another commercial simulator.
+
+**Completed disappearance in the conservative-energy transient.** Equilibrium relaxation removes a phase whose
+equilibrium target is zero geometrically: each step takes the fraction `dt / relaxationTime` of what is left, so the
+inventory approaches zero without reaching it. In the conservative-energy route a phase that holds less than one
+molecule in a cell (sum of component mass over molar mass, times the Avogadro constant, below one) is therefore merged
+into the phase holding the most moles in that cell after every accepted substep. Component masses, phase mass and phase
+momentum move together and the phase is left at exactly zero; cell mass, momentum and total energy are unchanged, and
+the transfer is entered in the interphase ledgers. Positive traces of one molecule or more are transported as before.
+Before this step existed (found 2026-11-28) a revaporised liquid decayed to a subnormal mass about 740 relaxation times
+after it had physically gone, its volume fraction underflowed to zero and the run stopped with "Endpoint primitive
+values must be finite": 5.7 h into the restart of a 707 km rich-gas line at the default 30 s relaxation time.
+
+**Annular wall friction with a vanishing film.** The annular closure keeps the gas core off the wall and sends its
+friction through the film. Two limits now apply:
+
+- A film thinner than the wall roughness leaves the roughness elements in the gas core. The gas carries the
+  single-phase wall shear on the exposed fraction `1 - delta / roughness`. The linear exposure is a modelling
+  assumption, not a fitted correlation.
+- A film thinner than `1e-10` m (about one molecular diameter) is not a film. The wall is dry and the gas carries the
+  full single-phase wall shear.
+
+Before these limits a trace film (holdup below about `4e-10` in a 1 m bore) left both phases with zero wall force. In a
+60 s pressure refill of a 5 km, 1.01 m line the inlet-cell gas then reached 196 m/s; with the limits it peaks at 48 m/s
+and the cell pressure no longer jumps by 10 bar when the trace phase disappears. On the 707 km depressurisation and
+restart the trace-liquid cells were stratified or slug, never annular, so that case was not affected.
 
 ### Stratified Flow Holdup
 The `calculateStratifiedHoldupMomentumBalance()` method calculates liquid holdup from momentum balance:

@@ -2,6 +2,7 @@ package neqsim.process.equipment.pipeline.twophasepipe;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -72,12 +73,56 @@ class TwoFluidUnsplitTengesdalPreparationTest {
     verifyTrackedSubcellForces(cells, maximumStep, 5.0);
   }
 
-  /** Require the tracked-force 180 s interval to remain conservative as a marker enters a new cell. */
+  /** Require the tracked-force 180 s mesh and time-step matrix to remain conservative. */
   @Tag("slow")
   @EnabledIfSystemProperty(named = "neqsim.unsplit.tengesdal.tracked-force-long-qualification", matches = "true")
   @Test
   void trackedSubcellForceLongIntervalMustCompleteConservatively() {
-    TwoFluidPipe pipe = createPipe(16);
+    verifyTrackedSubcellForceMatrix(180.0);
+  }
+
+  /** Require the tracked-force 600 s mesh and time-step matrix to remain conservative. */
+  @Tag("slow")
+  @EnabledIfSystemProperty(named = "neqsim.unsplit.tengesdal.tracked-force-sustained-qualification", matches = "true")
+  @Test
+  void trackedSubcellForceSustainedIntervalMustCompleteConservatively() {
+    verifyTrackedSubcellForceMatrix(600.0);
+  }
+
+  /**
+   * Run every tracked-force realization and compare each published refinement with the reference.
+   *
+   * @param duration complete publication interval in seconds
+   */
+  private static void verifyTrackedSubcellForceMatrix(double duration) {
+    int[] cells = {16, 16, 24};
+    double[] maximumSteps = {0.1, 0.05, 0.05};
+    TrackedRun[] runs = new TrackedRun[cells.length];
+    List<Executable> gates = new ArrayList<Executable>();
+    for (int index = 0; index < cells.length; index++) {
+      int realization = index;
+      gates.add(() -> {
+        runs[realization] = assertDoesNotThrow(
+            () -> simulateTrackedSubcellForceRun(cells[realization], maximumSteps[realization], duration),
+            cells[realization] + " cells / " + maximumSteps[realization] + " s must publish " + duration + " s");
+        assertTrackedRun(runs[realization], duration);
+      });
+    }
+    for (int index = 1; index < runs.length; index++) {
+      int refinement = index;
+      gates.add(() -> {
+        // Publication failures are reported by the realization gates above.
+        if (runs[0] != null && runs[refinement] != null) {
+          assertTrackedDiscretizationAgreement(runs[0], runs[refinement]);
+        }
+      });
+    }
+    assertAll(duration + " s tracked-force mesh and time-step qualification", gates.stream());
+  }
+
+  /** Run one tracked-force realization and retain its end-state and interval ledgers. */
+  private static TrackedRun simulateTrackedSubcellForceRun(int cells, double maximumStep, double duration) {
+    TwoFluidPipe pipe = createPipe(cells);
     pipe.setBlendInclinedAnnularSlugTransitions(true);
     pipe.setSignedDonorTransportEnabled(true);
     pipe.setSlugTrackingMode(TwoFluidPipe.SlugTrackingMode.CONSERVATIVE_LAGRANGIAN);
@@ -97,11 +142,43 @@ class TwoFluidUnsplitTengesdalPreparationTest {
     UnsplitTransientSolver solver = new UnsplitTransientSolver();
     solver.setRelativeTolerance(1.0e-9);
     solver.setTimeIntegrationMethod(UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER);
-    pipe.setUnsplitTransientSolver(solver, 0.1);
+    pipe.setUnsplitTransientSolver(solver, maximumStep);
 
-    UUID id = UUID.nameUUIDFromBytes("tracked-force-tengesdal:16:0.1:180.0".getBytes(StandardCharsets.UTF_8));
-    pipe.runTransient(180.0, id);
-    assertPublishedInterval(pipe, id, 0.1, 180.0);
+    UUID id = UUID.nameUUIDFromBytes(
+        ("tracked-force-tengesdal:" + cells + ":" + maximumStep + ":" + duration).getBytes(StandardCharsets.UTF_8));
+    pipe.runTransient(duration, id);
+    TwoFluidMassBalanceReport report = assertPublishedInterval(pipe, id, maximumStep, duration);
+    TrackedRun run = new TrackedRun(cells + " cells / " + maximumStep + " s", duration, pipe.getPressureProfile()[0],
+        report.getOutletMassKg(Phase.TOTAL), report.getFinalMassKg(Phase.GAS), report.getFinalMassKg(Phase.LIQUID),
+        report.getRejectedAttempts());
+    logger.info(
+        "Tracked-force Tengesdal interval: label={}, duration={}, inletPressure={}, outletMass={}, gasInventory={}, liquidInventory={}, rejects={}",
+        run.label, duration, run.inletPressurePa, run.outletMassKg, run.finalGasInventoryKg, run.finalLiquidInventoryKg,
+        run.rejectedAttempts);
+    return run;
+  }
+
+  /** Apply physical endpoint and nonlinear-progress gates to one tracked-force realization. */
+  private static void assertTrackedRun(TrackedRun run, double duration) {
+    assertAll("tracked-force endpoint for " + run.label, () -> assertEquals(duration, run.durationSeconds, 0.0),
+        () -> assertEquals(0, run.rejectedAttempts, "rejected nonlinear attempts"),
+        () -> assertTrue(Double.isFinite(run.inletPressurePa) && run.inletPressurePa > 0.0),
+        () -> assertTrue(Double.isFinite(run.outletMassKg) && run.outletMassKg > 0.0),
+        () -> assertTrue(Double.isFinite(run.finalGasInventoryKg) && run.finalGasInventoryKg > 0.0),
+        () -> assertTrue(Double.isFinite(run.finalLiquidInventoryKg) && run.finalLiquidInventoryKg > 0.0));
+  }
+
+  /** Apply the predeclared 15% end-state spread bound to a refined tracked-force realization. */
+  private static void assertTrackedDiscretizationAgreement(TrackedRun reference, TrackedRun refined) {
+    assertAll("tracked-force discretization agreement for " + refined.label,
+        () -> assertTrue(finiteRelativeSpread(reference.inletPressurePa, refined.inletPressurePa) <= 0.15,
+            "inlet-pressure spread exceeds 15%"),
+        () -> assertTrue(finiteRelativeSpread(reference.outletMassKg, refined.outletMassKg) <= 0.15,
+            "through-flow spread exceeds 15%"),
+        () -> assertTrue(finiteRelativeSpread(reference.finalGasInventoryKg, refined.finalGasInventoryKg) <= 0.15,
+            "gas-inventory spread exceeds 15%"),
+        () -> assertTrue(finiteRelativeSpread(reference.finalLiquidInventoryKg, refined.finalLiquidInventoryKg) <= 0.15,
+            "liquid-inventory spread exceeds 15%"));
   }
 
   @Tag("slow")
@@ -596,6 +673,39 @@ class TwoFluidUnsplitTengesdalPreparationTest {
       this.rejectedAttempts = rejectedAttempts;
       this.maximumClosure = new EnumMap<Phase, Double>(maximumClosure);
       this.finalInventory = new EnumMap<Phase, Double>(finalInventory);
+    }
+  }
+
+  /** Immutable numerical summary from one tracked-force long-interval realization. */
+  private static final class TrackedRun {
+    private final String label;
+    private final double durationSeconds;
+    private final double inletPressurePa;
+    private final double outletMassKg;
+    private final double finalGasInventoryKg;
+    private final double finalLiquidInventoryKg;
+    private final int rejectedAttempts;
+
+    /**
+     * Create a tracked-force summary.
+     *
+     * @param label discretization label
+     * @param durationSeconds accepted interval duration in s
+     * @param inletPressurePa final inlet-cell pressure in Pa
+     * @param outletMassKg cumulative total outlet mass in kg
+     * @param finalGasInventoryKg final gas inventory in kg
+     * @param finalLiquidInventoryKg final combined-liquid inventory in kg
+     * @param rejectedAttempts rejected nonlinear attempt count
+     */
+    private TrackedRun(String label, double durationSeconds, double inletPressurePa, double outletMassKg,
+        double finalGasInventoryKg, double finalLiquidInventoryKg, int rejectedAttempts) {
+      this.label = label;
+      this.durationSeconds = durationSeconds;
+      this.inletPressurePa = inletPressurePa;
+      this.outletMassKg = outletMassKg;
+      this.finalGasInventoryKg = finalGasInventoryKg;
+      this.finalLiquidInventoryKg = finalLiquidInventoryKg;
+      this.rejectedAttempts = rejectedAttempts;
     }
   }
 

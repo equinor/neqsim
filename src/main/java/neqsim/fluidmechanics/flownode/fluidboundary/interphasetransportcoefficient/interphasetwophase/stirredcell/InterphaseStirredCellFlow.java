@@ -39,8 +39,9 @@ public class InterphaseStirredCellFlow extends InterphaseStratifiedFlow {
       double temp = node.getBulkSystem().getPhase(phaseNum).getCp()
           / node.getBulkSystem().getPhase(phaseNum).getMolarMass()
           / node.getBulkSystem().getPhase(phaseNum).getNumberOfMolesInPhase()
-          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getDensity() * node.getVelocity(phaseNum);
-      return 0.5 * this.calcWallFrictionFactor(phaseNum, node) * Math.pow(prandtlNumber, -2.0 / 3.0) * temp;
+          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getDensity()
+          * Math.abs(node.getVelocity(phaseNum));
+      return chiltonColburnStanton(this.calcWallFrictionFactor(phaseNum, node), prandtlNumber) * temp;
     }
   }
 
@@ -54,8 +55,9 @@ public class InterphaseStirredCellFlow extends InterphaseStratifiedFlow {
       double temp = node.getBulkSystem().getPhase(phaseNum).getCp()
           / node.getBulkSystem().getPhase(phaseNum).getMolarMass()
           / node.getBulkSystem().getPhase(phaseNum).getNumberOfMolesInPhase()
-          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getDensity() * node.getVelocity(phaseNum);
-      return 0.5 * this.calcWallFrictionFactor(phaseNum, node) * Math.pow(prandtlNumber, -2.0 / 3.0) * temp;
+          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getDensity()
+          * Math.abs(node.getVelocity(phaseNum));
+      return chiltonColburnStanton(this.calcWallFrictionFactor(phaseNum, node), prandtlNumber) * temp;
     }
   }
 
@@ -66,8 +68,8 @@ public class InterphaseStirredCellFlow extends InterphaseStratifiedFlow {
       return 3.66 / node.getHydraulicDiameter(phaseNum) / schmidtNumber
           * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity();
     } else {
-      double temp = node.getVelocity(phaseNum);
-      return 0.5 * this.calcWallFrictionFactor(phaseNum, node) * Math.pow(schmidtNumber, -2.0 / 3.0) * temp;
+      double temp = Math.abs(node.getVelocity(phaseNum));
+      return chiltonColburnStanton(this.calcWallFrictionFactor(phaseNum, node), schmidtNumber) * temp;
     }
   }
 

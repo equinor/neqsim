@@ -2358,14 +2358,16 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public java.lang.String getComponentType() {
+    // Report the type without storing it: the stored database type ("HC", "inert", ...) is what
+    // isHydrocarbon() and isInert() read, and must survive a call of this getter.
     if (isTBPfraction) {
-      componentType = "TBP";
+      return "TBP";
     } else if (isPlusFraction) {
-      componentType = "plus";
+      return "plus";
     } else if (isNormalComponent) {
-      componentType = "normal";
+      return "normal";
     } else if (isIon) {
-      componentType = "ion";
+      return "ion";
     }
     return componentType;
   }

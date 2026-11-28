@@ -588,7 +588,7 @@ The `COMPTYPE` field classifies components for model selection:
 | Type | Description | Examples |
 |------|-------------|----------|
 | `HC` | Hydrocarbon | methane, ethane, propane, benzene |
-| `inert` | Inert gas | nitrogen, CO2, oxygen, argon |
+| `inert` | Inert gas | nitrogen, CO2, oxygen, argon, hydrogen, helium |
 | `ion` | Ionic species | Na+, Cl-, HCO3-, Ca++ |
 | `amine` | Amine compounds | MDEA, MEA, DEA |
 | `alcohol` | Alcohols | methanol, ethanol |
@@ -596,6 +596,14 @@ The `COMPTYPE` field classifies components for model selection:
 | `ice` | Ice/solid water | ice |
 | `TBP` | TBP pseudo-component | Generated from characterization |
 | `plus` | Plus fraction | C7+, C10+, etc. |
+
+`ComponentInterface.isHydrocarbon()` and `isInert()` read this stored type. `getComponentType()` reports
+`TBP`, `plus`, `normal` or `ion` for the corresponding component kinds and does not change the stored type.
+Until 2026-11-28 the getter overwrote the stored type with the reported one, so after any call of
+`getComponentType()` a database hydrocarbon or inert gas answered `false` to both checks; and hydrogen,
+ortho- and para-hydrogen and argon were stored as `HC`. Code that branches on `isHydrocarbon()` or
+`isInert()` (the flash stability and phase-identification logic, the Pitzer catalog selection, the coupled
+film model) now sees the database type consistently.
 
 ---
 

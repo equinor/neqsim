@@ -463,9 +463,12 @@ public class KrishnaStandartFilmModel extends
           || bulkSystem.hasPhaseType("aqueous")) {
         throw new IllegalStateException("Coupled film requires nonreactive gas/oil with mass and heat enabled");
       }
+      // Hydrocarbons and inert gases (nitrogen, carbon dioxide, hydrogen sulfide, ...) are molecular, non-associating
+      // species in a gas/oil pair. The film equations do not distinguish them; water, glycols and ions stay excluded.
       for (int component = 0; component < bulkSystem.getNumberOfComponents(); component++) {
-        if (!bulkSystem.getPhase(0).getComponent(component).isHydrocarbon()) {
-          throw new IllegalStateException("Coupled film currently requires hydrocarbon components");
+        if (!bulkSystem.getPhase(0).getComponent(component).isHydrocarbon()
+            && !bulkSystem.getPhase(0).getComponent(component).isInert()) {
+          throw new IllegalStateException("Coupled film currently requires hydrocarbon or inert-gas components");
         }
       }
       solveCoupledMassHeatTransfer();
