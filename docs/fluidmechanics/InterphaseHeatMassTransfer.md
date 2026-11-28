@@ -498,9 +498,20 @@ contains no natural convection. Gas at rest keeps the laminar duct limit $Sh = 3
 Interfacial area, film depth and phase appearance still need independent closure
 qualification before predicting seabed pool depletion.
 
-Where the two bulk fluids are miscible (dense phase above the local phase envelope) no
-interface equilibrium exists and the coupled route fails by design; a caller must treat
-that state separately.
+**Interface start when the bulk is single phase (2026-11-28).** `initInterphaseSystem()`
+flashes the bulk as a whole to start the interface. A liquid evaporating into gas that can
+hold all of it is single phase as a whole, although an interface exists. The start then
+used the bulk compositions, which are not in equilibrium with each other. It now flashes
+mixtures of the two bulk phases (50, 25, 75, 10 and 90 mol% liquid) and takes the first
+that splits: a tie line on the mixing line (`InterfaceTieLineInitialisationTest`: equal
+fugacities to 1e-6). In a 50 km blowdown and refill test this cut failed coupled solves
+from 11 to 5 of about 600.
+
+Where the two bulk fluids are miscible at first contact (no mixture of them splits; above
+the critical pressure of the mixing line) no interface equilibrium exists. The coupled
+route then fails, or converges to an interface with identical phases on its two sides and
+a meaningless flux. A caller must test for miscibility and treat that state separately;
+`FilmInterphaseTransfer` does (mode `MISCIBLE`).
 
 ### 5.3 Numerical Stability
 

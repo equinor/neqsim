@@ -73,7 +73,8 @@ class FilmInterphaseTransferTest {
 
   /**
    * The default law starts every component at its Maxwell-Stefan film flux and never carries a component that moves
-   * toward equilibrium past it, whatever the step.
+   * toward equilibrium past it, whatever the step. A component whose film flux points away from equilibrium is held.
+   * The bulk split is off here so that the film law is seen alone.
    */
   @Test
   void defaultLawStartsAtTheFilmFluxAndSaturatesAtEquilibrium() {
@@ -84,19 +85,22 @@ class FilmInterphaseTransferTest {
       FilmInterphaseTransfer explicit = new FilmInterphaseTransfer();
       explicit.setTransferLaw(TransferLaw.FILM_FLUX);
       explicit.setWallCondensation(false);
+      explicit.setBulkPhaseSplit(false);
       FilmInterphaseTransfer relaxing = new FilmInterphaseTransfer();
       relaxing.setWallCondensation(false);
+      relaxing.setBulkPhaseSplit(false);
       assertEquals(TransferLaw.FILM_FLUX_RELAXATION, relaxing.getTransferLaw());
       double shortStep = 1.0e-4;
       double[] filmFlux = explicit
           .calculate(cell.transport, cell.sections, cell.fluid, cell.equilibrium(), 0.0, shortStep)
           .getSourcesKgPerMetreSecond()[0][1];
-      double[] initial = relaxing
-          .calculate(cell.transport, cell.sections, cell.fluid, cell.equilibrium(), 0.0, shortStep)
-          .getSourcesKgPerMetreSecond()[0][1];
+      FilmInterphaseTransfer.Result first = relaxing.calculate(cell.transport, cell.sections, cell.fluid,
+          cell.equilibrium(), 0.0, shortStep);
+      double[] initial = first.getSourcesKgPerMetreSecond()[0][1];
       double[] longStep = relaxing.calculate(cell.transport, cell.sections, cell.fluid, cell.equilibrium(), 0.0, 1.0e9)
           .getSourcesKgPerMetreSecond()[0][1];
       int towardEquilibrium = 0;
+      boolean held = false;
       for (int component = 0; component < filmFlux.length; component++) {
         if (filmFlux[component] * target[0][1][component] > 0.0) {
           towardEquilibrium++;
@@ -105,11 +109,13 @@ class FilmInterphaseTransferTest {
           assertEquals(target[0][1][component], longStep[component] * 1.0e9, 1.0e-9 * Math.abs(target[0][1][component]),
               "end state of component " + component);
         } else {
-          // A transient against equilibrium is bounded by the film flux and by its saturation capacity.
-          assertTrue(Math.abs(initial[component]) <= Math.abs(filmFlux[component]) * (1.0 + 1.0e-9),
-              "transient of component " + component);
+          // A film flux away from equilibrium is held, on any step.
+          assertEquals(0.0, initial[component], 0.0, "held component " + component);
+          assertEquals(0.0, longStep[component], 0.0, "held component " + component + " on a long step");
+          held |= filmFlux[component] != 0.0 && target[0][1][component] != 0.0;
         }
       }
+      assertEquals(held, first.getCounterEquilibrium()[0]);
       assertTrue(towardEquilibrium >= 4, "components moving toward equilibrium: " + towardEquilibrium);
     }
   }
@@ -163,20 +169,147 @@ class FilmInterphaseTransferTest {
    */
   @Test
   void minorityPhaseCannotGrowWhereEquilibriumIsSinglePhase() {
-    Cell cell = cell(80.0, 250.0, 2.0, 0.3);
-    assertEquals(1, cell.equilibrium()[0].getNumberOfPhases());
-    for (TransferLaw law : TransferLaw.values()) {
-      FilmInterphaseTransfer closure = new FilmInterphaseTransfer();
-      closure.setTransferLaw(law);
-      double[][][] sources = closure.calculate(cell.transport, cell.sections, cell.fluid, cell.equilibrium(), 0.0, 5.0)
-          .getSourcesKgPerMetreSecond();
-      double total = 0.0;
-      for (int component = 0; component < sources[0][1].length; component++) {
-        assertTrue(sources[0][1][component] <= 0.0, law + " component " + component);
-        total += sources[0][1][component];
+    for (double pressure : new double[] {120.0, 250.0}) {
+      Cell cell = cell(80.0, pressure, 2.0, 0.3);
+      assertEquals(1, cell.equilibrium()[0].getNumberOfPhases());
+      for (TransferLaw law : TransferLaw.values()) {
+        FilmInterphaseTransfer closure = new FilmInterphaseTransfer();
+        closure.setTransferLaw(law);
+        double[][][] sources = closure
+            .calculate(cell.transport, cell.sections, cell.fluid, cell.equilibrium(), 0.0, 5.0)
+            .getSourcesKgPerMetreSecond();
+        double total = 0.0;
+        for (int component = 0; component < sources[0][1].length; component++) {
+          assertTrue(sources[0][1][component] <= 0.0, law + " component " + component + " at " + pressure);
+          total += sources[0][1][component];
+        }
+        assertTrue(total < 0.0, law + " must remove oil at " + pressure);
       }
-      assertTrue(total < 0.0, law + " must remove oil");
     }
+  }
+
+  /**
+   * A liquid can evaporate into gas that would hold all of it: the cell is single phase at equilibrium, yet mixtures of
+   * the two phases split, so an interface exists and the film is solved, starting from a tie line on the mixing line.
+   */
+  @Test
+  void filmIsSolvedWhereEquilibriumIsSinglePhaseButThePhasesAreImmiscible() {
+    Cell cell = cell(80.0, 120.0, 2.0, 0.3);
+    assertEquals(1, cell.equilibrium()[0].getNumberOfPhases());
+    FilmInterphaseTransfer.Result result = new FilmInterphaseTransfer().calculate(cell.transport, cell.sections,
+        cell.fluid, cell.equilibrium(), 0.0, 1.0);
+    assertEquals(CellMode.FILM, result.getModes()[0], result.getLastFailure());
+    assertEquals(0L, result.getFilmFailureCount());
+    assertTrue(Double.isNaN(result.getMiscibleMixingTimesSeconds()[0]));
+    assertTrue(result.getCharacteristicTimesSeconds()[0] > 0.0);
+  }
+
+  /**
+   * Far above the critical pressure of the gas/oil mixing line no mixture of the two phases splits. There is no
+   * interface: the oil mixes into the gas with the turbulent mixing time, or with a fixed time when one is set.
+   */
+  @Test
+  void miscibleCellMixesWithTheTurbulentMixingTime() {
+    Cell cell = cell(80.0, 250.0, 2.0, 0.3);
+    double[][][] target = cell.transport.createHydrocarbonEquilibriumInventoryChanges(cell.equilibrium(),
+        cell.sections);
+    FilmInterphaseTransfer closure = new FilmInterphaseTransfer();
+    FilmInterphaseTransfer.Result result = closure.calculate(cell.transport, cell.sections, cell.fluid,
+        cell.equilibrium(), 0.0, 10.0);
+    assertEquals(CellMode.MISCIBLE, result.getModes()[0]);
+    double mixingTime = result.getMiscibleMixingTimesSeconds()[0];
+    double reynolds = cell.sections[0].getGasDensity() * 2.0 * DIAMETER / cell.sections[0].getGasViscosity();
+    double frictionVelocity = 2.0 * Math.sqrt(0.316 * Math.pow(reynolds, -0.25) / 8.0);
+    assertEquals(0.5 * DIAMETER / (0.07 * frictionVelocity), mixingTime, 1.0e-9 * mixingTime);
+    assertTrue(mixingTime > 30.0 && mixingTime < 1000.0, "mixing time " + mixingTime + " s");
+    double[][][] sources = result.getSourcesKgPerMetreSecond();
+    for (int component = 0; component < sources[0][1].length; component++) {
+      assertEquals(-cell.transport.getInventoryKg()[0][1][component], target[0][1][component],
+          1.0e-12 * cell.oilMassPerMetre);
+      assertEquals(target[0][1][component] * -Math.expm1(-10.0 / mixingTime) / 10.0, sources[0][1][component],
+          1.0e-12 * cell.oilMassPerMetre);
+    }
+
+    FilmInterphaseTransfer fixed = new FilmInterphaseTransfer();
+    fixed.setMiscibleMixingTime(100.0);
+    assertEquals(100.0, fixed.calculate(cell.transport, cell.sections, cell.fluid, cell.equilibrium(), 0.0, 10.0)
+        .getMiscibleMixingTimesSeconds()[0], 0.0);
+
+    // Gas at rest does not mix a miscible layer.
+    Cell still = cell(80.0, 250.0, 0.0, 0.0);
+    FilmInterphaseTransfer.Result atRest = new FilmInterphaseTransfer().calculate(still.transport, still.sections,
+        still.fluid, still.equilibrium(), 0.0, 10.0);
+    assertEquals(CellMode.MISCIBLE, atRest.getModes()[0]);
+    for (double source : atRest.getSourcesKgPerMetreSecond()[0][1]) {
+      assertEquals(0.0, source, 1.0e-200);
+    }
+  }
+
+  /**
+   * A fall in pressure leaves the gas below its dew point and the oil above its bubble point. Each phase splits on its
+   * own, without an interface: the gas sheds fog and the oil flashes vapour, at the bulk split time. Together they
+   * carry most of the distance to local equilibrium. A rise in pressure leaves both phases stable, and nothing is shed.
+   */
+  @Test
+  void pressureFallIsCarriedByFogAndFlashingWithoutAnInterface() {
+    Cell cell = cell(80.0, 70.0, 2.0, 0.3);
+    double[][][] target = cell.transport.createHydrocarbonEquilibriumInventoryChanges(cell.equilibrium(),
+        cell.sections);
+    double netTarget = 0.0;
+    for (double value : target[0][1]) {
+      netTarget += value;
+    }
+    assertTrue(netTarget > 0.0, "net condensation expected, got " + netTarget);
+    double step = 1.0e-6;
+    FilmInterphaseTransfer closure = new FilmInterphaseTransfer();
+    assertTrue(closure.isBulkPhaseSplit());
+    assertEquals(30.0, closure.getBulkPhaseSplitTime(), 0.0);
+    FilmInterphaseTransfer.Result split = closure.calculate(cell.transport, cell.sections, cell.fluid,
+        cell.equilibrium(), 0.0, step);
+    double fog = split.getFogRatesKgPerMetreSecond()[0];
+    double flashing = split.getFlashingRatesKgPerMetreSecond()[0];
+    assertTrue(fog > 0.0 && flashing > 0.0, "fog " + fog + ", flashing " + flashing);
+    double carried = (fog - flashing) * closure.getBulkPhaseSplitTime();
+    assertEquals(netTarget, carried, 0.15 * netTarget, "bulk split against the equilibrium change");
+
+    FilmInterphaseTransfer slower = new FilmInterphaseTransfer();
+    slower.setBulkPhaseSplitTime(60.0);
+    assertEquals(0.5 * fog, slower.calculate(cell.transport, cell.sections, cell.fluid, cell.equilibrium(), 0.0, step)
+        .getFogRatesKgPerMetreSecond()[0], 1.0e-6 * fog);
+
+    // Without an interface to speak of, the source is the bulk split alone; without the split it vanishes.
+    FilmInterphaseTransfer noInterface = new FilmInterphaseTransfer();
+    noInterface.setInterfaceAreaFactor(1.0e-12);
+    double[] bulkOnly = noInterface.calculate(cell.transport, cell.sections, cell.fluid, cell.equilibrium(), 0.0, step)
+        .getSourcesKgPerMetreSecond()[0][1];
+    double bulkOnlySum = 0.0;
+    for (double value : bulkOnly) {
+      bulkOnlySum += value;
+    }
+    assertEquals(fog - flashing, bulkOnlySum, 1.0e-6 * fog);
+    noInterface.setBulkPhaseSplit(false);
+    FilmInterphaseTransfer.Result interfaceOnly = noInterface.calculate(cell.transport, cell.sections, cell.fluid,
+        cell.equilibrium(), 0.0, step);
+    assertEquals(0.0, interfaceOnly.getFogRatesKgPerMetreSecond()[0], 0.0);
+    assertEquals(0.0, interfaceOnly.getFlashingRatesKgPerMetreSecond()[0], 0.0);
+    for (double value : interfaceOnly.getSourcesKgPerMetreSecond()[0][1]) {
+      assertEquals(0.0, value, 1.0e-9 * fog);
+    }
+
+    // A long step moves what the phases shed, no more.
+    double[] longStep = closure.calculate(cell.transport, cell.sections, cell.fluid, cell.equilibrium(), 0.0, 1.0e9)
+        .getSourcesKgPerMetreSecond()[0][1];
+    double moved = 0.0;
+    for (int component = 0; component < longStep.length; component++) {
+      moved += longStep[component] * 1.0e9;
+    }
+    assertTrue(moved > 0.0 && moved <= netTarget * 1.15, "moved " + moved + " kg/m of " + netTarget);
+
+    Cell compressed = cell(80.0, 86.0, 2.0, 0.3);
+    FilmInterphaseTransfer.Result stable = new FilmInterphaseTransfer().calculate(compressed.transport,
+        compressed.sections, compressed.fluid, compressed.equilibrium(), 0.0, step);
+    assertEquals(0.0, stable.getFogRatesKgPerMetreSecond()[0], 0.0);
+    assertEquals(0.0, stable.getFlashingRatesKgPerMetreSecond()[0], 0.0);
   }
 
   /** A liquid below the minimum film holdup relaxes toward equilibrium with the fallback time. */
@@ -194,7 +327,7 @@ class FilmInterphaseTransferTest {
     assertEquals(0L, result.getFilmSolveCount());
     double[][][] sources = result.getSourcesKgPerMetreSecond();
     for (int component = 0; component < sources[0][1].length; component++) {
-      assertEquals(target[0][1][component] / 50.0, sources[0][1][component],
+      assertEquals(target[0][1][component] * -Math.expm1(-1.0e-3 / 50.0) / 1.0e-3, sources[0][1][component],
           1.0e-12 * Math.abs(target[0][1][component]) + 1.0e-300);
     }
   }
@@ -250,6 +383,10 @@ class FilmInterphaseTransferTest {
     assertThrows(IllegalArgumentException.class, () -> closure.setFallbackRelaxationTime(0.0));
     assertThrows(IllegalArgumentException.class, () -> closure.setInterfaceAreaFactor(Double.NaN));
     assertThrows(IllegalArgumentException.class, () -> closure.setTransferLaw(null));
+    assertThrows(IllegalArgumentException.class, () -> closure.setBulkPhaseSplitTime(0.0));
+    assertThrows(IllegalArgumentException.class, () -> closure.setMiscibleMixingTime(-1.0));
+    closure.setMiscibleMixingTime(Double.NaN);
+    assertTrue(Double.isNaN(closure.getMiscibleMixingTime()));
   }
 
   private static double slowestTimeConstant(Cell cell) {
@@ -287,6 +424,7 @@ class FilmInterphaseTransferTest {
     section.setPressure(equilibriumPressure * 1.0e5);
     section.setTemperature(277.15);
     section.setGasDensity(gasDensity);
+    section.setGasViscosity(fluid.getPhase(0).getPhysicalProperties().getViscosity());
     section.setOilDensity(oilDensity);
     section.setLiquidDensity(oilDensity);
     section.setGasHoldup(1.0 - oilVolumeFraction);

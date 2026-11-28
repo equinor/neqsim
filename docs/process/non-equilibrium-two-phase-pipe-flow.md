@@ -1,6 +1,6 @@
 ---
 title: "Non-equilibrium two-phase pipe flow"
-description: "Non-equilibrium gas/oil heat and mass transfer in the TwoFluidPipe transient: multicomponent film model, transfer coefficients from the local flow, film and droplet interfaces, stable two-resistance rate law, verification, measured effects and limits."
+description: "Non-equilibrium gas/oil heat and mass transfer in the TwoFluidPipe transient: bulk fog formation and flashing, multicomponent film model with transfer coefficients from the local flow, film and droplet interfaces, miscible contact, a rate law that is stable on pipeline time steps, verification, measured effects and limits."
 ---
 
 # Non-equilibrium two-phase pipe flow
@@ -14,7 +14,15 @@ It answers questions such as:
 - how long liquid survives a repressurisation;
 - where the equilibrium assumption is safe and where it is not.
 
-It uses the fluid-boundary film model of `neqsim.fluidmechanics`
+It separates three routes to equilibrium, because they have very different rates:
+
+| Route | When | Rate |
+|-------|------|------|
+| Bulk phase split | A phase is unstable on its own: gas below its dew point forms fog, oil above its bubble point flashes | Fast (bulk split time, default 30 s); needs no interface |
+| Interface transfer | Both phases are stable on their own but not in equilibrium with each other | Multicomponent film model on the local flow; seconds to days |
+| Miscible mixing | No mixture of the two phases splits: there is no interface | Radial turbulent mixing time of the pipe |
+
+The interface route uses the fluid-boundary film model of `neqsim.fluidmechanics`
 ([interphase heat and mass transfer](../fluidmechanics/InterphaseHeatMassTransfer.md)). No rate coefficient
 is supplied by the user.
 
@@ -34,6 +42,8 @@ pipe.runTransient(60.0, id);
 FilmInterphaseTransfer.Result r = pipe.getLastFilmInterphaseTransferResult();
 double[] tau = r.getSlowestTimeConstantsSeconds();       // slowest major component, per film cell
 double[] cellTime = r.getCharacteristicTimesSeconds();   // distance to equilibrium over present rate
+FilmInterphaseTransfer.CellMode[] mode = r.getModes();   // FILM, MISCIBLE, RELAXATION or NONE per cell
+double[] fog = r.getFogRatesKgPerMetreSecond();          // liquid formed in the bulk of the gas
 ```
 
 It requires the conservative-energy Euler transient with component transport and mass transfer, no slug
@@ -43,15 +53,24 @@ tracking and no other finite-rate closure, and dry gas/oil of hydrocarbons and i
 
 ### What is solved in each wet cell
 
-1. **A two-phase flow node** is built from the transported gas and oil compositions (they are not assumed to
+0. **Bulk phase split.** The gas inventory of the cell is flashed on its own at the cell pressure and
+   temperature, and so is the oil inventory. What the gas sheds as liquid is fog; what the oil sheds as vapour
+   is flashing. Both move with the bulk split time. The steps below act between the two stable phases that
+   remain. See [Bulk phase split](#bulk-phase-split-fog-and-flashing).
+1. **Miscibility test.** Mixtures of the two phases (10, 25, 50, 75 and 90 mol% oil) are flashed. If none
+   splits, the phases are miscible at first contact and no film is solved. See
+   [Where no film exists](#where-no-film-exists).
+2. **A two-phase flow node** is built from the transported gas and oil compositions (they are not assumed to
    be in equilibrium), the cell pressure and temperature, the holdup and the phase speeds: stratified, annular
    or slug according to the flow regime of the cell.
-2. **The Krishna-Standart film model** is solved on that node: Maxwell-Stefan diffusion through a gas film and a
+3. **The Krishna-Standart film model** is solved on that node: Maxwell-Stefan diffusion through a gas film and a
    liquid film, phase equilibrium at the interface only, and an interface heat balance. The unknowns are both
    interface compositions, every component flux and the interface temperature ($3n+1$). The solver checks every
-   residual and throws rather than return an unconverged flux.
-3. **Transfer coefficients** come from the flow state of the node (table below).
-4. **A rate law** turns the film solution into component sources for the transient.
+   residual and throws rather than return an unconverged flux. Where the cell as a whole is single phase at
+   equilibrium (a liquid evaporating into gas that can hold all of it), the interface is started from the tie
+   line of a gas/oil mixture that does split.
+4. **Transfer coefficients** come from the flow state of the node (table below).
+5. **A rate law** turns the film solution into component sources for the transient.
 
 ### Transfer coefficients
 
@@ -90,6 +109,27 @@ flow in small tubes and is not validated for large high-pressure lines. The drop
 default: run a case without it (lower bound of the area, largest departure from equilibrium) and with it
 (upper bound, close to equilibrium wherever the gas moves) and report both.
 
+### Bulk phase split: fog and flashing
+
+A film model moves components only across an interface. That is the wrong picture for a pressure fall. A rich
+gas that drops below its dew point condenses in its own bulk, on nuclei that are always present, and the
+droplets then settle; it does not wait for heavy components to diffuse through the gas to the pipe wall. An oil
+that drops below its bubble point forms bubbles.
+
+- The gas inventory of the cell is flashed alone at the cell pressure and temperature. If it splits, the denser
+  phase is fog and goes to the oil. The oil inventory is flashed alone; if it splits, the lighter phase goes to
+  the gas.
+- Each is moved with `setBulkPhaseSplitTime` (default 30 s, the default equilibrium relaxation time of the
+  pipe): $\Delta m = m_{shed}\,(1 - e^{-\Delta t/\tau_s})$. It is a flash of a phase's own content, so it is
+  bounded and stable on any step.
+- The film is solved between the phases as they are after the split, and the film rate law works on what is
+  left of the distance to local equilibrium, $\Delta m_i^{eq} - \Delta m_i^{split}$.
+- In the one-cell example below, a fall from 80 to 70 bara leaves 95 % of the equilibrium change to the bulk
+  split and 5 % to the interface. A rise in pressure leaves both phases stable: evaporation of a liquid into
+  unsaturated gas, and absorption of gas into unsaturated oil, are interface processes.
+- Fog is added to the oil of the cell. It is not carried as droplets with the gas (see limits).
+- `setBulkPhaseSplit(false)` sends everything through the interface. Use it only to see the size of the effect.
+
 ### Rate laws
 
 **Film-flux relaxation (default).** The film solution gives a Maxwell-Stefan flux $N_i$ for every component,
@@ -103,9 +143,11 @@ r_i = \frac{N_i\,M_i\,w}{\Delta m_i^{eq}}$$
 - $\Delta m_i^{eq}$: change of the oil inventory of component $i$ per metre that would bring the cell to local
   equilibrium (from a flash of the conserved cell composition); $w$: interface width; $M_i$: molar mass.
 - For a short step this is the film flux; for a long step it is local equilibrium. It cannot overshoot.
-- A component whose flux points away from its equilibrium inventory is a transient (for example ethane
-  dissolving in the liquid while the liquid as a whole evaporates). It is applied with the same exponential
-  form, saturating when the bulk of the limiting phase reaches the interface composition of the film solution.
+- A component whose film flux points away from its equilibrium inventory is held (zero rate) until the two
+  agree. `Result.getCounterEquilibrium()` flags the cells where this happens. An earlier version carried such
+  components toward the interface composition of the held film solution; near the dew point that let the
+  liquid take up gas without limit, gave nine times the equilibrium liquid in a 50 km test and stopped a
+  707 km blowdown. With the bulk split in front, what is held is small.
 - Where droplets are included, the film flux of a component is raised by the ratio of droplet to film
   conductance, $1 + K^{d}_{ov,i}a_d/(K_{ov,i}w)$.
 
@@ -127,11 +169,26 @@ held for 300 s a 50 km test turned whole cells into "oil" at the onset of conden
 ### Where no film exists
 
 - **Phase appearance and trace phases** (gas or oil volume fraction below `setMinimumHoldup`, default 1e-7):
-  relaxation toward local equilibrium with `setFallbackRelaxationTime` (default 30 s).
-- **Single-phase equilibrium** (the cell composition is above its phase envelope): the phase holding less mass
-  can only lose components, so a miscible "oil" cannot grow by absorbing gas.
-- **Dense phase** (gas and oil miscible): the film solve fails by design and the cell uses the fallback
-  relaxation. `Result.getFilmFailureCount()` counts these.
+  relaxation toward local equilibrium with `setFallbackRelaxationTime` (default 30 s),
+  $\Delta m = \Delta m^{eq}(1 - e^{-\Delta t/\tau})$. Mode `RELAXATION`.
+- **Single-phase equilibrium** (the gas can hold all of the liquid): the phase holding less mass can only lose
+  components. An interface still exists as long as some mixture of the two phases splits, and the film is
+  solved. Mode `FILM`.
+- **Miscible contact** (no mixture of the two phases splits; above the critical pressure of the gas/oil mixing
+  line): there is no interface. The phase the cell should lose mixes into the other with the radial turbulent
+  mixing time of the pipe,
+
+  $$\tau_{mix} = \frac{R^2}{D_t} = \frac{R}{0.07\,u^*},\qquad u^* = \lvert u_G\rvert\sqrt{f/8},\quad
+  f = 0.316\,Re^{-1/4}$$
+
+  but not faster than the fallback relaxation time. Mode `MISCIBLE`;
+  `Result.getMiscibleMixingTimesSeconds()` reports the time. For a 1 m line with dense gas at 2 m/s it is about
+  two minutes. Gas at rest does not mix a miscible layer. The estimate ignores the stable stratification of the
+  denser layer, so it is a lower estimate of the mixing time at low speed. `setMiscibleMixingTime(s)` fixes the
+  time for sensitivity runs. For a rich gas and the condensate it left at 85 bara, the phases became
+  miscible between 110 and 115 bara at −11 °C and between 130 and 140 bara at 0 °C.
+- **Failed film solve**: fallback relaxation for four update intervals, then a new attempt.
+  `Result.getFilmFailureCount()` and `getLastFailure()` report it.
 
 ### Energy
 
@@ -153,10 +210,14 @@ would matter for thick liquid layers, flashing liquids and cryogenic service.
 | `setInterfaceAreaFactor(x)` | 1 | Multiplier on the film interface width, for sensitivity runs. |
 | `setMinimumHoldup(x)` | 1e-7 | Below this gas or oil volume fraction no film is solved. |
 | `setFallbackRelaxationTime(s)` | 30 | Relaxation time where no film can be solved. |
+| `setBulkPhaseSplit(boolean)` | `true` | Fog and flashing vapour move without an interface. |
+| `setBulkPhaseSplitTime(s)` | 30 | Time constant of fog formation and flashing. |
+| `setMiscibleMixingTime(s)` | `NaN` | Fixed mixing time of miscible cells; `NaN` uses the turbulent estimate. |
 | `setFilmCorrections(finiteFlux, thermodynamicFactor)` | both on | Corrections of the film model. |
 
-A film solve costs 10 to 100 ms per cell (6 to 13 components). On long lines use an update interval of a few
-hundred seconds: the coefficients change with the flow, which changes slowly.
+A film solve costs 10 to 300 ms per cell (6 to 13 components). On long lines use an update interval of a few
+hundred seconds: the coefficients change with the flow, which changes slowly. The bulk split adds two flashes
+per wet cell and step.
 
 ## Verification
 
@@ -164,7 +225,11 @@ hundred seconds: the coefficients change with the flow, which changes slowly.
 |-------|------|
 | No source at equilibrium, for hydrocarbons with nitrogen and CO2 | `FilmInterphaseTransferTest`, `CoupledGasOilFilmTest` |
 | Two-resistance law: no overshoot of equilibrium for steps of 1 s to 1e7 s; a very long step reaches equilibrium | `FilmInterphaseTransferTest` |
-| The default law starts every component that moves toward equilibrium at its film flux (within 0.1 %) and ends at local equilibrium for a very long step | `FilmInterphaseTransferTest` |
+| The default law starts every component that moves toward equilibrium at its film flux (within 0.1 %) and ends at local equilibrium for a very long step; a component whose film flux points away from equilibrium has zero rate | `FilmInterphaseTransferTest` |
+| A pressure fall is carried by fog and flashing: their sum is within 15 % of the equilibrium change, scales with the split time, and is all that is left when the interface is removed; a pressure rise sheds nothing | `FilmInterphaseTransferTest` |
+| A cell that is single phase at equilibrium but whose phases are immiscible is solved with the film, without failure | `FilmInterphaseTransferTest` |
+| A miscible cell mixes with $R/(0.07u^*)$, or the fixed time; gas at rest gives no mixing | `FilmInterphaseTransferTest` |
+| The film starts from a tie line (equal fugacities to 1e-6) when the bulk as a whole is single phase | `InterfaceTieLineInitialisationTest` |
 | Rate follows gas speed, interface area and droplet area | `FilmInterphaseTransferTest` |
 | The minority phase cannot grow where equilibrium is single phase | `FilmInterphaseTransferTest` |
 | Turbulent coefficients against Dittus-Boelter, within 20 % for $Re = 10^4$ to $5\times10^6$ | `InterphaseStratifiedFlowAnalogyTest`, `ChiltonColburnAnalogyTest` |
@@ -189,16 +254,17 @@ The stratified surface is 0.31 m²/m in both cases. Light components (methane, C
 
 Results for a 707 km rich-gas line follow in the next revision of this page.
 
-## What a state-of-the-art model would add
+## Limits
 
 | Missing | Effect | Why not here |
 |---------|--------|--------------|
 | Comparison with measured interphase transfer in high-pressure pipe flow | Decides whether any of the rates above can be trusted quantitatively | No public data set is included in the repository. |
-| Separate gas and liquid temperatures | Small for thin condensate layers (see Energy); large for thick layers and flashing liquids | Needs a second energy equation in the conservative transient. |
 | A validated entrainment and droplet-size model for large high-pressure lines, with a transported droplet field | Decides the interfacial area, the largest single uncertainty here | The available correlation is for small tubes; the entrained fraction is the local equilibrium value and droplets are not transported. |
-| Fog formation in supersaturated gas | Faster condensation at onset | Phase appearance uses the fallback relaxation. |
-| Fully implicit multicomponent coupling in the transient | The default law starts from the coupled film fluxes but lets each component approach equilibrium on its own exponential between film solves | An implicit solve of the film equations with the cell inventories costs one film solve per component per iteration. |
-| Transfer in miscible (dense-phase) contact | Decides when the last liquid disappears above the local phase envelope | No interface exists; the fallback relaxation is used. |
+| Fog as a transported droplet field with nucleation and growth kinetics | Fog is formed with a fixed 30 s time constant and added to the liquid layer of the cell at once. In reality it travels with the gas until it settles or deposits, which carries liquid further downstream and keeps a large interface for re-evaporation | Needs a third (droplet) field in the flow equations. |
+| Bubble nucleation kinetics in the liquid | Flashing of the liquid uses the same fixed time constant; a quiet liquid can stay supersaturated longer | No nucleation model. |
+| Separate gas and liquid temperatures | Small for thin condensate layers (see Energy); large for thick layers and flashing liquids | Needs a second energy equation in the conservative transient. |
+| Fully implicit multicomponent coupling in the transient | The film law starts from the coupled film fluxes but lets each component approach equilibrium on its own exponential between film solves, and holds components whose flux points away from equilibrium | An implicit solve of the film equations with the cell inventories costs one film solve per component per iteration. |
+| Mixing of miscible layers under stable stratification | The miscible mixing time is the unstratified turbulent estimate; a dense layer under slow gas mixes more slowly | Needs an entrainment law in the gradient Richardson number. |
 | Natural convection in the liquid and at the wall | Shut-in lines | Only gas-side natural convection above the interface is included. |
 
 ## Related

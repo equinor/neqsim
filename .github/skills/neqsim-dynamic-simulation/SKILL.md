@@ -662,13 +662,22 @@ For non-equilibrium condensation and evaporation without a user-supplied rate, s
 `prepareConservativeEnergyTransientFromSteadyState()`. Each wet cell is solved with the
 Krishna-Standart film model of `neqsim.fluidmechanics` at its own holdup and phase speeds; the
 default law starts every component at its Maxwell-Stefan film flux and approaches local equilibrium
-exponentially, so it is stable on pipeline steps. Read
+exponentially, so it is stable on pipeline steps. Three routes are kept apart: a phase that is
+unstable on its own splits in its bulk (gas below its dew point sheds fog, oil above its bubble
+point flashes; `setBulkPhaseSplit`, 30 s split time), two stable phases exchange through the film,
+and phases that are miscible at first contact mix with the radial turbulent mixing time
+(`CellMode.MISCIBLE`, `setMiscibleMixingTime`). So a blowdown condenses close to equilibrium, while
+evaporation during repressurisation is interface-limited: expect liquid to outlast the equilibrium
+prediction in a refill. Do not switch the bulk split off except to show its effect. Read
 `docs/process/non-equilibrium-two-phase-pipe-flow.md` first. Interfacial area is the largest
 uncertainty: run the case twice, with `setDropletField(false)` (default, film interface only) and
 `setDropletField(true)` (entrained droplets, close to equilibrium wherever the gas moves), and
 report both as bounds. Call `setUpdateInterval(300.0)` on long lines (a film solve costs 10–100 ms per cell)
 and read `getLastFilmInterphaseTransferResult()`: `getSlowestTimeConstantsSeconds()`,
-`getCharacteristicTimesSeconds()`, `getModes()`, `getFilmFailureCount()`. Do not select
+`getCharacteristicTimesSeconds()`, `getModes()`, `getFogRatesKgPerMetreSecond()`,
+`getFlashingRatesKgPerMetreSecond()`, `getMiscibleMixingTimesSeconds()`, `getCounterEquilibrium()`,
+`getFilmFailureCount()`. Liquid in a `MISCIBLE` cell is a rich dense layer, not a second phase:
+report it apart from immiscible liquid. Do not select
 `TransferLaw.FILM_FLUX` on pipeline time steps: it is explicit and turned whole cells into oil at
 the onset of condensation in a 50 km test. `TWO_RESISTANCE_RELAXATION` overstates the rates of butane
 to heptane by a factor of 2 to 8 against the film flux. Report the interface assumptions with the result (`setWallCondensation`, regime-specific
