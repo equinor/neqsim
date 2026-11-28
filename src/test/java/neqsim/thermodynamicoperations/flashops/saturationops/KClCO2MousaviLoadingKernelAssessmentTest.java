@@ -17,15 +17,14 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
- * Discriminates two degree-one excess-Helmholtz CO2-loading kernels with a frozen
- * Mousavi-Chapoy-Burgass concentration-family holdout.
+ * Discriminates two degree-one excess-Helmholtz CO2-loading kernels with a frozen Mousavi-Chapoy-Burgass
+ * concentration-family holdout.
  *
  * @author OpenAI
  * @version 1.0
  */
 class KClCO2MousaviLoadingKernelAssessmentTest {
-  private static final String OUTPUT =
-      "target/co2-kcl-mousavi-loading-kernel-assessment.csv";
+  private static final String OUTPUT = "target/co2-kcl-mousavi-loading-kernel-assessment.csv";
   private static final double WATER_MOLAR_MASS_KG_PER_MOL = 0.01801528;
   private static final double KCL_MOLAR_MASS_KG_PER_MOL = 0.0745513;
   private static final double CO2_FEED_MOLES = 10.0;
@@ -33,27 +32,24 @@ class KClCO2MousaviLoadingKernelAssessmentTest {
   /**
    * Fits A11 and A13 only, then transfers without refit to the frozen A12 family.
    *
-   * <p>The response and predictors are centered within source-table/temperature
-   * blocks before fitting. This removes one block intercept without treating it as
-   * measured loading shape. The two tested chemical-potential increments are
-   * 2 L m0 ms and 2 Z m0 ms^2. No coefficient is activated in the production model.
+   * <p>
+   * The response and predictors are centered within source-table/temperature blocks before fitting. This removes one
+   * block intercept without treating it as measured loading shape. The two tested chemical-potential increments are 2 L
+   * m0 ms and 2 Z m0 ms^2. No coefficient is activated in the production model.
    *
    * @throws Exception if source data, model evaluation, or evidence writing fails
    */
   @Tag("slow")
   @Test
   void a11AndA13CalibrationDiscriminatesA12HoldoutTransfer() throws Exception {
-    List<KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Reference> references =
-        KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.loadReferences();
+    List<KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Reference> references = KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest
+        .loadReferences();
     List<State> states = new ArrayList<State>();
 
     // The source-family partition is fixed before any model evaluation.
-    for (KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Reference reference :
-        references) {
-      boolean calibration = "A11".equals(reference.sourceTable)
-          || "A13".equals(reference.sourceTable);
-      assertTrue(calibration || "A12".equals(reference.sourceTable),
-          reference.pointId + " unexpected source table");
+    for (KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Reference reference : references) {
+      boolean calibration = "A11".equals(reference.sourceTable) || "A13".equals(reference.sourceTable);
+      assertTrue(calibration || "A12".equals(reference.sourceTable), reference.pointId + " unexpected source table");
       states.add(evaluate(reference, calibration));
     }
 
@@ -69,8 +65,7 @@ class KClCO2MousaviLoadingKernelAssessmentTest {
     assertEquals(3, blockCount(states, false));
     assertTrue(linear.degreesOfFreedom > 0);
     assertTrue(linearPlusQuadratic.degreesOfFreedom > 0);
-    assertTrue(linearPlusQuadratic.conditionNumber < 1.0e12,
-        "two-kernel calibration design must be full rank");
+    assertTrue(linearPlusQuadratic.conditionNumber < 1.0e12, "two-kernel calibration design must be full rank");
     assertFinite(linear);
     assertFinite(linearPlusQuadratic);
 
@@ -86,8 +81,7 @@ class KClCO2MousaviLoadingKernelAssessmentTest {
         + "degrees_of_freedom,linear_coefficient,linear_standard_error,"
         + "quadratic_coefficient,quadratic_standard_error,parameter_correlation,"
         + "condition_number,calibration_baseline_rmse,calibration_candidate_rmse,"
-        + "holdout_baseline_rmse,holdout_candidate_rmse,holdout_improved_states,"
-        + "aicc,comparison");
+        + "holdout_baseline_rmse,holdout_candidate_rmse,holdout_improved_states," + "aicc,comparison");
     for (State state : states) {
       report.add(stateRow(state, linear, linearPlusQuadratic));
     }
@@ -101,34 +95,24 @@ class KClCO2MousaviLoadingKernelAssessmentTest {
     Files.write(output, report, StandardCharsets.UTF_8);
   }
 
-  private static State evaluate(
-      KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Reference reference,
+  private static State evaluate(KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Reference reference,
       boolean calibration) {
-    KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result model =
-        KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.calculate(
-            reference, CO2_FEED_MOLES);
-    KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result pureWater =
-        KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.calculate(
-            reference.withoutSalt(), model.co2FeedMoles);
+    KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result model = KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest
+        .calculate(reference, CO2_FEED_MOLES);
+    KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result pureWater = KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest
+        .calculate(reference.withoutSalt(), model.co2FeedMoles);
     double sourceMoleFraction = reference.sourceCo2MolePercent / 100.0;
-    double sourceMolality = sourceMoleFraction
-        / (1.0 - sourceMoleFraction) / WATER_MOLAR_MASS_KG_PER_MOL;
-    double kclMolality = reference.kclMassFractionPercent
-        / (100.0 - reference.kclMassFractionPercent) / KCL_MOLAR_MASS_KG_PER_MOL;
+    double sourceMolality = sourceMoleFraction / (1.0 - sourceMoleFraction) / WATER_MOLAR_MASS_KG_PER_MOL;
+    double kclMolality = reference.kclMassFractionPercent / (100.0 - reference.kclMassFractionPercent)
+        / KCL_MOLAR_MASS_KG_PER_MOL;
     assertTrue(sourceMolality > 0.0, reference.pointId + " positive source loading");
     assertTrue(model.co2Molality > 0.0, reference.pointId + " positive model loading");
-    assertTrue(pureWater.co2Molality > 0.0,
-        reference.pointId + " positive matched pure-water loading");
-    assertTrue(model.componentBalanceResidualMol <= 1.0e-10,
-        reference.pointId + " component closure");
-    assertTrue(model.molecularLogFugacityResidual < 1.0e-8,
-        reference.pointId + " fugacity closure");
-    assertTrue(pureWater.componentBalanceResidualMol <= 1.0e-10,
-        reference.pointId + " pure-water component closure");
-    assertTrue(pureWater.molecularLogFugacityResidual < 1.0e-8,
-        reference.pointId + " pure-water fugacity closure");
-    return new State(reference, calibration, sourceMolality, kclMolality, model,
-        pureWater);
+    assertTrue(pureWater.co2Molality > 0.0, reference.pointId + " positive matched pure-water loading");
+    assertTrue(model.componentBalanceResidualMol <= 1.0e-10, reference.pointId + " component closure");
+    assertTrue(model.molecularLogFugacityResidual < 1.0e-8, reference.pointId + " fugacity closure");
+    assertTrue(pureWater.componentBalanceResidualMol <= 1.0e-10, reference.pointId + " pure-water component closure");
+    assertTrue(pureWater.molecularLogFugacityResidual < 1.0e-8, reference.pointId + " pure-water fugacity closure");
+    return new State(reference, calibration, sourceMolality, kclMolality, model, pureWater);
   }
 
   private static void centerWithinBlocks(List<State> states, boolean calibration) {
@@ -214,8 +198,7 @@ class KClCO2MousaviLoadingKernelAssessmentTest {
     double holdoutBaselineSse = 0.0;
     int holdoutImproved = 0;
     for (State state : states) {
-      double candidate = candidateResidual(state, linearCoefficient,
-          quadraticCoefficient);
+      double candidate = candidateResidual(state, linearCoefficient, quadraticCoefficient);
       if (state.calibration) {
         calibrationSse += candidate * candidate;
         calibrationBaselineSse += state.centeredResponse * state.centeredResponse;
@@ -229,27 +212,19 @@ class KClCO2MousaviLoadingKernelAssessmentTest {
     }
     double variance = calibrationSse / degreesOfFreedom;
     double linearStandardError = Math.sqrt(variance * inverse00);
-    double quadraticStandardError = quadratic ? Math.sqrt(variance * inverse11)
-        : Double.NaN;
-    double correlation = quadratic
-        ? inverse01 / Math.sqrt(inverse00 * inverse11) : Double.NaN;
+    double quadraticStandardError = quadratic ? Math.sqrt(variance * inverse11) : Double.NaN;
+    double correlation = quadratic ? inverse01 / Math.sqrt(inverse00 * inverse11) : Double.NaN;
     int aiccParameters = calibrationBlocks + parameterCount;
-    double aicc = calibrationStates * Math.log(calibrationSse / calibrationStates)
-        + 2.0 * aiccParameters
-        + 2.0 * aiccParameters * (aiccParameters + 1.0)
-            / (calibrationStates - aiccParameters - 1.0);
-    return new Fit(quadratic ? "LINEAR_PLUS_QUADRATIC" : "LINEAR_SALT",
-        calibrationStates, calibrationBlocks, parameterCount, degreesOfFreedom,
-        linearCoefficient, linearStandardError, quadraticCoefficient,
-        quadraticStandardError, correlation, conditionNumber,
-        Math.sqrt(calibrationBaselineSse / calibrationStates),
-        Math.sqrt(calibrationSse / calibrationStates),
-        Math.sqrt(holdoutBaselineSse / count(states, false)),
+    double aicc = calibrationStates * Math.log(calibrationSse / calibrationStates) + 2.0 * aiccParameters
+        + 2.0 * aiccParameters * (aiccParameters + 1.0) / (calibrationStates - aiccParameters - 1.0);
+    return new Fit(quadratic ? "LINEAR_PLUS_QUADRATIC" : "LINEAR_SALT", calibrationStates, calibrationBlocks,
+        parameterCount, degreesOfFreedom, linearCoefficient, linearStandardError, quadraticCoefficient,
+        quadraticStandardError, correlation, conditionNumber, Math.sqrt(calibrationBaselineSse / calibrationStates),
+        Math.sqrt(calibrationSse / calibrationStates), Math.sqrt(holdoutBaselineSse / count(states, false)),
         Math.sqrt(holdoutSse / count(states, false)), holdoutImproved, aicc);
   }
 
-  private static double candidateResidual(State state, double linearCoefficient,
-      double quadraticCoefficient) {
+  private static double candidateResidual(State state, double linearCoefficient, double quadraticCoefficient) {
     return state.centeredResponse - linearCoefficient * state.centeredLinear
         - quadraticCoefficient * state.centeredQuadratic;
   }
@@ -305,8 +280,7 @@ class KClCO2MousaviLoadingKernelAssessmentTest {
     row[12] = state.centeredLinear;
     row[13] = state.centeredQuadratic;
     row[14] = candidateResidual(state, linear.linearCoefficient, 0.0);
-    row[15] = candidateResidual(state, combined.linearCoefficient,
-        combined.quadraticCoefficient);
+    row[15] = candidateResidual(state, combined.linearCoefficient, combined.quadraticCoefficient);
     row[16] = state.model.waterActivity;
     row[17] = state.pureWater.waterActivity;
     row[18] = state.model.co2FugacityBara;
@@ -344,8 +318,7 @@ class KClCO2MousaviLoadingKernelAssessmentTest {
     String comparison = String.format(Locale.ROOT,
         "delta_AICc_combined_minus_linear=%.12g;holdout_RMSE_linear=%.12g;"
             + "holdout_RMSE_combined=%.12g;scientific_disposition_pending_exact_head_artifact",
-        combined.aicc - linear.aicc, linear.holdoutCandidateRmse,
-        combined.holdoutCandidateRmse);
+        combined.aicc - linear.aicc, linear.holdoutCandidateRmse, combined.holdoutCandidateRmse);
     Object[] row = emptyRow();
     row[0] = "COMPARISON";
     row[2] = "FROZEN_A12_HOLDOUT";
@@ -384,10 +357,8 @@ class KClCO2MousaviLoadingKernelAssessmentTest {
     private double centeredLinear;
     private double centeredQuadratic;
 
-    private State(
-        KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Reference reference,
-        boolean calibration, double sourceMolality, double kclMolality,
-        KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result model,
+    private State(KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Reference reference, boolean calibration,
+        double sourceMolality, double kclMolality, KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result model,
         KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.Result pureWater) {
       this.reference = reference;
       this.calibration = calibration;
@@ -420,12 +391,10 @@ class KClCO2MousaviLoadingKernelAssessmentTest {
     private final int holdoutImproved;
     private final double aicc;
 
-    private Fit(String name, int calibrationStates, int calibrationBlocks,
-        int parameterCount, int degreesOfFreedom, double linearCoefficient,
-        double linearStandardError, double quadraticCoefficient,
-        double quadraticStandardError, double parameterCorrelation,
-        double conditionNumber, double calibrationBaselineRmse,
-        double calibrationCandidateRmse, double holdoutBaselineRmse,
+    private Fit(String name, int calibrationStates, int calibrationBlocks, int parameterCount, int degreesOfFreedom,
+        double linearCoefficient, double linearStandardError, double quadraticCoefficient,
+        double quadraticStandardError, double parameterCorrelation, double conditionNumber,
+        double calibrationBaselineRmse, double calibrationCandidateRmse, double holdoutBaselineRmse,
         double holdoutCandidateRmse, int holdoutImproved, double aicc) {
       this.name = name;
       this.calibrationStates = calibrationStates;
