@@ -742,6 +742,35 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     }
   }
 
+  /**
+   * Describe the frozen and staged gas-liquid regime choices without reclassifying or modifying any section.
+   *
+   * @param cell cell containing the largest scaled residual
+   * @return diagnostic suffix for a failed nonlinear attempt, or an empty string when regime ownership is disabled
+   */
+  synchronized String describeRegimeChoices(int cell) {
+    if (!regimeActiveSetEnabled) {
+      return "";
+    }
+    int changedCells = 0;
+    for (int index = 0; index < activeRegimeTemplates.length; index++) {
+      TwoFluidSection active = activeRegimeTemplates[index];
+      TwoFluidSection pending = pendingRegimeTemplates[index];
+      if (active.getFlowRegime() != pending.getFlowRegime()
+          || !Objects.equals(active.getRegimeWeights(), pending.getRegimeWeights())) {
+        changedCells++;
+      }
+    }
+    String details = ", regimeChoicesChangedCells=" + changedCells;
+    if (cell < 0 || cell >= activeRegimeTemplates.length) {
+      return details;
+    }
+    TwoFluidSection active = activeRegimeTemplates[cell];
+    TwoFluidSection pending = pendingRegimeTemplates[cell];
+    return details + ", frozenRegime=" + active.getFlowRegime() + ", frozenRegimeWeights=" + active.getRegimeWeights()
+        + ", stagedRegime=" + pending.getFlowRegime() + ", stagedRegimeWeights=" + pending.getRegimeWeights();
+  }
+
   /** Activate the regime choices staged by the last accepted Newton iterate. */
   private void applyPendingRegimeChoices() {
     if (!regimeActiveSetEnabled) {

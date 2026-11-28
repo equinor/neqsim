@@ -284,12 +284,21 @@ class TwoFluidUnsplitModelAdapterTest {
     equations.applyState(frozenSections, state);
     double[][] expectedFrozen = equations.evaluateTransactionalWithFrozenRegimes(frozenSections, 10.0).getRates();
     assertMatrixEquals(expectedFrozen, frozen.copyConservativeRates());
+    assertTrue(adapter.describeRegimeChoices(0).contains("regimeChoicesChangedCells=0"));
+    assertTrue(adapter.describeRegimeChoices(0).contains("frozenRegime=" + seed));
 
     assertFalse(adapter.updateActiveSet(state, pressure));
+    String stagedChoices = adapter.describeRegimeChoices(0);
+    assertTrue(stagedChoices.contains("regimeChoicesChangedCells=1"));
+    assertTrue(stagedChoices.contains("frozenRegime=" + seed));
+    assertTrue(stagedChoices.contains("stagedRegime=" + classified.getFlowRegime()));
     UnsplitTransientSolver.Evaluation staged = adapter.evaluate(state, pressure, state, pressure, 2.0, Double.NaN,
         false);
     assertMatrixEquals(expectedFrozen, staged.copyConservativeRates());
+    assertEquals(stagedChoices, adapter.describeRegimeChoices(0));
     adapter.beginLinearization(state, pressure);
+    assertTrue(adapter.describeRegimeChoices(0).contains("regimeChoicesChangedCells=0"));
+    assertTrue(adapter.describeRegimeChoices(0).contains("frozenRegime=" + classified.getFlowRegime()));
     UnsplitTransientSolver.Evaluation refreshed = adapter.evaluate(state, pressure, state, pressure, 2.0, Double.NaN,
         false);
     adapter.endLinearization();
