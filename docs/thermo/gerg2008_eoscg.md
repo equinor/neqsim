@@ -113,6 +113,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemGERG2008Eos;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermo.util.gerg.NeqSimGERG2008;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public final class GergExample {
@@ -136,6 +138,30 @@ public final class GergExample {
     assert properties != null && properties.length > 0 : "GERG property vector must be populated";
 
     logger.info("GERG-2008 density: {} kg/m3", density);
+    heavyEndLumping();
+  }
+
+  /** Demonstrates a molar-mass-preserving heavy-end lump in a lean gas. */
+  private static void heavyEndLumping() {
+    SystemInterface fluid = new SystemSrkEos(288.15, 5.0); // K, bara
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.06);
+    fluid.addComponent("propane", 0.03);
+    fluid.addComponent("nitrogen", 0.008);
+    double heavy = 0.002;
+    double xDecane = (0.130 - 0.12825) / (0.14228 - 0.12825); // 130 g/mol
+    fluid.addComponent("n-nonane", heavy * (1.0 - xDecane));
+    fluid.addComponent("nC10", heavy * xDecane);
+    fluid.createDatabase(true);
+    fluid.setMixingRule("classic");
+    new ThermodynamicOperations(fluid).TPflash();
+
+    double gergDensity = fluid.getPhase("gas").getDensity_GERG2008();
+    double gergMolarMass = new NeqSimGERG2008(fluid.getPhase("gas")).getMolarMass();
+    double phaseMolarMass = fluid.getPhase("gas").getMolarMass();
+    assert Double.isFinite(gergDensity) && gergDensity > 0.0;
+    assert Math.abs(gergMolarMass - phaseMolarMass) <= 1.0e-4 * phaseMolarMass;
+    logger.info("GERG density: {} kg/m3; mapped molar mass: {} kg/mol", gergDensity, gergMolarMass);
   }
 }
 ```
@@ -224,23 +250,10 @@ when water or glycol is present).
    heavy-end effect. A small difference is not independent validation either.
    Record the C6+ mole fraction, mapping, conditions and applicable range.
 
-```java
-SystemInterface fluid = new SystemSrkEos(288.15, 5.0);
-fluid.addComponent("methane", 0.90);
-fluid.addComponent("ethane", 0.06);
-fluid.addComponent("propane", 0.03);
-fluid.addComponent("nitrogen", 0.008);
-double heavy = 0.002;
-double xDecane = (0.130 - 0.12825) / (0.14228 - 0.12825); // plus fraction 130 g/mol
-fluid.addComponent("n-nonane", heavy * (1.0 - xDecane));
-fluid.addComponent("nC10", heavy * xDecane);
-fluid.createDatabase(true);
-fluid.setMixingRule("classic");
-new ThermodynamicOperations(fluid).TPflash();
-
-double gergDensity = fluid.getPhase("gas").getDensity_GERG2008();
-double gergMolarMass = new NeqSimGERG2008(fluid.getPhase("gas")).getMolarMass();
-```
+The `heavyEndLumping()` method in the complete `GergExample` above demonstrates
+this procedure for a lean gas and checks the gas-phase density and molar-mass
+balance. `GergEoscgDocumentationTest` extracts, compiles and executes the example
+with assertions enabled.
 
 The regression test `NeqSimGERG2008HeavyEndsTest` covers the mapping error of an
 unlumped 130 g/mol fraction and the molar-mass match after lumping.
