@@ -140,7 +140,9 @@ def test_literal_example_has_one_owner_and_one_marker() -> None:
     ) == 1
     assert "private static final String MARKER = " in java_test
     assert "MathematicalModelsQuickStart.java" in java_test
-    assert '"-source", "8", "-target", "8"' in java_test
+    assert re.search(
+        r'"-source",\s*"8",\s*"-target",\s*"8"', java_test
+    )
     assert "loader.setDefaultAssertionStatus(true);" in java_test
 
 
