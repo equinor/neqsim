@@ -25,8 +25,7 @@ import org.junit.jupiter.api.Test;
  */
 class MathematicalModelsDocumentationTest {
   private static final String GUIDE = "docs/thermo/mathematical_models.md";
-  private static final String MARKER =
-      "<!-- mathematical-models-example: cubic-eos-selection -->";
+  private static final String MARKER = "<!-- mathematical-models-example: cubic-eos-selection -->";
 
   /**
    * Read the maintained guide.
@@ -47,9 +46,8 @@ class MathematicalModelsDocumentationTest {
   private String source(String guide) {
     assertEquals(guide.indexOf(MARKER), guide.lastIndexOf(MARKER), "Marker must be unique");
     assertTrue(guide.indexOf(MARKER) >= 0, "Missing mathematical-model example marker");
-    Matcher fence =
-        Pattern.compile("```java\\r?\\n(.*?)\\r?\\n```", Pattern.DOTALL)
-            .matcher(guide.substring(guide.indexOf(MARKER) + MARKER.length()));
+    Matcher fence = Pattern.compile("```java\\r?\\n(.*?)\\r?\\n```", Pattern.DOTALL)
+        .matcher(guide.substring(guide.indexOf(MARKER) + MARKER.length()));
     assertTrue(fence.find(), "Missing Java fence after mathematical-model example marker");
     return fence.group(1);
   }
@@ -62,13 +60,9 @@ class MathematicalModelsDocumentationTest {
   @Test
   void modelSelectionProgramCompilesAndRuns() throws Exception {
     String guide = guide();
-    assertTrue(
-        guide.contains(
-            "[`MathematicalModelsDocumentationTest`]"
-                + "(../../src/test/java/neqsim/documentation/"
-                + "MathematicalModelsDocumentationTest.java)"));
-    assertTrue(
-        guide.contains("./mvnw -Dtest=MathematicalModelsDocumentationTest test"));
+    assertTrue(guide.contains("[`MathematicalModelsDocumentationTest`]" + "(../../src/test/java/neqsim/documentation/"
+        + "MathematicalModelsDocumentationTest.java)"));
+    assertTrue(guide.contains("./mvnw -Dtest=MathematicalModelsDocumentationTest test"));
 
     java.nio.file.Path directory = Files.createTempDirectory("mathematical-models-");
     java.nio.file.Path file = directory.resolve("MathematicalModelsQuickStart.java");
@@ -77,37 +71,20 @@ class MathematicalModelsDocumentationTest {
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertTrue(compiler != null, "A JDK is required for the literal documentation example");
     StringWriter diagnostics = new StringWriter();
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
       assertTrue(
-          compiler
-              .getTask(
-                  diagnostics,
-                  manager,
-                  null,
-                  Arrays.asList(
-                      "-source",
-                      "8",
-                      "-target",
-                      "8",
-                      "-classpath",
-                      System.getProperty("java.class.path"),
-                      "-d",
-                      directory.toString()),
-                  null,
-                  manager.getJavaFileObjects(file.toFile()))
-              .call(),
+          compiler.getTask(diagnostics, manager, null,
+              Arrays.asList("-source", "8", "-target", "8", "-classpath", System.getProperty("java.class.path"), "-d",
+                  directory.toString()),
+              null, manager.getJavaFileObjects(file.toFile())).call(),
           diagnostics.toString());
     }
 
-    try (URLClassLoader loader =
-        new URLClassLoader(
-            new URL[] {directory.toUri().toURL()}, getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {directory.toUri().toURL()},
+        getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
-      loader
-          .loadClass("MathematicalModelsQuickStart")
-          .getMethod("main", String[].class)
-          .invoke(null, (Object) new String[0]);
+      loader.loadClass("MathematicalModelsQuickStart").getMethod("main", String[].class).invoke(null,
+          (Object) new String[0]);
     }
   }
 }

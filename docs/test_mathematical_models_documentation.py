@@ -92,7 +92,9 @@ def test_metadata_math_and_links() -> None:
     body = FRONT_MATTER.sub("", text, count=1)
     visible = _visible_text(body)
     assert re.search(r"^#\s+", visible, re.MULTILINE) is None
-    assert "$$\n" not in text, "display math must stay compact"
+    assert re.search(r"(?m)^\s*\$\$\s*$", text) is None, (
+        "display math delimiters must stay on the expression line"
+    )
 
     for target in MARKDOWN_LINK.findall(visible):
         candidates = _target_candidates(target)
