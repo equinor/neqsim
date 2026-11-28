@@ -5,6 +5,8 @@ import java.util.Arrays;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.AnnularFlow;
+import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.BubbleFlowNode;
+import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.DropletFlowNode;
 import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.SlugFlowNode;
 import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.StratifiedFlowNode;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
@@ -84,9 +86,14 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * are not transported as a separate field; the entrained fraction is the local equilibrium value. The entrainment
  * correlation puts almost all liquid in droplets in large high-pressure lines, so treat the result with droplets as the
  * upper bound of the interfacial area and the result without them as the lower bound.</li>
- * <li>Stratified, bubble and dispersed cells use the stratified-flow film node, annular and mist cells the annular-flow
- * node and slug cells the slug-flow node (switchable). The gas side follows the Chilton-Colburn analogy on the
- * interfacial friction factor and includes natural convection where the gas is unstably stratified.</li>
+ * <li>Every flow regime has its own film node and interface (switchable): a liquid layer in stratified flow and in
+ * cells classified as single-phase gas that hold a trace of liquid; the slug-flow node on the layer in slug and churn
+ * flow; a wall film on the gas-core perimeter in annular flow; droplets in mist flow (Sauter diameter from
+ * {@link EntrainmentDeposition}, settling speed as slip, Ranz-Marshall outside and Kronig-Brink inside); bubbles in
+ * bubble and dispersed-bubble flow and in cells classified as single-phase liquid (Hinze diameter, Harmathy rise
+ * speed). The regime of a cell is the one the pipe assigns; transitions are not blended. In layer and film regimes the
+ * gas side follows the Chilton-Colburn analogy on the interfacial friction factor and includes natural convection where
+ * the gas is unstably stratified.</li>
  * </ul>
  */
 public final class FilmInterphaseTransfer implements Serializable {
@@ -174,6 +181,10 @@ public final class FilmInterphaseTransfer implements Serializable {
   private double[][] cachedDistanceKgPerMetre;
   /** True while the cached fluxes of a cell and liquid come from a converged film, not from the miscibility test. */
   private boolean[][] cachedSolution;
+  /** Surface of the droplets or bubbles of a cell in m2 per m of pipe; zero where the liquid forms a layer or film. */
+  private double[][] cachedDispersedAreaSquareMetresPerMetre;
+  /** True where the liquid of a cell travels as droplets (mist flow). */
+  private boolean[][] cachedDispersedLiquid;
   private long filmSolveCount;
   private long filmFailureCount;
   private long bulkSplitFailureCount;
@@ -489,10 +500,12 @@ public final class FilmInterphaseTransfer implements Serializable {
   }
 
   /**
-   * Choose the film node of annular, mist and slug cells.
+   * Choose the film node and interface of each flow regime.
    *
-   * @param enabled true to solve annular and mist cells with the annular-flow node (Wallis interfacial friction) and
-   * slug cells with the slug-flow node; false to use the stratified-flow node in every regime
+   * @param enabled true to solve annular cells with the annular-flow node (Wallis interfacial friction), slug and churn
+   * cells with the slug-flow node, mist cells as droplets and bubble cells as bubbles; false to use the stratified-flow
+   * node in every regime, on the gas-core perimeter in annular and mist cells and on the chord of the liquid layer
+   * elsewhere
    */
   public void setRegimeSpecificFilm(boolean enabled) {
     regimeSpecificFilm = enabled;
@@ -683,6 +696,8 @@ public final class FilmInterphaseTransfer implements Serializable {
       cachedTargetKgPerMetre = new double[cells][LIQUIDS][];
       cachedDistanceKgPerMetre = new double[cells][LIQUIDS];
       cachedSolution = new boolean[cells][LIQUIDS];
+      cachedDispersedAreaSquareMetresPerMetre = new double[cells][LIQUIDS];
+      cachedDispersedLiquid = new boolean[cells][LIQUIDS];
       for (int cell = 0; cell < cells; cell++) {
         Arrays.fill(cachedTimeSeconds[cell], Double.NEGATIVE_INFINITY);
         Arrays.fill(cachedRetryTimeSeconds[cell], Double.NEGATIVE_INFINITY);
@@ -911,9 +926,12 @@ public final class FilmInterphaseTransfer implements Serializable {
           double netFlux = sum(flux);
           double netTarget = sum(target);
           boolean condensing = transferLaw == TransferLaw.FILM_FLUX ? netFlux > 0.0 : netTarget > 0.0;
-          // Two liquids share the interface in proportion to their volume.
-          double width = interfaceAreaFactor * interfaceWidth(section, condensing)
-              * (wetHoldup > holdup[liquid] ? holdup[liquid] / wetHoldup : 1.0);
+          // Two liquids share the interface in proportion to their volume; droplets carry their own surface.
+          double share = wetHoldup > holdup[liquid] ? holdup[liquid] / wetHoldup : 1.0;
+          double dispersedArea = cachedDispersedAreaSquareMetresPerMetre[cell][liquid];
+          double width = interfaceAreaFactor
+              * (dispersedArea > 0.0 ? dispersedArea * (cachedDispersedLiquid[cell][liquid] ? 1.0 : share)
+                  : interfaceWidth(section, condensing) * share);
           widths[liquid][cell] = width;
           double gasMoles = 0.0;
           double liquidMoles = 0.0;
@@ -1107,9 +1125,30 @@ public final class FilmInterphaseTransfer implements Serializable {
     pipe.setNodeLength(1.0);
     FlowRegime regime = section.getFlowRegime();
     FlowNodeInterface node;
-    if (regimeSpecificFilm && (regime == FlowRegime.ANNULAR || regime == FlowRegime.MIST)) {
+    cachedDispersedAreaSquareMetresPerMetre[cell][liquid] = 0.0;
+    cachedDispersedLiquid[cell][liquid] = false;
+    double pipeArea = Math.PI * section.getDiameter() * section.getDiameter() / 4.0;
+    if (regimeSpecificFilm && regime == FlowRegime.MIST) {
+      // The liquid travels as droplets in the gas.
+      double[] droplet = dropletSizeAndSlip(bulk, section, liquidHoldup, liquidSpeed);
+      DropletFlowNode dropletNode = new DropletFlowNode(bulk, pipe);
+      dropletNode.setAverageDropletDiameter(droplet[0]);
+      dropletNode.setSpecifiedDispersedPhaseRelativeVelocity(droplet[1]);
+      node = dropletNode;
+      cachedDispersedAreaSquareMetresPerMetre[cell][liquid] = 6.0 * liquidHoldup * pipeArea / droplet[0];
+      cachedDispersedLiquid[cell][liquid] = true;
+    } else if (regimeSpecificFilm && (regime == FlowRegime.BUBBLE || regime == FlowRegime.DISPERSED_BUBBLE
+        || regime == FlowRegime.SINGLE_PHASE_LIQUID)) {
+      // The gas travels as bubbles in the liquid.
+      double[] bubble = bubbleSizeAndSlip(bulk, section, liquidHoldup, liquidSpeed);
+      BubbleFlowNode bubbleNode = new BubbleFlowNode(bulk, pipe);
+      bubbleNode.setAverageBubbleDiameter(bubble[0]);
+      bubbleNode.setSpecifiedDispersedPhaseRelativeVelocity(bubble[1]);
+      node = bubbleNode;
+      cachedDispersedAreaSquareMetresPerMetre[cell][liquid] = 6.0 * section.getGasHoldup() * pipeArea / bubble[0];
+    } else if (regimeSpecificFilm && regime == FlowRegime.ANNULAR) {
       node = new AnnularFlow(bulk, pipe);
-    } else if (regimeSpecificFilm && regime == FlowRegime.SLUG) {
+    } else if (regimeSpecificFilm && (regime == FlowRegime.SLUG || regime == FlowRegime.CHURN)) {
       node = new SlugFlowNode(bulk, pipe);
     } else {
       node = new StratifiedFlowNode(bulk, pipe);
@@ -1168,7 +1207,7 @@ public final class FilmInterphaseTransfer implements Serializable {
     double[] dropletOverall = new double[names.length];
     cachedEntrainedFraction[cell][liquid] = 0.0;
     cachedDropletDiameterMetres[cell][liquid] = 0.0;
-    if (dropletField) {
+    if (dropletField && !cachedDispersedLiquid[cell][liquid]) {
       double gasDensity = nodeBulk.getPhase(0).getDensity("kg/m3");
       double liquidDensity = nodeBulk.getPhase(1).getDensity("kg/m3");
       double gasViscosity = nodeBulk.getPhase(0).getPhysicalProperties().getViscosity();
@@ -1403,6 +1442,102 @@ public final class FilmInterphaseTransfer implements Serializable {
       bulkSplitFailureCount++;
       return null;
     }
+  }
+
+  /**
+   * Sauter diameter and slip speed of the droplets of a mist cell.
+   *
+   * <p>
+   * The diameter comes from {@link EntrainmentDeposition} (critical Weber number), bounded to 10 micrometres and a
+   * tenth of the bore; the slip is the settling speed from the Archimedes number,
+   * {@code Re = Ar / (18 + 0.61 sqrt(Ar))}.
+   * </p>
+   *
+   * @param bulk gas and liquid of the cell with physical properties
+   * @param section hydrodynamic cell
+   * @param liquidHoldup volume fraction of the liquid
+   * @param liquidSpeed velocity of the liquid in m/s
+   * @return droplet diameter in m and slip speed in m/s
+   */
+  private double[] dropletSizeAndSlip(SystemInterface bulk, TwoFluidSection section, double liquidHoldup,
+      double liquidSpeed) {
+    double gasDensity = bulk.getPhase(0).getDensity("kg/m3");
+    double liquidDensity = bulk.getPhase(1).getDensity("kg/m3");
+    double gasViscosity = bulk.getPhase(0).getPhysicalProperties().getViscosity();
+    double liquidViscosity = bulk.getPhase(1).getPhysicalProperties().getViscosity();
+    double surfaceTension = surfaceTension(bulk);
+    double gasSpeed = Math.abs(section.getGasVelocity());
+    double diameter = new EntrainmentDeposition().calculate(FlowRegime.ANNULAR, gasSpeed * (1.0 - liquidHoldup),
+        Math.max(Math.abs(liquidSpeed) * liquidHoldup, 1.0e-9), gasDensity, liquidDensity, gasViscosity,
+        liquidViscosity, surfaceTension, section.getDiameter(), liquidHoldup).dropletDiameter;
+    if (!(diameter > 0.0) || !Double.isFinite(diameter)) {
+      diameter = 1.0e-4;
+    }
+    diameter = Math.min(Math.max(diameter, 1.0e-5), 0.1 * section.getDiameter());
+    double archimedes = 9.81 * Math.pow(diameter, 3.0) * gasDensity * Math.abs(liquidDensity - gasDensity)
+        / (gasViscosity * gasViscosity);
+    double slip = archimedes / (18.0 + 0.61 * Math.sqrt(archimedes)) * gasViscosity / (gasDensity * diameter);
+    return new double[] {diameter, Math.max(slip, MINIMUM_NODE_SPEED)};
+  }
+
+  /**
+   * Sauter diameter and rise speed of the bubbles of a bubble-flow cell.
+   *
+   * <p>
+   * The largest stable bubble in the turbulent liquid follows Hinze, {@code d_max = 0.725 (sigma / rho_L)^0.6
+   * eps^-0.4}, with the dissipation {@code eps = f u_m^3 / (2 D)} of the mixture on a smooth wall; the Sauter diameter
+   * is 0.62 of it, bounded by four capillary lengths and 0.1 mm. The rise speed is that of a distorted bubble
+   * (Harmathy), {@code 1.53 (g sigma (rho_L - rho_G) / rho_L^2)^0.25}.
+   * </p>
+   *
+   * @param bulk gas and liquid of the cell with physical properties
+   * @param section hydrodynamic cell
+   * @param liquidHoldup volume fraction of the liquid
+   * @param liquidSpeed velocity of the liquid in m/s
+   * @return bubble diameter in m and rise speed in m/s
+   */
+  private double[] bubbleSizeAndSlip(SystemInterface bulk, TwoFluidSection section, double liquidHoldup,
+      double liquidSpeed) {
+    double gasDensity = bulk.getPhase(0).getDensity("kg/m3");
+    double liquidDensity = bulk.getPhase(1).getDensity("kg/m3");
+    double liquidViscosity = bulk.getPhase(1).getPhysicalProperties().getViscosity();
+    double surfaceTension = surfaceTension(bulk);
+    double densityDifference = Math.max(Math.abs(liquidDensity - gasDensity), 1.0);
+    double capillaryLength = Math.sqrt(surfaceTension / (9.81 * densityDifference));
+    double mixtureSpeed = Math.abs(section.getGasHoldup() * section.getGasVelocity() + liquidHoldup * liquidSpeed);
+    double reynolds = liquidDensity * mixtureSpeed * section.getDiameter() / liquidViscosity;
+    double diameter = 4.0 * capillaryLength;
+    if (reynolds > 0.0 && Double.isFinite(reynolds)) {
+      double dissipation = 0.316 * Math.pow(reynolds, -0.25) * Math.pow(mixtureSpeed, 3.0)
+          / (2.0 * section.getDiameter());
+      if (dissipation > 0.0) {
+        diameter = Math.min(diameter,
+            0.62 * 0.725 * Math.pow(surfaceTension / liquidDensity, 0.6) * Math.pow(dissipation, -0.4));
+      }
+    }
+    diameter = Math.max(diameter, 1.0e-4);
+    double slip = 1.53 * Math.pow(9.81 * surfaceTension * densityDifference / (liquidDensity * liquidDensity), 0.25);
+    return new double[] {diameter, Math.max(slip, MINIMUM_NODE_SPEED)};
+  }
+
+  /**
+   * Interfacial tension between the two phases of a film bulk.
+   *
+   * @param bulk gas and liquid with physical properties
+   * @return interfacial tension in N/m; 5 mN/m against a hydrocarbon liquid and 50 mN/m against an aqueous liquid where
+   * the property model returns none
+   */
+  private static double surfaceTension(SystemInterface bulk) {
+    double value = Double.NaN;
+    try {
+      value = bulk.getInterphaseProperties().getSurfaceTension(0, 1);
+    } catch (RuntimeException exception) {
+      value = Double.NaN;
+    }
+    if (!(value > 0.0) || !Double.isFinite(value)) {
+      value = bulk.getPhase(1).getType() == PhaseType.AQUEOUS ? 5.0e-2 : 5.0e-3;
+    }
+    return value;
   }
 
   /**

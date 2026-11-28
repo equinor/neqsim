@@ -374,6 +374,85 @@ class FilmInterphaseTransferTest {
     }
   }
 
+  /**
+   * Every flow regime is solved, each with its own interface: a layer (stratified, slug, churn), a wall film (annular),
+   * droplets in the gas (mist) or bubbles in the liquid (bubble and dispersed-bubble flow).
+   */
+  @Test
+  void everyFlowRegimeIsSolvedWithItsOwnInterface() {
+    FilmInterphaseTransfer.Result stratified = regimeResult(FlowRegime.STRATIFIED_WAVY, Double.NaN, true);
+    double chord = stratified.getInterfaceWidthsMetres()[0];
+    for (FlowRegime regime : new FlowRegime[] {FlowRegime.STRATIFIED_SMOOTH, FlowRegime.STRATIFIED_WAVY,
+        FlowRegime.SLUG, FlowRegime.CHURN, FlowRegime.ANNULAR, FlowRegime.MIST, FlowRegime.SINGLE_PHASE_GAS}) {
+      FilmInterphaseTransfer.Result result = regimeResult(regime, Double.NaN, true);
+      assertEquals(CellMode.FILM, result.getModes()[0], regime + ": " + result.getLastFailure());
+      assertEquals(0L, result.getFilmFailureCount(), regime.toString());
+      double time = result.getCharacteristicTimesSeconds()[0];
+      assertTrue(time > 0.0 && Double.isFinite(time), regime + " characteristic time " + time);
+      double width = result.getInterfaceWidthsMetres()[0];
+      if (regime == FlowRegime.MIST) {
+        // Droplets of some tens of micrometres: thousands of square metres per metre of pipe.
+        assertTrue(width > 1000.0 * chord, "droplet surface " + width + " m2/m");
+        assertTrue(time < 1.0e-3 * stratified.getCharacteristicTimesSeconds()[0], "mist time " + time + " s");
+      } else if (regime == FlowRegime.ANNULAR) {
+        assertEquals(Math.PI * DIAMETER * Math.sqrt(1.0 - 0.0), width, 0.02 * Math.PI * DIAMETER);
+      } else {
+        assertEquals(chord, width, 1.0e-12, regime.toString());
+      }
+      // Without the regime-specific treatment the stratified film node is used on the gas-core perimeter in
+      // annular and mist cells and on the chord elsewhere.
+      boolean core = regime == FlowRegime.ANNULAR || regime == FlowRegime.MIST;
+      assertEquals(core ? Math.PI * DIAMETER : chord,
+          regimeResult(regime, Double.NaN, false).getInterfaceWidthsMetres()[0],
+          core ? 0.02 * Math.PI * DIAMETER : 1.0e-12, regime + " without the regime-specific treatment");
+    }
+    double liquidChord = regimeResult(FlowRegime.STRATIFIED_WAVY, 0.85, true).getInterfaceWidthsMetres()[0];
+    for (FlowRegime regime : new FlowRegime[] {FlowRegime.BUBBLE, FlowRegime.DISPERSED_BUBBLE,
+        FlowRegime.SINGLE_PHASE_LIQUID}) {
+      FilmInterphaseTransfer.Result result = regimeResult(regime, 0.85, true);
+      assertEquals(CellMode.FILM, result.getModes()[0], regime + ": " + result.getLastFailure());
+      double time = result.getCharacteristicTimesSeconds()[0];
+      assertTrue(time > 0.0 && Double.isFinite(time), regime + " characteristic time " + time);
+      // Bubbles of 0.1 mm to four capillary lengths in 15 % gas.
+      double width = result.getInterfaceWidthsMetres()[0];
+      assertTrue(width > 10.0 * liquidChord && width < 6.0 * 0.15 * AREA / 1.0e-4, regime + " bubble surface " + width);
+    }
+  }
+
+  /**
+   * Evaluate one cell in a given flow regime.
+   *
+   * @param regime flow regime of the cell
+   * @param liquidFraction liquid volume fraction to impose, or NaN for the equilibrium amount (below 1 %)
+   * @param regimeSpecific true for the regime-specific film treatment
+   * @return closure result
+   */
+  private static FilmInterphaseTransfer.Result regimeResult(FlowRegime regime, double liquidFraction,
+      boolean regimeSpecific) {
+    Cell cell = cell(80.0, 86.0, 5.0, 0.5);
+    if (!Double.isNaN(liquidFraction)) {
+      TwoFluidSection section = cell.sections[0];
+      double gasDensity = section.getGasDensity();
+      double oilDensity = section.getOilDensity();
+      section.setPressure(80.0e5);
+      section.setGasHoldup(1.0 - liquidFraction);
+      section.setLiquidHoldup(liquidFraction);
+      section.setOilHoldup(liquidFraction);
+      section.setGasMassPerLength(gasDensity * (1.0 - liquidFraction) * AREA);
+      section.setOilMassPerLength(oilDensity * liquidFraction * AREA);
+      section.setGasVelocity(1.5);
+      section.setLiquidVelocity(1.0);
+      section.setOilVelocity(1.0);
+      TwoFluidComponentTransport transport = new TwoFluidComponentTransport(cell.fluid, cell.sections);
+      section.setPressure(86.0e5);
+      cell = new Cell(cell.fluid, cell.sections, transport, oilDensity * liquidFraction * AREA);
+    }
+    cell.sections[0].setFlowRegime(regime);
+    FilmInterphaseTransfer closure = new FilmInterphaseTransfer();
+    closure.setRegimeSpecificFilm(regimeSpecific);
+    return closure.calculate(cell.transport, cell.sections, cell.fluid, cell.equilibrium(), 0.0, 1.0);
+  }
+
   /** Invalid settings are rejected. */
   @Test
   void settersValidateTheirArguments() {

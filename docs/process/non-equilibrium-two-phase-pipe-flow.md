@@ -62,8 +62,8 @@ ions), or both; see [Aqueous phase and three phases](#aqueous-phase-and-three-ph
    splits, the phases are miscible at first contact and no film is solved. See
    [Where no film exists](#where-no-film-exists).
 2. **A two-phase flow node** is built from the transported gas and oil compositions (they are not assumed to
-   be in equilibrium), the cell pressure and temperature, the holdup and the phase speeds: stratified, annular
-   or slug according to the flow regime of the cell.
+   be in equilibrium), the cell pressure and temperature, the holdup and the phase speeds. Its kind follows the
+   flow regime of the cell (see [Flow regimes](#flow-regimes)).
 3. **The Krishna-Standart film model** is solved on that node: Maxwell-Stefan diffusion through a gas film and a
    liquid film, phase equilibrium at the interface only, and an interface heat balance. The unknowns are both
    interface compositions, every component flux and the interface temperature ($3n+1$). The solver checks every
@@ -95,9 +95,36 @@ ions), or both; see [Aqueous phase and three phases](#aqueous-phase-and-three-ph
 
 | Interface | Area per metre of pipe | When |
 |-----------|------------------------|------|
-| Stratified surface | chord of the liquid layer | stratified, slug, bubble cells |
-| Gas core | $\pi D\sqrt{\alpha_G}$ | annular and mist cells; cells with net condensation when wall condensation is on |
-| Droplets (optional) | $6\,E\,\alpha_L A/d_{32}$ | where the gas entrains liquid, with `setDropletField(true)` |
+| Liquid layer | chord of the layer | stratified, slug and churn cells |
+| Gas core | $\pi D\sqrt{\alpha_G}$ | annular cells; layer cells with net condensation when wall condensation is on |
+| Droplets | $6\,\alpha_L A/d_{32}$ | mist cells |
+| Bubbles | $6\,\alpha_G A/d_{32}$ | bubble and dispersed-bubble cells |
+| Entrained droplets (optional) | $6\,E\,\alpha_L A/d_{32}$ | added in layer and film cells where the gas entrains liquid, with `setDropletField(true)` |
+
+### Flow regimes
+
+The regime of a cell is the one `TwoFluidPipe` assigns. Each has its own film node and interface:
+
+| Regime | Film node | Interface | Size and slip of the dispersed phase |
+|--------|-----------|-----------|--------------------------------------|
+| Stratified smooth, stratified wavy | stratified | liquid layer | – |
+| Slug, churn | slug (its own enhancement of the coefficients) | liquid layer | – |
+| Annular | annular (Wallis interfacial friction) | gas core | – |
+| Mist | droplet (Ranz-Marshall outside, Kronig-Brink inside) | droplets | $d_{32}$ from `EntrainmentDeposition`, 10 µm to $D/10$; settling speed from the Archimedes number |
+| Bubble, dispersed bubble | bubble (Ranz-Marshall in the liquid) | bubbles | Hinze, $d_{32} = 0.62\cdot0.725\,(\sigma/\rho_L)^{0.6}\varepsilon^{-0.4}$ with $\varepsilon = f u_m^3/2D$, 0.1 mm to four capillary lengths; Harmathy rise speed |
+| Single-phase gas with a trace of liquid | stratified | liquid layer | – |
+| Single-phase liquid with a trace of gas | bubble | bubbles | as bubble flow |
+
+- Mist exchanges within a fraction of a second: 30 µm droplets give thousands of square metres per metre of pipe.
+  A mist cell is at equilibrium for practical purposes.
+- In bubble flow the liquid side controls, and the large liquid inventory makes the time longer: 84 s in a cell
+  with 85 % liquid against 23 s for the same cell treated as stratified.
+- Transitions are not blended: the film of a cell follows the regime label, and a change of label changes the
+  rate at once. `TwoFluidPipe` itself blends its friction closures across transitions.
+- `setRegimeSpecificFilm(false)` uses the stratified node everywhere, on the gas-core perimeter in annular and
+  mist cells and on the chord elsewhere.
+- Slug flow uses the liquid layer of the film region. Bubbles in the slug body and the mixing at the slug front
+  are represented only by the enhancement factors of the slug node.
 
 The entrained fraction $E$ (Ishii and Mishima) and the Sauter diameter $d_{32}$ (critical Weber number) come
 from `EntrainmentDeposition`. Droplets are not transported as a separate field: $E$ is the local equilibrium
@@ -270,6 +297,7 @@ and a 20 km, 6-cell case ran four times slower than with plain relaxation.
 | Gas over water/TEG (CPA): no flux at equilibrium; water leaves the liquid on a pressure fall or a temperature rise and enters it in the opposite cases, at 3 m/s and 0.2 m/s gas speed; TEG flux below 0.1 % of the water flux | `CoupledGasAqueousFilmTest` |
 | Gas with a small aqueous phase, with and without condensate: no source at equilibrium; evaporation through the stratified surface without overshoot; aqueous fog on cooling; absorption without fog on a pressure rise; every component conserved over three phases | `FilmInterphaseTransferAqueousTest` |
 | Rate follows gas speed, interface area and droplet area | `FilmInterphaseTransferTest` |
+| Every flow regime is solved without failure, with its own interface: layer, gas core, droplets (over 1000 times the layer surface, time below a thousandth) or bubbles | `FilmInterphaseTransferTest` |
 | The minority phase cannot grow where equilibrium is single phase | `FilmInterphaseTransferTest` |
 | Turbulent coefficients against Dittus-Boelter, within 20 % for $Re = 10^4$ to $5\times10^6$ | `InterphaseStratifiedFlowAnalogyTest`, `ChiltonColburnAnalogyTest` |
 | Liquid-side heat and mass transfer are the same correlation; natural convection only where unstable; Wallis factor | `InterphaseStratifiedFlowAnalogyTest` |
