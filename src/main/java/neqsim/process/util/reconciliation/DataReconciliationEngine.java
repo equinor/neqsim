@@ -333,7 +333,7 @@ public class DataReconciliationEngine implements java.io.Serializable {
     // Gross error detection via normalized residuals
     // Covariance of adjustments: V_adj = V - V * A^T * solve(AVAT, A * V)
     SimpleMatrix solvedAv = avat.solve(aTimesV);
-    detectGrossErrors(n, aTimesV, solvedAv);
+    detectGrossErrors(n, m, aTimesV, solvedAv);
 
     // Build result
     ReconciliationResult result = new ReconciliationResult(variables);
@@ -378,17 +378,18 @@ public class DataReconciliationEngine implements java.io.Serializable {
    * </p>
    *
    * @param n number of variables
+   * @param constraintCount number of rows in the constraint matrix
    * @param aTimesV covariance-weighted constraint matrix
    * @param solvedAv solution of (A*V*A^T)*X = A*V
    */
-  private void detectGrossErrors(int n, SimpleMatrix aTimesV, SimpleMatrix solvedAv) {
+  private void detectGrossErrors(int n, int constraintCount, SimpleMatrix aTimesV, SimpleMatrix solvedAv) {
     for (int i = 0; i < n; i++) {
       ReconciliationVariable v = variables.get(i);
       double sigma = v.getUncertainty();
       double vii = sigma * sigma;
       // Only diagonal elements of the projected covariance enter the normalized residual.
       double projection = 0.0;
-      for (int k = 0; k < aTimesV.getNumRows(); k++) {
+      for (int k = 0; k < constraintCount; k++) {
         projection += aTimesV.get(k, i) * solvedAv.get(k, i);
       }
       double vadjii = vii - projection;
