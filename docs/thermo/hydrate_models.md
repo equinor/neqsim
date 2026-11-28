@@ -89,6 +89,44 @@ For mixed gases, the structure depends on composition:
 int structure = ((PhaseHydrate) fluid.getPhase(PhaseType.HYDRATE)).getStableHydrateStructure();
 ```
 
+At fixed pressure, the warmer of the two independently converged dissociation temperatures is the
+first stable hydrate on cooling for the cases below. The integer temperature overload fixes the
+lattice for one call. The next no-argument call compares both lattices again.
+
+| SRK-CPA, 55 bara, one mole of water per mole of feed gas | Fixed sI (K) | Fixed sII (K) | Automatic |
+|---|---:|---:|---|
+| Methane | 280.476 | 269.363 | sI |
+| 94 mol% methane, 6 mol% propane in the gas charge | 279.783 | 291.057 | sII |
+
+### Methane hydrate dissociation with methanol and MEG
+
+The unfitted `SystemSrkCPAstatoil` model with mixing rule 10 was assessed against every distilled-water,
+methanol and MEG complete-dissociation point in Semenov et al., Table 1. All 59 points
+converged with gas, aqueous liquid and incipient sI. For each of the 59 measured points, independent fixed-sI and fixed-sII solves confirmed that automatic selection returned the warmer dissociation root. At these conditions the calculated temperature was
+systematically below the measurement, so the model understates the equilibrium temperature for this dataset.
+
+| Aqueous charge | Points | Signed bias (K) | MAE (K) | Largest absolute error (K) |
+|---|---:|---:|---:|---:|
+| Distilled water | 5 | −0.174 | 0.174 | 0.201 |
+| Methanol, five series from 10 to 50 mass% | 29 | −0.672 | 0.672 | 1.492 |
+| MEG, five series from 10 to 50 mass% | 25 | −0.938 | 0.938 | 1.352 |
+
+The tested equilibrium endpoints span 248.34–285.01 K and 4.77–8.84 MPa absolute. The authors
+report expanded uncertainties of 0.1 K and 0.02 MPa (coverage factor 2). Errors above 0.1 K matter
+even when the water fugacity residual is small. The three-point regression tolerance of 0.01 K
+detects numerical changes relative to this baseline. It is independent of experimental accuracy.
+
+The model uses the weighed water and inhibitor charges from the authors' equilibrium workbooks.
+Total methane is reconstructed by matching the 600 mL cell volume at the measured endpoint with a
+hydrate-free TP flash. The subsequent hydrate solve starts from the public API's own temperature guess.
+Changing total methane by ±20% at fixed solution charge and pressure moved the calculated temperature by
+at most 0.00016 K. The assessment retains the faster 0.5 K/h Me50 run, phase diagnostics and the fraction
+of inhibitor in the vapor. Its bounds apply to these methane–water–alcohol systems.
+
+[Pointwise calculations and sensitivity runs](data/semenov_2023_srk_cpa.csv) ·
+[Source data, units and reproduction instructions](../../src/test/resources/data/hydrate/README.md) ·
+[Semenov et al., Data in Brief](https://doi.org/10.1016/j.dib.2023.108892)
+
 ---
 
 ## Thermodynamic Framework

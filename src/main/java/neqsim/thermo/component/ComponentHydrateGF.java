@@ -100,7 +100,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
       double LNFUG_ICE = LNFUG_ICEREF + (VM * 100000 * (pres - 1.0) / (R * temp));
       fugacityCoefficient = Math.exp(LNFUG_ICE);
     } else {
-      for (int structure = 0; structure < 2; structure++) {
+      for (int structure = firstCandidateStructure(); structure <= lastCandidateStructure(); structure++) {
         hydrateStructure = structure;
         if (componentName.equals("water")) {
           // this is the empty hydrate fugacity devited by pressure (why??)
