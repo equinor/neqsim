@@ -252,7 +252,66 @@ compared.
 
 The stratified surface is 0.31 m²/m in both cases. Light components (methane, CO2) reach equilibrium in seconds.
 
-Results for a 707 km rich-gas line follow in the next revision of this page.
+**One cell, same gas, a fall from 80 to 70 bara**: the equilibrium change is 0.202 kg of liquid per metre. The
+gas sheds 0.280 kg/m as fog and the liquid flashes 0.088 kg/m, a net 0.191 kg/m (95 %) without an interface.
+After a rise from 80 to 86 bara neither phase sheds anything.
+
+**50 km line** (1.01 m bore, 10 cells, 13-component rich gas, blown down from 130 to 86 bara in 2 h, shut in
+30 min, refilled toward 200 bara in 2 h with the outlet shut, then held; 2026-11-28). Liquid in the line, t:
+
+| Time (h) | Stage | Inlet pressure (bara) | 30 s relaxation to equilibrium | Non-equilibrium model |
+|----------|-------|-----------------------|--------------------------------|-----------------------|
+| 1.25 | blowdown | 104 | 11 | 11 |
+| 1.50 | blowdown | 99 | 64 | 68 |
+| 2.00 | end of blowdown | 87 | 191 | 182 |
+| 2.50 | end of shut-in | 87 | 178 | 184 |
+| 2.75 | refill | 99 | 101 | 152 |
+| 3.00 | refill | 112 | 9 | 95 |
+| 3.25 | refill | 127 | 0 | 50 |
+| 3.50 | refill | 141 | 0 | 11 |
+| 4.00 | refill | 170 | 0 | 1.5 |
+| 4.50 | end of refill | 199 | 0 | 0.4 |
+
+- Condensation follows equilibrium within 5 %: the gas forms fog as it passes its dew point.
+- Evaporation lags. When the equilibrium run is dry (3.25 h) the non-equilibrium run still holds a quarter of
+  its liquid.
+- From 3.0 h one or two cells are miscible. The 0.1 to 0.4 t left at the end is a rich layer in a miscible cell
+  at the closed end, where the gas is at rest.
+- 631 film solves, 5 failed (0.8 %). With the first version of the default law the same case gave 687 t of
+  "liquid" at 1.6 h and 33 failures in 121 solves.
+
+**707 km rich-gas export line** (1.01 m bore, real seabed profile, 25 cells; inlet shut, line settled at 130 bara and
+blown down through the outlet to 84 bara average in 16 h, held 12 h, repressurised from the inlet with the outlet
+shut for about 18 h and then opened; 60 s steps, film update every 300 s; 2026-11-28):
+
+| Quantity | 30 s relaxation | Film interface | Film and droplets | Film, no bulk split |
+|----------|-----------------|----------------|-------------------|---------------------|
+| Liquid at end of blowdown (t) | 1,660 | 1,659 | 1,662 | 1,356 |
+| Liquid through the outlet in blowdown (t) | 1,057 | 1,053 | 1,059 | 1,057 |
+| Liquid at end of the 12 h hold (t) | 1,141 | 1,551 | 1,417 | 1,334 |
+| Liquid 6 h after restart (t) | 402 | 749 | 621 | 949 |
+| Liquid 12 h after restart (t) | 17 | 142 | 66 | 280 |
+| Line free of liquid (h after restart) | 12.8 | 20.5 | 17.3 | 19.0 |
+| Film solves / failed | – | 16,855 / 9 | 16,380 / 5 | 17,349 / 51 |
+| Computer time (min) | 18 | 27 | 27 | 30 |
+
+- **Blowdown:** the same liquid as the equilibrium run, within 0.2 %. Without the bulk split the line would hold
+  18 % less, because condensation would have to diffuse to the wall. That column is a sensitivity, not a
+  prediction.
+- **Hold:** with relaxation a third of the liquid evaporates again in 12 h as the line settles and warms. With
+  the film model 7 to 15 % does: the gas is nearly at rest and the interface is small.
+- **Restart:** the liquid lasts 4.5 to 8 h longer. The last 110 t sits in the 85 km before the closed outlet,
+  where the gas moves at 0.1 to 0.6 m/s at 115 to 135 bara and the characteristic times are 6 to 40 h. It goes
+  within 2 h of the outlet opening, when the gas there starts to move and the characteristic time falls to
+  minutes.
+- **Consequence for the case:** the outlet-opening time was taken from an equilibrium study. With the film
+  interface 26 t of liquid is still in the line when the outlet opens. None reached the outlet (0.002 t).
+- **Droplets** bound the interfacial area from above; the truth is between the two non-equilibrium columns.
+- In the two non-equilibrium columns at most one cell was miscible at a time, holding up to 9 t.
+- With the droplet interface, and without the bulk split, the line took in 1.9 % and 2.4 % more gas during the
+  restart than the other two runs at the same end pressures. The cause is not established. Compare liquid amounts between
+  the columns, not flows.
+- The runs are not mesh-converged (see [TwoFluidPipe model](TWOFLUIDPIPE_MODEL.md)).
 
 ## Limits
 
