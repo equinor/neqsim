@@ -108,6 +108,7 @@ jobs:
           uv run --project devtools --locked --group test python -m pytest -q \
             devtools/test_agent_search.py \
             devtools/test_check_documentation_search.py \
+            devtools/test_check_path_lengths.py \
             devtools/test_industrial_sm_benchmark.py \
             devtools/test_skill_search.py \
             devtools/test_discovery_registry.py \

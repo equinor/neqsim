@@ -42,7 +42,7 @@ public final class S8QualifiedTransitionChainCheckpoint {
    */
   public static Result create(String checkpointTransitionChainCheckpointTransitionChainCheckpointIdentifier,
       long checkpointTransitionChainCheckpointTransitionChainCheckpointSequence,
-      AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.Result chain) {
+      S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.Result chain) {
     requireText(checkpointTransitionChainCheckpointTransitionChainCheckpointIdentifier,
         "Checkpoint-transition-chain checkpoint-transition-chain checkpoint identifier");
     if (checkpointTransitionChainCheckpointTransitionChainCheckpointSequence < 0L) {
@@ -82,7 +82,7 @@ public final class S8QualifiedTransitionChainCheckpoint {
    */
   public static boolean verify(String checkpointTransitionChainCheckpointTransitionChainCheckpointIdentifier,
       long checkpointTransitionChainCheckpointTransitionChainCheckpointSequence,
-      AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.Result chain,
+      S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.Result chain,
       Result result) {
     if (result == null) {
       throw new IllegalArgumentException(
@@ -134,13 +134,13 @@ public final class S8QualifiedTransitionChainCheckpoint {
 
   /** Validate one already-qualified transition chain without replaying its receipts. */
   private static void validateChain(
-      AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.Result chain) {
+      S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.Result chain) {
     if (chain == null) {
       throw new IllegalArgumentException("S8 checkpoint-transition chain is required");
     }
-    if (!AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.DIGEST_ALGORITHM
+    if (!S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.DIGEST_ALGORITHM
         .equals(chain.getDigestAlgorithm())
-        || !AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.SCHEMA_IDENTIFIER
+        || !S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.SCHEMA_IDENTIFIER
             .equals(chain.getSchemaIdentifier())) {
       throw new IllegalArgumentException("Transition-chain encoding is not supported");
     }
@@ -205,7 +205,7 @@ public final class S8QualifiedTransitionChainCheckpoint {
   /** Calculate the canonical checkpoint digest. */
   private static byte[] digest(String checkpointTransitionChainCheckpointTransitionChainCheckpointIdentifier,
       long checkpointTransitionChainCheckpointTransitionChainCheckpointSequence,
-      AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.Result chain) {
+      S8ManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.Result chain) {
     try {
       MessageDigest messageDigest = MessageDigest.getInstance(DIGEST_ALGORITHM);
       ByteArrayOutputStream bytes = new ByteArrayOutputStream();
