@@ -17,6 +17,9 @@ on:
       - 'src/test/java/neqsim/process/equipment/pipeline/TwoFluidComponentTraceInventoryTest.java'
       - 'src/main/java/neqsim/process/equipment/pipeline/twophasepipe/**'
       - 'src/test/java/neqsim/process/equipment/pipeline/twophasepipe/TwoFluidUnsplitTengesdalPreparationTest.java'
+      - 'docs/process/H2S_scavenger_guide.md'
+      - 'docs/test_h2s_scavenger_documentation.py'
+      - 'src/test/java/neqsim/documentation/H2SScavengerDocumentationTest.java'
       - '.github/workflows/ai-production-restart-qualification.yml'
 
 permissions:
@@ -174,3 +177,54 @@ jobs:
           -Dgroups=slow
           -DexcludedTestGroups=
           test
+
+  h2s-documentation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - uses: astral-sh/setup-uv@v10.4.0
+        with:
+          python-version: '3.13'
+          enable-cache: true
+          cache-dependency-glob: devtools/uv.lock
+      - name: Qualify combined H2S guide and source contracts
+        run: uv run --project devtools --locked --group test python -m pytest -q docs/test_h2s_scavenger_documentation.py
+      - name: Compile and run the documented example
+        if: ${{ !cancelled() }}
+        run: ./mvnw -B -ntp -Dtest=H2SScavengerDocumentationTest test
+  slug-precision-control:
+    # Diagnostic only: compare the identical combined tree with the pre-precision
+    # SlugFilmCoupling implementation. The primary job still runs every gate.
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Restore only the frozen master reconstruction in this disposable checkout
+        shell: bash
+        run: |
+          git fetch --depth=1 origin 963e2f57d641ab35088be5a3b274eafeb4cd9281
+          git show 963e2f57d641ab35088be5a3b274eafeb4cd9281:src/main/java/neqsim/process/equipment/pipeline/twophasepipe/SlugFilmCoupling.java > src/main/java/neqsim/process/equipment/pipeline/twophasepipe/SlugFilmCoupling.java
+          test "$(git hash-object src/main/java/neqsim/process/equipment/pipeline/twophasepipe/SlugFilmCoupling.java)" = 5df9be6c42a58474e3c84cbe82c443c2e9e36d6e
+      - name: Run identical moving three-phase regression on control
+        shell: bash
+        run: |
+          mkdir -p target/restart-qualification-logs
+          ./mvnw -B -ntp -Dtest=TwoFluidPipeUnsplitRunTest#movingSlugFilmCouplingIsStableAcrossMeshAndTimeStepRefinement test 2>&1 | tee target/restart-qualification-logs/pre-precision-control.log
+      - name: Retain control log
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: slug-precision-control-${{ github.run_attempt }}
+          path: target/restart-qualification-logs/pre-precision-control.log
+          if-no-files-found: error

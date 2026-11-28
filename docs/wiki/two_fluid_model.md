@@ -63,8 +63,6 @@ overlap owns that implicit source before body/film contrast is admissible and us
 mean-cell friction closure, so Newton trial state cannot switch the owner at cell entry.
 For a nearly full body cell, film mass and momentum use the body-to-cell differences before
 division by film length. This avoids amplifying rounding in the reconstructed face state.
-Both subcell energies use their local kinetic energies and the common internal-energy offset
-from the weighted cell balance, avoiding cancellation in the short film's energy.
 Momentum probes at exactly zero phase mass contribute to the nonlinear momentum residual while
 the face and source states keep that phase absent. If line search stalls at a closure transition,
 the tracked cell-only solver can restart Newton once within its existing iteration budget.

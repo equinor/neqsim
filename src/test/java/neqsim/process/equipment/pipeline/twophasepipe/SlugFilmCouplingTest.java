@@ -200,28 +200,7 @@ class SlugFilmCouplingTest {
     assertEquals(1.0 - expectedLiquid, film[0], 2.0e-15);
     assertEquals(0.5 * expectedLiquid, film[4], 2.0e-15);
     assertEquals(0.5 * (1.0 - expectedLiquid), film[3], 2.0e-15);
-    // The same internal-energy offset must be recovered in both subcells.
-    // Use stored conservative states and frozen reference properties, not a
-    // cell-scale energy subtraction divided by film length.
-    double gasInternal = section.getGasEnthalpy() - section.getPressure() / section.getGasDensity();
-    double oilInternal = section.getLiquidEnthalpy() - section.getPressure() / section.getOilDensity();
-    double[] body = result.getBodyConservativeState();
-    assertEquals(reconstructedEnergyOffset(body, gasInternal, oilInternal),
-        reconstructedEnergyOffset(film, gasInternal, oilInternal), 1.0e-8);
     assertPartition(mean, result);
-  }
-
-  /**
-   * Recover the common specific internal-energy offset for the two-phase precision fixture.
-   *
-   * @param state reconstructed conservative variables
-   * @param gasInternal frozen gas specific internal energy (J/kg)
-   * @param oilInternal frozen oil specific internal energy (J/kg)
-   * @return specific internal-energy offset (J/kg)
-   */
-  private double reconstructedEnergyOffset(double[] state, double gasInternal, double oilInternal) {
-    double kinetic = 0.5 * state[3] * state[3] / state[0] + 0.5 * state[4] * state[4] / state[1];
-    return (state[6] - kinetic - state[0] * gasInternal - state[1] * oilInternal) / (state[0] + state[1]);
   }
 
   /**

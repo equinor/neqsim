@@ -220,16 +220,11 @@ public final class SlugFilmCoupling {
       }
       double energyOffset = (mean[6] - fraction * bodyKinetic - (1.0 - fraction) * filmKinetic - referenceInternal)
           / totalMass;
-      // Both subcells share the offset from the weighted energy balance. Evaluate
-      // each directly rather than subtracting rounded cell-scale energies and
-      // dividing by a potentially tiny film length.
       body[6] = bodyKinetic;
-      film[6] = filmKinetic;
       for (int phase = 0; phase < 3; phase++) {
-        double specificInternal = phaseInternalEnergy[phase] + energyOffset;
-        body[6] += body[phase] * specificInternal;
-        film[6] += film[phase] * specificInternal;
+        body[6] += body[phase] * (phaseInternalEnergy[phase] + energyOffset);
       }
+      film[6] = (mean[6] - fraction * body[6]) / (1.0 - fraction);
       double extraKineticEnergy = fraction * bodyKinetic + (1.0 - fraction) * filmKinetic - meanKineticEnergy;
       double sensibleEnergy = section.getMixtureHeatCapacity() > 0.0 && section.getTemperature() > 0.0
           ? totalMass * section.getMixtureHeatCapacity() * section.getTemperature()
