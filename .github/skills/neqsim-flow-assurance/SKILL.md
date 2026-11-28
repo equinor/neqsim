@@ -564,11 +564,13 @@ double liquidKg = pipe.getLiquidInventory("kg");            // "kg", "tonnes", "
   `setGasOnlyOutletTakeoff(true)` or `setOutletBoundaryFluid(...)` with `setAllowOutletPhaseBackflow(true)`;
   undo those before `closeOutlet()`; restart with `CONSTANT_PRESSURE` inlet, `setInletBoundaryFluid(...)` and
   `setInletPressure(Pa)`. Without that set-up it stops within minutes (10 s and 180 s in a 2026-11-27 probe);
-  that is a set-up error. Measured 2026-11-28 on the 707 km case, 25 cells, end pressures from the line-pack
-  base case: 1,057 t of liquid through the outlet in blowdown (line-pack 1,167 t), 1,660 t in the line at
-  the end of blowdown (2,152 t), line liquid-free 12.2 h after restart (16.5 h), 18.3 h with a gas-only
-  outlet; 84.5 h simulated in 18 min. It removed 5 % less mass in blowdown and stayed 8 K warmer, so it
-  condensed less. Report both models and say that neither is validated against field data.
+  that is a set-up error. Measured 2026-11-28 on the 707 km case, 50 cells, end pressures from the line-pack
+  base case: 1,092 t of liquid through the outlet in blowdown (line-pack 1,167 t), 1,878 t in the line at
+  the end of blowdown (2,152 t), line liquid-free 14.2 h after restart (16.5 h), 19.5 h with a gas-only
+  outlet; 84.5 h simulated in 59 min. It removed 2.5 % less mass in blowdown and stayed 4 K warmer, so it
+  condensed less. From 25 to 50 cells these results moved 3–17 % toward the line-pack values (1,057 t,
+  1,660 t, 12.3 h and 18.5 h at 25 cells), so run a mesh pair and say `TwoFluidPipe` is not mesh-converged
+  at 50 cells. Report both models and say that neither is validated against field data.
 - Equilibrium is instantaneous, so "line liquid-free" times are optimistic. Slug flow, annular films and
   terrain slugging are not modelled, and nothing here is validated against measured pipeline data.
 

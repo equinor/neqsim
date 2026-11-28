@@ -210,28 +210,33 @@ divided by the converged `TwoFluidPipe` holdup:
 | Annular (film only, no entrainment) | 3 | 1.43–1.81 |
 
 **`TwoFluidPipe` transient on this process** (2026-11-28; same 707 km route, fluid, wall and heat transfer as
-the real-route study below; 25 cells, 60 s outer steps; conservative-energy transient with coupled
+the real-route study below; 50 cells, 60 s outer steps; conservative-energy transient with coupled
 pressure-momentum, component transport and 30 s mass-transfer relaxation). The end pressures follow the
 100-section line-pack base case, so flows, temperatures, condensation and liquid movement are
 `TwoFluidPipe`'s own and the end pressures are not.
 
 | Result | Line-pack, two-fluid transport | `TwoFluidPipe`, liquid may leave | `TwoFluidPipe`, gas-only outlet |
 |--------|-------------------------------:|---------------------------------:|--------------------------------:|
-| Inlet pressure before shutdown (bara) | 179.7 | 178.5 | 178.5 |
-| Mass removed in blowdown (t) | 39,466 | 37,460 | 35,457 |
-| Line-average pressure at end of blowdown (bara) | 80.2 | 83.9 | 85.3 |
-| Coldest fluid (°C) | -27.1 | -19.0 | -17.2 |
-| Liquid in line at end of blowdown (t) | 2,152 | 1,660 | 2,541 |
-| Liquid through the outlet in blowdown (t) | 1,167 | 1,057 | 0 |
-| Liquid at end of 12 h hold (t) | 1,576 | 1,141 | 2,047 |
-| Line liquid-free after restart begins (h) | 16.5 | 12.2 | 18.3 |
+| Inlet pressure before shutdown (bara) | 179.7 | 179.6 | 179.6 |
+| Mass removed in blowdown (t) | 39,466 | 38,487 | 35,295 |
+| Line-average pressure at end of blowdown (bara) | 80.2 | 82.6 | 85.4 |
+| Coldest fluid (°C) | -27.1 | -22.7 | -19.2 |
+| Liquid in line at end of blowdown (t) | 2,152 | 1,878 | 2,697 |
+| Liquid through the outlet in blowdown (t) | 1,167 | 1,092 | 0 |
+| Liquid at end of 12 h hold (t) | 1,576 | 1,339 | 2,169 |
+| Line liquid-free after restart begins (h) | 16.5 | 14.2 | 19.5 |
 | Liquid delivered in restart (t) | 0 | 0 | 0 |
-| Delivery at end of run (kg/s) | 520 | 484 | 489 |
+| Delivery at end of run (kg/s) | 520 | 502 | 512 |
 
-- Both `TwoFluidPipe` runs completed 84.5 h of pipeline time in 18 min of computer time with phase-mass
-  residuals below $10^{-15}$.
-- `TwoFluidPipe` classified the wet cells as stratified (87 % in blowdown, 63 % in the hold, 73 % in the
-  restart) and otherwise slug; 5 % were annular in blowdown, at holdups of 0.6–2 %.
+- Times are read from 10-minute logs.
+- All four `TwoFluidPipe` runs (25 and 50 cells) completed 84.5 h of pipeline time, in 18 min (25 cells) and
+  59 min (50 cells) of computer time, with phase-mass residuals of $1.2 \times 10^{-15}$ or less.
+- Mesh, 25 against 50 cells with liquid leaving: liquid at end of blowdown 1,660 / 1,878 t, through the
+  outlet 1,057 / 1,092 t, at end of hold 1,141 / 1,339 t, liquid-free after 12.3 / 14.2 h (18.5 / 19.5 h
+  with a gas-only outlet). The changes are 3–17 % and all toward the line-pack result, so `TwoFluidPipe` is
+  not mesh-converged at 50 cells. No 100-cell run was made.
+- At 50 cells `TwoFluidPipe` classified the wet cells as stratified (82 % in blowdown, 69 % in the hold,
+  80 % in the restart) and otherwise slug; 11 % were annular in blowdown, at holdups of 0.4 % and above.
 - Use this set-up: steady `run()`, `prepareConservativeEnergyTransientFromSteadyState()`, `closeInlet()`,
   then either `setGasOnlyOutletTakeoff(true)` or `setOutletBoundaryFluid(...)` with
   `setAllowOutletPhaseBackflow(true)`. Before `closeOutlet()` switch the gas-only take-off off, or set the
