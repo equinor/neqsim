@@ -209,10 +209,13 @@ jobs:
         if: ${{ !cancelled() }}
         run: ./mvnw -B -ntp -Dtest=H2SScavengerDocumentationTest test
   slug-precision-control:
-    # Diagnostic only: compare the identical combined tree with the pre-precision
-    # SlugFilmCoupling implementation. The primary job still runs every gate.
+    # Diagnostic only: isolate the two arithmetic changes; the primary job retains every gate.
+    strategy:
+      fail-fast: false
+      matrix:
+        reconstruction: [original, mass-only, momentum-only]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-java@v6
@@ -220,13 +223,39 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
-      - name: Restore only the frozen master reconstruction in this disposable checkout
+      - name: Prepare exact arithmetic control in disposable checkout
         id: restore_control
         shell: bash
+        env:
+          RECONSTRUCTION: ${{ matrix.reconstruction }}
         run: |
           git fetch --depth=1 origin 963e2f57d641ab35088be5a3b274eafeb4cd9281
-          git show 963e2f57d641ab35088be5a3b274eafeb4cd9281:src/main/java/neqsim/process/equipment/pipeline/twophasepipe/SlugFilmCoupling.java > src/main/java/neqsim/process/equipment/pipeline/twophasepipe/SlugFilmCoupling.java
-          test "$(git hash-object src/main/java/neqsim/process/equipment/pipeline/twophasepipe/SlugFilmCoupling.java)" = 5df9be6c42a58474e3c84cbe82c443c2e9e36d6e
+          test "$(git show 963e2f57d641ab35088be5a3b274eafeb4cd9281:src/main/java/neqsim/process/equipment/pipeline/twophasepipe/SlugFilmCoupling.java | git hash-object --stdin)" = 5df9be6c42a58474e3c84cbe82c443c2e9e36d6e
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          import subprocess
+          path = Path("src/main/java/neqsim/process/equipment/pipeline/twophasepipe/SlugFilmCoupling.java")
+          mode = os.environ["RECONSTRUCTION"]
+          original = subprocess.check_output(["git", "show", "963e2f57d641ab35088be5a3b274eafeb4cd9281:" + str(path)], text=True)
+          current = path.read_text()
+          assert subprocess.check_output(["git", "hash-object", str(path)], text=True).strip() == "cd23e5d21f8bdb9c9de2437237d2d60fb3e4fa84"
+          def replace_once(source, before, after):
+              assert source.count(before) == 1, "Expected one exact arithmetic block"
+              return source.replace(before, after, 1)
+          if mode == "original":
+              result = original
+          elif mode == "mass-only":
+              result = replace_once(current, "        double velocityChange = relaxation * (mixtureVelocity - velocity);\n        double bodyMomentumChange = bodyMassChanges[phase] * velocity + body[phase] * velocityChange;\n        body[phase + 3] = mean[phase + 3] + bodyMomentumChange;\n        film[phase + 3] = mean[phase + 3] - bodyToFilmLengthRatio * bodyMomentumChange;\n", "        body[phase + 3] = body[phase] * (velocity + relaxation * (mixtureVelocity - velocity));\n        film[phase + 3] = (mean[phase + 3] - fraction * body[phase + 3]) / (1.0 - fraction);\n")
+          else:
+              assert mode == "momentum-only"
+              result = replace_once(current, "    // Compute contrasts before scaling by the short film length. Subtracting\n    // two rounded cell-scale inventories would amplify their rounding in the film.\n    double liquidVolumeChange = MathArrays.linearCombination(bodyHoldup, gasVolume, bodyHoldup, liquidVolume, -1.0,\n        liquidVolume);\n    double bodyToFilmLengthRatio = fraction / (1.0 - fraction);\n    double[] bodyMassChanges = new double[3];\n    for (int phase = 0; phase < 3; phase++) {\n      double relativeChange = phase == 0 ? -liquidVolumeChange / gasVolume : liquidVolumeChange / liquidVolume;\n      bodyMassChanges[phase] = mean[phase] * relativeChange;\n      body[phase] = mean[phase] + bodyMassChanges[phase];\n      film[phase] = mean[phase] - bodyToFilmLengthRatio * bodyMassChanges[phase];\n    }\n", "    for (int phase = 0; phase < 3; phase++) {\n      double massScale = phase == 0 ? (1.0 - bodyHoldup) / (1.0 - meanHoldup) : bodyHoldup / meanHoldup;\n      body[phase] = mean[phase] * massScale;\n      film[phase] = (mean[phase] - fraction * body[phase]) / (1.0 - fraction);\n    }\n    double bodyToFilmLengthRatio = fraction / (1.0 - fraction);\n    double[] bodyMassChanges = new double[3];\n    for (int phase = 0; phase < 3; phase++) {\n      bodyMassChanges[phase] = body[phase] - mean[phase];\n    }\n")
+              result = replace_once(result, "    double gasVolume = mean[0] / density[0];\n    double totalVolume = liquidVolume + gasVolume;\n", "    double totalVolume = liquidVolume + mean[0] / density[0];\n")
+              result = replace_once(result, "import org.apache.commons.math3.util.MathArrays;\n", "")
+          path.write_text(result)
+          print("Diagnostic reconstruction:", mode)
+          PY
+          git diff --stat
       - name: Run identical moving three-phase regression on control
         shell: bash
         run: |
@@ -251,7 +280,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
-          name: slug-precision-control-${{ github.run_attempt }}
+          name: slug-precision-control-${{ matrix.reconstruction }}-${{ github.run_attempt }}
           path: target/restart-qualification-logs/*.log
           if-no-files-found: error
 
