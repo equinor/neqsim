@@ -87,8 +87,8 @@ public final class H2SScavengerQuickStart {
     assert Double.isFinite(outletPpm) && outletPpm < inletPpm;
     assert removalPercent > 0.0 && removalPercent < 100.0;
     assert consumptionKgPerHour > 0.0;
-    assert json.contains("\\\"injectionRateUnit\\\":\\\"l/hr\\\"");
-    assert json.contains("\\\"h2sRemovedKgPerHr\\\":");
+    assert json.contains("\"injectionRateUnit\":\"l/hr\"");
+    assert json.contains("\"h2sRemovedKgPerHr\":");
 
     logger.info(
         "H2S scavenger: inlet={} ppm, outlet={} ppm, removal={}%, consumption={} kg/hr",
