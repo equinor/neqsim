@@ -6,6 +6,12 @@ on:
     paths:
       - 'examples/production-decision/**'
       - 'src/main/java/neqsim/process/equipment/pipeline/TwoFluidPipe.java'
+      - 'src/main/java/neqsim/process/equipment/pipeline/CompositionalLinePackPipe.java'
+      - 'src/main/java/neqsim/process/equipment/pipeline/StratifiedLiquidMomentum.java'
+      - 'src/main/java/neqsim/process/equipment/pipeline/RetrogradeDewPointScanner.java'
+      - 'src/main/java/neqsim/process/equipment/pipeline/DewPointGuardedOutletController.java'
+      - 'src/test/java/neqsim/process/equipment/pipeline/CompositionalLinePackPipeTest.java'
+      - 'src/test/java/neqsim/process/equipment/pipeline/StratifiedLiquidMomentumTest.java'
       - 'src/main/java/neqsim/process/equipment/pipeline/twophasepipe/**'
       - 'src/test/java/neqsim/process/equipment/pipeline/twophasepipe/TwoFluidUnsplitTengesdalPreparationTest.java'
       - '.github/workflows/ai-production-restart-qualification.yml'
@@ -36,7 +42,13 @@ jobs:
       - name: Compile the PR physics and resolve its runtime classpath
         id: compile
         run: ./mvnw -B -ntp -DskipTests compile dependency:build-classpath -Dmdep.outputFile=target/restart-classpath.txt
+      - name: Qualify integrated compositional and two-fluid inventory contracts
+        run: >-
+          ./mvnw -B -ntp
+          -Dtest=CompositionalLinePackPipeTest#twoFluidPipeLiquidMassIncludesDenseBrine+twoFluidPipeLiquidInventoryRejectsUnknownUnit+blowdownFormsRetrogradeLiquidAndGuardStaysShut,StratifiedLiquidMomentumTest,TwoFluidUnsplitModelAdapterTest
+          test
       - name: Qualify the tracked-force five-second mesh and time-step matrix
+        if: ${{ !cancelled() && steps.compile.outcome == 'success' }}
         run: >-
           ./mvnw -B -ntp
           -Dtest=TwoFluidUnsplitTengesdalPreparationTest#fiveSecondTrackedSubcellForceRiserQualificationMustCompleteTheWholeInterval
