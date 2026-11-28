@@ -155,6 +155,8 @@ before the mole fractions are renormalised. The 21 named components (including
 `n-hexane` ... `n-nonane` and `nC10`) go to their own slot. Every other
 component is assigned by its **molar mass**:
 
+The limits below are rounded for readability; the implementation uses strict inequalities at the exact cutoffs.
+
 | Molar mass of the component [g/mol] | GERG slot used |
 |---|---|
 | 44.10 to 58.12 | n-butane |
@@ -167,12 +169,13 @@ component is assigned by its **molar mass**:
 
 Consequences to be aware of:
 
-- Mole fractions are kept, so the mixture is correct in moles. The heavy
-  fraction then behaves thermodynamically as n-decane (or the slot above), not
-  as its true molecular size. GERG density is `molar density from GERG x
-  molar mass of the real phase`, so mass is conserved but the molar volume of a
-  C12 to C30 fraction is that of decane. Density and heat capacity are
-  underestimated for heavy, high-molar-mass fractions.
+- Mapped mole fractions are accumulated in their assigned slots and then
+  renormalised. The heavy fraction behaves thermodynamically as n-decane (or
+  the slot above), not as its true molecular size. GERG density uses `molar
+  density from GERG x molar mass of the real phase`. This preserves the
+  real-phase mass conversion, but does not establish the accuracy of the
+  molar volume, density or heat capacity. The sign and magnitude of the
+  property error depend on composition and state.
 - A component with a molar mass exactly on a boundary, or below 44.10 g/mol and
   not named in the list, is dropped and the rest is renormalised. Use exact
   names for light components.
@@ -197,7 +200,7 @@ when water or glycol is present).
    point, liquid dropout and the composition of the gas leaving a separator come
    from this flash, not from GERG-2008.
 2. **Apply GERG-2008 to the gas phase only.** After separation the heavy ends in
-   the gas are small. Use `getPhase(0).getDensity_GERG2008()` or
+   the gas are small. Use `getPhase("gas").getDensity_GERG2008()` or
    `getProperties_GERG2008()` on that phase for density, Z, speed of sound,
    enthalpy and Joule-Thomson coefficient.
 3. **Lump the remaining heavy ends explicitly instead of relying on the mass
@@ -211,14 +214,15 @@ when water or glycol is present).
 
    For a 130 g/mol fraction this gives 87.6 % n-nonane and 12.4 % n-decane. The
    molar mass of the GERG mixture then equals that of the real gas. A
-   fraction heavier than n-decane cannot be matched; keep it in the SRK/PR flash
-   and leave it out of the GERG mixture, or report the result as outside the
-   range of the model.
+   fraction heavier than n-decane cannot be matched with this two-component
+   balance. Keep it in the SRK/PR flash and use that characterised model for
+   properties unless a separately validated approximation is available. Do not
+   silently omit the fraction from a GERG calculation.
 4. **Check and report.** Compare the GERG molar mass with the real phase molar
    mass and compare the GERG density with the SRK/PR density of the same phase.
-   A large difference means the heavy ends dominate and GERG-2008 is not the
-   right model. Record the C6+ mole fraction and the lumping used with the
-   result.
+   A large difference flags a property-model discrepancy, not necessarily a
+   heavy-end effect. A small difference is not independent validation either.
+   Record the C6+ mole fraction, mapping, conditions and applicable range.
 
 ```java
 SystemInterface fluid = new SystemSrkEos(288.15, 5.0);
@@ -234,8 +238,8 @@ fluid.createDatabase(true);
 fluid.setMixingRule("classic");
 new ThermodynamicOperations(fluid).TPflash();
 
-double gergDensity = fluid.getPhase(0).getDensity_GERG2008();
-double gergMolarMass = new NeqSimGERG2008(fluid.getPhase(0)).getMolarMass();
+double gergDensity = fluid.getPhase("gas").getDensity_GERG2008();
+double gergMolarMass = new NeqSimGERG2008(fluid.getPhase("gas")).getMolarMass();
 ```
 
 The regression test `NeqSimGERG2008HeavyEndsTest` covers the mapping error of an
