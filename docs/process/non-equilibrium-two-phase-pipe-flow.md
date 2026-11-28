@@ -400,6 +400,25 @@ from the start, kg:
   of 30 to 80 min, so only a fifth of the equilibrium amount has moved at the end of a 15 min refill.
 - 156 film solves, 14 failed. The run took 1.8 times as long as the relaxation run (14 min against 8 min).
 
+**The same 20 km line with condensate as well** (three phases: 294 t of condensate and 3.9 t of glycol solution at
+the start; same sequence):
+
+| Time (min) | Stage | Condensate, equilibrium (t) | Condensate, non-equilibrium (t) | Aqueous change, equilibrium (kg) | Aqueous change, non-equilibrium (kg) |
+|------------|-------|-----------------------------|---------------------------------|----------------------------------|--------------------------------------|
+| 5 | blowdown | 320 | 318 | +32 | +21 |
+| 15 | end of blowdown | 360 | 358 | +78 | +69 |
+| 20 | end of shut-in | 357 | 358 | +71 | +73 |
+| 25 | refill, 130 bara | 307 | 319 | +4 | +79 |
+| 30 | refill, 163 bara | 183 | 229 | −97 | +88 |
+| 35 | end of refill, 197 bara | 21 | 116 | −202 | +65 |
+| 40 | end of hold | 18 | 81 | −178 | +60 |
+
+- Condensate and water both condense close to equilibrium during the blowdown.
+- In the refill the condensate lags as in the dry case. The aqueous phase hardly evaporates at all: it holds 1 %
+  of the liquid volume and so 1 % of the surface.
+- 333 film solves, 41 failed, most of them for the aqueous film above 130 bara; those cells kept their last rate
+  constants. The run took 28 min against 5 min in equilibrium mode.
+
 **707 km rich-gas export line** (1.01 m bore, real seabed profile, 25 cells; inlet shut, line settled at 130 bara and
 blown down through the outlet to 84 bara average in 16 h, held 12 h, repressurised from the inlet with the outlet
 shut for 17 h and then opened; 60 s steps, film update every 300 s; 2026-11-28):
